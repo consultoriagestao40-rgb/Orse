@@ -973,6 +973,35 @@ export default function GestaoEntregasPage() {
     };
   };
 
+  const getTrendInfo = (data: any[], key: 'valor' | 'ticketMedio') => {
+    const activeMonths = data.filter(d => d.volume > 0);
+    if (activeMonths.length < 2) return { text: 'Estável', color: 'bg-slate-100 text-slate-500 border-slate-200/50', icon: '●' };
+    
+    const current = activeMonths[activeMonths.length - 1][key];
+    const previous = activeMonths[activeMonths.length - 2][key];
+    
+    if (previous === 0) return { text: 'Estável', color: 'bg-slate-100 text-slate-500 border-slate-200/50', icon: '●' };
+    
+    const pct = ((current - previous) / previous) * 100;
+    if (pct > 0.5) {
+      return {
+        text: `+${pct.toFixed(0)}% vs mês anterior`,
+        color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        icon: '▲',
+        isUp: true
+      };
+    } else if (pct < -0.5) {
+      return {
+        text: `${pct.toFixed(0)}% vs mês anterior`,
+        color: 'bg-rose-50 text-rose-700 border-rose-200',
+        icon: '▼',
+        isUp: false
+      };
+    } else {
+      return { text: 'Estável', color: 'bg-slate-100 text-slate-500 border-slate-200/50', icon: '●' };
+    }
+  };
+
   const kpis = getKpiData();
 
   return (
@@ -1925,7 +1954,7 @@ export default function GestaoEntregasPage() {
             </div>
           </div>
 
-            {/* Gráficos Analíticos Mensais (12 Meses) */}
+            {/* Gráficos Analíticos Mensais (Ano Vigente) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
               
               {/* Gráfico 1: Valor & Volume das Entregas por Mês */}
@@ -1938,7 +1967,16 @@ export default function GestaoEntregasPage() {
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Faturamento acumulado e quantidade de entregas</p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-4">
+                    {/* Indicador de Tendência */}
+                    {(() => {
+                      const trend = getTrendInfo(kpis.monthlyData, 'valor');
+                      return (
+                        <span className={`text-[8.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${trend.color} flex items-center gap-1`}>
+                          {trend.icon} {trend.text}
+                        </span>
+                      );
+                    })()}
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
@@ -1946,6 +1984,10 @@ export default function GestaoEntregasPage() {
                     <div className="flex items-center gap-2">
                       <span className="w-3.5 h-2 bg-[#1B4D3E]/20 rounded inline-block" />
                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Entregas (Qtd)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-0 border-t border-dashed border-emerald-500 inline-block" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Tendência</span>
                     </div>
                   </div>
                 </div>
@@ -2013,7 +2055,7 @@ export default function GestaoEntregasPage() {
                       });
                     })()}
 
-                    {/* Caminhos da Linha e Área */}
+                    {/* Caminhos da Linha, Área e Tendência */}
                     {(() => {
                       const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
                       const points = kpis.monthlyData.map((d, i) => {
@@ -2025,10 +2067,44 @@ export default function GestaoEntregasPage() {
                       const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
                       const areaPath = `60,180 ${linePath} 570,180`;
 
+                      // Linear Regression Trendline
+                      const activePoints = points.filter((p, i) => kpis.monthlyData[i].volume > 0);
+                      let trendLine = null;
+                      if (activePoints.length >= 2) {
+                        const n = activePoints.length;
+                        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                        activePoints.forEach(p => {
+                          sumX += p.x; sumY += p.y;
+                          sumXY += p.x * p.y; sumXX += p.x * p.x;
+                        });
+                        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+                        const intercept = (sumY - slope * sumX) / n;
+                        trendLine = {
+                          x1: activePoints[0].x,
+                          y1: slope * activePoints[0].x + intercept,
+                          x2: activePoints[activePoints.length - 1].x,
+                          y2: slope * activePoints[activePoints.length - 1].x + intercept,
+                          isIncreasing: slope < 0
+                        };
+                      }
+
                       return (
                         <>
                           <polygon points={areaPath} fill="url(#areaGradient)" />
                           <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                          {trendLine && (
+                            <line
+                              x1={trendLine.x1}
+                              y1={trendLine.y1}
+                              x2={trendLine.x2}
+                              y2={trendLine.y2}
+                              stroke={trendLine.isIncreasing ? "#10B981" : "#EF4444"}
+                              strokeWidth="1.5"
+                              strokeDasharray="4 4"
+                              opacity="0.8"
+                            />
+                          )}
 
                           {points.map((p, i) => (
                             <g key={i} className="group/point">
@@ -2061,9 +2137,24 @@ export default function GestaoEntregasPage() {
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Evolução do valor médio por entrega realizada</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ticket Médio (R$)</span>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {/* Indicador de Tendência */}
+                    {(() => {
+                      const trend = getTrendInfo(kpis.monthlyData, 'ticketMedio');
+                      return (
+                        <span className={`text-[8.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${trend.color} flex items-center gap-1`}>
+                          {trend.icon} {trend.text}
+                        </span>
+                      );
+                    })()}
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ticket Médio (R$)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-0 border-t border-dashed border-emerald-500 inline-block" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Tendência</span>
+                    </div>
                   </div>
                 </div>
 
@@ -2093,7 +2184,7 @@ export default function GestaoEntregasPage() {
                       );
                     })}
 
-                    {/* Caminhos da Linha e Área */}
+                    {/* Caminhos da Linha, Área e Tendência */}
                     {(() => {
                       const maxTicket = Math.max(...kpis.monthlyData.map(d => d.ticketMedio), 100);
                       const points = kpis.monthlyData.map((d, i) => {
@@ -2105,10 +2196,44 @@ export default function GestaoEntregasPage() {
                       const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
                       const areaPath = `60,180 ${linePath} 570,180`;
 
+                      // Linear Regression Trendline
+                      const activePoints = points.filter((p, i) => kpis.monthlyData[i].volume > 0);
+                      let trendLine = null;
+                      if (activePoints.length >= 2) {
+                        const n = activePoints.length;
+                        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                        activePoints.forEach(p => {
+                          sumX += p.x; sumY += p.y;
+                          sumXY += p.x * p.y; sumXX += p.x * p.x;
+                        });
+                        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+                        const intercept = (sumY - slope * sumX) / n;
+                        trendLine = {
+                          x1: activePoints[0].x,
+                          y1: slope * activePoints[0].x + intercept,
+                          x2: activePoints[activePoints.length - 1].x,
+                          y2: slope * activePoints[activePoints.length - 1].x + intercept,
+                          isIncreasing: slope < 0
+                        };
+                      }
+
                       return (
                         <>
                           <polygon points={areaPath} fill="url(#ticketAreaGradient)" />
                           <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                          {trendLine && (
+                            <line
+                              x1={trendLine.x1}
+                              y1={trendLine.y1}
+                              x2={trendLine.x2}
+                              y2={trendLine.y2}
+                              stroke={trendLine.isIncreasing ? "#10B981" : "#EF4444"}
+                              strokeWidth="1.5"
+                              strokeDasharray="4 4"
+                              opacity="0.8"
+                            />
+                          )}
 
                           {points.map((p, i) => (
                             <g key={i} className="group/point">
