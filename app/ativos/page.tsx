@@ -167,7 +167,8 @@ export default function AtivosPage() {
     instrucoes: '',
     tecnicoResponsavel: '',
     tecnicoEmail: '',
-    dataPrevista: new Date().toISOString().substring(0, 10)
+    dataPrevista: new Date().toISOString().substring(0, 10),
+    status: 'PENDENTE'
   });
 
   useEffect(() => {
@@ -573,7 +574,8 @@ export default function AtivosPage() {
         instrucoes: os.instrucoes || '',
         tecnicoResponsavel: os.tecnicoResponsavel || '',
         tecnicoEmail: os.tecnicoEmail || '',
-        dataPrevista: os.dataPrevista ? new Date(os.dataPrevista).toISOString().substring(0, 10) : ''
+        dataPrevista: os.dataPrevista ? new Date(os.dataPrevista).toISOString().substring(0, 10) : '',
+        status: os.status || 'PENDENTE'
       });
     } else {
       const targetContrato = contratos[0];
@@ -588,7 +590,8 @@ export default function AtivosPage() {
         instrucoes: '',
         tecnicoResponsavel: '',
         tecnicoEmail: '',
-        dataPrevista: new Date().toISOString().substring(0, 10)
+        dataPrevista: new Date().toISOString().substring(0, 10),
+        status: 'PENDENTE'
       });
     }
     setActiveOsTab('details');
@@ -624,7 +627,8 @@ export default function AtivosPage() {
         instrucoes: osForm.instrucoes,
         tecnicoResponsavel: osForm.tecnicoResponsavel,
         tecnicoEmail: osForm.tecnicoEmail,
-        dataPrevista: osForm.dataPrevista ? new Date(osForm.dataPrevista).toISOString() : null
+        dataPrevista: osForm.dataPrevista ? new Date(osForm.dataPrevista).toISOString() : null,
+        status: osForm.status
       });
     } else {
       res = await createOrdemServicoAtivo(osForm);
@@ -664,12 +668,17 @@ export default function AtivosPage() {
     
     // Atualização otimista imediata no estado React para evitar lag visual
     setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: newStatus } : o));
+    setOsForm(prev => prev.id === osId ? { ...prev, status: newStatus } : prev);
     
     const res = await updateOrdemServicoAtivo(osId, { status: newStatus });
     if (res.success) {
       await loadData(true); // Recarrega silenciosamente em background
     } else {
       await loadData(true); // Reverte e atualiza com o estado real do banco se houver erro
+      const realOs = ordens.find(o => o.id === osId);
+      if (realOs) {
+        setOsForm(prev => prev.id === osId ? { ...prev, status: realOs.status } : prev);
+      }
       showAlert('Erro ao Atualizar', res.error || 'Erro ao atualizar status da OS', 'error');
     }
   };
@@ -694,6 +703,12 @@ export default function AtivosPage() {
       setModalAssignTecnicoOpen(false);
       setOsToAssignTecnico(null);
       setSelectedTecnicoForAssign('');
+      setOsForm(prev => prev.id === osToAssignTecnico.id ? {
+        ...prev,
+        status: targetStatusForAssign,
+        tecnicoEmail: userSelected.email,
+        tecnicoResponsavel: userSelected.nome
+      } : prev);
       await loadData(true);
       
       let msgText = `Ordem atribuída ao técnico ${userSelected.nome} com sucesso.`;
@@ -726,6 +741,7 @@ export default function AtivosPage() {
     setSaving(false);
     setModalSignatureOpen(false);
     if (res.success) {
+      setOsForm(prev => prev.id === selectedOsForSignature.id ? { ...prev, status: 'CONCLUIDA' } : prev);
       await loadData();
     } else {
       showAlert('Erro ao Salvar', res.error || 'Erro ao assinar e concluir OS', 'error');
@@ -1426,7 +1442,11 @@ export default function AtivosPage() {
                       }
 
                       return (
-                        <tr key={os.id} className="hover:bg-slate-50/50 transition-colors">
+                        <tr 
+                          key={os.id} 
+                          onClick={() => openOsModal(os)} 
+                          className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                        >
                           <td className="px-6 py-3.5 text-center">
                             <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700 whitespace-nowrap">
                               OS № {String(os.codigo).padStart(3, '0')}
@@ -1460,7 +1480,7 @@ export default function AtivosPage() {
                               return (
                                 <button
                                   type="button"
-                                  onClick={() => handleReassignTecnico(os)}
+                                  onClick={(e) => { e.stopPropagation(); handleReassignTecnico(os); }}
                                   className="flex items-center gap-2 p-1 hover:bg-blue-50 border border-transparent hover:border-blue-150 rounded-lg text-left transition-all group/table-tech cursor-pointer max-w-full"
                                   title="Clique para alterar o técnico"
                                 >
@@ -1483,7 +1503,7 @@ export default function AtivosPage() {
                             })() : (
                               <button
                                 type="button"
-                                onClick={() => handleReassignTecnico(os)}
+                                onClick={(e) => { e.stopPropagation(); handleReassignTecnico(os); }}
                                 className="flex items-center justify-center gap-1 p-1 px-2 bg-amber-50 hover:bg-amber-100 border border-dashed border-amber-300 text-amber-800 rounded-lg text-left transition-all cursor-pointer"
                                 title="Atribuir Técnico"
                               >
@@ -1501,7 +1521,7 @@ export default function AtivosPage() {
                             <div className="flex items-center justify-center gap-1.5">
                               {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
                                 <button 
-                                  onClick={() => openOsModal(os)}
+                                  onClick={(e) => { e.stopPropagation(); openOsModal(os); }}
                                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
                                   title="Editar OS"
                                 >
@@ -1509,47 +1529,12 @@ export default function AtivosPage() {
                                 </button>
                               )}
                               <button 
-                                onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
                                 className="p-1.5 text-[#1B4D3E] hover:bg-emerald-50 rounded-lg"
                                 title="Ver OS (PDF)"
                               >
                                 <Printer size={13} />
                               </button>
-                              
-                              {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
-                                <select 
-                                  value={os.status}
-                                  onChange={(e) => handleUpdateOsStatus(os.id, e.target.value)}
-                                  className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[9px] font-black uppercase text-slate-600 outline-none cursor-pointer hover:border-[#1B4D3E]"
-                                >
-                                  <option value="PENDENTE">Backlog</option>
-                                  <option value="PROGRAMADO">Programado</option>
-                                  <option value="EM_DESLOCAMENTO">Deslocamento</option>
-                                  <option value="EM_ANDAMENTO">Atendimento</option>
-                                  <option value="VALIDACAO">Validação</option>
-                                  <option value="CANCELADA">Cancelar</option>
-                                  <option value="CONCLUIDA">Concluir</option>
-                                </select>
-                              )}
-                              
-                              {os.status === 'VALIDACAO' && (
-                                <button 
-                                  onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')}
-                                  className="text-[9px] font-black bg-[#1B4D3E] text-white hover:bg-[#13382D] border border-[#1b4d3e]/20 px-2 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  title="Validar e Concluir OS"
-                                >
-                                  Validar
-                                </button>
-                              )}
-                              
-                              {os.status === 'CANCELADA' && (
-                                <button 
-                                  onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
-                                  className="text-[9px] font-black text-[#1B4D3E] hover:bg-slate-50 px-2 py-0.5 border border-slate-200 rounded transition-all uppercase tracking-wider"
-                                >
-                                  Restaurar
-                                </button>
-                              )}
                               
                               {os.status === 'CONCLUIDA' && (
                                 <span className="text-emerald-600 p-1 flex items-center gap-0.5 text-[10px] font-black uppercase" title="Assinada e Finalizada">
@@ -1557,7 +1542,13 @@ export default function AtivosPage() {
                                 </span>
                               )}
                               
-                              <button onClick={() => handleDeleteOs(os.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteOs(os.id); }} 
+                                className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                                title="Excluir OS"
+                              >
+                                <Trash2 size={13} />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2399,6 +2390,25 @@ export default function AtivosPage() {
                         ))}
                       </select>
                     </div>
+
+                    {osForm.id && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Status da Ordem de Serviço</label>
+                        <select
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                          value={osForm.status || 'PENDENTE'}
+                          onChange={(e) => handleUpdateOsStatus(osForm.id, e.target.value)}
+                        >
+                          <option value="PENDENTE">Backlog</option>
+                          <option value="PROGRAMADO">Programado</option>
+                          <option value="EM_DESLOCAMENTO">Em Deslocamento</option>
+                          <option value="EM_ANDAMENTO">Em Atendimento</option>
+                          <option value="VALIDACAO">Em Validação</option>
+                          <option value="CONCLUIDA">Concluída</option>
+                          <option value="CANCELADA">Cancelada</option>
+                        </select>
+                      </div>
+                    )}
 
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instruções de Atendimento *</label>
