@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
-  Calendar, Check, LogOut, Loader2, Briefcase, Car, Navigation, Volume2
+  Calendar, Check, LogOut, Loader2, Briefcase, Car, Navigation, Volume2,
+  Building, Target, PlusCircle, MessageSquare
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo 
@@ -662,36 +663,32 @@ export default function TecnicoPage() {
   };
 
   const isTecnico = currentUser?.cargo?.toLowerCase().includes('tecnico') || currentUser?.cargo?.toLowerCase().includes('técnico');
+  const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
+  const isSomenteTecnico = isTecnico && !isGestor;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans select-none pb-8">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans select-none pb-24">
       {/* HEADER PREMIUM */}
-      <header className="sticky top-0 bg-[#1B4D3E] text-white z-40 px-4 py-4 flex items-center justify-between shadow-md select-none">
-        <div className="flex items-center gap-3">
-          {tenant?.logoUrl ? (
+      <header className="sticky top-0 bg-[#1B4D3E] text-white z-40 px-4 py-3.5 flex items-center justify-between shadow-md select-none">
+        <div className="flex items-center gap-3 min-w-0">
+          {currentUser?.avatarUrl ? (
             <img 
-              src={`/api/tenant/logo?tenantId=${tenant.id}&v=${tenant.logoUrl.length > 30 ? encodeURIComponent(tenant.logoUrl.substring(tenant.logoUrl.length - 10)) : encodeURIComponent(tenant.logoUrl.substring(0, 10))}`} 
-              alt="Logo" 
-              className="h-7 w-auto object-contain rounded bg-white p-0.5"
+              src={currentUser.avatarUrl} 
+              alt={currentUser.nome} 
+              className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
             />
           ) : (
-            <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center font-black text-xs text-white">
-              S
+            <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+              {currentUser?.iniciais || 'T'}
             </div>
           )}
-          <div>
-            <h1 className="text-xs font-black tracking-widest uppercase text-white/90">Área do Técnico</h1>
-            <p className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest leading-none">Slimpe Operacional</p>
+          <div className="min-w-0">
+            <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
+            <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Técnico'}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {currentUser && (
-            <div className="text-right">
-              <span className="text-[10px] font-extrabold uppercase block text-white leading-tight">{currentUser.nome}</span>
-              <span className="text-[8.5px] font-bold text-white/60 block leading-none">{currentUser.cargo || 'Técnico'}</span>
-            </div>
-          )}
+        <div className="flex items-center gap-3 shrink-0">
           {isTecnico ? (
             <a 
               href="/api/auth/logout"
@@ -1204,6 +1201,60 @@ export default function TecnicoPage() {
           </div>
         </div>
       )}
+      {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)] no-print">
+        
+        {!isSomenteTecnico && (
+          <>
+            {/* Tab CRM */}
+            <a
+              href="/leads?tab=crm"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <Building size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
+            </a>
+
+            {/* Tab Prospecção */}
+            <a
+              href="/leads?tab=prospeccao"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <Target size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+            </a>
+
+            {/* Tab Novo Lead */}
+            <a
+              href="/leads?openCreate=true"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <PlusCircle size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
+            </a>
+          </>
+        )}
+
+        {/* Tab Área do Técnico (Active) */}
+        <a
+          href="/ativos/tecnico"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
+        >
+          <Wrench size={18} className="text-[#1B4D3E]" />
+          <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+        </a>
+
+        {!isSomenteTecnico && (
+          /* Tab Chat Interno */
+          <a
+            href="/leads?tab=chat"
+            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+          >
+            <MessageSquare size={18} className="text-slate-400" />
+            <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+          </a>
+        )}
+      </nav>
     </div>
   );
 }

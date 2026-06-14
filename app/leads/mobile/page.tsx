@@ -198,13 +198,32 @@ export default function MobileCRM() {
   const [loadingChatMessages, setLoadingChatMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch logged user on mount
+  // Fetch logged user on mount and read query parameters for activeTab
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'crm' || tab === 'prospeccao' || tab === 'chat') {
+        setActiveTab(tab as any);
+      }
+      const openCreate = params.get('openCreate');
+      if (openCreate === 'true') {
+        setIsCreateModalOpen(true);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await getLoggedUser();
         if (user) {
           setCurrentUser(user);
+          const isTech = user.cargo?.toLowerCase().includes('tecnico') || user.cargo?.toLowerCase().includes('técnico');
+          const isGest = user.role === 'ADMIN' || user.role === 'MANAGER';
+          if (isTech && !isGest) {
+            router.push('/ativos/tecnico');
+          }
         } else {
           router.push('/login');
         }
@@ -216,6 +235,10 @@ export default function MobileCRM() {
     };
     fetchUser();
   }, [router]);
+
+  const isTecnico = currentUser?.cargo?.toLowerCase().includes('tecnico') || currentUser?.cargo?.toLowerCase().includes('técnico');
+  const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
+  const isSomenteTecnico = isTecnico && !isGestor;
 
   // Load CRM Data (Leads, Stages, Segments)
   const loadCRMData = async (pipeId?: string) => {
@@ -1256,74 +1279,82 @@ export default function MobileCRM() {
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         
-        {/* Tab CRM */}
-        <button
-          onClick={() => {
-            setActiveTab('crm');
-            setActiveChatUser(null);
-            loadCRMData();
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-            activeTab === 'crm' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-          }`}
-        >
-          <Building size={18} className={activeTab === 'crm' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-          <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
-        </button>
+        {!isSomenteTecnico && (
+          <>
+            {/* Tab CRM */}
+            <button
+              onClick={() => {
+                setActiveTab('crm');
+                setActiveChatUser(null);
+                loadCRMData();
+              }}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                activeTab === 'crm' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+              }`}
+            >
+              <Building size={18} className={activeTab === 'crm' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
+            </button>
 
-        {/* Tab Prospecção */}
-        <button
-          onClick={() => {
-            setActiveTab('prospeccao');
-            setActiveChatUser(null);
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-            activeTab === 'prospeccao' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-          }`}
-        >
-          <Target size={18} className={activeTab === 'prospeccao' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-          <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
-        </button>
+            {/* Tab Prospecção */}
+            <button
+              onClick={() => {
+                setActiveTab('prospeccao');
+                setActiveChatUser(null);
+              }}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                activeTab === 'prospeccao' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+              }`}
+            >
+              <Target size={18} className={activeTab === 'prospeccao' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+              <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+            </button>
 
-        {/* Tab Novo Lead */}
-        <button
-          onClick={() => {
-            setIsCreateModalOpen(true);
-          }}
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
-        >
-          <PlusCircle size={18} className="text-slate-400" />
-          <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
-        </button>
+            {/* Tab Novo Lead */}
+            <button
+              onClick={() => {
+                setIsCreateModalOpen(true);
+              }}
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
+            >
+              <PlusCircle size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
+            </button>
+          </>
+        )}
 
         {/* Tab Área do Técnico (Mobile Link) */}
         <a
           href="/ativos/tecnico"
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent font-bold no-underline ${
+            isSomenteTecnico ? 'text-[#1B4D3E] font-black' : 'text-slate-400'
+          }`}
         >
-          <Wrench size={18} className="text-slate-400" />
+          <Wrench size={18} className={isSomenteTecnico ? 'text-[#1B4D3E]' : 'text-slate-400'} />
           <span className="text-[8px] uppercase tracking-wider">Técnico</span>
         </a>
 
-        {/* Tab Chat Interno */}
-        <button
-          onClick={() => {
-            setActiveTab('chat');
-            setActiveChatUser(null);
-            loadChatListMobile();
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative ${
-            activeTab === 'chat' ? 'text-blue-600 font-black' : 'text-slate-400 font-bold'
-          }`}
-        >
-          <MessageSquare size={18} className={activeTab === 'chat' ? 'text-blue-600' : 'text-slate-400'} />
-          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-          {totalUnreadChat > 0 && (
-            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
-              {totalUnreadChat}
-            </span>
-          )}
-        </button>
+        {!isSomenteTecnico && (
+          /* Tab Chat Interno */
+          <button
+            onClick={() => {
+              setActiveTab('chat');
+              setActiveChatUser(null);
+              loadChatListMobile();
+            }}
+            className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative ${
+              activeTab === 'chat' ? 'text-blue-600 font-black' : 'text-slate-400 font-bold'
+            }`}
+          >
+            <MessageSquare size={18} className={activeTab === 'chat' ? 'text-blue-600' : 'text-slate-400'} />
+            <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+            {totalUnreadChat > 0 && (
+              <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+                {totalUnreadChat}
+              </span>
+            )}
+          </button>
+        )}
       </nav>
 
       {/* FULL-SCREEN LEAD DETAIL & EDIT OVERLAY */}
