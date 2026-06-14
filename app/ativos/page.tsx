@@ -37,6 +37,9 @@ export default function AtivosPage() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const [selectedKpiTecnico, setSelectedKpiTecnico] = useState('');
+  const [hoveredKpiStatus, setHoveredKpiStatus] = useState<string | null>(null);
+  const [hoveredKpiOsType, setHoveredKpiOsType] = useState<string | null>(null);
+  const [hoveredKpiMonthIndex, setHoveredKpiMonthIndex] = useState<number | null>(null);
   
   // Data State
   const [ativos, setAtivos] = useState<any[]>([]);
@@ -2293,39 +2296,49 @@ export default function AtivosPage() {
               const atendimentoMin = techOrdens.reduce((acc, os) => {
                 if (os.status === 'CONCLUIDA' && os.dataExecucao && os.atendimentoIniciadoEm) {
                   const diff = new Date(os.dataExecucao).getTime() - new Date(os.atendimentoIniciadoEm).getTime();
-                  return acc + Math.max(0, diff / 60000);
+                  return acc + (diff / 60000);
                 }
                 return acc;
               }, 0);
-
               const tempoTotalMin = deslocamentoMin + atendimentoMin;
               const tempoTotalHoras = tempoTotalMin / 60;
               const kmRodados = techOrdens.reduce((acc, os) => acc + (os.distanciaRealizadaRota || 0), 0);
               const percentAlocacao = (tempoTotalHoras / 176) * 100;
 
               return {
-                id: tech.id,
-                nome: tech.nome,
-                cargo: tech.cargo || 'Técnico',
-                avatarUrl: tech.avatarUrl,
-                email: tech.email,
-                totalTechOs,
-                deslocamentoMin,
-                atendimentoMin,
-                tempoTotalMin,
-                tempoTotalHoras,
-                kmRodados,
-                percentAlocacao
-              };
-            }).filter(t => t.totalTechOs > 0 || t.kmRodados > 0);
+                    let accumulatedStatusPercent = 0;
+            const statusSlices = statusList.map(item => {
+              const startAngle = -90 + (accumulatedStatusPercent / 100) * 360;
+              const strokeDashArray = `${(item.pct / 100) * 238.76} 238.76`;
+              accumulatedStatusPercent += item.pct;
+              return { ...item, startAngle, strokeDashArray };
+            });
 
-            const totalKmRodados = techStats.reduce((acc, t) => acc + t.kmRodados, 0);
-            const totalHoursTech = techStats.reduce((acc, t) => acc + t.tempoTotalHoras, 0);
+            const osTypeHexColors: Record<string, string> = {
+              INSTALACAO: '#3B82F6', // blue
+              RETIRADA: '#EF4444', // red
+              TROCA: '#A855F7', // purple
+              MANUTENCAO: '#F59E0B' // amber
+            };
+
+            const osTypeList = Object.entries(osTypesLabel).map(([tipo, label]) => {
+              const count = osPorTipo[tipo] || 0;
+              const pct = totalOs > 0 ? (count / totalOs) * 100 : 0;
+              return { tipo, label, count, pct, color: osTypeHexColors[tipo] || '#94A3B8' };
+            });
+
+            let accumulatedOsPercent = 0;
+            const osSlices = osTypeList.map(item => {
+              const startAngle = -90 + (accumulatedOsPercent / 100) * 360;
+              const strokeDashArray = `${(item.pct / 100) * 238.76} 238.76`;
+              accumulatedOsPercent += item.pct;
+              return { ...item, startAngle, strokeDashArray };
+            });
 
             return (
               <div className="space-y-6">
                 {/* FILTROS BAR */}
-                <div className="flex flex-wrap gap-4 items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl p-4 select-none">
+                <div className="flex flex-wrap gap-4 items-center justify-between bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-3xl p-4 select-none shadow-xs">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="text-[#1B4D3E]" size={18} />
                     <span className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Filtros de Período & Operação</span>
@@ -2356,243 +2369,585 @@ export default function AtivosPage() {
                   </div>
                 </div>
 
-                {/* METRIC CARDS ROW */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  {/* Card 1: Total Ativos */}
-                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-650 flex items-center justify-center shrink-0">
-                      <Boxes size={18} className="stroke-[2.5]" />
+                {/* SEÇÃO 1: DESTAQUES & SLA GAUGE */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Grid de 4 Cards de Métricas */}
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Card 1: Total Ativos */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-[#1B4D3E]/10 group-hover:text-[#1B4D3E] transition-colors duration-300">
+                        <Boxes size={22} className="stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Total de Ativos</p>
+                        <h4 className="text-2.5xl font-black text-slate-850 leading-none">{totalAtivos}</h4>
+                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Patrimônio Geral</span>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total de Ativos</p>
-                      <h4 className="text-xl font-black text-slate-800 leading-none">{totalAtivos}</h4>
-                    </div>
-                  </div>
 
-                  {/* Card 2: Alocados */}
-                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-750 flex items-center justify-center shrink-0">
-                      <FileCheck size={18} className="stroke-[2.5]" />
+                    {/* Card 2: Ativos Alocados */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100/50 group-hover:text-blue-700 transition-colors duration-300">
+                        <FileCheck size={22} className="stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Ativos Alocados</p>
+                        <div className="flex items-baseline gap-1.5">
+                          <h4 className="text-2.5xl font-black text-slate-850 leading-none">{alocadosAtivos}</h4>
+                          <span className="text-xs font-black text-blue-650">({alocadosPercent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 rounded-full mt-2 overflow-hidden">
+                          <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${alocadosPercent}%` }}></div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Ativos Alocados</p>
-                      <div className="flex items-baseline gap-1.5">
-                        <h4 className="text-xl font-black text-slate-800 leading-none">{alocadosAtivos}</h4>
-                        <span className="text-[10px] font-bold text-blue-600">({alocadosPercent.toFixed(1)}%)</span>
+
+                    {/* Card 3: Total OS */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-100/50 group-hover:text-emerald-800 transition-colors duration-300">
+                        <Wrench size={22} className="stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Total de OSs</p>
+                        <h4 className="text-2.5xl font-black text-slate-850 leading-none">{totalOs}</h4>
+                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Neste Período</span>
+                      </div>
+                    </div>
+
+                    {/* Card 4: Clientes Atendidos */}
+                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-650 flex items-center justify-center shrink-0 group-hover:bg-purple-100/50 group-hover:text-purple-700 transition-colors duration-300">
+                        <Users size={22} className="stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Clientes Atendidos</p>
+                        <h4 className="text-2.5xl font-black text-slate-850 leading-none">{totalClientesAtendidos}</h4>
+                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Portfólio Ativo</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Card 3: Total OS */}
-                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
-                    <div className="w-10 h-10 rounded-xl bg-[#1B4D3E]/5 text-[#1B4D3E] flex items-center justify-center shrink-0">
-                      <Wrench size={18} className="stroke-[2.5]" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total de OSs</p>
-                      <h4 className="text-xl font-black text-slate-800 leading-none">{totalOs}</h4>
-                    </div>
-                  </div>
+                  {/* Card Velocímetro: SLA Médio */}
+                  <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-6 shadow-xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:shadow-sm transition-all duration-300">
+                    <header className="w-full flex justify-between items-center border-b border-slate-100 pb-2.5 select-none">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SLA Médio de Atendimento</span>
+                      {(() => {
+                        let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200';
+                        let label = 'Sem Dados';
+                        if (slaMedioDias > 0) {
+                          if (slaMedioDias < 3) {
+                            badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-150';
+                            label = 'EXCELENTE';
+                          } else if (slaMedioDias < 5) {
+                            badgeColor = 'bg-blue-50 text-blue-700 border-blue-150';
+                            label = 'CONFORME';
+                          } else if (slaMedioDias < 7) {
+                            badgeColor = 'bg-amber-50 text-amber-700 border-amber-150';
+                            label = 'ATENÇÃO';
+                          } else {
+                            badgeColor = 'bg-rose-50 text-rose-700 border-rose-150';
+                            label = 'CRÍTICO';
+                          }
+                        }
+                        return (
+                          <span className={`text-[8.5px] font-black px-2 py-0.5 rounded border uppercase tracking-wider ${badgeColor}`}>
+                            {label}
+                          </span>
+                        );
+                      })()}
+                    </header>
 
-                  {/* Card 4: Clientes Atendidos */}
-                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-750 flex items-center justify-center shrink-0">
-                      <Users size={18} className="stroke-[2.5]" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Clientes Atendidos</p>
-                      <h4 className="text-xl font-black text-slate-800 leading-none">{totalClientesAtendidos}</h4>
-                    </div>
-                  </div>
+                    <div className="py-4 w-full flex justify-center items-center relative min-h-[140px]">
+                      {(() => {
+                        const val = Math.min(10, Math.max(0, slaMedioDias));
+                        // Angle from -90deg (0 days) to +90deg (10+ days)
+                        const needleAngle = -90 + (val / 10) * 180;
+                        return (
+                          <div className="relative w-[180px] h-[100px] flex items-center justify-center overflow-visible">
+                            <svg viewBox="0 0 200 120" className="w-full h-full overflow-visible select-none">
+                              <defs>
+                                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#10B981" />   {/* Emerald */}
+                                  <stop offset="45%" stopColor="#F59E0B" />  {/* Amber */}
+                                  <stop offset="75%" stopColor="#EF4444" />  {/* Red */}
+                                  <stop offset="100%" stopColor="#B91C1C" /> {/* Dark Red */}
+                                </linearGradient>
+                                <filter id="needleShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                  <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.25"/>
+                                </filter>
+                              </defs>
+                              {/* Background track */}
+                              <path 
+                                d="M 20 110 A 80 80 0 0 1 180 110" 
+                                fill="none" 
+                                stroke="#F1F5F9" 
+                                strokeWidth="16" 
+                                strokeLinecap="round" 
+                              />
+                              {/* Colored gradient track */}
+                              <path 
+                                d="M 20 110 A 80 80 0 0 1 180 110" 
+                                fill="none" 
+                                stroke="url(#gaugeGradient)" 
+                                strokeWidth="16" 
+                                strokeLinecap="round" 
+                              />
+                              
+                              {/* Ticks */}
+                              {[0, 2, 4, 6, 8, 10].map((tick) => {
+                                const angle = -90 + (tick / 10) * 180;
+                                const angleRad = (angle * Math.PI) / 180;
+                                const x1 = 100 + 80 * Math.cos(angleRad);
+                                const y1 = 110 + 80 * Math.sin(angleRad);
+                                const x2 = 100 + 90 * Math.cos(angleRad);
+                                const y2 = 110 + 90 * Math.sin(angleRad);
+                                return (
+                                  <line 
+                                    key={tick}
+                                    x1={x1} 
+                                    y1={y1} 
+                                    x2={x2} 
+                                    y2={y2} 
+                                    stroke="#FFFFFF" 
+                                    strokeWidth="2.5" 
+                                  />
+                                );
+                              })}
 
-                  {/* Card 5: SLA Médio */}
-                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
-                      <Calendar size={18} className="stroke-[2.5]" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">SLA Médio (Dias)</p>
-                      <h4 className="text-xl font-black text-slate-800 leading-none">
-                        {slaMedioDias > 0 ? `${slaMedioDias.toFixed(1)} d` : 'N/A'}
-                      </h4>
+                              {/* Needle */}
+                              <g style={{ 
+                                transform: `rotate(${needleAngle}deg)`, 
+                                transformOrigin: '100px 110px', 
+                                transition: 'transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+                              }}
+                                filter="url(#needleShadow)"
+                              >
+                                <path 
+                                  d="M 96 110 L 99.2 15 L 100.8 15 L 104 110 Z" 
+                                  fill="#1E293B" 
+                                />
+                                <circle cx="100" cy="110" r="10" fill="#1E293B" />
+                                <circle cx="100" cy="110" r="4" fill="#FFFFFF" />
+                              </g>
+                            </svg>
+                          </div>
+                        );
+                      })()}
+                      
+                      {/* Centered days indicator */}
+                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-center select-none">
+                        <span className="text-3xl font-black text-slate-800 leading-none drop-shadow-xs animate-pulse">
+                          {slaMedioDias > 0 ? `${slaMedioDias.toFixed(1)}` : 'N/A'}
+                        </span>
+                        <p className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mt-1">Dias de SLA</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* GRID DE ANÁLISE OPERACIONAL */}
+                {/* SEÇÃO 2: PARQUE DE ATIVOS & CURVA DE MANUTENÇÃO */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Bloco Ativos */}
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6">
+                  {/* Bloco Parque de Ativos */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs hover:shadow-sm transition-all duration-300">
                     <header className="flex justify-between items-center border-b border-slate-100 pb-3">
                       <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
-                        <Boxes size={16} className="stroke-[2.5]" /> Distribuição do Parque de Ativos
+                        <Boxes size={16} className="stroke-[2.5]" /> Parque de Ativos & Categorias
                       </h3>
                     </header>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Status do Ativo</span>
-                        <div className="space-y-2.5">
-                          {Object.entries(statusLabels).map(([status, label]) => {
-                            const count = ativosPorStatus[status] || 0;
-                            const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                      {/* Donut Chart Status */}
+                      <div className="flex flex-col items-center justify-center relative bg-slate-50/40 rounded-2xl p-4 border border-slate-100">
+                        <div className="w-[150px] h-[150px] relative flex items-center justify-center">
+                          <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 select-none">
+                            {totalAtivos === 0 ? (
+                              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#E2E8F0" strokeWidth="8" />
+                            ) : (
+                              statusSlices.map((slice) => {
+                                const isHovered = hoveredKpiStatus === slice.status;
+                                return (
+                                  <circle
+                                    key={slice.status}
+                                    cx="50"
+                                    cy="50"
+                                    r="38"
+                                    fill="transparent"
+                                    stroke={slice.color}
+                                    strokeWidth={isHovered ? 12 : 8}
+                                    strokeDasharray={slice.strokeDashArray}
+                                    transform={`rotate(${slice.startAngle} 50 50)`}
+                                    className="transition-all duration-300 cursor-pointer"
+                                    onMouseEnter={() => setHoveredKpiStatus(slice.status)}
+                                    onMouseLeave={() => setHoveredKpiStatus(null)}
+                                  />
+                                );
+                              })
+                            )}
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none px-4">
+                            {hoveredKpiStatus ? (
+                              (() => {
+                                const activeItem = statusList.find(s => s.status === hoveredKpiStatus);
+                                return (
+                                  <>
+                                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
+                                    <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
+                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({activeItem?.pct.toFixed(1)}%)</span>
+                                  </>
+                                );
+                              })()
+                            ) : (
+                              <>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Ativos</span>
+                                <span className="text-2xl font-black text-slate-800 leading-none mt-0.5">{totalAtivos}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Legenda Customizada */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4 w-full select-none">
+                          {statusList.map(item => {
+                            const isHovered = hoveredKpiStatus === item.status;
                             return (
-                              <div key={status} className="space-y-1">
-                                <div className="flex justify-between text-[10.5px] font-bold text-slate-650">
-                                  <span>{label}</span>
-                                  <span>{count} ({pct.toFixed(0)}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                  <div className={`h-full ${statusColors[status] || 'bg-slate-500'} rounded-full`} style={{ width: `${pct}%` }}></div>
-                                </div>
+                              <div 
+                                key={item.status} 
+                                className={`flex items-center gap-1.5 p-1 rounded-lg transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-102' : ''}`}
+                                onMouseEnter={() => setHoveredKpiStatus(item.status)}
+                                onMouseLeave={() => setHoveredKpiStatus(null)}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
+                                <span className="text-[9px] font-bold text-slate-655 truncate uppercase leading-none">
+                                  {item.label}: <strong className="text-slate-850 font-black">{item.count}</strong>
+                                </span>
                               </div>
                             );
                           })}
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Categorias Principais</span>
-                        <div className="space-y-2.5 max-h-[190px] overflow-y-auto pr-1">
-                          {Object.entries(ativosPorCategoria).length === 0 ? (
-                            <p className="text-[11px] font-bold text-slate-400 text-center py-6">Nenhum ativo cadastrado.</p>
-                          ) : (
-                            Object.entries(ativosPorCategoria)
-                              .sort((a, b) => b[1] - a[1])
-                              .slice(0, 4)
-                              .map(([catName, count]) => {
-                                const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
-                                return (
-                                  <div key={catName} className="space-y-1">
-                                    <div className="flex justify-between text-[10.5px] font-bold text-slate-650">
-                                      <span className="truncate max-w-[130px]">{catName}</span>
-                                      <span>{count} ({pct.toFixed(0)}%)</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                      <div className="h-full bg-teal-600 rounded-full" style={{ width: `${pct}%` }}></div>
-                                    </div>
+                      {/* Categorias Principais */}
+                      <div className="space-y-3.5 max-h-[190px] overflow-y-auto pr-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1.5 select-none">Categorias Principais</span>
+                        {Object.entries(ativosPorCategoria).length === 0 ? (
+                          <p className="text-[10.5px] font-bold text-slate-400 text-center py-10">Nenhum ativo cadastrado.</p>
+                        ) : (
+                          Object.entries(ativosPorCategoria)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 4)
+                            .map(([catName, count]) => {
+                              const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+                              return (
+                                <div key={catName} className="space-y-1">
+                                  <div className="flex justify-between text-[10px] font-bold text-slate-655 uppercase">
+                                    <span className="truncate max-w-[130px] font-extrabold text-slate-800">{catName}</span>
+                                    <span className="font-black text-slate-700">{count} ({pct.toFixed(0)}%)</span>
                                   </div>
+                                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                    <div className="h-full bg-teal-650 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bloco Atendimentos & Curva */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs hover:shadow-sm transition-all duration-300">
+                    <header className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                        <Wrench size={16} className="stroke-[2.5]" /> Serviços & Curva de Manutenção
+                      </h3>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                      {/* Donut Chart OS Types */}
+                      <div className="flex flex-col items-center justify-center relative bg-slate-50/40 rounded-2xl p-4 border border-slate-100">
+                        <div className="w-[150px] h-[150px] relative flex items-center justify-center">
+                          <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 select-none">
+                            {totalOs === 0 ? (
+                              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#E2E8F0" strokeWidth="8" />
+                            ) : (
+                              osSlices.map((slice) => {
+                                const isHovered = hoveredKpiOsType === slice.tipo;
+                                return (
+                                  <circle
+                                    key={slice.tipo}
+                                    cx="50"
+                                    cy="50"
+                                    r="38"
+                                    fill="transparent"
+                                    stroke={slice.color}
+                                    strokeWidth={isHovered ? 12 : 8}
+                                    strokeDasharray={slice.strokeDashArray}
+                                    transform={`rotate(${slice.startAngle} 50 50)`}
+                                    className="transition-all duration-300 cursor-pointer"
+                                    onMouseEnter={() => setHoveredKpiOsType(slice.tipo)}
+                                    onMouseLeave={() => setHoveredKpiOsType(null)}
+                                  />
                                 );
                               })
+                            )}
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none px-4">
+                            {hoveredKpiOsType ? (
+                              (() => {
+                                const activeItem = osTypeList.find(o => o.tipo === hoveredKpiOsType);
+                                return (
+                                  <>
+                                    <span className="text-[7.5px] font-black text-slate-405 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
+                                    <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
+                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({activeItem?.pct.toFixed(1)}%)</span>
+                                  </>
+                                );
+                              })()
+                            ) : (
+                              <>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total OSs</span>
+                                <span className="text-2xl font-black text-slate-800 leading-none mt-0.5">{totalOs}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Legenda Customizada */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4 w-full select-none">
+                          {osTypeList.map(item => {
+                            const isHovered = hoveredKpiOsType === item.tipo;
+                            return (
+                              <div 
+                                key={item.tipo} 
+                                className={`flex items-center gap-1.5 p-1 rounded-lg transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-102' : ''}`}
+                                onMouseEnter={() => setHoveredKpiOsType(item.tipo)}
+                                onMouseLeave={() => setHoveredKpiOsType(null)}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
+                                <span className="text-[9px] font-bold text-slate-655 truncate uppercase leading-none">
+                                  {item.label}: <strong className="text-slate-850 font-black">{item.count}</strong>
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Curva de Manutenção */}
+                      <div className="space-y-4">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1.5 select-none">Curva de Manutenção</span>
+                        <div className="relative pt-2 h-[115px] w-full flex items-center justify-center">
+                          {(() => {
+                            const chartPoints = last6Months.map((m, idx) => {
+                              const x = 25 + idx * 40;
+                              const y = 90 - (m.count / maxMaintenanceCount) * 70;
+                              return { x, y, label: m.label, count: m.count };
+                            });
+
+                            // Calculate smooth Bezier path
+                            let linePathD = '';
+                            if (chartPoints.length > 0) {
+                              linePathD = `M ${chartPoints[0].x} ${chartPoints[0].y}`;
+                              for (let i = 0; i < chartPoints.length - 1; i++) {
+                                const p0 = chartPoints[i];
+                                const p1 = chartPoints[i + 1];
+                                const cp1x = p0.x + (p1.x - p0.x) / 3;
+                                const cp1y = p0.y;
+                                const cp2x = p0.x + 2 * (p1.x - p0.x) / 3;
+                                const cp2y = p1.y;
+                                linePathD += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
+                              }
+                            }
+                            const areaPathD = linePathD 
+                              ? `${linePathD} L ${chartPoints[chartPoints.length - 1].x} 90 L ${chartPoints[0].x} 90 Z`
+                              : '';
+
+                            return (
+                              <svg viewBox="0 0 250 110" className="w-full h-full overflow-visible select-none">
+                                <defs>
+                                  <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.4" />
+                                    <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
+                                  </linearGradient>
+                                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="#1B4D3E" />
+                                    <stop offset="100%" stopColor="#34D399" />
+                                  </linearGradient>
+                                </defs>
+                                {/* Grid lines */}
+                                <line x1="20" y1="90" x2="235" y2="90" stroke="#F1F5F9" strokeWidth="1.5" />
+                                <line x1="20" y1="55" x2="235" y2="55" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="3 3" />
+                                <line x1="20" y1="20" x2="235" y2="20" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="3 3" />
+                                
+                                {/* Area */}
+                                {areaPathD && <path d={areaPathD} fill="url(#areaGradient)" />}
+                                {/* Line */}
+                                {linePathD && (
+                                  <path 
+                                    d={linePathD} 
+                                    fill="none" 
+                                    stroke="url(#lineGradient)" 
+                                    strokeWidth="3" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                  />
+                                )}
+                                
+                                {/* Dots & Labels */}
+                                {chartPoints.map((p, idx) => {
+                                  const isHovered = hoveredKpiMonthIndex === idx;
+                                  return (
+                                    <g 
+                                      key={idx} 
+                                      className="cursor-pointer"
+                                      onMouseEnter={() => setHoveredKpiMonthIndex(idx)}
+                                      onMouseLeave={() => setHoveredKpiMonthIndex(null)}
+                                    >
+                                      {/* Outer glowing pulse on hover */}
+                                      {isHovered && (
+                                        <circle cx={p.x} cy={p.y} r="8" fill="#1B4D3E" fillOpacity="0.15" />
+                                      )}
+                                      <circle 
+                                        cx={p.x} 
+                                        cy={p.y} 
+                                        r={isHovered ? 5.5 : 4} 
+                                        fill="#FFFFFF" 
+                                        stroke="#1B4D3E" 
+                                        strokeWidth={isHovered ? 3.5 : 2.5} 
+                                        className="transition-all duration-200"
+                                      />
+                                      
+                                      {/* Axis Label */}
+                                      <text 
+                                        x={p.x} 
+                                        y="105" 
+                                        textAnchor="middle" 
+                                        fill={isHovered ? "#1B4D3E" : "#94A3B8"} 
+                                        className="text-[8.5px] font-black uppercase transition-colors duration-200"
+                                      >
+                                        {p.label}
+                                      </text>
+                                    </g>
+                                  );
+                                })}
+                              </svg>
+                            );
+                          })()}
+
+                          {/* Absolute HTML Tooltip */}
+                          {hoveredKpiMonthIndex !== null && (
+                            (() => {
+                              const p = last6Months[hoveredKpiMonthIndex];
+                              const leftPercent = 10 + hoveredKpiMonthIndex * 16;
+                              return (
+                                <div 
+                                  className="absolute bg-slate-800 text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-md pointer-events-none animate-fade-in whitespace-nowrap"
+                                  style={{ 
+                                    left: `${leftPercent}%`, 
+                                    bottom: '65px',
+                                    transform: 'translateX(-50%)' 
+                                  }}
+                                >
+                                  {p.count} {p.count === 1 ? 'Manutenção' : 'Manutenções'}
+                                </div>
+                              );
+                            })()
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Bloco OS */}
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6">
-                    <header className="flex justify-between items-center border-b border-slate-100 pb-3">
-                      <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
-                        <Wrench size={16} className="stroke-[2.5]" /> Atendimentos e Curva de Manutenção
-                      </h3>
-                    </header>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Serviços por Tipo</span>
-                        <div className="space-y-2.5">
-                          {Object.entries(osTypesLabel).map(([tipo, label]) => {
-                            const count = osPorTipo[tipo] || 0;
-                            const pct = totalOs > 0 ? (count / totalOs) * 100 : 0;
-                            return (
-                              <div key={tipo} className="space-y-1">
-                                <div className="flex justify-between text-[10.5px] font-bold text-slate-650">
-                                  <span>{label}</span>
-                                  <span>{count}</span>
-                                </div>
-                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                  <div className="h-full bg-[#1B4D3E] rounded-full" style={{ width: `${pct}%` }}></div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 flex flex-col justify-between">
-                        <div>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Curva de Manutenção (Últimos 6 Meses)</span>
-                          <div className="flex items-end justify-between h-[110px] gap-2 pt-2 px-1">
-                            {last6Months.map(m => {
-                              const barHeight = (m.count / maxMaintenanceCount) * 80;
-                              return (
-                                <div key={m.label} className="flex flex-col items-center flex-1 group relative">
-                                  <div className="absolute -top-6 bg-slate-800 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs opacity-0 group-hover:opacity-100 transition-opacity select-none z-10">
-                                    {m.count} {m.count === 1 ? 'OS' : 'OSs'}
-                                  </div>
-                                  <div 
-                                    className="w-full bg-[#1B4D3E]/20 hover:bg-[#1B4D3E]/80 rounded-t-md transition-all duration-350 cursor-pointer"
-                                    style={{ height: `${barHeight + 5}px` }}
-                                  ></div>
-                                  <span className="text-[8px] font-black text-slate-400 mt-2 truncate max-w-[40px] block leading-none">{m.label}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* GRID DE RANKINGS */}
+                {/* SEÇÃO 3: RANKINGS DE CLIENTES & ATIVOS COM QUANTIDADE E PERCENTUAL */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Ranking Clientes */}
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
-                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-xs hover:shadow-sm transition-all duration-300">
+                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3 select-none">
                       <Users size={16} className="stroke-[2.5]" /> Clientes com Maior Volume de Atendimentos
                     </h3>
-                    <div className="divide-y divide-slate-100 select-text">
+                    <div className="space-y-4 select-text">
                       {rankingClientes.length === 0 ? (
                         <p className="text-[11px] font-bold text-slate-400 text-center py-8">Nenhum atendimento registrado no período.</p>
                       ) : (
-                        rankingClientes.map((item, idx) => (
-                          <div key={item.name} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 font-semibold text-xs">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-5 h-5 rounded-full bg-slate-100 text-[10px] font-black flex items-center justify-center text-slate-650 shrink-0 border border-slate-200/50">
-                                #{idx + 1}
-                              </span>
-                              <span className="text-slate-800 font-extrabold truncate max-w-[240px] uppercase">{item.name}</span>
+                        rankingClientes.map((item, idx) => {
+                          const pct = totalOs > 0 ? (item.count / totalOs) * 100 : 0;
+                          return (
+                            <div key={item.name} className="space-y-1.5 group">
+                              <div className="flex justify-between items-center text-[10.5px] font-bold text-slate-655">
+                                <span className="truncate max-w-[240px] text-slate-800 font-extrabold uppercase flex items-center gap-1.5">
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9.5px] font-black shrink-0 ${
+                                    idx === 0 ? 'bg-amber-100 text-amber-800 shadow-xs border border-amber-200' :
+                                    idx === 1 ? 'bg-slate-200 text-slate-850 shadow-xs border border-slate-300' :
+                                    idx === 2 ? 'bg-amber-500/10 text-amber-900 shadow-xs border border-amber-300/30' :
+                                    'bg-slate-100 text-slate-500'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                  {item.name}
+                                </span>
+                                <span className="text-[#1B4D3E] font-black shrink-0 bg-[#1B4D3E]/5 px-2 py-0.5 rounded border border-[#1b4d3e]/10 text-[10px] select-none group-hover:bg-[#1B4D3E]/10 transition-colors">
+                                  {item.count} {item.count === 1 ? 'OS' : 'OSs'} ({pct.toFixed(1)}%)
+                                </span>
+                              </div>
+                              <div className="h-2.5 w-full bg-slate-100/80 rounded-full overflow-hidden border border-slate-100">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-[#1B4D3E] to-[#34D399] rounded-full transition-all duration-700 ease-out origin-left group-hover:brightness-105" 
+                                  style={{ width: `${pct}%` }}
+                                ></div>
+                              </div>
                             </div>
-                            <span className="text-slate-650 font-black shrink-0 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200/50 text-[10.5px]">
-                              {item.count} {item.count === 1 ? 'OS' : 'OSs'}
-                            </span>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>
 
                   {/* Ranking Ativos */}
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
-                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-xs hover:shadow-sm transition-all duration-300">
+                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3 select-none">
                       <Boxes size={16} className="stroke-[2.5]" /> Equipamentos com Maior Volume de Atendimentos
                     </h3>
-                    <div className="divide-y divide-slate-100 select-text">
+                    <div className="space-y-4 select-text">
                       {rankingAtivos.length === 0 ? (
                         <p className="text-[11px] font-bold text-slate-400 text-center py-8">Nenhum equipamento atendido no período.</p>
                       ) : (
-                        rankingAtivos.map((item, idx) => (
-                          <div key={item.name} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 font-semibold text-xs">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-5 h-5 rounded-full bg-slate-100 text-[10px] font-black flex items-center justify-center text-slate-650 shrink-0 border border-slate-200/50">
-                                #{idx + 1}
-                              </span>
-                              <span className="text-slate-800 font-extrabold truncate max-w-[240px] uppercase">{item.name}</span>
+                        rankingAtivos.map((item, idx) => {
+                          const pct = totalOs > 0 ? (item.count / totalOs) * 100 : 0;
+                          return (
+                            <div key={item.name} className="space-y-1.5 group">
+                              <div className="flex justify-between items-center text-[10.5px] font-bold text-slate-655">
+                                <span className="truncate max-w-[240px] text-slate-800 font-extrabold uppercase flex items-center gap-1.5">
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9.5px] font-black shrink-0 ${
+                                    idx === 0 ? 'bg-amber-100 text-amber-800 shadow-xs border border-amber-200' :
+                                    idx === 1 ? 'bg-slate-200 text-slate-850 shadow-xs border border-slate-300' :
+                                    idx === 2 ? 'bg-amber-500/10 text-amber-900 shadow-xs border border-amber-300/30' :
+                                    'bg-slate-100 text-slate-500'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                  {item.name}
+                                </span>
+                                <span className="text-blue-750 font-black shrink-0 bg-blue-50 px-2 py-0.5 rounded border border-blue-150 text-[10px] select-none group-hover:bg-blue-100/80 transition-colors">
+                                  {item.count} {item.count === 1 ? 'OS' : 'OSs'} ({pct.toFixed(1)}%)
+                                </span>
+                              </div>
+                              <div className="h-2.5 w-full bg-slate-100/80 rounded-full overflow-hidden border border-slate-100">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-700 ease-out origin-left group-hover:brightness-105" 
+                                  style={{ width: `${pct}%` }}
+                                ></div>
+                              </div>
                             </div>
-                            <span className="text-[#1B4D3E] font-black shrink-0 bg-[#1B4D3E]/5 px-2.5 py-0.5 rounded-lg border border-[#1b4d3e]/10 text-[10.5px]">
-                              {item.count} {item.count === 1 ? 'OS' : 'OSs'}
-                            </span>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* TABELA OPERACIONAL DOS TÉCNICOS */}
-                <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-xs border-slate-200/60">
                   <header className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                       <Users size={16} className="stroke-[2.5]" /> Produtividade e Utilização dos Técnicos
@@ -2646,23 +3001,23 @@ export default function AtivosPage() {
                                     )}
                                     <div className="min-w-0">
                                       <h4 className="font-extrabold text-slate-800 leading-tight uppercase truncate max-w-[140px]">{tech.nome}</h4>
-                                      <p className="text-[9px] text-slate-450 leading-none font-bold uppercase">{tech.cargo}</p>
+                                      <p className="text-[9px] text-slate-455 leading-none font-bold uppercase">{tech.cargo}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-5 py-3 border-r border-slate-150 text-center font-black">
+                                <td className="px-5 py-3 border-r border-slate-150 text-center font-black text-slate-800">
                                   {tech.totalTechOs}
                                 </td>
-                                <td className="px-5 py-3 border-r border-slate-150 text-center text-cyan-600 font-bold">
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-cyan-650 font-bold">
                                   {formatTime(tech.deslocamentoMin)}
                                 </td>
-                                <td className="px-5 py-3 border-r border-slate-150 text-center text-amber-600 font-bold">
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-amber-650 font-bold">
                                   {formatTime(tech.atendimentoMin)}
                                 </td>
                                 <td className="px-5 py-3 border-r border-slate-150 text-center text-slate-850 font-black">
                                   {formatTime(tech.tempoTotalMin)}
                                 </td>
-                                <td className="px-5 py-3 border-r border-slate-150 text-center text-emerald-600 font-bold">
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-emerald-650 font-bold">
                                   {tech.kmRodados.toFixed(1)} km
                                 </td>
                                 <td className="px-5 py-3">
