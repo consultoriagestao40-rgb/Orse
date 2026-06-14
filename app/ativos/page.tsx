@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
-  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck
+  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck, Car
 } from 'lucide-react';
 
 import { 
@@ -44,6 +44,7 @@ export default function AtivosPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [updatingOsId, setUpdatingOsId] = useState<string | null>(null);
+  const [modalTrackOs, setModalTrackOs] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategoria, setFilterCategoria] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -181,6 +182,18 @@ export default function AtivosPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Live updates for tracking modal
+  useEffect(() => {
+    if (!modalTrackOs) return;
+    
+    // Auto-update every 15 seconds to fetch latest coordinates
+    const interval = setInterval(async () => {
+      await loadOrdensSilently();
+    }, 15000);
+    
+    return () => clearInterval(interval);
+  }, [modalTrackOs]);
 
   const loadOrdensSilently = async () => {
     try {
@@ -1558,6 +1571,15 @@ export default function AtivosPage() {
                                 </span>
                               )}
                               
+                              {os.status === 'EM_DESLOCAMENTO' && (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setModalTrackOs(os); }}
+                                  className="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-lg animate-pulse"
+                                  title="Rastrear Técnico em Tempo Real"
+                                >
+                                  <Car size={13} className="stroke-[2.5]" />
+                                </button>
+                              )}
                               <button 
                                 onClick={(e) => { e.stopPropagation(); handleDeleteOs(os.id); }} 
                                 className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
@@ -1693,9 +1715,21 @@ export default function AtivosPage() {
                                 </div>
                               )}
                               <div className="flex justify-between items-center">
-                                <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
-                                  OS № {String(os.codigo).padStart(3, '0')}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                    OS № {String(os.codigo).padStart(3, '0')}
+                                  </span>
+                                  {os.status === 'EM_DESLOCAMENTO' && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setModalTrackOs(os); }}
+                                      className="p-1 text-cyan-600 hover:bg-cyan-50 rounded-md animate-pulse cursor-pointer flex items-center"
+                                      title="Rastrear Técnico em Tempo Real"
+                                    >
+                                      <Car size={11} className="stroke-[2.5]" />
+                                    </button>
+                                  )}
+                                </div>
                                 <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider">{os.tipo}</span>
                               </div>
                               <div className="space-y-0.5">
@@ -3327,6 +3361,115 @@ export default function AtivosPage() {
           </div>
         </div>
       )}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL DE RASTREAMENTO GPS EM TEMPO REAL (GESTOR)
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalTrackOs && (() => {
+        const os = ordens.find(o => o.id === modalTrackOs.id) || modalTrackOs;
+        const lat = os.latitudeAtual || os.latitudePartida;
+        const lng = os.longitudeAtual || os.longitudePartida;
+        const hasPosition = lat && lng;
+        
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Car size={16} className="stroke-[2.5] text-cyan-600 animate-bounce" />
+                  Rastreamento em Tempo Real
+                </h3>
+                <button 
+                  onClick={() => setModalTrackOs(null)} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+              
+              <div className="p-6 space-y-4">
+                {/* Info Row */}
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs font-semibold text-slate-650">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider leading-none">Técnico em Rota</p>
+                    <p className="text-slate-800 font-extrabold uppercase truncate">{os.tecnicoResponsavel || 'Não Atribuído'}</p>
+                    <p className="text-[9.5px] text-slate-500 uppercase truncate">{os.tecnicoEmail}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider leading-none">Cliente / Destino</p>
+                    <p className="text-slate-800 font-extrabold uppercase truncate" title={os.client.nomeFantasia}>{os.client.nomeFantasia}</p>
+                    <p className="text-[9.5px] text-slate-500 uppercase truncate" title={os.client.endereco}>{os.client.endereco || 'Sem endereço'}</p>
+                  </div>
+                </div>
+
+                {/* Maps Iframe */}
+                <div className="relative border border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
+                  {hasPosition ? (
+                    <iframe 
+                      width="100%" 
+                      height="340" 
+                      style={{ border: 0 }}
+                      loading="lazy" 
+                      allowFullScreen 
+                      src={`https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                    />
+                  ) : (
+                    <div className="h-[340px] flex flex-col items-center justify-center gap-3 text-slate-400 p-8 text-center">
+                      <MapPin size={32} className="stroke-[1.5] text-slate-300 animate-pulse" />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wider text-slate-700">Aguardando coordenadas...</p>
+                        <p className="text-[10px] text-slate-450 mt-1">O técnico iniciou a rota mas o aparelho ainda não enviou o sinal de GPS.</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {hasPosition && (
+                    <div className="absolute bottom-3 left-3 bg-slate-900/85 text-white text-[8px] font-black tracking-widest uppercase px-2 py-1 rounded-md flex items-center gap-1.5 select-none backdrop-blur-xs">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
+                      <span>Sinal GPS ativo</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Timestamp details */}
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 px-1">
+                  <div>
+                    <span>Partida: </span>
+                    <span className="text-slate-700 font-extrabold">
+                      {os.rotaIniciadaEm ? new Date(os.rotaIniciadaEm).toLocaleTimeString('pt-BR') : '-'}
+                    </span>
+                  </div>
+                  {os.ultimaAtualizacaoLocalizacao && (
+                    <div className="flex items-center gap-1 text-[#1B4D3E] font-extrabold">
+                      <span>Último Sinal: </span>
+                      <span>{new Date(os.ultimaAtualizacaoLocalizacao).toLocaleTimeString('pt-BR')}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <footer className="pt-2 flex gap-3 border-t border-slate-100">
+                  <button 
+                    onClick={() => setModalTrackOs(null)}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+                  >
+                    Fechar Painel
+                  </button>
+                  {hasPosition && (
+                    <a 
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${os.latitudePartida},${os.longitudePartida}&destination=${encodeURIComponent(os.client.endereco || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center shadow-xs"
+                    >
+                      <Car size={13} /> Ver no Maps
+                    </a>
+                  )}
+                </footer>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MODAL DE ALERTA PREMIUM */}
       {customAlert.open && (

@@ -1188,6 +1188,9 @@ model OrdemServicoAtivo {
   nomeAssinante      String?
   cpfAssinante       String?
   historico          String?           @db.Text // JSON string tracking lifecycle history events
+  latitudeAtual      Float?
+  longitudeAtual     Float?
+  ultimaAtualizacaoLocalizacao DateTime?
   tenantId           String?
   tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt          DateTime          @default(now())

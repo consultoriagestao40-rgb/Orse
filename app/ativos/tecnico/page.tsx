@@ -109,6 +109,58 @@ export default function TecnicoPage() {
     return () => clearInterval(interval);
   }, [currentUser, knownOsIds]);
 
+  // Rastreamento periódico de GPS quando em deslocamento
+  useEffect(() => {
+    const activeTransitOs = ordens.find(o => o.status === 'EM_DESLOCAMENTO');
+    if (!activeTransitOs) return;
+
+    let intervalId: NodeJS.Timeout;
+    let wakeLock: any = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('Erro ao solicitar Wake Lock de tela:', err);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      try {
+        if (wakeLock) {
+          await wakeLock.release();
+          wakeLock = null;
+        }
+      } catch (err) {
+        console.warn('Erro ao liberar Wake Lock de tela:', err);
+      }
+    };
+
+    const sendGPSUpdate = async () => {
+      try {
+        const location = await getGPSLocation();
+        await updateOrdemServicoAtivo(activeTransitOs.id, {
+          latitudeAtual: location.latitude,
+          longitudeAtual: location.longitude,
+          ultimaAtualizacaoLocalizacao: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error('Erro no envio periódico de GPS:', err);
+      }
+    };
+
+    requestWakeLock();
+    sendGPSUpdate();
+    intervalId = setInterval(sendGPSUpdate, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+      releaseWakeLock();
+    };
+  }, [ordens]);
+
   const playNotificationSound = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -766,6 +818,14 @@ export default function TecnicoPage() {
                       >
                         <X size={12} className="shrink-0" /> Cancelar OS
                       </button>
+                    </div>
+                    {/* Aviso de GPS ativo para celulares Android corporativos */}
+                    <div className="mt-1 bg-blue-50 border border-blue-200 rounded-2xl p-3 text-[10px] font-bold text-blue-800 flex items-start gap-2 leading-relaxed select-none">
+                      <Navigation size={14} className="shrink-0 text-blue-600 mt-0.5 animate-pulse" />
+                      <div>
+                        <p className="font-extrabold uppercase tracking-wide">Rastreamento de Rota Ativo</p>
+                        <p className="mt-0.5 font-medium">Por favor, mantenha o celular no suporte do veículo com o carregador conectado. Para que o rastreamento em tempo real funcione, evite bloquear a tela do aparelho.</p>
+                      </div>
                     </div>
                   </div>
                 )}

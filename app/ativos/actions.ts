@@ -673,6 +673,9 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   longitudePartida?: number | null;
   latitudeChegada?: number | null;
   longitudeChegada?: number | null;
+  latitudeAtual?: number | null;
+  longitudeAtual?: number | null;
+  ultimaAtualizacaoLocalizacao?: string | null;
   rotaIniciadaEm?: string | null;
   atendimentoIniciadoEm?: string | null;
   historico?: string;
@@ -711,6 +714,11 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     if (data.longitudePartida !== undefined) updateData.longitudePartida = data.longitudePartida;
     if (data.latitudeChegada !== undefined) updateData.latitudeChegada = data.latitudeChegada;
     if (data.longitudeChegada !== undefined) updateData.longitudeChegada = data.longitudeChegada;
+    if (data.latitudeAtual !== undefined) updateData.latitudeAtual = data.latitudeAtual;
+    if (data.longitudeAtual !== undefined) updateData.longitudeAtual = data.longitudeAtual;
+    if (data.ultimaAtualizacaoLocalizacao !== undefined) {
+      updateData.ultimaAtualizacaoLocalizacao = data.ultimaAtualizacaoLocalizacao ? new Date(data.ultimaAtualizacaoLocalizacao) : null;
+    }
     if (data.rotaIniciadaEm !== undefined) updateData.rotaIniciadaEm = data.rotaIniciadaEm ? new Date(data.rotaIniciadaEm) : null;
     if (data.atendimentoIniciadoEm !== undefined) updateData.atendimentoIniciadoEm = data.atendimentoIniciadoEm ? new Date(data.atendimentoIniciadoEm) : null;
 
