@@ -2252,8 +2252,16 @@ export default function AtivosPage() {
                 const d2 = new Date(os.dataExecucao);
                 const date1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
                 const date2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
-                const diffDays = Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)) + 1;
-                return acc + diffDays;
+                
+                if (date1 === date2) {
+                  // Mesmo dia civil: horas entre abertura e conclusao / 24
+                  const diffHours = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60);
+                  return acc + (diffHours / 24);
+                } else {
+                  // Dias civis diferentes: dia seguinte 2 dias, etc.
+                  const diffDays = Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)) + 1;
+                  return acc + diffDays;
+                }
               }, 0);
               slaMedioDias = totalSlaDays / completedKpiOrdens.length;
             }
@@ -2697,7 +2705,13 @@ export default function AtivosPage() {
                       {/* Centered days indicator */}
                       <div className="text-center select-none">
                         <span className="text-3xl font-black text-slate-800 leading-none">
-                          {slaMedioDias > 0 ? slaMedioDias.toFixed(1) : '0.0'}
+                          {(() => {
+                            if (slaMedioDias === 0) return '0.0';
+                            if (slaMedioDias < 0.1) {
+                              return slaMedioDias.toFixed(2);
+                            }
+                            return slaMedioDias.toFixed(1);
+                          })()}
                         </span>
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
                           {slaMedioDias === 1 ? 'Dia de SLA' : 'Dias de SLA'}
