@@ -916,10 +916,10 @@ export default function GestaoEntregasPage() {
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 5);
 
-    // 10. Evolução mensal do volume de entregas (últimos 6 meses)
+    // 10. Evolução mensal do volume de entregas (últimos 12 meses)
     const monthlyVolume: Record<string, { volume: number; valor: number }> = {};
     const now = new Date();
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       monthlyVolume[key] = { volume: 0, valor: 0 };
@@ -944,11 +944,15 @@ export default function GestaoEntregasPage() {
         const [year, month] = key.split('-');
         const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         const label = `${monthNames[parseInt(month) - 1]}/${year.slice(-2)}`;
+        const volume = monthlyVolume[key].volume;
+        const valor = monthlyVolume[key].valor;
+        const ticketMedio = volume > 0 ? valor / volume : 0;
         return {
           key,
           label,
-          volume: monthlyVolume[key].volume,
-          valor: monthlyVolume[key].valor
+          volume,
+          valor,
+          ticketMedio
         };
       });
 
@@ -1921,127 +1925,212 @@ export default function GestaoEntregasPage() {
             </div>
           </div>
 
-            {/* Faturamento Mensal das Entregas */}
-            <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
-                <div>
-                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                    <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
-                    Valor & Volume das Entregas por Mês
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Comparativo de faturamento e quantidade de entregas nos últimos 6 meses</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
+            {/* Gráficos Analíticos Mensais (12 Meses) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
+              
+              {/* Gráfico 1: Valor & Volume das Entregas por Mês */}
+              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                      Valor & Volume por Mês (12 meses)
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Faturamento acumulado e quantidade de entregas</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3.5 h-2 bg-[#1B4D3E]/20 rounded inline-block" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Entregas (Qtd)</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3.5 h-2 bg-[#1B4D3E]/20 rounded inline-block" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Entregas (Qtd)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* SVG Chart Container */}
-              <div className="h-64 w-full relative">
-                <svg className="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.25" />
-                      <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
+                {/* SVG Chart Container */}
+                <div className="h-64 w-full relative">
+                  <svg className="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
 
-                  {/* Grid Lines Horizontais */}
-                  {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                    const y = 35 + ratio * 145;
-                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
-                    const val = Math.round(maxVal * (1 - ratio));
-                    const formattedVal = val >= 1000 
-                      ? `R$ ${(val / 1000).toFixed(0)}k` 
-                      : `R$ ${val}`;
-                    return (
-                      <g key={idx} className="opacity-30">
-                        <line x1="55" y1={y} x2="590" y2={y} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
-                        <text x="45" y={y + 4} textAnchor="end" className="fill-slate-400 font-bold text-[9px] font-sans">{formattedVal}</text>
-                      </g>
-                    );
-                  })}
-
-                  {/* Barras de Quantidade de Entregas (Volume) */}
-                  {(() => {
-                    const maxVolume = Math.max(...kpis.monthlyData.map(d => d.volume), 1);
-                    return kpis.monthlyData.map((d, i) => {
-                      const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
-                      const barHeight = (d.volume / maxVolume) * 110;
-                      const barY = 180 - barHeight;
-                      const showInside = barHeight >= 16;
-                      const labelY = showInside ? (barY + 10) : (barY - 4);
-                      const labelClass = showInside 
-                        ? "fill-[#1B4D3E] font-black text-[8.5px] font-sans" 
-                        : "fill-slate-400 font-extrabold text-[8.5px] font-sans";
-
+                    {/* Grid Lines Horizontais */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                      const y = 35 + ratio * 145;
+                      const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
+                      const val = Math.round(maxVal * (1 - ratio));
+                      const formattedVal = val >= 1000 
+                        ? `R$ ${(val / 1000).toFixed(0)}k` 
+                        : `R$ ${val}`;
                       return (
-                        <g key={i} className="opacity-95">
-                          {d.volume > 0 && (
-                            <>
-                              <rect
-                                x={x - 12}
-                                y={barY}
-                                width="24"
-                                height={barHeight}
-                                fill="#1B4D3E"
-                                fillOpacity="0.12"
-                                rx="4"
-                                ry="4"
-                              />
-                              <text x={x} y={labelY} textAnchor="middle" className={labelClass}>
-                                {d.volume} {d.volume === 1 ? 'ent.' : 'ent.'}
-                              </text>
-                            </>
-                          )}
+                        <g key={idx} className="opacity-30">
+                          <line x1="55" y1={y} x2="590" y2={y} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
+                          <text x="45" y={y + 4} textAnchor="end" className="fill-slate-400 font-bold text-[9px] font-sans">{formattedVal}</text>
                         </g>
                       );
-                    });
-                  })()}
+                    })}
 
-                  {/* Caminhos da Linha e Área */}
-                  {(() => {
-                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
-                    const points = kpis.monthlyData.map((d, i) => {
-                      const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
-                      const y = 180 - (d.valor / maxVal) * 145;
-                      return { x, y, val: d.valor, label: d.label };
-                    });
+                    {/* Barras de Quantidade de Entregas (Volume) */}
+                    {(() => {
+                      const maxVolume = Math.max(...kpis.monthlyData.map(d => d.volume), 1);
+                      return kpis.monthlyData.map((d, i) => {
+                        const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
+                        const barHeight = (d.volume / maxVolume) * 110;
+                        const barY = 180 - barHeight;
+                        const showInside = barHeight >= 16;
+                        const labelY = showInside ? (barY + 10) : (barY - 4);
+                        const labelClass = showInside 
+                          ? "fill-[#1B4D3E] font-black text-[8px] font-sans" 
+                          : "fill-slate-400 font-extrabold text-[8px] font-sans";
 
-                    const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
-                    const areaPath = `60,180 ${linePath} 570,180`;
-
-                    return (
-                      <>
-                        <polygon points={areaPath} fill="url(#areaGradient)" />
-                        <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-
-                        {points.map((p, i) => (
-                          <g key={i} className="group/point">
-                            <circle cx={p.x} cy={p.y} r="5.5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="3" className="cursor-pointer" />
-                            
-                            {/* Valor flutuante acima do ponto */}
-                            <text x={p.x} y={p.y - 12} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[10px] font-sans">
-                              {p.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-                            </text>
-                            
-                            <text x={p.x} y="202" textAnchor="middle" className="fill-slate-400 font-bold text-[9px] uppercase tracking-wider">{p.label}</text>
+                        return (
+                          <g key={i} className="opacity-95">
+                            {d.volume > 0 && (
+                              <>
+                                <rect
+                                  x={x - 8}
+                                  width="16"
+                                  y={barY}
+                                  height={barHeight}
+                                  fill="#1B4D3E"
+                                  fillOpacity="0.12"
+                                  rx="3"
+                                  ry="3"
+                                />
+                                <text x={x} y={labelY} textAnchor="middle" className={labelClass}>
+                                  {d.volume}
+                                </text>
+                              </>
+                            )}
                           </g>
-                        ))}
-                      </>
-                    );
-                  })()}
+                        );
+                      });
+                    })()}
 
-                  <line x1="55" y1="180" x2="590" y2="180" stroke="#E2E8F0" strokeWidth="1.5" />
-                </svg>
+                    {/* Caminhos da Linha e Área */}
+                    {(() => {
+                      const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
+                      const points = kpis.monthlyData.map((d, i) => {
+                        const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
+                        const y = 180 - (d.valor / maxVal) * 145;
+                        return { x, y, val: d.valor, label: d.label };
+                      });
+
+                      const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
+                      const areaPath = `60,180 ${linePath} 570,180`;
+
+                      return (
+                        <>
+                          <polygon points={areaPath} fill="url(#areaGradient)" />
+                          <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                          {points.map((p, i) => (
+                            <g key={i} className="group/point">
+                              <circle cx={p.x} cy={p.y} r="4.5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="2.5" className="cursor-pointer" />
+                              
+                              {/* Valor flutuante acima do ponto (sem prefixo R$ para evitar colisão) */}
+                              <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[9px] font-sans">
+                                {p.val > 0 ? p.val.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ""}
+                              </text>
+                              
+                              <text x={p.x} y="202" textAnchor="middle" className="fill-slate-400 font-bold text-[8.5px] uppercase tracking-wider">{p.label}</text>
+                            </g>
+                          ))}
+                        </>
+                      );
+                    })()}
+
+                    <line x1="55" y1="180" x2="590" y2="180" stroke="#E2E8F0" strokeWidth="1.5" />
+                  </svg>
+                </div>
               </div>
+
+              {/* Gráfico 2: Ticket Médio Mensal (Horizontal) */}
+              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs flex flex-col justify-between">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      <BarChart3 size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                      Ticket Médio por Mês (12 meses)
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Histórico do ticket médio por entrega realizada</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3.5 h-2 bg-[#1B4D3E]/30 rounded inline-block" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ticket Médio (R$)</span>
+                  </div>
+                </div>
+
+                {/* SVG Chart Container */}
+                <div className="h-64 w-full relative animate-in fade-in duration-300">
+                  <svg className="w-full h-full" viewBox="0 0 600 290" preserveAspectRatio="none">
+                    {/* Grid Lines Verticais */}
+                    {[0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                      const x = 70 + ratio * 440;
+                      const maxTicket = Math.max(...kpis.monthlyData.map(d => d.ticketMedio), 100);
+                      const val = Math.round(maxTicket * ratio);
+                      const formattedVal = val >= 1000 
+                        ? `R$ ${(val / 1000).toFixed(1)}k` 
+                        : `R$ ${val}`;
+                      return (
+                        <g key={idx} className="opacity-30">
+                          <line x1={x} y1="10" x2={x} y2="250" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
+                          <text x={x} y="265" textAnchor="middle" className="fill-slate-400 font-bold text-[8.5px] font-sans">{formattedVal}</text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Baseline Vertical */}
+                    <line x1="70" y1="10" x2="70" y2="250" stroke="#E2E8F0" strokeWidth="1.5" />
+
+                    {/* Barras Horizontais */}
+                    {(() => {
+                      const maxTicket = Math.max(...kpis.monthlyData.map(d => d.ticketMedio), 100);
+                      return kpis.monthlyData.map((d, i) => {
+                        const y = 15 + i * 19;
+                        const barWidth = (d.ticketMedio / maxTicket) * 440;
+                        return (
+                          <g key={i}>
+                            {/* Label do Mês */}
+                            <text x="15" y={y + 9} textAnchor="start" className="fill-slate-400 font-bold text-[8.5px] uppercase tracking-wider">{d.label}</text>
+                            
+                            {/* Barra Horizontal */}
+                            {d.ticketMedio > 0 ? (
+                              <>
+                                <rect
+                                  x="70"
+                                  y={y}
+                                  width={barWidth}
+                                  height="11"
+                                  fill="#1B4D3E"
+                                  fillOpacity="0.15"
+                                  rx="3"
+                                  ry="3"
+                                />
+                                {/* Valor flutuante à direita da barra */}
+                                <text x={70 + barWidth + 8} y={y + 8.5} textAnchor="start" className="fill-[#1B4D3E] font-black text-[8.5px] font-sans">
+                                  {d.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                                </text>
+                              </>
+                            ) : (
+                              <text x="78" y={y + 8.5} textAnchor="start" className="fill-slate-350 font-bold text-[8px] italic">
+                                R$ 0
+                              </text>
+                            )}
+                          </g>
+                        );
+                      });
+                    })()}
+                  </svg>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
