@@ -788,29 +788,77 @@ export default function GestaoEntregasPage() {
       ? Math.max(0, Math.min(100, ((totalProgramadasSla - entregasAtrasadasParaSla) / totalProgramadasSla) * 100)) 
       : 100;
       
-    // 8. Cidades de maior volume de entregas
     const getCityFromAddress = (address: string) => {
       if (!address) return 'NÃO INFORMADO';
-      const clean = address.trim().toUpperCase();
       
-      const match = clean.match(/,\s*([^,]+)\s*-\s*[A-Z]{2}\s*$/i);
-      if (match && match[1]) return match[1].trim();
+      let clean = address.trim().toUpperCase();
+      // Replace en-dash and em-dash with normal hyphen
+      clean = clean.replace(/–/g, '-').replace(/—/g, '-');
       
-      const parts = clean.split('-');
-      if (parts.length > 1) {
-        const possibleCity = parts[parts.length - 2].trim();
-        const possibleState = parts[parts.length - 1].trim();
-        if (possibleState.length === 2 && possibleCity) {
-          const subParts = possibleCity.split(',');
-          return subParts[subParts.length - 1].trim();
+      // Remove country if it ends with Brasil / Brazil
+      clean = clean.replace(/,\s*(BRASIL|BRAZIL)\s*$/i, '');
+      
+      // Remove CEP (e.g. 80040-000, 83149899, 83.149-899)
+      clean = clean.replace(/\b\d{5}-\d{3}\b/g, '');
+      clean = clean.replace(/\b\d{8}\b/g, '');
+      clean = clean.replace(/\b\d{2}\.\d{3}-\d{3}\b/g, '');
+      
+      // Clean trailing spaces/commas/hyphens left after removing CEP/Country
+      clean = clean.replace(/[\s,-]+$/, '');
+      
+      // Split by hyphen or comma
+      const parts = clean.split(/[,-]+/).map(p => p.trim()).filter(Boolean);
+      
+      if (parts.length === 0) return 'OUTROS';
+      
+      const states = new Set([
+        'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+        'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+        'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+      ]);
+      
+      const cleanCityName = (cityStr: string): string => {
+        let city = cityStr.trim();
+        
+        // Split by whitespace
+        const words = city.split(/\s+/);
+        if (words.length > 1) {
+          const firstWord = words[0];
+          if (['CENTRO', 'BAIRRO', 'ZONA', 'DISTRITO', 'AREA', 'ÁREA', 'RURAL', 'URBANA'].includes(firstWord)) {
+            return cleanCityName(words.slice(1).join(' '));
+          }
+        }
+        
+        // Remove trailing digits or number indicators
+        city = city.replace(/\b\d+\b/g, '');
+        city = city.replace(/\bNº\s*\d+\b/gi, '');
+        city = city.replace(/\bNO\s*\d+\b/gi, '');
+        
+        // Clean punctuation and extra spaces
+        city = city.replace(/\s+/g, ' ').trim();
+        
+        return city || 'OUTROS';
+      };
+      
+      const lastPart = parts[parts.length - 1];
+      
+      // Check if last part is exactly a state abbreviation
+      if (states.has(lastPart)) {
+        if (parts.length >= 2) {
+          return cleanCityName(parts[parts.length - 2]);
+        }
+        return 'OUTROS';
+      }
+      
+      // Check if last part ends with " UF" (e.g. "PINHAIS PR")
+      for (const state of states) {
+        if (lastPart.endsWith(' ' + state)) {
+          const cityCandidate = lastPart.substring(0, lastPart.length - state.length - 1).trim();
+          return cleanCityName(cityCandidate);
         }
       }
       
-      const commaParts = clean.split(',');
-      if (commaParts.length >= 2) {
-        return commaParts[commaParts.length - 2].trim();
-      }
-      return 'OUTROS';
+      return cleanCityName(lastPart);
     };
     
     const cidadesVolume: Record<string, number> = {};
