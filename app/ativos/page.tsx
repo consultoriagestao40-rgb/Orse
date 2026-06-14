@@ -2547,10 +2547,10 @@ export default function AtivosPage() {
 
                 {/* SEÇÃO 1: DESTAQUES & SLA GAUGE */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Grid de 4 Cards de Métricas */}
-                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Grid de 6 Cards de Métricas */}
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     {/* Card 1: Total Ativos */}
-                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-md transition-all duration-300 group">
                       <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center shrink-0 group-hover:bg-[#1B4D3E]/10 group-hover:text-[#1B4D3E] transition-colors duration-300">
                         <Boxes size={22} className="stroke-[2.5]" />
                       </div>
@@ -2562,7 +2562,7 @@ export default function AtivosPage() {
                     </div>
 
                     {/* Card 2: Ativos Alocados */}
-                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-md transition-all duration-300 group">
                       <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-100/50 group-hover:text-blue-700 transition-colors duration-300">
                         <FileCheck size={22} className="stroke-[2.5]" />
                       </div>
@@ -2579,8 +2579,8 @@ export default function AtivosPage() {
                     </div>
 
                     {/* Card 3: Total OS */}
-                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-100/50 group-hover:text-emerald-800 transition-colors duration-300">
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-md transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 group-hover:bg-amber-100/50 group-hover:text-amber-805 transition-colors duration-300">
                         <Wrench size={22} className="stroke-[2.5]" />
                       </div>
                       <div className="min-w-0">
@@ -2590,15 +2590,66 @@ export default function AtivosPage() {
                       </div>
                     </div>
 
-                    {/* Card 4: Clientes Atendidos */}
-                    <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-300 group">
-                      <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-650 flex items-center justify-center shrink-0 group-hover:bg-purple-100/50 group-hover:text-purple-700 transition-colors duration-300">
-                        <Users size={22} className="stroke-[2.5]" />
+                    {/* Card 4: % Crescimento */}
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-md transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-100/50 group-hover:text-emerald-800 transition-colors duration-300">
+                        <TrendingUp size={22} className="stroke-[2.5]" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Clientes Atendidos</p>
-                        <h4 className="text-2.5xl font-black text-slate-850 leading-none">{totalClientesAtendidos}</h4>
-                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Portfólio Ativo</span>
+                        <p className="text-[9px] font-black text-emerald-800 uppercase tracking-widest leading-none mb-1.5">% Crescimento</p>
+                        <div className="flex items-baseline gap-1.5">
+                          <h4 className="text-2.5xl font-black text-slate-850 leading-none">
+                            {(() => {
+                              const countInstalacao = osPorTipo['INSTALACAO'] || 0;
+                              const pctCrescimento = totalAtivos > 0 ? (countInstalacao / totalAtivos) * 100 : 0;
+                              return `${pctCrescimento.toFixed(1)}%`;
+                            })()}
+                          </h4>
+                          <span className="text-[9px] font-bold text-emerald-650 ml-1">({osPorTipo['INSTALACAO'] || 0} OSs)</span>
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Instaladas/Total Ativos</span>
+                      </div>
+                    </div>
+
+                    {/* Card 5: % Troca */}
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-md transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-650 flex items-center justify-center shrink-0 group-hover:bg-purple-100/50 group-hover:text-purple-700 transition-colors duration-300">
+                        <History size={22} className="stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-purple-800 uppercase tracking-widest leading-none mb-1.5">% Troca</p>
+                        <div className="flex items-baseline gap-1.5">
+                          <h4 className="text-2.5xl font-black text-slate-850 leading-none">
+                            {(() => {
+                              const countTroca = osPorTipo['TROCA'] || 0;
+                              const pctTroca = totalAtivos > 0 ? (countTroca / totalAtivos) * 100 : 0;
+                              return `${pctTroca.toFixed(1)}%`;
+                            })()}
+                          </h4>
+                          <span className="text-[9px] font-bold text-purple-600 ml-1">({osPorTipo['TROCA'] || 0} OSs)</span>
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Trocas/Total Ativos</span>
+                      </div>
+                    </div>
+
+                    {/* Card 6: % Encerramento */}
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex items-center gap-4 hover:shadow-md transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-650 flex items-center justify-center shrink-0 group-hover:bg-rose-100/50 group-hover:text-rose-750 transition-colors duration-300">
+                        <XCircle size={22} className="stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-rose-850 uppercase tracking-widest leading-none mb-1.5">% Encerramento</p>
+                        <div className="flex items-baseline gap-1.5">
+                          <h4 className="text-2.5xl font-black text-slate-850 leading-none">
+                            {(() => {
+                              const countRetirada = osPorTipo['RETIRADA'] || 0;
+                              const pctEncerramento = totalAtivos > 0 ? (countRetirada / totalAtivos) * 100 : 0;
+                              return `${pctEncerramento.toFixed(1)}%`;
+                            })()}
+                          </h4>
+                          <span className="text-[9px] font-bold text-rose-600 ml-1">({osPorTipo['RETIRADA'] || 0} OSs)</span>
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-450 uppercase tracking-wider block mt-1">Retiradas/Total Ativos</span>
                       </div>
                     </div>
                   </div>
@@ -2918,50 +2969,8 @@ export default function AtivosPage() {
                           })}
                         </div>
 
-                        <div className="text-[7.5px] text-slate-400 font-bold leading-normal select-none px-1 py-0.5 border-b border-slate-100/50 w-full">
+                        <div className="text-[8px] text-slate-400 font-bold leading-normal select-none px-1 py-1 w-full text-center">
                           * Percentuais de Instalações, Trocas e Encerramentos calculados com base no Total de Ativos ({totalAtivos}). Manutenções calculadas sobre o Total de OS ({totalOs}).
-                        </div>
-
-                        {/* Indicadores de Crescimento, Troca & Encerramento em Relação aos Ativos */}
-                        <div className="mt-3.5 grid grid-cols-3 gap-2 w-full select-none">
-                          {/* % Crescimento */}
-                          <div className="bg-emerald-50/50 border border-emerald-100 p-2 rounded-2xl text-center">
-                            <span className="text-[7.5px] font-black text-emerald-850 uppercase tracking-wider block">% Crescimento</span>
-                            <span className="text-xs font-black text-emerald-700 block mt-0.5">
-                              {(() => {
-                                const countInstalacao = osPorTipo['INSTALACAO'] || 0;
-                                const pctCrescimento = totalAtivos > 0 ? (countInstalacao / totalAtivos) * 100 : 0;
-                                return `${pctCrescimento.toFixed(1)}%`;
-                              })()}
-                            </span>
-                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Instaladas/Total Ativos</span>
-                          </div>
-
-                          {/* % Troca */}
-                          <div className="bg-purple-50/50 border border-purple-100 p-2 rounded-2xl text-center">
-                            <span className="text-[7.5px] font-black text-purple-850 uppercase tracking-wider block">% Troca</span>
-                            <span className="text-xs font-black text-purple-700 block mt-0.5">
-                              {(() => {
-                                const countTroca = osPorTipo['TROCA'] || 0;
-                                const pctTroca = totalAtivos > 0 ? (countTroca / totalAtivos) * 100 : 0;
-                                return `${pctTroca.toFixed(1)}%`;
-                              })()}
-                            </span>
-                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Trocas/Total Ativos</span>
-                          </div>
-
-                          {/* % Encerramento */}
-                          <div className="bg-rose-50/50 border border-rose-100 p-2 rounded-2xl text-center">
-                            <span className="text-[7.5px] font-black text-rose-850 uppercase tracking-wider block">% Encerramento</span>
-                            <span className="text-xs font-black text-rose-700 block mt-0.5">
-                              {(() => {
-                                const countRetirada = osPorTipo['RETIRADA'] || 0;
-                                const pctEncerramento = totalAtivos > 0 ? (countRetirada / totalAtivos) * 100 : 0;
-                                return `${pctEncerramento.toFixed(1)}%`;
-                              })()}
-                            </span>
-                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Retiradas/Total Ativos</span>
-                          </div>
                         </div>
                       </div>
 
