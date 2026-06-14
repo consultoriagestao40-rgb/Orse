@@ -916,6 +916,42 @@ export default function GestaoEntregasPage() {
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 5);
 
+    // 10. Evolução mensal do volume de entregas (últimos 6 meses)
+    const monthlyVolume: Record<string, { volume: number; valor: number }> = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthlyVolume[key] = { volume: 0, valor: 0 };
+    }
+
+    entregas.forEach((e: any) => {
+      if (e.status === 'CANCELADA') return;
+      const dateStr = e.dataProgramada || e.createdAt;
+      if (dateStr) {
+        const d = new Date(dateStr);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (monthlyVolume[key] !== undefined) {
+          monthlyVolume[key].volume += 1;
+          monthlyVolume[key].valor += (e.valor || 0);
+        }
+      }
+    });
+
+    const monthlyData = Object.keys(monthlyVolume)
+      .sort()
+      .map(key => {
+        const [year, month] = key.split('-');
+        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const label = `${monthNames[parseInt(month) - 1]}/${year.slice(-2)}`;
+        return {
+          key,
+          label,
+          volume: monthlyVolume[key].volume,
+          valor: monthlyVolume[key].valor
+        };
+      });
+
     return {
       totalValoresEntregues,
       totalValoresGeral,
@@ -928,7 +964,8 @@ export default function GestaoEntregasPage() {
       slaPercentual,
       rankingCidades,
       rankingClientes,
-      rankingSegmentos
+      rankingSegmentos,
+      monthlyData
     };
   };
 
@@ -1640,6 +1677,83 @@ export default function GestaoEntregasPage() {
                 </div>
               </div>
 
+            </div>
+
+            {/* Evolução Mensal do Volume de Entregas */}
+            <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <Navigation size={16} className="text-[#1B4D3E] stroke-[2.5] rotate-90" />
+                    Evolução Mensal do Volume de Entregas
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Histórico dos últimos 6 meses</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Quantidade de Entregas</span>
+                </div>
+              </div>
+
+              {/* SVG Chart Container */}
+              <div className="h-64 w-full relative">
+                <svg className="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Grid Lines Horizontais */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                    const y = 10 + ratio * 160;
+                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.volume), 5);
+                    const val = Math.round(maxVal * (1 - ratio));
+                    return (
+                      <g key={idx} className="opacity-30">
+                        <line x1="45" y1={y} x2="590" y2={y} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
+                        <text x="35" y={y + 4} textAnchor="end" className="fill-slate-400 font-bold text-[9px] font-sans">{val}</text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Caminhos da Linha e Área */}
+                  {(() => {
+                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.volume), 5);
+                    const points = kpis.monthlyData.map((d, i) => {
+                      const x = 50 + (i / (kpis.monthlyData.length - 1)) * 520;
+                      const y = 170 - (d.volume / maxVal) * 160;
+                      return { x, y, val: d.volume, label: d.label };
+                    });
+
+                    const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
+                    const areaPath = `50,170 ${linePath} 570,170`;
+
+                    return (
+                      <>
+                        <polygon points={areaPath} fill="url(#areaGradient)" />
+                        <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                        {points.map((p, i) => (
+                          <g key={i} className="group/point">
+                            <circle cx={p.x} cy={p.y} r="5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="3" className="hover:scale-125 transition-transform duration-200 cursor-pointer" />
+                            
+                            {/* Valor flutuante acima do ponto */}
+                            <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-slate-800 font-black text-[9px] font-sans">
+                              {p.val}
+                            </text>
+                            
+                            <text x={p.x} y="192" textAnchor="middle" className="fill-slate-400 font-bold text-[9px] uppercase tracking-wider">{p.label}</text>
+                          </g>
+                        ))}
+                      </>
+                    );
+                  })()}
+
+                  <line x1="45" y1="170" x2="590" y2="170" stroke="#E2E8F0" strokeWidth="1.5" />
+                </svg>
+              </div>
             </div>
 
             {/* Linha 2: Rankings e Gráficos */}
