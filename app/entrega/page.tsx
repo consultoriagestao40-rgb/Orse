@@ -549,6 +549,29 @@ export default function GestaoEntregasPage() {
     setModalEntregaOpen(true);
   };
 
+  const handleOpenRouteMap = (list: any[]) => {
+    const activeItems = list.filter(e => e.client && e.client.endereco);
+    if (activeItems.length === 0) return;
+    
+    let url = "";
+    if (activeItems.length === 1) {
+      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeItems[0].client.endereco)}`;
+    } else {
+      const origin = encodeURIComponent(activeItems[0].client.endereco);
+      const destination = encodeURIComponent(activeItems[activeItems.length - 1].client.endereco);
+      const waypoints = activeItems.slice(1, activeItems.length - 1)
+        .map(e => encodeURIComponent(e.client.endereco))
+        .join('|');
+      
+      url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+      if (waypoints) {
+        url += `&waypoints=${waypoints}`;
+      }
+    }
+    
+    window.open(url, '_blank');
+  };
+
   // Roteamento
   const handleOptimizeRoute = async () => {
     if (!selectedRouteEntregador) {
@@ -1764,25 +1787,37 @@ export default function GestaoEntregasPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fila de Entregas Programadas ({entSorted.length})</h4>
-                      {entSorted.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={handleOptimizeRoute}
-                          className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9.5px] font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
-                          disabled={routeSaving}
-                        >
-                          {routeSaving ? (
-                            <>
-                              <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                              Otimizando...
-                            </>
-                          ) : (
-                            <>
-                              ⚡ Otimizar Rota (OSRM)
-                            </>
-                          )}
-                        </button>
-                      )}
+                      <div className="flex gap-2">
+                        {entSorted.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRouteMap(entSorted)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[9.5px] font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                            disabled={routeSaving}
+                          >
+                            🗺️ Ver Rota no Mapa
+                          </button>
+                        )}
+                        {entSorted.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={handleOptimizeRoute}
+                            className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9.5px] font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                            disabled={routeSaving}
+                          >
+                            {routeSaving ? (
+                              <>
+                                <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                Otimizando...
+                              </>
+                            ) : (
+                              <>
+                                ⚡ Otimizar Rota (OSRM)
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="border border-slate-150 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-slate-50/50">

@@ -369,6 +369,29 @@ export default function TecnicoPage() {
     window.location.href = mapsUrl;
   };
 
+  const handleOpenRouteMap = (list: any[]) => {
+    const activeItems = list.filter(os => os.client && os.client.endereco);
+    if (activeItems.length === 0) return;
+    
+    let url = "";
+    if (activeItems.length === 1) {
+      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeItems[0].client.endereco)}`;
+    } else {
+      const origin = encodeURIComponent(activeItems[0].client.endereco);
+      const destination = encodeURIComponent(activeItems[activeItems.length - 1].client.endereco);
+      const waypoints = activeItems.slice(1, activeItems.length - 1)
+        .map(os => encodeURIComponent(os.client.endereco))
+        .join('|');
+      
+      url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+      if (waypoints) {
+        url += `&waypoints=${waypoints}`;
+      }
+    }
+    
+    window.open(url, '_blank');
+  };
+
   const handleStartService = async (osId: string) => {
     setSaving(true);
     showAlert('warning', 'Validando Chegada...', 'Aguarde enquanto o GPS valida a sua localização de chegada.');
@@ -784,12 +807,22 @@ export default function TecnicoPage() {
           <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest flex items-center gap-1.5">
             <ClipboardList size={13} /> Suas Ordens de Serviço
           </span>
-          <button 
-            onClick={loadTechnicianData}
-            className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer"
-          >
-            Atualizar
-          </button>
+          <div className="flex gap-3">
+            {ordens.length > 0 && (
+              <button 
+                onClick={() => handleOpenRouteMap(ordens)}
+                className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer flex items-center gap-0.5"
+              >
+                🗺️ Ver Rota no Mapa
+              </button>
+            )}
+            <button 
+              onClick={loadTechnicianData}
+              className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer"
+            >
+              Atualizar
+            </button>
+          </div>
         </div>
 
         {/* LOADING STATE */}
