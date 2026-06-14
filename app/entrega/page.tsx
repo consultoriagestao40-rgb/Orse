@@ -896,6 +896,26 @@ export default function GestaoEntregasPage() {
       .sort((a, b) => b.valor - a.valor)
       .slice(0, 5);
 
+    // 9.5. Ranking de segmentos (valor / volume)
+    const segmentosVolume: Record<string, { valor: number; volume: number }> = {};
+    activeDeliveries.forEach(e => {
+      const segment = e.client?.segmento || 'SEM SEGMENTO';
+      if (!segmentosVolume[segment]) {
+        segmentosVolume[segment] = { valor: 0, volume: 0 };
+      }
+      segmentosVolume[segment].volume += 1;
+      segmentosVolume[segment].valor += (e.valor || 0);
+    });
+
+    const rankingSegmentos = Object.keys(segmentosVolume)
+      .map(seg => ({
+        segmento: seg,
+        volume: segmentosVolume[seg].volume,
+        valor: segmentosVolume[seg].valor
+      }))
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 5);
+
     return {
       totalValoresEntregues,
       totalValoresGeral,
@@ -907,7 +927,8 @@ export default function GestaoEntregasPage() {
       totalKmRodados,
       slaPercentual,
       rankingCidades,
-      rankingClientes
+      rankingClientes,
+      rankingSegmentos
     };
   };
 
@@ -1705,6 +1726,49 @@ export default function GestaoEntregasPage() {
                             <div className="relative w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                               <div 
                                 className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500" 
+                                style={{ width: `${pctVolume}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Volume de Entregas por Segmento */}
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
+                    <BarChart3 size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                    Volume de Entregas por Segmento
+                  </h3>
+                  
+                  <div className="space-y-4.5">
+                    {kpis.rankingSegmentos.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-8">Sem dados de segmentos disponíveis.</p>
+                    ) : (
+                      kpis.rankingSegmentos.map((item, idx) => {
+                        const totalVol = kpis.rankingSegmentos.reduce((s, c) => s + c.volume, 0) || 1;
+                        const pctVolume = (item.volume / totalVol) * 100;
+                        return (
+                          <div key={item.segmento} className="space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 bg-slate-100 border border-slate-200 text-slate-600 rounded-full flex items-center justify-center font-black text-[9px]">
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-extrabold uppercase text-slate-700 truncate max-w-[200px]">{item.segmento}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-black text-slate-800">{item.volume} {item.volume === 1 ? 'entrega' : 'entregas'}</span>
+                                <span className="text-[10px] text-slate-400 font-bold block">
+                                  {item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="relative w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#1B4D3E] to-emerald-600 rounded-full transition-all duration-500" 
                                 style={{ width: `${pctVolume}%` }}
                               />
                             </div>
