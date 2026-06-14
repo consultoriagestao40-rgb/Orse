@@ -830,13 +830,31 @@ export default function AtivosPage() {
   };
 
   const handleConcludeOs = async (osId: string) => {
-    const os = ordens.find(o => o.id === osId);
-    setSelectedOsForSignature(os);
-    setNomeAssinanteWeb(os?.client?.contato || '');
-    setCpfAssinanteWeb(os?.client?.cnpj || '');
-    setHasDrawnCliente(false);
-    setHasDrawnTecnico(false);
-    setModalSignatureOpen(true);
+    showConfirm(
+      'Concluir Ordem de Serviço',
+      'Deseja concluir esta Ordem de Serviço sem coletar assinaturas (versão Web)?',
+      async () => {
+        setUpdatingOsId(osId);
+        setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: 'CONCLUIDA' } : o));
+        setOsForm(prev => prev.id === osId ? { ...prev, status: 'CONCLUIDA' } : prev);
+
+        const res = await updateOrdemServicoAtivo(osId, {
+          status: 'CONCLUIDA'
+        });
+        
+        if (res.success) {
+          await loadData(true);
+        } else {
+          await loadData(true);
+          const realOs = ordens.find(o => o.id === osId);
+          if (realOs) {
+            setOsForm(prev => prev.id === osId ? { ...prev, status: realOs.status } : prev);
+          }
+          showAlert('Erro ao Concluir', res.error || 'Erro ao concluir a OS', 'error');
+        }
+        setUpdatingOsId(null);
+      }
+    );
   };
 
   const handleUpdateOsStatus = async (osId: string, newStatus: string) => {
@@ -3094,132 +3112,7 @@ export default function AtivosPage() {
           </div>
         )}
 
-        {/* ───────────────────────────────────────────────────────────────────
-            MODAL COLETA DE ASSINATURA DA OS
-            ─────────────────────────────────────────────────────────────────── */}
-        {modalSignatureOpen && (
-          <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left">
-              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
-                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
-                  <FileImage size={16} className="stroke-[2.5]" />
-                  Assinaturas de Recebimento da OS
-                </h3>
-                <button onClick={() => setModalSignatureOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
-              </header>
-              <div className="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Declaração</label>
-                  <p className="text-[11px] text-slate-500 leading-relaxed font-bold bg-slate-50 border border-slate-200/50 rounded-xl p-3">
-                    Eu, como responsável do cliente comodatário, declaro ter acompanhado o atendimento técnico e atesto o perfeito estado de conservação/funcionamento dos equipamentos listados nesta OS.
-                  </p>
-                </div>
 
-                {/* Nome e CPF do Assinante */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nome do Assinante *</label>
-                    <input
-                      type="text"
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
-                      placeholder="Nome do cliente"
-                      value={nomeAssinanteWeb}
-                      onChange={(e) => setNomeAssinanteWeb(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">CPF/Documento</label>
-                    <input
-                      type="text"
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
-                      placeholder="CPF ou documento"
-                      value={cpfAssinanteWeb}
-                      onChange={(e) => setCpfAssinanteWeb(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Canvas de Assinatura do Cliente */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assinatura do Cliente *</label>
-                    <button
-                      type="button"
-                      onClick={clearCanvasCliente}
-                      className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
-                    >
-                      <RotateCcw size={10} /> Limpar
-                    </button>
-                  </div>
-                  <div className="border border-slate-250 rounded-2xl overflow-hidden bg-slate-50">
-                    <canvas
-                      ref={canvasClienteRef}
-                      width={480}
-                      height={120}
-                      onMouseDown={startDrawingCliente}
-                      onMouseMove={drawCliente}
-                      onMouseUp={stopDrawingCliente}
-                      onMouseLeave={stopDrawingCliente}
-                      onTouchStart={startDrawingCliente}
-                      onTouchMove={drawCliente}
-                      onTouchEnd={stopDrawingCliente}
-                      className="w-full h-[120px] cursor-crosshair touch-none bg-slate-50 block"
-                    />
-                  </div>
-                </div>
-
-                {/* Canvas de Assinatura do Técnico */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assinatura do Técnico *</label>
-                    <button
-                      type="button"
-                      onClick={clearCanvasTecnico}
-                      className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
-                    >
-                      <RotateCcw size={10} /> Limpar
-                    </button>
-                  </div>
-                  <div className="border border-slate-250 rounded-2xl overflow-hidden bg-slate-50">
-                    <canvas
-                      ref={canvasTecnicoRef}
-                      width={480}
-                      height={120}
-                      onMouseDown={startDrawingTecnico}
-                      onMouseMove={drawTecnico}
-                      onMouseUp={stopDrawingTecnico}
-                      onMouseLeave={stopDrawingTecnico}
-                      onTouchStart={startDrawingTecnico}
-                      onTouchMove={drawTecnico}
-                      onTouchEnd={stopDrawingTecnico}
-                      className="w-full h-[120px] cursor-crosshair touch-none bg-slate-50 block"
-                    />
-                  </div>
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="flex gap-2 justify-end select-none shrink-0 pt-3 border-t border-slate-100">
-                  <button 
-                    type="button" 
-                    onClick={() => setModalSignatureOpen(false)} 
-                    className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-xs font-black uppercase hover:bg-slate-50 cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="button" 
-                    disabled={saving || !hasDrawnCliente || !hasDrawnTecnico || !nomeAssinanteWeb.trim()}
-                    onClick={handleSaveSignature} 
-                    className="px-5 py-2 bg-[#1B4D3E] disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-[#13382D] cursor-pointer shadow-xs transition-colors flex items-center gap-2"
-                  >
-                    {saving && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
-                    {saving ? 'Gravando...' : 'Concluir e Gravar Assinaturas'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ───────────────────────────────────────────────────────────────────
             MODAL LISTAGEM DE TEMPLATE MINUTA (MINUTAS PADRÃO)
@@ -3600,7 +3493,7 @@ export default function AtivosPage() {
                         <>
                           <div className="text-center">
                             <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Quantidade</span>
-                            <span className="text-[11px]">{Number(quantidade).toFixed(3)}</span>
+                            <span className="text-[11px]">{Number(quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 })}</span>
                           </div>
                           <div className="text-right">
                             <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Valor Previsto</span>
@@ -3813,11 +3706,17 @@ export default function AtivosPage() {
                     {/* Assinatura do Cliente (Acima da Linha) */}
                     <div className="flex-1 flex items-end justify-center pb-2 w-full min-h-[55px]">
                       {selectedOsForPdf.assinaturaCliente ? (
-                        <img 
-                          src={selectedOsForPdf.assinaturaCliente} 
-                          alt="Assinatura Cliente" 
-                          className="max-h-[55px] object-contain"
-                        />
+                        selectedOsForPdf.assinaturaCliente === 'CLIENTE AUSENTE' ? (
+                          <span className="text-red-600 font-black italic text-[11px] tracking-wider uppercase border border-red-200 bg-red-50 rounded-lg px-2.5 py-1 select-none">
+                            Cliente Ausente
+                          </span>
+                        ) : (
+                          <img 
+                            src={selectedOsForPdf.assinaturaCliente} 
+                            alt="Assinatura Cliente" 
+                            className="max-h-[55px] object-contain"
+                          />
+                        )
                       ) : (
                         <span className="text-slate-300 italic text-[10px]">_____________________________________</span>
                       )}
@@ -3826,12 +3725,20 @@ export default function AtivosPage() {
                     <div className="border-t border-slate-350 pt-1.5 w-full flex flex-col items-center">
                       {selectedOsForPdf.assinaturaCliente && (
                         <div className="flex flex-col items-center mb-0.5">
-                          <span className="text-[8.5px] text-[#2563EB] font-black uppercase flex items-center gap-0.5"><CheckCircle size={9} /> Assinado Digitalmente</span>
-                          {selectedOsForPdf.nomeAssinante && (
-                            <span className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">Nome: {selectedOsForPdf.nomeAssinante}</span>
-                          )}
-                          {selectedOsForPdf.cpfAssinante && (
-                            <span className="text-[8px] text-slate-500 font-bold leading-none">CPF: {selectedOsForPdf.cpfAssinante}</span>
+                          {selectedOsForPdf.assinaturaCliente === 'CLIENTE AUSENTE' ? (
+                            <span className="text-[8.5px] text-amber-600 font-black uppercase flex items-center gap-0.5">
+                              <CheckCircle size={9} /> Finalizado sem Cliente
+                            </span>
+                          ) : (
+                            <>
+                              <span className="text-[8.5px] text-[#2563EB] font-black uppercase flex items-center gap-0.5"><CheckCircle size={9} /> Assinado Digitalmente</span>
+                              {selectedOsForPdf.nomeAssinante && selectedOsForPdf.nomeAssinante !== 'CLIENTE AUSENTE' && (
+                                <span className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">Nome: {selectedOsForPdf.nomeAssinante}</span>
+                              )}
+                              {selectedOsForPdf.cpfAssinante && selectedOsForPdf.cpfAssinante !== 'CLIENTE AUSENTE' && (
+                                <span className="text-[8px] text-slate-500 font-bold leading-none">CPF: {selectedOsForPdf.cpfAssinante}</span>
+                              )}
+                            </>
                           )}
                         </div>
                       )}

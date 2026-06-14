@@ -26,6 +26,7 @@ export default function TecnicoPage() {
   const [fotos, setFotos] = useState<string[]>([]);
   const [nomeAssinante, setNomeAssinante] = useState('');
   const [cpfAssinante, setCpfAssinante] = useState('');
+  const [clienteAusente, setClienteAusente] = useState(false);
 
   // Canvas Drawing Ref (Cliente)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -383,6 +384,7 @@ export default function TecnicoPage() {
     setCpfAssinante('');
     setHasDrawn(false);
     setHasDrawnTecnico(false);
+    setClienteAusente(false);
     
     // Auto-scroll to top and block background scroll
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -567,21 +569,25 @@ export default function TecnicoPage() {
     if (!relato.trim()) {
       return showAlert('warning', 'Relato Obrigatório', 'Escreva um resumo do serviço realizado.');
     }
-    if (!nomeAssinante.trim()) {
-      return showAlert('warning', 'Assinante Obrigatório', 'Informe o nome do cliente que está assinando.');
+
+    if (!clienteAusente) {
+      if (!nomeAssinante.trim()) {
+        return showAlert('warning', 'Assinante Obrigatório', 'Informe o nome do cliente que está assinando.');
+      }
+      if (!hasDrawn) {
+        return showAlert('warning', 'Assinatura Obrigatória', 'O cliente precisa assinar no campo indicado.');
+      }
     }
 
-    if (!hasDrawn) {
-      return showAlert('warning', 'Assinatura Obrigatória', 'O cliente precisa assinar no campo indicado.');
-    }
     if (!hasDrawnTecnico) {
       return showAlert('warning', 'Assinatura Obrigatória', 'Você (técnico) precisa assinar no campo indicado.');
     }
 
-    const canvas = canvasRef.current;
+    const canvasCliente = canvasRef.current;
     const canvasTecnico = canvasTecnicoRef.current;
-    if (!canvas || !canvasTecnico) return;
-    const base64Signature = canvas.toDataURL('image/png');
+    if (!canvasTecnico) return;
+
+    const base64Signature = (!clienteAusente && canvasCliente) ? canvasCliente.toDataURL('image/png') : 'CLIENTE AUSENTE';
     const base64SignatureTecnico = canvasTecnico.toDataURL('image/png');
 
     setSaving(true);
@@ -592,8 +598,8 @@ export default function TecnicoPage() {
         fotosAtendimento: JSON.stringify(fotos),
         assinaturaCliente: base64Signature,
         assinaturaTecnico: base64SignatureTecnico,
-        nomeAssinante: nomeAssinante,
-        cpfAssinante: cpfAssinante
+        nomeAssinante: clienteAusente ? 'CLIENTE AUSENTE' : nomeAssinante,
+        cpfAssinante: clienteAusente ? 'CLIENTE AUSENTE' : cpfAssinante
       });
 
       if (res.success) {
@@ -843,7 +849,7 @@ export default function TecnicoPage() {
                         );
                         const qty = (contratoItem && contratoItem.quantidade > 0) ? contratoItem.quantidade : 1;
                         const val = (contratoItem && contratoItem.valorUnitario > 0) ? contratoItem.valorUnitario : (os.ativo?.valor || 0);
-                        return `${Number(qty).toFixed(3)} | ${(qty * val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                        return `${Number(qty).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 })} | ${(qty * val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
                       })()}
                     </span>
                   </div>
@@ -998,7 +1004,7 @@ export default function TecnicoPage() {
                         (it: any) => it.ativoId === activeOsForFinalize.ativoId || (activeOsForFinalize.ativoDestinoId && it.ativoId === activeOsForFinalize.ativoDestinoId)
                       );
                       const qty = (contratoItem && contratoItem.quantidade > 0) ? contratoItem.quantidade : 1;
-                      return Number(qty).toFixed(3);
+                      return Number(qty).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
                     })()}
                   </span>
                 </div>
@@ -1068,37 +1074,56 @@ export default function TecnicoPage() {
               <p className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wide">Permitido até 6 fotos anexas.</p>
             </div>
 
-            {/* Client signature canvas block */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest">Assinatura Digital do Cliente *</label>
-                <button
-                  onClick={clearCanvas}
-                  className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
-                >
-                  <RotateCcw size={10} /> Limpar
-                </button>
-              </div>
-              
-              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 select-none touch-none w-full">
-                <canvas
-                  ref={canvasRef}
-                  width={340}
-                  height={140}
-                  className="w-full bg-slate-50 cursor-crosshair touch-none block"
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                />
-              </div>
-              <div className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest select-none">
-                Colete a assinatura do responsável tocando na tela acima
+            {/* Checkbox Cliente Ausente */}
+            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 select-none active:scale-[0.98] transition-all cursor-pointer"
+                 onClick={() => setClienteAusente(!clienteAusente)}>
+              <input
+                type="checkbox"
+                id="cliente-ausente-checkbox"
+                checked={clienteAusente}
+                onChange={(e) => setClienteAusente(e.target.checked)}
+                className="w-4 h-4 text-[#1B4D3E] border-slate-300 rounded focus:ring-[#1B4D3E] cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="text-left">
+                <label htmlFor="cliente-ausente-checkbox" className="text-xs font-black text-amber-800 uppercase tracking-wide cursor-pointer block leading-none">Cliente Ausente</label>
+                <span className="text-[9.5px] text-amber-600 font-semibold leading-relaxed mt-0.5 block">Marque se não houver um responsável para assinar no local.</span>
               </div>
             </div>
+
+            {!clienteAusente && (
+              /* Client signature canvas block */
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest">Assinatura Digital do Cliente *</label>
+                  <button
+                    onClick={clearCanvas}
+                    className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <RotateCcw size={10} /> Limpar
+                  </button>
+                </div>
+                
+                <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 select-none touch-none w-full">
+                  <canvas
+                    ref={canvasRef}
+                    width={340}
+                    height={140}
+                    className="w-full bg-slate-50 cursor-crosshair touch-none block"
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                  />
+                </div>
+                <div className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest select-none">
+                  Colete a assinatura do responsável tocando na tela acima
+                </div>
+              </div>
+            )}
 
             {/* Technician signature canvas block */}
             <div className="space-y-1.5">
@@ -1132,31 +1157,33 @@ export default function TecnicoPage() {
               </div>
             </div>
 
-            {/* Signee metadata - Stacked vertically for mobile readability and full width */}
-            <div className="space-y-3 w-full">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">Nome do Assinante *</label>
-                <input
-                  type="text"
-                  placeholder="Nome do cliente responsável"
-                  value={nomeAssinante}
-                  onChange={(e) => setNomeAssinante(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
-                  style={{ fontSize: '16px' }}
-                />
+            {!clienteAusente && (
+              /* Signee metadata - Stacked vertically for mobile readability and full width */
+              <div className="space-y-3 w-full">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">Nome do Assinante *</label>
+                  <input
+                    type="text"
+                    placeholder="Nome do cliente responsável"
+                    value={nomeAssinante}
+                    onChange={(e) => setNomeAssinante(e.target.value)}
+                    className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                    style={{ fontSize: '16px' }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">CPF do Assinante</label>
+                  <input
+                    type="text"
+                    placeholder="Apenas números (opcional)"
+                    value={cpfAssinante}
+                    onChange={(e) => setCpfAssinante(e.target.value)}
+                    className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                    style={{ fontSize: '16px' }}
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">CPF do Assinante</label>
-                <input
-                  type="text"
-                  placeholder="Apenas números (opcional)"
-                  value={cpfAssinante}
-                  onChange={(e) => setCpfAssinante(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
-                  style={{ fontSize: '16px' }}
-                />
-              </div>
-            </div>
+            )}
 
             {/* Form Actions */}
             <footer className="pt-4 border-t border-slate-100 flex gap-3 select-none">
