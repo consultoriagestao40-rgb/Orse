@@ -1311,7 +1311,7 @@ export default function AtivosPage() {
                               <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                                 <button 
                                   onClick={() => { setSelectedContratoForPdf(contr); setModalContratoPdfOpen(true); }}
-                                  className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-1 cursor-pointer"
+                                  className="text-[9px] font-black uppercase text-slate-500 hover:text-[#1B4D3E] transition-colors flex items-center gap-1 cursor-pointer"
                                 >
                                   <Printer size={10} /> Imprimir PDF
                                 </button>
@@ -1359,7 +1359,7 @@ export default function AtivosPage() {
                               <td className="px-6 py-3 font-extrabold text-slate-800 uppercase">
                                 {contrato.client.nomeFantasia}
                               </td>
-                              <td className="px-6 py-3 text-slate-550 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
+                              <td className="px-6 py-3 text-slate-500 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
                               <td className="px-6 py-3 text-center text-slate-650">
                                 Vigência: {contrato.vigenciaMeses} meses (Venc. {contrato.dataVencimento ? new Date(contrato.dataVencimento).toLocaleDateString('pt-BR') : '-'})
                               </td>
@@ -1394,22 +1394,22 @@ export default function AtivosPage() {
               ABA 4: GESTÃO DE ORDENS DE SERVIÇO (OS)
               ─────────────────────────────────────────────────────────────────── */}
           {activeTab === 'ordens' && osViewMode === 'lista' && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-x-auto">
+            <div className="bg-white border border-slate-300 rounded shadow-sm overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
+                <thead className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-widest border-none select-none">
                   <tr>
-                    <th className="px-6 py-4 text-center w-28">Nº Ordem</th>
-                    <th className="px-6 py-4 min-w-[360px]">Cliente</th>
-                    <th className="px-6 py-4 text-center w-36">Tipo OS</th>
-                    <th className="px-6 py-4">Equipamento Vinculado</th>
-                    <th className="px-6 py-4 text-center w-36">Emissão</th>
-                    <th className="px-6 py-4 text-center w-36">Data Prevista</th>
-                    <th className="px-6 py-4 w-44">Técnico Responsável</th>
-                    <th className="px-6 py-4 text-center w-40">Status</th>
-                    <th className="px-6 py-4 w-44 text-center">Ações</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-28">Nº Ordem</th>
+                    <th className="px-6 py-4 border-r border-white/10 min-w-[360px]">Cliente</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-36">Tipo OS</th>
+                    <th className="px-6 py-4 border-r border-white/10">Equipamento Vinculado</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-36">Emissão</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-36">Data Prevista</th>
+                    <th className="px-6 py-4 border-r border-white/10 w-44">Técnico Responsável</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-40">Status</th>
+                    <th className="px-6 py-4 text-center w-44">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
+                <tbody className="divide-y divide-slate-200 font-semibold text-slate-700">
                   {loading && ordens.length === 0 ? (
                     <tr><td colSpan={9} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando ordens de serviço...</td></tr>
                   ) : filteredOrdens.length === 0 ? (
@@ -1445,7 +1445,7 @@ export default function AtivosPage() {
                         <tr 
                           key={os.id} 
                           onClick={() => openOsModal(os)} 
-                          className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                          className="hover:bg-slate-50 transition-colors cursor-pointer group"
                         >
                           <td className="px-6 py-3.5 text-center">
                             <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700 whitespace-nowrap">
@@ -1468,10 +1468,10 @@ export default function AtivosPage() {
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-3.5 text-center text-xs text-slate-550">
+                          <td className="px-6 py-3.5 text-center text-xs text-slate-500">
                             {new Date(os.dataEmissao).toLocaleDateString('pt-BR')}
                           </td>
-                          <td className="px-6 py-3.5 text-center text-xs text-slate-550">
+                          <td className="px-6 py-3.5 text-center text-xs text-slate-500">
                             {os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}
                           </td>
                           <td className="px-6 py-3.5 text-xs text-slate-700 font-bold uppercase truncate max-w-[150px]">
@@ -1677,7 +1677,7 @@ export default function AtivosPage() {
                               </div>
                               <div className="space-y-0.5">
                                 <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={os.client.nomeFantasia}>{os.client.nomeFantasia}</h4>
-                                <p className="text-[9.5px] text-slate-550 truncate font-semibold uppercase" title={os.ativo.descricao}>{os.ativo.descricao}</p>
+                                <p className="text-[9.5px] text-slate-500 truncate font-semibold uppercase" title={os.ativo.descricao}>{os.ativo.descricao}</p>
                               </div>
                               <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-2">
                                 {os.tecnicoResponsavel ? (() => {
@@ -2543,7 +2543,7 @@ export default function AtivosPage() {
                     <button 
                       type="button"
                       onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
-                      className="py-3 px-4 text-xs font-black text-slate-550 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                      className="py-3 px-4 text-xs font-black text-slate-500 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
                       title="Ver OS (PDF)"
                     >
                       <Printer size={14} className="stroke-[2.5]" /> PDF
