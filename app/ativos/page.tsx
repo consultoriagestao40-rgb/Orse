@@ -1411,6 +1411,7 @@ export default function AtivosPage() {
               </div>
             </div>
           )}
+          </div>
 
           {/* ───────────────────────────────────────────────────────────────────
               ABA 1: PARQUE DE ATIVOS E CATEGORIAS
