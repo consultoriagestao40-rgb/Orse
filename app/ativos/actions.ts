@@ -651,6 +651,76 @@ export async function createOrdemServicoAtivo(data: {
   }
 }
 
+// Helper functions for GPS Geocoding, OSRM routing, and Haversine distance calculations
+async function geocodeAddress(address: string): Promise<{ lat: number, lon: number } | null> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'SlimpeOrseApp/1.0'
+        }
+      }
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon)
+      };
+    }
+  } catch (e) {
+    console.error("Geocoding failed:", e);
+  }
+  return null;
+}
+
+async function getRouteEstimation(startLat: number, startLon: number, endLat: number, endLon: number) {
+  try {
+    const response = await fetch(
+      `http://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=false`
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      const route = data.routes[0];
+      return {
+        durationMinutes: route.duration / 60, // OSRM returns duration in seconds
+        distanceKm: route.distance / 1000 // OSRM returns distance in meters
+      };
+    }
+  } catch (e) {
+    console.error("OSRM routing failed:", e);
+  }
+  return null;
+}
+
+function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // distance in km
+}
+
+function calculatePathDistance(path: { lat: number, lng: number }[]): number {
+  let totalDistance = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    totalDistance += calculateHaversineDistance(
+      path[i].lat,
+      path[i].lng,
+      path[i + 1].lat,
+      path[i + 1].lng
+    );
+  }
+  return totalDistance;
+}
+
 export async function updateOrdemServicoAtivo(id: string, data: {
   status?: string;
   dataExecucao?: string;
@@ -678,6 +748,12 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   ultimaAtualizacaoLocalizacao?: string | null;
   rotaIniciadaEm?: string | null;
   atendimentoIniciadoEm?: string | null;
+  tempoEstimadoRota?: number | null;
+  distanciaEstimadaRota?: number | null;
+  tempoRealizadoRota?: number | null;
+  distanciaRealizadaRota?: number | null;
+  desvioRota?: boolean | null;
+  caminhoGps?: string | null;
   historico?: string;
 }) {
   try {
@@ -685,7 +761,8 @@ export async function updateOrdemServicoAtivo(id: string, data: {
 
     // Fetch current state of the OS to track history logs
     const currentOs = await prisma.ordemServicoAtivo.findUnique({
-      where: { id, tenantId: user.tenantId }
+      where: { id, tenantId: user.tenantId },
+      include: { client: true }
     });
 
     if (!currentOs) {
@@ -721,6 +798,12 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     }
     if (data.rotaIniciadaEm !== undefined) updateData.rotaIniciadaEm = data.rotaIniciadaEm ? new Date(data.rotaIniciadaEm) : null;
     if (data.atendimentoIniciadoEm !== undefined) updateData.atendimentoIniciadoEm = data.atendimentoIniciadoEm ? new Date(data.atendimentoIniciadoEm) : null;
+    if (data.tempoEstimadoRota !== undefined) updateData.tempoEstimadoRota = data.tempoEstimadoRota;
+    if (data.distanciaEstimadaRota !== undefined) updateData.distanciaEstimadaRota = data.distanciaEstimadaRota;
+    if (data.tempoRealizadoRota !== undefined) updateData.tempoRealizadoRota = data.tempoRealizadoRota;
+    if (data.distanciaRealizadaRota !== undefined) updateData.distanciaRealizadaRota = data.distanciaRealizadaRota;
+    if (data.desvioRota !== undefined) updateData.desvioRota = data.desvioRota;
+    if (data.caminhoGps !== undefined) updateData.caminhoGps = data.caminhoGps;
 
     // Parse existing history or initialize it
     let historicoArray: any[] = [];
@@ -737,6 +820,109 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     const nowStr = new Date().toISOString();
     const userName = user.nome || user.email || "Sistema";
 
+    // ─── DESLOCAMENTO E ROTA LOGIC ───
+    
+    // 1. Início do deslocamento
+    if (data.status === 'EM_DESLOCAMENTO' && currentOs.status !== 'EM_DESLOCAMENTO') {
+      const latPartida = data.latitudePartida ?? currentOs.latitudePartida;
+      const lonPartida = data.longitudePartida ?? currentOs.longitudePartida;
+      const endereco = currentOs.client?.endereco;
+
+      if (latPartida && lonPartida) {
+        // Inicializa o caminho com a partida
+        const initialPath = [{ lat: latPartida, lng: lonPartida, time: nowStr }];
+        updateData.caminhoGps = JSON.stringify(initialPath);
+
+        // Geocodificação Nominatim + Cálculo OSRM
+        if (endereco) {
+          try {
+            const geocoded = await geocodeAddress(endereco);
+            if (geocoded) {
+              const routeEst = await getRouteEstimation(latPartida, lonPartida, geocoded.lat, geocoded.lon);
+              if (routeEst) {
+                updateData.tempoEstimadoRota = routeEst.durationMinutes;
+                updateData.distanciaEstimadaRota = routeEst.distanceKm;
+              }
+            }
+          } catch (e) {
+            console.error("Erro ao estimar rota:", e);
+          }
+        }
+      }
+    }
+
+    // 2. Transmissão periódica de GPS
+    if (data.latitudeAtual !== undefined && data.longitudeAtual !== undefined && data.latitudeAtual && data.longitudeAtual) {
+      const isTransit = (data.status === 'EM_DESLOCAMENTO') || (currentOs.status === 'EM_DESLOCAMENTO');
+      if (isTransit) {
+        let path: any[] = [];
+        if (currentOs.caminhoGps) {
+          try {
+            path = JSON.parse(currentOs.caminhoGps);
+          } catch (e) {}
+        }
+        if (path.length === 0 && currentOs.latitudePartida && currentOs.longitudePartida) {
+          path.push({
+            lat: currentOs.latitudePartida,
+            lng: currentOs.longitudePartida,
+            time: currentOs.rotaIniciadaEm?.toISOString() || nowStr
+          });
+        }
+        path.push({
+          lat: data.latitudeAtual,
+          lng: data.longitudeAtual,
+          time: nowStr
+        });
+        updateData.caminhoGps = JSON.stringify(path);
+      }
+    }
+
+    // 3. Chegada ao cliente
+    if (data.status === 'EM_ANDAMENTO' && currentOs.status !== 'EM_ANDAMENTO') {
+      updateData.atendimentoIniciadoEm = new Date();
+      
+      const latChegada = data.latitudeChegada ?? currentOs.latitudeChegada;
+      const lonChegada = data.longitudeChegada ?? currentOs.longitudeChegada;
+      const rotaIniciada = currentOs.rotaIniciadaEm || data.rotaIniciadaEm;
+
+      // Calcular tempo realizado
+      if (rotaIniciada) {
+        const diffMs = new Date().getTime() - new Date(rotaIniciada).getTime();
+        updateData.tempoRealizadoRota = Math.max(0, diffMs / 60000);
+      }
+
+      let path: any[] = [];
+      if (currentOs.caminhoGps) {
+        try {
+          path = JSON.parse(currentOs.caminhoGps);
+        } catch (e) {}
+      }
+
+      if (latChegada && lonChegada) {
+        path.push({
+          lat: latChegada,
+          lng: lonChegada,
+          time: nowStr
+        });
+        updateData.caminhoGps = JSON.stringify(path);
+      }
+
+      // Calcular distância realizada e desvio
+      if (path.length > 0) {
+        const distance = calculatePathDistance(path);
+        updateData.distanciaRealizadaRota = distance;
+
+        const distEst = updateData.distanciaEstimadaRota ?? currentOs.distanciaEstimadaRota;
+        if (distEst && distEst > 0) {
+          if (distance > distEst * 1.25) {
+            updateData.desvioRota = true;
+          } else {
+            updateData.desvioRota = false;
+          }
+        }
+      }
+    }
+
     // Trace status transitions
     if (data.status !== undefined && data.status !== currentOs.status) {
       historicoArray.push({
@@ -745,9 +931,6 @@ export async function updateOrdemServicoAtivo(id: string, data: {
         usuario: userName
       });
 
-      if (data.status === 'EM_ANDAMENTO') {
-        updateData.atendimentoIniciadoEm = new Date();
-      }
       if (data.status === 'CONCLUIDA') {
         updateData.dataExecucao = new Date();
       }

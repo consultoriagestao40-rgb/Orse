@@ -1541,9 +1541,25 @@ export default function AtivosPage() {
                                 <span>Gravando...</span>
                               </div>
                             ) : (
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
-                                {statusText}
-                              </span>
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                                  {statusText}
+                                </span>
+                                {os.status === 'EM_DESLOCAMENTO' && os.tempoEstimadoRota !== null && os.tempoEstimadoRota !== undefined && (
+                                  <span className="text-[8.5px] text-cyan-600 font-black whitespace-nowrap bg-cyan-50/50 px-1.5 py-0.5 rounded border border-cyan-100">
+                                    Est: {Math.round(os.tempoEstimadoRota)}m / {os.distanciaEstimadaRota?.toFixed(1)}km
+                                  </span>
+                                )}
+                                {(os.status === 'EM_ANDAMENTO' || os.status === 'VALIDACAO' || os.status === 'CONCLUIDA') && os.tempoRealizadoRota !== null && os.tempoRealizadoRota !== undefined && (
+                                  <span className={`text-[8.5px] font-black whitespace-nowrap px-1.5 py-0.5 rounded border ${
+                                    os.desvioRota 
+                                      ? 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse' 
+                                      : 'bg-emerald-50 text-emerald-755 border-emerald-100'
+                                  }`}>
+                                    {os.desvioRota ? '⚠️ ' : ''}{Math.round(os.tempoRealizadoRota)}m / {os.distanciaRealizadaRota?.toFixed(1)}km
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </td>
                           <td className="px-6 py-3.5">
@@ -1785,6 +1801,28 @@ export default function AtivosPage() {
                                     <span className="text-[9px] font-black uppercase tracking-wider">Atribuir Técnico</span>
                                   </button>
                                 )}
+                                {os.status === 'EM_DESLOCAMENTO' && os.tempoEstimadoRota !== null && os.tempoEstimadoRota !== undefined && (
+                                  <div className="text-[9.5px] px-1 flex justify-between items-center text-cyan-600 bg-cyan-50/40 p-1 rounded border border-cyan-100/60">
+                                    <span className="font-extrabold">Est. Rota:</span>
+                                    <span className="font-black">{Math.round(os.tempoEstimadoRota)} min ({os.distanciaEstimadaRota?.toFixed(1)} km)</span>
+                                  </div>
+                                )}
+
+                                {(os.status === 'EM_ANDAMENTO' || os.status === 'VALIDACAO' || os.status === 'CONCLUIDA') && os.tempoRealizadoRota !== null && os.tempoRealizadoRota !== undefined && (
+                                  <div className={`text-[9.5px] px-1 flex justify-between items-center p-1 rounded border ${
+                                    os.desvioRota 
+                                      ? 'text-rose-600 bg-rose-50/40 border-rose-100/60 animate-pulse' 
+                                      : 'text-emerald-700 bg-emerald-50/40 border-emerald-100/60'
+                                  }`}>
+                                    <span className="font-extrabold flex items-center gap-0.5">
+                                      {os.desvioRota ? '⚠️ Rota (Desvio):' : '✓ Rota Realizada:'}
+                                    </span>
+                                    <span className="font-black">
+                                      {Math.round(os.tempoRealizadoRota)} min ({os.distanciaRealizadaRota?.toFixed(1)} km)
+                                    </span>
+                                  </div>
+                                )}
+
                                 <div className="text-slate-500 font-bold px-1 flex justify-between items-center">
                                   <span className="text-slate-400 font-extrabold">Previsto:</span>
                                   <span className="text-slate-700 font-extrabold">{os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}</span>
@@ -2563,6 +2601,32 @@ export default function AtivosPage() {
                             <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Tempo de Atendimento</span>
                             <span className="font-bold text-slate-700">{attendanceTime || '-'}</span>
                           </div>
+                          {currentOs.tempoEstimadoRota !== null && currentOs.tempoEstimadoRota !== undefined && (
+                            <div>
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Rota Estimada (OSRM)</span>
+                              <span className="font-bold text-slate-700">{Math.round(currentOs.tempoEstimadoRota)} min ({currentOs.distanciaEstimadaRota?.toFixed(2)} km)</span>
+                            </div>
+                          )}
+                          {currentOs.tempoRealizadoRota !== null && currentOs.tempoRealizadoRota !== undefined && (
+                            <div>
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Rota Realizada (GPS)</span>
+                              <span className="font-bold text-slate-700">{Math.round(currentOs.tempoRealizadoRota)} min ({currentOs.distanciaRealizadaRota?.toFixed(2)} km)</span>
+                            </div>
+                          )}
+                          {currentOs.desvioRota !== null && currentOs.desvioRota !== undefined && (
+                            <div className="col-span-2">
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Auditoria de Desvio de Rota</span>
+                              {currentOs.desvioRota ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase bg-rose-50 text-rose-600 border border-rose-150 animate-pulse">
+                                  ⚠️ Desvio Detectado (A distância percorrida excedeu a estimativa em +25%)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-150">
+                                  ✓ Rota Conforme (Dentro do trajeto esperado)
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {currentOs.rotaIniciadaEm && (
                             <div>
                               <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Início do Deslocamento</span>
@@ -3302,6 +3366,39 @@ export default function AtivosPage() {
                           >
                             Ver Ponto de Chegada no Mapa
                           </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {((selectedOsForPdf.tempoEstimadoRota !== null && selectedOsForPdf.tempoEstimadoRota !== undefined) || 
+                      (selectedOsForPdf.tempoRealizadoRota !== null && selectedOsForPdf.tempoRealizadoRota !== undefined)) && (
+                      <div className="col-span-1 sm:col-span-2 bg-slate-50/50 p-3 rounded-xl border border-slate-150 text-[10px] space-y-2">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                          <Car size={12} className="stroke-[2.5]" /> Resumo de Rota e Auditoria de Deslocamento
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-650 font-semibold">
+                          {selectedOsForPdf.tempoEstimadoRota !== null && (
+                            <div>
+                              <span className="block text-slate-400 font-extrabold text-[8px] uppercase tracking-wider">Estimado (OSRM)</span>
+                              <span>{Math.round(selectedOsForPdf.tempoEstimadoRota)} min ({selectedOsForPdf.distanciaEstimadaRota?.toFixed(1)} km)</span>
+                            </div>
+                          )}
+                          {selectedOsForPdf.tempoRealizadoRota !== null && (
+                            <div>
+                              <span className="block text-slate-400 font-extrabold text-[8px] uppercase tracking-wider">Realizado (GPS)</span>
+                              <span>{Math.round(selectedOsForPdf.tempoRealizadoRota)} min ({selectedOsForPdf.distanciaRealizadaRota?.toFixed(1)} km)</span>
+                            </div>
+                          )}
+                          {selectedOsForPdf.desvioRota !== null && (
+                            <div>
+                              <span className="block text-slate-400 font-extrabold text-[8px] uppercase tracking-wider">Status Desvio</span>
+                              {selectedOsForPdf.desvioRota ? (
+                                <span className="text-rose-600 font-black flex items-center gap-0.5 uppercase">⚠️ Sim (Desvio &gt; 25%)</span>
+                              ) : (
+                                <span className="text-emerald-700 font-black flex items-center gap-0.5 uppercase">✓ Não</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
