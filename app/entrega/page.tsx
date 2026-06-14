@@ -1679,7 +1679,7 @@ export default function GestaoEntregasPage() {
 
             </div>
 
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
               
               {/* Esquerda: Entregadores & Cidades */}
               <div className="space-y-8">
@@ -1919,6 +1919,7 @@ export default function GestaoEntregasPage() {
                 </div>
 
             </div>
+          </div>
 
             {/* Faturamento Mensal das Entregas */}
             <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
