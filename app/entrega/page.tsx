@@ -617,7 +617,7 @@ export default function GestaoEntregasPage() {
       
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative no-print">
         {/* Header Superior */}
-        <header className="bg-white border-b border-slate-200 px-8 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-30 select-none">
+        <header className="bg-white border-b border-slate-200 px-8 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none">
           <div className="space-y-1">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
