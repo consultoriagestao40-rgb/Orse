@@ -2110,9 +2110,9 @@ export default function GestaoEntregasPage() {
                             <g key={i} className="group/point">
                               <circle cx={p.x} cy={p.y} r="4.5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="2.5" className="cursor-pointer" />
                               
-                              {/* Valor flutuante acima do ponto (sem prefixo R$ para evitar colisão) */}
+                              {/* Valor flutuante acima do ponto formatado em BRL */}
                               <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[9px] font-sans">
-                                {p.val > 0 ? p.val.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ""}
+                                {p.val > 0 ? p.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : ""}
                               </text>
                               
                               <text x={p.x} y="202" textAnchor="middle" className="fill-slate-400 font-bold text-[8.5px] uppercase tracking-wider">{p.label}</text>
@@ -2239,9 +2239,9 @@ export default function GestaoEntregasPage() {
                             <g key={i} className="group/point">
                               <circle cx={p.x} cy={p.y} r="4.5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="2.5" className="cursor-pointer" />
                               
-                              {/* Valor flutuante acima do ponto (sem prefixo R$ para evitar colisão) */}
+                              {/* Valor flutuante acima do ponto formatado em BRL */}
                               <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[9px] font-sans">
-                                {p.val > 0 ? p.val.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ""}
+                                {p.val > 0 ? p.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : ""}
                               </text>
                               
                               <text x={p.x} y="202" textAnchor="middle" className="fill-slate-400 font-bold text-[8.5px] uppercase tracking-wider">{p.label}</text>
