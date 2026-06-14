@@ -44,6 +44,7 @@ export default function GestaoEntregasPage() {
   const [modalAssignEntregadorOpen, setModalAssignEntregadorOpen] = useState(false);
   const [modalManageRoutesOpen, setModalManageRoutesOpen] = useState(false);
   const [modalQuickClienteOpen, setModalQuickClienteOpen] = useState(false);
+  const [modalMetricsOpen, setModalMetricsOpen] = useState<'programadas' | 'realizadas' | 'atrasadas' | 'valores' | null>(null);
   const [activeDetailsTab, setActiveDetailsTab] = useState<'details' | 'history'>('details');
   
   // Selection and Assignments
@@ -687,6 +688,33 @@ export default function GestaoEntregasPage() {
 
   const metrics = getMetrics();
 
+  const getModalMetricsList = () => {
+    if (!modalMetricsOpen) return [];
+    const today = new Date();
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    return entregas.filter((ent: any) => {
+      if (!ent.dataProgramada) return false;
+      const progDate = new Date(ent.dataProgramada);
+      const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+
+      const isToday = progZero.getTime() === todayZero.getTime();
+      const isPast = progZero.getTime() < todayZero.getTime();
+      const isFinished = ent.status === 'ENTREGUE' || ent.status === 'VALIDACAO';
+
+      if (modalMetricsOpen === 'programadas' || modalMetricsOpen === 'valores') {
+        return isToday;
+      }
+      if (modalMetricsOpen === 'realizadas') {
+        return isToday && isFinished;
+      }
+      if (modalMetricsOpen === 'atrasadas') {
+        return isPast && !isFinished && ent.status !== 'CANCELADA';
+      }
+      return false;
+    });
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       <Sidebar />
@@ -746,11 +774,14 @@ export default function GestaoEntregasPage() {
         <section className="px-8 pt-6 select-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Card 1: Total Programadas */}
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+          <div 
+            onClick={() => setModalMetricsOpen('programadas')}
+            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-blue-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+          >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Programadas Hoje</span>
               <p className="text-2xl font-black text-slate-800 leading-none">{metrics.totalDia}</p>
-              <span className="text-[9.5px] text-slate-450 font-bold block leading-none">Entregas agendadas</span>
+              <span className="text-[9.5px] text-slate-455 font-bold block leading-none">Entregas agendadas</span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-sm shadow-blue-100">
               <Calendar size={20} className="stroke-[2.5]" />
@@ -758,7 +789,10 @@ export default function GestaoEntregasPage() {
           </div>
 
           {/* Card 2: Realizadas */}
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+          <div 
+            onClick={() => setModalMetricsOpen('realizadas')}
+            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-emerald-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+          >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Realizadas Hoje</span>
               <p className="text-2xl font-black text-emerald-600 leading-none">{metrics.realizadasDia}</p>
@@ -772,7 +806,10 @@ export default function GestaoEntregasPage() {
           </div>
 
           {/* Card 3: Atrasadas */}
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+          <div 
+            onClick={() => setModalMetricsOpen('atrasadas')}
+            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-rose-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+          >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Entregas Atrasadas</span>
               <p className={`text-2xl font-black leading-none ${metrics.atrasadasTotal > 0 ? 'text-rose-600 animate-pulse' : 'text-slate-800'}`}>
@@ -790,7 +827,10 @@ export default function GestaoEntregasPage() {
           </div>
 
           {/* Card 4: Faturamento/Valor */}
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+          <div 
+            onClick={() => setModalMetricsOpen('valores')}
+            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-amber-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+          >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valor em Rota</span>
               <p className="text-2xl font-black text-slate-800 leading-none">
@@ -2285,6 +2325,179 @@ export default function GestaoEntregasPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL DE DETALHES DAS MÉTRICAS */}
+      {modalMetricsOpen && (() => {
+        const list = getModalMetricsList();
+        
+        const titles = {
+          programadas: 'Entregas Programadas Hoje',
+          realizadas: 'Entregas Realizadas Hoje',
+          atrasadas: 'Entregas Atrasadas (Dias Anteriores)',
+          valores: 'Valores das Entregas Programadas Hoje'
+        };
+
+        const icons = {
+          programadas: <Calendar size={18} className="text-blue-600 stroke-[2.5]" />,
+          realizadas: <CheckCircle size={18} className="text-emerald-600 stroke-[2.5]" />,
+          atrasadas: <ShieldAlert size={18} className="text-rose-600 stroke-[2.5]" />,
+          valores: <DollarSign size={18} className="text-amber-600 stroke-[2.5]" />
+        };
+
+        const subtitle = {
+          programadas: 'Lista de entregas com agendamento para a data atual',
+          realizadas: 'Lista de entregas concluídas ou em validação na data atual',
+          atrasadas: 'Entregas pendentes com data programada anterior a hoje',
+          valores: 'Detalhamento dos valores das entregas agendadas para hoje'
+        };
+
+        const titleText = titles[modalMetricsOpen];
+        const iconComponent = icons[modalMetricsOpen];
+        const subtitleText = subtitle[modalMetricsOpen];
+
+        const totalValue = list.reduce((sum, ent) => sum + (ent.valor || 0), 0);
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 max-w-5xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+              <header className="bg-slate-50 border-b border-slate-150 px-8 py-5 flex justify-between items-center select-none shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-xs">
+                    {iconComponent}
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider leading-none">
+                      {titleText}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                      {subtitleText}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setModalMetricsOpen(null)} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+              
+              <div className="overflow-x-auto overflow-y-auto flex-1">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-450 uppercase tracking-widest select-none">
+                      <th className="py-4 pl-8">Ordem de entrega</th>
+                      <th className="py-4">Programado</th>
+                      <th className="py-4">Dados das programações</th>
+                      <th className="py-4">Cliente</th>
+                      <th className="py-4 pr-8 text-right">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-650">
+                    {list.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-16 text-center text-slate-400">
+                          Nenhuma entrega correspondente encontrada.
+                        </td>
+                      </tr>
+                    ) : (
+                      list.map((ent, idx) => {
+                        const badgeMap: Record<string, string> = {
+                          BACKLOG: 'bg-slate-100 text-slate-600 border-slate-200/80',
+                          PROGRAMADO: 'bg-blue-50 text-blue-700 border-blue-200',
+                          EM_DESLOCAMENTO: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                          ENTREGA: 'bg-amber-50 text-amber-800 border-amber-250',
+                          VALIDACAO: 'bg-purple-50 text-purple-700 border-purple-200',
+                          ENTREGUE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                          CANCELADA: 'bg-red-50 text-red-700 border-red-200'
+                        };
+
+                        const labelMap: Record<string, string> = {
+                          BACKLOG: 'Backlog',
+                          PROGRAMADO: 'Programado',
+                          EM_DESLOCAMENTO: 'Em Rota',
+                          ENTREGA: 'Entrega Local',
+                          VALIDACAO: 'Em Validação',
+                          ENTREGUE: 'Entregue',
+                          CANCELADA: 'Cancelada'
+                        };
+
+                        return (
+                          <tr key={ent.id} className="hover:bg-slate-50/50 transition-colors">
+                            {/* Ordem de entrega */}
+                            <td className="py-4.5 pl-8 font-mono font-black text-slate-900">
+                              {ent.status === 'PROGRAMADO' && ent.ordemExecucao ? (
+                                <span className="bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                  #{ent.ordemExecucao}
+                                </span>
+                              ) : (
+                                <span className="bg-slate-100 border border-slate-200/60 rounded px-1.5 py-0.5 text-slate-500 whitespace-nowrap">
+                                  #{idx + 1}
+                                </span>
+                              )}
+                            </td>
+                            {/* Programado */}
+                            <td className="py-4.5 text-slate-700">
+                              {ent.dataProgramada ? (
+                                <div className="space-y-0.5">
+                                  <p className="font-extrabold">{new Date(ent.dataProgramada).toLocaleDateString('pt-BR')}</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold">{new Date(ent.dataProgramada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 italic">Não programado</span>
+                              )}
+                            </td>
+                            {/* Dados das programações */}
+                            <td className="py-4.5">
+                              <div className="flex flex-col items-start gap-1.5">
+                                <span className="font-mono text-[10px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                  NF {ent.numeroNf}
+                                </span>
+                                <span className={`px-2 py-0.5 border text-[9px] font-black uppercase tracking-wider rounded-md ${badgeMap[ent.status]}`}>
+                                  {labelMap[ent.status]}
+                                </span>
+                              </div>
+                            </td>
+                            {/* Cliente */}
+                            <td className="py-4.5 max-w-[280px]">
+                              <div className="space-y-0.5 text-left">
+                                <p className="font-extrabold text-slate-800 uppercase truncate" title={ent.client.nomeFantasia}>
+                                  {ent.client.nomeFantasia}
+                                </p>
+                                <p className="text-[9.5px] text-slate-455 leading-tight font-semibold uppercase truncate" title={ent.client.endereco}>
+                                  {ent.client.endereco || 'Sem endereço'}
+                                </p>
+                              </div>
+                            </td>
+                            {/* Valor */}
+                            <td className="py-4.5 pr-8 text-right font-black text-slate-850 font-mono">
+                              {ent.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              
+              <footer className="bg-slate-50 border-t border-slate-150 px-8 py-4 flex justify-between items-center select-none shrink-0">
+                <div className="text-xs font-semibold text-slate-650 flex items-center gap-4">
+                  <p>Total de Itens: <span className="font-extrabold text-slate-900">{list.length}</span></p>
+                  <div className="w-px h-4 bg-slate-200" />
+                  <p>Valor Total: <span className="font-black text-[#1B4D3E]">{totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></p>
+                </div>
+                <button 
+                  onClick={() => setModalMetricsOpen(null)}
+                  className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer border border-slate-200 shadow-2xs"
+                >
+                  Fechar
+                </button>
+              </footer>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
