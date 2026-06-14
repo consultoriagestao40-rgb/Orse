@@ -796,10 +796,7 @@ export default function EntregadorPage() {
       {/* Lista de Entregas Ativas do Roteiro */}
       <main className="flex-1 p-5 space-y-4 overflow-y-auto">
         
-        <div className="flex justify-between items-center px-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-            <ClipboardList size={13} /> Fila de Entregas do Seu Roteiro
-          </span>
+        <div className="flex justify-end px-1">
           <button 
             onClick={loadEntregadorData}
             className="text-[9px] font-black text-[#10B981] uppercase hover:underline cursor-pointer"
