@@ -825,6 +825,19 @@ export default function GestaoEntregasPage() {
                             <span className={`px-2 py-1 border text-[9.5px] font-black uppercase tracking-wider rounded-md ${badgeMap[ent.status]}`}>
                               {labelMap[ent.status]}
                             </span>
+                            {(() => {
+                              if (!ent.dataProgramada) return false;
+                              if (ent.status === 'ENTREGUE' || ent.status === 'VALIDACAO' || ent.status === 'CANCELADA') return false;
+                              const progDate = new Date(ent.dataProgramada);
+                              const today = new Date();
+                              const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+                              const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                              return progZero.getTime() < todayZero.getTime();
+                            })() && (
+                              <span className="ml-2 px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-[8.5px] font-black uppercase tracking-wider rounded-md animate-pulse inline-flex items-center gap-0.5" title="Entrega Atrasada">
+                                ⚠️ Atrasada
+                              </span>
+                            )}
                           </td>
                           <td className="py-4.5 pr-6 text-right">
                             <div className="flex justify-end items-center gap-1.5" onClick={e => e.stopPropagation()}>
@@ -988,6 +1001,19 @@ export default function GestaoEntregasPage() {
                                   {ent.status === 'PROGRAMADO' && ent.ordemExecucao && (
                                     <span className="text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 whitespace-nowrap" title="Ordem na Fila">
                                       #{ent.ordemExecucao}
+                                    </span>
+                                  )}
+                                  {(() => {
+                                    if (!ent.dataProgramada) return false;
+                                    if (ent.status === 'ENTREGUE' || ent.status === 'VALIDACAO' || ent.status === 'CANCELADA') return false;
+                                    const progDate = new Date(ent.dataProgramada);
+                                    const today = new Date();
+                                    const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+                                    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                                    return progZero.getTime() < todayZero.getTime();
+                                  })() && (
+                                    <span className="text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200 rounded px-1.5 py-0.5 whitespace-nowrap animate-pulse flex items-center gap-0.5" title="Entrega Atrasada">
+                                      ⚠️ Atrasada
                                     </span>
                                   )}
                                   {ent.status === 'VALIDACAO' && ent.observacaoEntrega?.includes('Cancelamento solicitado') && (

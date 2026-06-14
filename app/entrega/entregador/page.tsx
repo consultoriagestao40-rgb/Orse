@@ -241,6 +241,18 @@ export default function EntregadorPage() {
     });
   };
 
+  const filterEntregasForDriver = (list: any[]) => {
+    const today = new Date();
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    return list.filter((e: any) => {
+      if (!e.dataProgramada) return true;
+      const progDate = new Date(e.dataProgramada);
+      const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+      return progZero.getTime() <= todayZero.getTime();
+    });
+  };
+
   const loadEntregadorData = async () => {
     setLoading(true);
     try {
@@ -250,8 +262,9 @@ export default function EntregadorPage() {
       ]);
 
       if (entregasRes.success && entregasRes.entregas) {
-        setEntregas(entregasRes.entregas);
-        setKnownEntregaIds(entregasRes.entregas.map((e: any) => e.id));
+        const filtered = filterEntregasForDriver(entregasRes.entregas);
+        setEntregas(filtered);
+        setKnownEntregaIds(filtered.map((e: any) => e.id));
       }
       if (loggedUser) {
         setCurrentUser(loggedUser);
@@ -282,9 +295,9 @@ export default function EntregadorPage() {
     try {
       const entregasRes = await getEntregadorEntregas();
       if (entregasRes.success && entregasRes.entregas) {
-        const newEntregas = entregasRes.entregas;
+        const filtered = filterEntregasForDriver(entregasRes.entregas);
         
-        const hasNew = newEntregas.some((e: any) => 
+        const hasNew = filtered.some((e: any) => 
           e.status === 'PROGRAMADO' && !knownEntregaIds.includes(e.id)
         );
         
@@ -293,8 +306,8 @@ export default function EntregadorPage() {
           showAlert('success', 'Nova Entrega Recebida!', 'Uma nova entrega foi programada para você.');
         }
         
-        setEntregas(newEntregas);
-        setKnownEntregaIds(newEntregas.map((e: any) => e.id));
+        setEntregas(filtered);
+        setKnownEntregaIds(filtered.map((e: any) => e.id));
       }
     } catch (err) {
       console.error('Erro no polling em background:', err);
@@ -656,13 +669,24 @@ export default function EntregadorPage() {
   };
 
   // Trava sequencial de rotas
-  // Uma entrega PROGRAMADO só pode ser iniciada se for a primeira da fila (ordemExecucao menor)
   const isTransitOrServiceActive = entregas.some(e => e.status === 'EM_DESLOCAMENTO' || e.status === 'ENTREGA');
 
-  const getFilaProgramada = () => {
-    return entregas
-      .filter(e => e.status === 'PROGRAMADO')
-      .sort((a, b) => (a.ordemExecucao ?? 9999) - (b.ordemExecucao ?? 9999));
+  const isTodayEntrega = (e: any) => {
+    if (!e.dataProgramada) return true;
+    const progDate = new Date(e.dataProgramada);
+    const today = new Date();
+    return progDate.getFullYear() === today.getFullYear() &&
+           progDate.getMonth() === today.getMonth() &&
+           progDate.getDate() === today.getDate();
+  };
+
+  const isLateEntrega = (e: any) => {
+    if (!e.dataProgramada) return false;
+    const progDate = new Date(e.dataProgramada);
+    const today = new Date();
+    const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return progZero.getTime() < todayZero.getTime();
   };
 
   const isEntregaBlocked = (ent: any) => {
@@ -671,13 +695,21 @@ export default function EntregadorPage() {
     // Se outra entrega já estiver ativa (deslocando ou entregando), bloqueia tudo
     if (isTransitOrServiceActive) return true;
 
-    // Se for a primeira na fila programada, não bloqueia
-    const fila = getFilaProgramada();
-    if (fila.length > 0 && fila[0].id === ent.id) {
+    // Se a entrega for atrasada (de dias anteriores), ela NÃO é impeditiva e NÃO fica bloqueada
+    if (isLateEntrega(ent)) {
       return false;
     }
 
-    return true; // não é a primeira
+    // Se for uma entrega de hoje, ela só é bloqueada pelas outras de hoje que venham antes dela na fila
+    const filaHoje = entregas
+      .filter(e => e.status === 'PROGRAMADO' && isTodayEntrega(e))
+      .sort((a, b) => (a.ordemExecucao ?? 9999) - (b.ordemExecucao ?? 9999));
+
+    if (filaHoje.length > 0 && filaHoje[0].id === ent.id) {
+      return false;
+    }
+
+    return true; // não é a primeira de hoje
   };
 
   const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
@@ -821,15 +853,22 @@ export default function EntregadorPage() {
                       </span>
                     </div>
 
-                    <span className={`text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-                      isDeslocamento 
-                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
-                        : isLocal 
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                    }`}>
-                      {isDeslocamento ? 'Em Rota' : isLocal ? 'No Local' : 'Programado'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                        isDeslocamento 
+                          ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
+                          : isLocal 
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      }`}>
+                        {isDeslocamento ? 'Em Rota' : isLocal ? 'No Local' : 'Programado'}
+                      </span>
+                      {isLateEntrega(ent) && ent.status === 'PROGRAMADO' && (
+                        <span className="text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse">
+                          ⚠️ Atrasada
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Informações do Cliente */}
