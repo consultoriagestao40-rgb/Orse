@@ -40,6 +40,7 @@ export default function GestaoEntregasPage() {
   const [filterStatus, setFilterStatus] = useState('');
   
   // Modals & Forms State
+  const [activeTab, setActiveTab] = useState<'gestao' | 'kpis'>('gestao');
   const [modalEntregaOpen, setModalEntregaOpen] = useState(false);
   const [modalAssignEntregadorOpen, setModalAssignEntregadorOpen] = useState(false);
   const [modalManageRoutesOpen, setModalManageRoutesOpen] = useState(false);
@@ -715,6 +716,155 @@ export default function GestaoEntregasPage() {
     });
   };
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Cálculos do Painel de KPIs & Insights
+  // ─────────────────────────────────────────────────────────────────────────
+  const getKpiData = () => {
+    const activeDeliveries = entregas.filter(e => e.status !== 'CANCELADA');
+    
+    // 1. Total de valores de entregas concluídas
+    const completedDeliveries = entregas.filter(e => e.status === 'ENTREGUE' || e.status === 'VALIDACAO');
+    const totalValoresEntregues = completedDeliveries.reduce((sum, e) => sum + (e.valor || 0), 0);
+    const totalValoresGeral = activeDeliveries.reduce((sum, e) => sum + (e.valor || 0), 0);
+    
+    // 2. Ticket médio de entregas
+    const ticketMedio = activeDeliveries.length > 0 ? totalValoresGeral / activeDeliveries.length : 0;
+    
+    // 3. Média de entregas programadas por dia
+    const daysMap = new Map();
+    entregas.forEach(e => {
+      if (e.dataProgramada && e.status !== 'CANCELADA') {
+        const dateKey = new Date(e.dataProgramada).toDateString();
+        daysMap.set(dateKey, (daysMap.get(dateKey) || 0) + 1);
+      }
+    });
+    const distinctDaysCount = daysMap.size || 1;
+    const mediaEntregasDia = activeDeliveries.length / distinctDaysCount;
+    
+    // 4. Entregas atrasadas
+    const atrasadasCount = metrics.atrasadasTotal;
+    
+    // 5. Tempo médio de entrega
+    const deliveriesWithTime = completedDeliveries.filter(e => e.tempoRealizadoRota !== null && e.tempoRealizadoRota !== undefined);
+    const totalTimeRoute = deliveriesWithTime.reduce((sum, e) => sum + e.tempoRealizadoRota, 0);
+    const tempoMedioEntrega = deliveriesWithTime.length > 0 ? totalTimeRoute / deliveriesWithTime.length : 0;
+    
+    // 6. Percentual de horas do entregador (Horas em rotas / 176 horas)
+    // E KM rodados em entregas (distanciaRealizadaRota)
+    const entregadoresStats: Record<string, { horas: number; km: number; totalEntregas: number; email: string }> = {};
+    
+    completedDeliveries.forEach(e => {
+      if (e.entregadorResponsavel) {
+        const name = e.entregadorResponsavel;
+        if (!entregadoresStats[name]) {
+          entregadoresStats[name] = { horas: 0, km: 0, totalEntregas: 0, email: e.entregadorEmail || '' };
+        }
+        entregadoresStats[name].totalEntregas += 1;
+        if (e.tempoRealizadoRota !== null) {
+          entregadoresStats[name].horas += (e.tempoRealizadoRota / 60);
+        }
+        if (e.distanciaRealizadaRota !== null) {
+          entregadoresStats[name].km += e.distanciaRealizadaRota;
+        }
+      }
+    });
+
+    const totalKmRodados = completedDeliveries.reduce((sum, e) => sum + (e.distanciaRealizadaRota || 0), 0);
+    
+    // 7. SLA de entregas (entregas no prazo / entregas total programadas)
+    const totalProgramadasSla = entregas.filter(e => e.dataProgramada && e.status !== 'CANCELADA').length;
+    const entregasAtrasadasParaSla = entregas.filter(e => {
+      if (!e.dataProgramada || e.status === 'CANCELADA') return false;
+      const progDate = new Date(e.dataProgramada);
+      const today = new Date();
+      const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+      const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const isPast = progZero.getTime() < todayZero.getTime();
+      const isFinished = e.status === 'ENTREGUE' || e.status === 'VALIDACAO';
+      return isPast && !isFinished;
+    }).length;
+    
+    const slaPercentual = totalProgramadasSla > 0 
+      ? Math.max(0, Math.min(100, ((totalProgramadasSla - entregasAtrasadasParaSla) / totalProgramadasSla) * 100)) 
+      : 100;
+      
+    // 8. Cidades de maior volume de entregas
+    const getCityFromAddress = (address: string) => {
+      if (!address) return 'NÃO INFORMADO';
+      const clean = address.trim().toUpperCase();
+      
+      const match = clean.match(/,\s*([^,]+)\s*-\s*[A-Z]{2}\s*$/i);
+      if (match && match[1]) return match[1].trim();
+      
+      const parts = clean.split('-');
+      if (parts.length > 1) {
+        const possibleCity = parts[parts.length - 2].trim();
+        const possibleState = parts[parts.length - 1].trim();
+        if (possibleState.length === 2 && possibleCity) {
+          const subParts = possibleCity.split(',');
+          return subParts[subParts.length - 1].trim();
+        }
+      }
+      
+      const commaParts = clean.split(',');
+      if (commaParts.length >= 2) {
+        return commaParts[commaParts.length - 2].trim();
+      }
+      return 'OUTROS';
+    };
+    
+    const cidadesVolume: Record<string, number> = {};
+    activeDeliveries.forEach(e => {
+      if (e.client && e.client.endereco) {
+        const city = getCityFromAddress(e.client.endereco);
+        cidadesVolume[city] = (cidadesVolume[city] || 0) + 1;
+      }
+    });
+    
+    const rankingCidades = Object.keys(cidadesVolume)
+      .map(city => ({ cidade: city, volume: cidadesVolume[city] }))
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 5);
+      
+    // 9. Ranking de clientes que mais compram (valor / volume)
+    const clientesVolume: Record<string, { valor: number; volume: number; nomeFantasia: string }> = {};
+    activeDeliveries.forEach(e => {
+      const clientId = e.clientId;
+      const clientName = e.client?.nomeFantasia || 'Cliente Desconhecido';
+      if (!clientesVolume[clientId]) {
+        clientesVolume[clientId] = { valor: 0, volume: 0, nomeFantasia: clientName };
+      }
+      clientesVolume[clientId].volume += 1;
+      clientesVolume[clientId].valor += (e.valor || 0);
+    });
+    
+    const rankingClientes = Object.keys(clientesVolume)
+      .map(cid => ({
+        id: cid,
+        nome: clientesVolume[cid].nomeFantasia,
+        volume: clientesVolume[cid].volume,
+        valor: clientesVolume[cid].valor
+      }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 5);
+
+    return {
+      totalValoresEntregues,
+      totalValoresGeral,
+      ticketMedio,
+      mediaEntregasDia,
+      atrasadasCount,
+      tempoMedioEntrega,
+      entregadoresStats,
+      totalKmRodados,
+      slaPercentual,
+      rankingCidades,
+      rankingClientes
+    };
+  };
+
+  const kpis = getKpiData();
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       <Sidebar />
@@ -770,7 +920,33 @@ export default function GestaoEntregasPage() {
           </div>
         </header>
 
-        {/* CARDS INDICADORES METRICAS */}
+        {/* Seleção de Abas Principais */}
+        <div className="bg-white border-b border-slate-200 px-8 flex items-center gap-6 select-none shrink-0">
+          <button
+            onClick={() => setActiveTab('gestao')}
+            className={`pb-3.5 pt-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
+              activeTab === 'gestao' 
+                ? 'border-[#1B4D3E] text-[#1B4D3E]' 
+                : 'border-transparent text-slate-400 hover:text-slate-650'
+            }`}
+          >
+            Gestão Operacional
+          </button>
+          <button
+            onClick={() => setActiveTab('kpis')}
+            className={`pb-3.5 pt-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
+              activeTab === 'kpis' 
+                ? 'border-[#1B4D3E] text-[#1B4D3E]' 
+                : 'border-transparent text-slate-400 hover:text-slate-650'
+            }`}
+          >
+            Métricas & KPIs de Performance
+          </button>
+        </div>
+
+        {activeTab === 'gestao' && (
+          <>
+            {/* CARDS INDICADORES METRICAS */}
         <section className="px-8 pt-6 select-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Card 1: Total Programadas */}
@@ -1310,6 +1486,287 @@ export default function GestaoEntregasPage() {
             </div>
           )}
         </section>
+          </>
+        )}
+
+        {/* CONTEÚDO DA ABA DE KPIS */}
+        {activeTab === 'kpis' && (
+          <div className="p-8 space-y-8 animate-in fade-in duration-200">
+            {/* Linha 1: Cards de Indicadores Rápidos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 select-none">
+              
+              {/* Card 1: Faturamento Total */}
+              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-emerald-350 transition-all duration-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valores Concluídos</span>
+                  <p className="text-lg font-black text-emerald-600 truncate mt-1">
+                    {kpis.totalValoresEntregues.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                  </p>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">
+                    Geral: {kpis.totalValoresGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2: Ticket Médio */}
+              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-blue-350 transition-all duration-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Ticket Médio</span>
+                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                    {kpis.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                  </p>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Média por entrega ativa</span>
+                </div>
+              </div>
+
+              {/* Card 3: Média Diária */}
+              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-cyan-350 transition-all duration-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Média Entregas/Dia</span>
+                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                    {kpis.mediaEntregasDia.toFixed(1)}
+                  </p>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Entregas por dia programado</span>
+                </div>
+              </div>
+
+              {/* Card 4: SLA de Entregas */}
+              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-purple-350 transition-all duration-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">SLA de Entregas</span>
+                  <p className={`text-lg font-black mt-1 ${kpis.slaPercentual >= 90 ? 'text-emerald-600' : kpis.slaPercentual >= 75 ? 'text-amber-600' : 'text-rose-600'}`}>
+                    {kpis.slaPercentual.toFixed(1)}%
+                  </p>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Entregas no prazo programado</span>
+                </div>
+              </div>
+
+              {/* Card 5: KM Rodados */}
+              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-amber-350 transition-all duration-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">KM Rodados</span>
+                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                    {kpis.totalKmRodados.toFixed(1)} km
+                  </p>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Total acumulado em rotas</span>
+                </div>
+              </div>
+
+              {/* Card 6: Tempo Médio */}
+              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-indigo-350 transition-all duration-300">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Tempo Médio/Rota</span>
+                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                    {kpis.tempoMedioEntrega.toFixed(0)} min
+                  </p>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Média de duração das entregas</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Linha 2: Rankings e Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
+              
+              {/* Esquerda: Entregadores & Cidades */}
+              <div className="space-y-8">
+                
+                {/* Ranking de Entregadores */}
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
+                    <Users size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                    Performance & Horas dos Entregadores
+                  </h3>
+                  
+                  <div className="space-y-4.5">
+                    {Object.keys(kpis.entregadoresStats).length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-8">Nenhum dado de entregador disponível.</p>
+                    ) : (
+                      Object.keys(kpis.entregadoresStats).map(name => {
+                        const stats = kpis.entregadoresStats[name];
+                        const pctHours = (stats.horas / 176) * 100;
+                        const tech = usuarios.find(u => u.email === stats.email || u.nome === name);
+                        
+                        return (
+                          <div key={name} className="space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                              <div className="flex items-center gap-2">
+                                {tech?.avatarUrl ? (
+                                  <img src={tech.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover border border-slate-200" />
+                                ) : (
+                                  <div className="w-6 h-6 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase">
+                                    {name.substring(0, 2)}
+                                  </div>
+                                )}
+                                <span className="font-extrabold uppercase text-slate-700">{name}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-bold">
+                                <span className="font-black text-slate-800">{stats.horas.toFixed(1)}h</span> / 176h ({pctHours.toFixed(1)}%)
+                              </div>
+                            </div>
+                            <div className="relative w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-[#1B4D3E] rounded-full transition-all duration-500" 
+                                style={{ width: `${Math.min(100, pctHours)}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-[9px] text-slate-400 font-bold uppercase tracking-wider pl-8 select-none">
+                              <span>{stats.totalEntregas} {stats.totalEntregas === 1 ? 'Entrega' : 'Entregas'}</span>
+                              <span>{stats.km.toFixed(1)} km rodados</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Cidades de Maior Volume */}
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
+                    <MapPin size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                    Cidades com Maior Volume de Entregas
+                  </h3>
+                  
+                  <div className="space-y-4.5">
+                    {kpis.rankingCidades.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-8">Sem dados geográficos suficientes.</p>
+                    ) : (
+                      kpis.rankingCidades.map((item, idx) => {
+                        const totalVol = kpis.rankingCidades.reduce((s, c) => s + c.volume, 0) || 1;
+                        const pctVolume = (item.volume / totalVol) * 100;
+                        return (
+                          <div key={item.cidade} className="space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 bg-slate-100 border border-slate-200 text-slate-600 rounded-full flex items-center justify-center font-black text-[9px]">
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-extrabold uppercase text-slate-700 truncate max-w-[200px]">{item.cidade}</span>
+                              </div>
+                              <span className="font-black text-slate-800">{item.volume} {item.volume === 1 ? 'entrega' : 'entregas'}</span>
+                            </div>
+                            <div className="relative w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500" 
+                                style={{ width: `${pctVolume}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Direita: Clientes & Entregas Atrasadas */}
+              <div className="space-y-8">
+                
+                {/* Ranking de Clientes */}
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
+                    <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                    Clientes que mais Compram (Faturamento / Volume)
+                  </h3>
+                  
+                  <div className="space-y-4.5">
+                    {kpis.rankingClientes.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-8">Nenhum cliente com entregas ativas.</p>
+                    ) : (
+                      kpis.rankingClientes.map((item, idx) => {
+                        const totalVal = kpis.rankingClientes.reduce((s, c) => s + c.valor, 0) || 1;
+                        const pctVal = (item.valor / totalVal) * 100;
+                        return (
+                          <div key={item.id} className="space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 bg-slate-100 border border-slate-200 text-slate-600 rounded-full flex items-center justify-center font-black text-[9px]">
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-extrabold uppercase text-slate-700 truncate max-w-[200px]" title={item.nome}>{item.nome}</span>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-black text-slate-800">{item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</p>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{item.volume} {item.volume === 1 ? 'Entrega' : 'Entregas'}</p>
+                              </div>
+                            </div>
+                            <div className="relative w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500" 
+                                style={{ width: `${pctVal}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Resumo de Entregas Atrasadas */}
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
+                    <ShieldAlert size={16} className="text-rose-600 stroke-[2.5] animate-pulse" />
+                    Detalhamento de Entregas Atrasadas ({kpis.atrasadasCount})
+                  </h3>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-150 text-[9px] font-black text-slate-400 uppercase tracking-wider select-none">
+                          <th className="pb-3 pl-2">NF</th>
+                          <th className="pb-3">Cliente</th>
+                          <th className="pb-3">Agendado</th>
+                          <th className="pb-3 text-right pr-2">Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-650 font-semibold">
+                        {(() => {
+                          const today = new Date();
+                          const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                          
+                          const delayedList = entregas.filter((ent: any) => {
+                            if (!ent.dataProgramada || ent.status === 'CANCELADA') return false;
+                            const progDate = new Date(ent.dataProgramada);
+                            const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+                            const isPast = progZero.getTime() < todayZero.getTime();
+                            const isFinished = ent.status === 'ENTREGUE' || ent.status === 'VALIDACAO';
+                            return isPast && !isFinished;
+                          }).slice(0, 4);
+
+                          if (delayedList.length === 0) {
+                            return (
+                              <tr>
+                                <td colSpan={4} className="py-8 text-center text-slate-400 italic">
+                                  Nenhuma entrega atrasada pendente!
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          return delayedList.map(ent => (
+                            <tr key={ent.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="py-3 pl-2 font-mono font-black text-slate-800">#{ent.numeroNf}</td>
+                              <td className="py-3 uppercase truncate max-w-[120px]" title={ent.client.nomeFantasia}>{ent.client.nomeFantasia}</td>
+                              <td className="py-3 text-slate-500">{new Date(ent.dataProgramada).toLocaleDateString('pt-BR')}</td>
+                              <td className="py-3 text-right pr-2 font-black text-slate-800 font-mono">
+                                {ent.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ───────────────────────────────────────────────────────────────────
