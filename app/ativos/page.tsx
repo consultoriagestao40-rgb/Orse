@@ -40,13 +40,21 @@ export default function AtivosPage() {
   const [hoveredKpiStatus, setHoveredKpiStatus] = useState<string | null>(null);
   const [hoveredKpiOsType, setHoveredKpiOsType] = useState<string | null>(null);
   const [hoveredKpiMonthIndex, setHoveredKpiMonthIndex] = useState<number | null>(null);
-  const [selectedKpiPeriodType, setSelectedKpiPeriodType] = useState<'7d' | '14d' | '28d' | 'mes' | 'ano' | 'custom'>('mes');
+  const [selectedKpiPeriodType, setSelectedKpiPeriodType] = useState<'hoje' | '7d' | '14d' | '30d' | 'mes' | 'custom'>('mes');
   const [kpiCustomStart, setKpiCustomStart] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
     return d.toISOString().split('T')[0];
   });
   const [kpiCustomEnd, setKpiCustomEnd] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+  const [kpiCustomStartInput, setKpiCustomStartInput] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [kpiCustomEndInput, setKpiCustomEndInput] = useState(() => {
     return new Date().toISOString().split('T')[0];
   });
   
@@ -2200,6 +2208,11 @@ export default function AtivosPage() {
               const osDate = new Date(os.createdAt);
               const now = new Date();
               
+              if (selectedKpiPeriodType === 'hoje') {
+                const todayStr = now.toISOString().split('T')[0];
+                const osDateStr = osDate.toISOString().split('T')[0];
+                return osDateStr === todayStr;
+              }
               if (selectedKpiPeriodType === '7d') {
                 const diffTime = now.getTime() - osDate.getTime();
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -2210,17 +2223,14 @@ export default function AtivosPage() {
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 return diffDays >= 0 && diffDays <= 14;
               }
-              if (selectedKpiPeriodType === '28d') {
+              if (selectedKpiPeriodType === '30d') {
                 const diffTime = now.getTime() - osDate.getTime();
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 28;
+                return diffDays >= 0 && diffDays <= 30;
               }
               if (selectedKpiPeriodType === 'mes') {
                 const osYearMonth = `${osDate.getFullYear()}-${String(osDate.getMonth() + 1).padStart(2, '0')}`;
                 return osYearMonth === selectedKpiMonth;
-              }
-              if (selectedKpiPeriodType === 'ano') {
-                return osDate.getFullYear() === now.getFullYear();
               }
               if (selectedKpiPeriodType === 'custom') {
                 const start = new Date(kpiCustomStart + 'T00:00:00');
@@ -2243,6 +2253,7 @@ export default function AtivosPage() {
               }, 0);
               slaMedioDias = totalSlaMs / (1000 * 60 * 60 * 24) / completedKpiOrdens.length;
             }
+            const needleAngle = Math.min(Math.max(-90 + (slaMedioDias / 10) * 180, -90), 90);
 
             const ativosPorCategoria = ativos.reduce((acc, a) => {
               const catName = a.categoria?.nome || 'Sem Categoria';
@@ -2411,80 +2422,96 @@ export default function AtivosPage() {
                     {/* Dropdown Period Selector */}
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período:</span>
-                      <select
-                        value={selectedKpiPeriodType}
-                        onChange={(e) => setSelectedKpiPeriodType(e.target.value as any)}
-                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
-                      >
-                        <option value="7d">Últimos 7 Dias</option>
-                        <option value="14d">Últimos 14 Dias</option>
-                        <option value="28d">Últimos 28 Dias</option>
-                        <option value="mes">Este Mês</option>
-                        <option value="ano">Este Ano</option>
-                        <option value="custom">Personalizado</option>
-                      </select>
+                      
+                      <div className="flex items-center gap-1.5">
+                        {selectedKpiPeriodType === 'mes' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const [yearStr, monthStr] = selectedKpiMonth.split('-');
+                              const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
+                              date.setMonth(date.getMonth() - 1);
+                              setSelectedKpiMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+                            }}
+                            className="text-slate-500 hover:text-[#1B4D3E] transition-colors p-1.5 hover:bg-slate-50 rounded-xl cursor-pointer border border-slate-200 bg-white shadow-xs"
+                            title="Mês Anterior"
+                          >
+                            <ChevronRight className="rotate-180" size={14} />
+                          </button>
+                        )}
+
+                        <select
+                          value={selectedKpiPeriodType}
+                          onChange={(e) => setSelectedKpiPeriodType(e.target.value as any)}
+                          className="px-3 py-1.5 bg-white border border-[#3B82F6] rounded-xl text-xs font-bold text-[#3B82F6] outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer shadow-xs"
+                        >
+                          <option value="hoje">Hoje</option>
+                          <option value="7d">Últimos 7 dias</option>
+                          <option value="14d">Últimos 14 dias</option>
+                          <option value="30d">Últimos 30 dias</option>
+                          <option value="mes">Este Mês</option>
+                          <option value="custom">Período Personalizado</option>
+                        </select>
+
+                        {selectedKpiPeriodType === 'mes' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const [yearStr, monthStr] = selectedKpiMonth.split('-');
+                              const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
+                              date.setMonth(date.getMonth() + 1);
+                              setSelectedKpiMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+                            }}
+                            className="text-slate-500 hover:text-[#1B4D3E] transition-colors p-1.5 hover:bg-slate-50 rounded-xl cursor-pointer border border-slate-200 bg-white shadow-xs"
+                            title="Próximo Mês"
+                          >
+                            <ChevronRight size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Navigation for Month */}
                     {selectedKpiPeriodType === 'mes' && (
-                      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-1 shadow-xs animate-fade-in">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const [yearStr, monthStr] = selectedKpiMonth.split('-');
-                            const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
-                            date.setMonth(date.getMonth() - 1);
-                            setSelectedKpiMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-                          }}
-                          className="text-slate-500 hover:text-[#1B4D3E] transition-colors p-1 hover:bg-slate-50 rounded-lg cursor-pointer"
-                          title="Mês Anterior"
-                        >
-                          <ChevronRight className="rotate-180" size={16} />
-                        </button>
-                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest min-w-[110px] text-center">
-                          {(() => {
-                            const [yearStr, monthStr] = selectedKpiMonth.split('-');
-                            const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
-                            return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                          })()}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const [yearStr, monthStr] = selectedKpiMonth.split('-');
-                            const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
-                            date.setMonth(date.getMonth() + 1);
-                            setSelectedKpiMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-                          }}
-                          className="text-slate-500 hover:text-[#1B4D3E] transition-colors p-1 hover:bg-slate-50 rounded-lg cursor-pointer"
-                          title="Próximo Mês"
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest bg-slate-100/60 px-3 py-1.5 rounded-xl border border-slate-200/40 animate-fade-in">
+                        {(() => {
+                          const [yearStr, monthStr] = selectedKpiMonth.split('-');
+                          const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
+                          return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                        })()}
+                      </span>
                     )}
 
                     {/* Custom Range Date Pickers */}
                     {selectedKpiPeriodType === 'custom' && (
-                      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-1 shadow-xs animate-fade-in">
+                      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-1.5 shadow-xs animate-fade-in">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">De:</span>
                           <input
                             type="date"
-                            value={kpiCustomStart}
-                            onChange={(e) => setKpiCustomStart(e.target.value)}
+                            value={kpiCustomStartInput}
+                            onChange={(e) => setKpiCustomStartInput(e.target.value)}
                             className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
                           />
                         </div>
-                        <div className="flex items-center gap-1.5 border-l border-slate-150 pl-2">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Até:</span>
+                        <span className="text-[10px] text-slate-400 font-medium lowercase">até</span>
+                        <div className="flex items-center gap-1.5 pr-2">
                           <input
                             type="date"
-                            value={kpiCustomEnd}
-                            onChange={(e) => setKpiCustomEnd(e.target.value)}
+                            value={kpiCustomEndInput}
+                            onChange={(e) => setKpiCustomEndInput(e.target.value)}
                             className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
                           />
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKpiCustomStart(kpiCustomStartInput);
+                            setKpiCustomEnd(kpiCustomEndInput);
+                          }}
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Filtrar
+                        </button>
                       </div>
                     )}
 
