@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
-  Calendar, Check, LogOut, Loader2, Briefcase, Car, Navigation, Volume2,
+  Calendar, Check, LogOut, Loader2, Car, Navigation, Volume2,
   Building, Target, PlusCircle, MessageSquare
 } from 'lucide-react';
 import { 
@@ -689,23 +689,13 @@ export default function TecnicoPage() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          {isTecnico ? (
-            <a 
-              href="/api/auth/logout"
-              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
-              title="Sair da Conta (Logout)"
-            >
-              <LogOut size={16} />
-            </a>
-          ) : (
-            <a 
-              href="/ativos?mode=desktop"
-              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
-              title="Voltar ao Painel de Gestão"
-            >
-              <Briefcase size={16} />
-            </a>
-          )}
+          <a 
+            href="/api/auth/logout"
+            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+            title="Sair da Conta (Logout)"
+          >
+            <LogOut size={16} />
+          </a>
         </div>
       </header>
 
