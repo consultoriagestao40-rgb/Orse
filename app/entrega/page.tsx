@@ -645,6 +645,48 @@ export default function GestaoEntregasPage() {
   // Entregadores list (todos os usuários têm acesso a entregas)
   const entregadorList = usuarios;
 
+  // Métricas do Dia
+  const getMetrics = () => {
+    const today = new Date();
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    let totalDia = 0;
+    let realizadasDia = 0;
+    let valorDia = 0;
+    let atrasadasTotal = 0;
+
+    entregas.forEach((ent: any) => {
+      if (!ent.dataProgramada) return;
+      const progDate = new Date(ent.dataProgramada);
+      const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
+
+      const isToday = progZero.getTime() === todayZero.getTime();
+      const isPast = progZero.getTime() < todayZero.getTime();
+      const isFinished = ent.status === 'ENTREGUE' || ent.status === 'VALIDACAO';
+
+      if (isToday) {
+        totalDia++;
+        valorDia += ent.valor || 0;
+        if (isFinished) {
+          realizadasDia++;
+        }
+      }
+
+      if (isPast && !isFinished && ent.status !== 'CANCELADA') {
+        atrasadasTotal++;
+      }
+    });
+
+    return {
+      totalDia,
+      realizadasDia,
+      valorDia,
+      atrasadasTotal
+    };
+  };
+
+  const metrics = getMetrics();
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       <Sidebar />
@@ -699,6 +741,69 @@ export default function GestaoEntregasPage() {
             </button>
           </div>
         </header>
+
+        {/* CARDS INDICADORES METRICAS */}
+        <section className="px-8 pt-6 select-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Total Programadas */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Programadas Hoje</span>
+              <p className="text-2xl font-black text-slate-800 leading-none">{metrics.totalDia}</p>
+              <span className="text-[9.5px] text-slate-450 font-bold block leading-none">Entregas agendadas</span>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-sm shadow-blue-100">
+              <Calendar size={20} className="stroke-[2.5]" />
+            </div>
+          </div>
+
+          {/* Card 2: Realizadas */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Realizadas Hoje</span>
+              <p className="text-2xl font-black text-emerald-600 leading-none">{metrics.realizadasDia}</p>
+              <span className="text-[9.5px] text-slate-455 font-bold block leading-none">
+                {metrics.totalDia > 0 ? `${Math.round((metrics.realizadasDia / metrics.totalDia) * 105) > 100 ? 100 : Math.round((metrics.realizadasDia / metrics.totalDia) * 100)}% de taxa de conclusão` : 'Sem agendamentos'}
+              </span>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-sm shadow-emerald-100">
+              <CheckCircle size={20} className="stroke-[2.5]" />
+            </div>
+          </div>
+
+          {/* Card 3: Atrasadas */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Entregas Atrasadas</span>
+              <p className={`text-2xl font-black leading-none ${metrics.atrasadasTotal > 0 ? 'text-rose-600 animate-pulse' : 'text-slate-800'}`}>
+                {metrics.atrasadasTotal}
+              </p>
+              <span className="text-[9.5px] text-slate-455 font-bold block leading-none">Acumuladas de dias anteriores</span>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-sm ${
+              metrics.atrasadasTotal > 0 
+                ? 'bg-rose-50 text-rose-600 shadow-rose-100' 
+                : 'bg-slate-50 text-slate-500 shadow-slate-100'
+            }`}>
+              <ShieldAlert size={20} className="stroke-[2.5]" />
+            </div>
+          </div>
+
+          {/* Card 4: Faturamento/Valor */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs transition-all duration-300">
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valor em Rota</span>
+              <p className="text-2xl font-black text-slate-800 leading-none">
+                {metrics.valorDia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+              </p>
+              <span className="text-[9.5px] text-slate-455 font-bold block leading-none">Faturamento total do dia</span>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-sm shadow-amber-100">
+              <DollarSign size={20} className="stroke-[2.5]" />
+            </div>
+          </div>
+
+        </section>
 
         {/* Barra de Filtros e Pesquisa */}
         <section className={viewMode === 'kanban' ? 'px-8 pt-8 pb-3 space-y-4' : 'px-8 py-6 space-y-4'}>
