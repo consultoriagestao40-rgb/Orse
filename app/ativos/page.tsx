@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
-  DollarSign, TrendingUp, Navigation, MapPin, History
+  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck
 } from 'lucide-react';
 
 import { 
@@ -2544,16 +2544,28 @@ export default function AtivosPage() {
               <footer className="p-6 pt-4 flex gap-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 {osForm.id && activeOsTab === 'details' && (() => {
                   const currentOs = ordens.find(o => o.id === osForm.id);
-                  return currentOs ? (
-                    <button 
-                      type="button"
-                      onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
-                      className="py-3 px-4 text-xs font-black text-slate-500 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                      title="Ver OS (PDF)"
-                    >
-                      <Printer size={14} className="stroke-[2.5]" /> PDF
-                    </button>
-                  ) : null;
+                  return (
+                    <div className="flex gap-2">
+                      {currentOs && (
+                        <button 
+                          type="button"
+                          onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
+                          className="py-3 px-4 text-xs font-black text-slate-500 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                          title="Ver OS (PDF)"
+                        >
+                          <Printer size={14} className="stroke-[2.5]" /> PDF
+                        </button>
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => { setModalOsOpen(false); handleDeleteOs(osForm.id); }}
+                        className="py-3 px-4 text-xs font-black text-red-500 hover:bg-red-50 hover:text-red-700 border border-slate-200 hover:border-red-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                        title="Excluir Ordem de Serviço"
+                      >
+                        <Trash2 size={14} className="stroke-[2.5]" /> Excluir
+                      </button>
+                    </div>
+                  );
                 })()}
                 <button 
                   type="button"
@@ -3254,6 +3266,66 @@ export default function AtivosPage() {
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ALERTA PREMIUM */}
+      {customAlert.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center border shadow-lg shadow-slate-100 animate-bounce">
+                {customAlert.type === 'error' && <Shield className="text-red-500" size={32} />}
+                {customAlert.type === 'warning' && <Shield className="text-amber-500" size={32} />}
+                {customAlert.type === 'success' && <UserCheck className="text-emerald-500" size={32} />}
+                {customAlert.type === 'info' && <Users className="text-blue-500" size={32} />}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customAlert.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{customAlert.message}</p>
+              </div>
+              <button 
+                onClick={() => setCustomAlert(prev => ({ ...prev, open: false }))}
+                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#1B4D3E]/10 cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
+      {customConfirm.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center border border-amber-100 bg-amber-50/50 text-amber-600 shadow-lg shadow-amber-50 animate-pulse">
+                <Trash2 size={32} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customConfirm.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed">{customConfirm.message}</p>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setCustomConfirm(prev => ({ ...prev, open: false }))}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    customConfirm.onConfirm();
+                    setCustomConfirm(prev => ({ ...prev, open: false }));
+                  }}
+                  className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-600/10 cursor-pointer"
+                >
+                  Confirmar Exclusão
+                </button>
+              </div>
             </div>
           </div>
         </div>
