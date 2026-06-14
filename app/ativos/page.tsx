@@ -2692,10 +2692,37 @@ export default function AtivosPage() {
                       
                       {/* Centered days indicator */}
                       <div className="text-center select-none">
-                        <span className="text-3xl font-black text-slate-800 leading-none">
-                          {slaMedioDias.toFixed(1)}
-                        </span>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Dias de SLA</p>
+                        {(() => {
+                          let slaValorExibicao = "0.0";
+                          let slaUnidadeExibicao = "Dias de SLA";
+
+                          if (slaMedioDias > 0) {
+                            if (slaMedioDias >= 1) {
+                              slaValorExibicao = slaMedioDias.toFixed(1);
+                              slaUnidadeExibicao = slaMedioDias === 1 ? "Dia de SLA" : "Dias de SLA";
+                            } else {
+                              const slaMedioHoras = slaMedioDias * 24;
+                              if (slaMedioHoras >= 1) {
+                                slaValorExibicao = slaMedioHoras.toFixed(1);
+                                slaUnidadeExibicao = slaMedioHoras === 1 ? "Hora de SLA" : "Horas de SLA";
+                              } else {
+                                const slaMedioMinutos = slaMedioHoras * 60;
+                                slaValorExibicao = Math.round(slaMedioMinutos).toString();
+                                slaUnidadeExibicao = Math.round(slaMedioMinutos) === 1 ? "Minuto de SLA" : "Minutos de SLA";
+                              }
+                            }
+                          }
+                          return (
+                            <>
+                              <span className="text-3xl font-black text-slate-800 leading-none">
+                                {slaValorExibicao}
+                              </span>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                {slaUnidadeExibicao}
+                              </p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
