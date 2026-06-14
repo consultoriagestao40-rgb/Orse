@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, ChevronUp, ChevronDown, FileCheck, CheckCircle,
-  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck, Car
+  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck, Car, ShieldAlert, XCircle
 } from 'lucide-react';
 
 import { 
@@ -696,7 +696,8 @@ export default function AtivosPage() {
   };
 
   const handleUpdateOsStatus = async (osId: string, newStatus: string) => {
-    if (newStatus === 'CONCLUIDA') {
+    const os = ordens.find(o => o.id === osId);
+    if (newStatus === 'CONCLUIDA' && os?.status !== 'VALIDACAO') {
       handleConcludeOs(osId);
       return;
     }
@@ -2425,9 +2426,9 @@ export default function AtivosPage() {
         {/* ───────────────────────────────────────────────────────────────────
             MODAL CADASTRO / ABERTURA DE ORDEM DE SERVIÇO (OS)
             ─────────────────────────────────────────────────────────────────── */}
-        {modalOsOpen && (
+         {modalOsOpen && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-100 animate-fade-in text-left flex flex-col max-h-[90vh]">
               <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
                 <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                   <Wrench size={16} className="stroke-[2.5]" />
@@ -2465,6 +2466,37 @@ export default function AtivosPage() {
 
                 {(!osForm.id || activeOsTab === 'details') && (
                   <div className="space-y-4">
+                    {osForm.id && ordens.find(o => o.id === osForm.id)?.status === 'VALIDACAO' && (
+                      <div className="bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 space-y-3">
+                        <div className="flex gap-2">
+                          <ShieldAlert className="text-purple-600 shrink-0 mt-0.5" size={16} />
+                          <div className="text-left space-y-1">
+                            <h4 className="text-xs font-black text-purple-900 uppercase tracking-tight">OS aguardando validação</h4>
+                            <p className="text-[10.5px] font-semibold text-purple-700 leading-relaxed">
+                              O técnico concluiu o atendimento em campo e enviou o relatório, fotos e assinatura do cliente para sua validação.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateOsStatus(osForm.id, 'CONCLUIDA')}
+                            disabled={updatingOsId === osForm.id}
+                            className="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                          >
+                            <CheckCircle size={13} className="stroke-[2.5]" /> Validar & Concluir
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateOsStatus(osForm.id, 'EM_ANDAMENTO')}
+                            disabled={updatingOsId === osForm.id}
+                            className="flex-1 py-2 px-3 bg-white border border-purple-200 hover:bg-purple-50 text-purple-600 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            <XCircle size={13} className="stroke-[2.5]" /> Recusar & Retornar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Serviço *</label>
@@ -2741,52 +2773,59 @@ export default function AtivosPage() {
                 })()}
               </div>
 
-              <footer className="p-6 pt-4 flex gap-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
-                {osForm.id && activeOsTab === 'details' && (() => {
-                  const currentOs = ordens.find(o => o.id === osForm.id);
-                  return (
-                    <div className="flex gap-2">
-                      {currentOs && (
+              <footer className="p-6 pt-4 flex justify-between items-center border-t border-slate-100 shrink-0 bg-slate-50/50 select-none">
+                {/* Ações Secundárias / Destrutivas (Esquerda) */}
+                <div>
+                  {osForm.id && activeOsTab === 'details' && (() => {
+                    const currentOs = ordens.find(o => o.id === osForm.id);
+                    return (
+                      <div className="flex gap-2">
+                        {currentOs && (
+                          <button 
+                            type="button"
+                            onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
+                            className="py-2.5 px-4 text-xs font-black text-slate-500 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                            title="Ver OS (PDF)"
+                          >
+                            <Printer size={14} className="stroke-[2.5]" /> PDF
+                          </button>
+                        )}
                         <button 
                           type="button"
-                          onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
-                          className="py-3 px-4 text-xs font-black text-slate-500 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                          title="Ver OS (PDF)"
+                          onClick={() => { setModalOsOpen(false); handleDeleteOs(osForm.id); }}
+                          className="py-2.5 px-4 text-xs font-black text-red-500 hover:bg-red-50 hover:text-red-700 border border-slate-200 hover:border-red-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                          title="Excluir Ordem de Serviço"
                         >
-                          <Printer size={14} className="stroke-[2.5]" /> PDF
+                          <Trash2 size={14} className="stroke-[2.5]" /> Excluir
                         </button>
-                      )}
-                      <button 
-                        type="button"
-                        onClick={() => { setModalOsOpen(false); handleDeleteOs(osForm.id); }}
-                        className="py-3 px-4 text-xs font-black text-red-500 hover:bg-red-50 hover:text-red-700 border border-slate-200 hover:border-red-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                        title="Excluir Ordem de Serviço"
-                      >
-                        <Trash2 size={14} className="stroke-[2.5]" /> Excluir
-                      </button>
-                    </div>
-                  );
-                })()}
-                <button 
-                  type="button"
-                  onClick={() => setModalOsOpen(false)}
-                  className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="button"
-                  onClick={handleSaveOs}
-                  disabled={saving}
-                  className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  {saving ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    <Save size={14} />
-                  )}
-                  {saving ? 'Gravando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
-                </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Ações Principais (Direita) */}
+                <div className="flex gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setModalOsOpen(false)}
+                    className="py-2.5 px-4 text-xs font-black text-slate-500 uppercase hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleSaveOs}
+                    disabled={saving}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-2.5 px-5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98] cursor-pointer whitespace-nowrap"
+                  >
+                    {saving ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <Save size={14} className="stroke-[2.5]" />
+                    )}
+                    {saving ? 'Gravando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
+                  </button>
+                </div>
               </footer>
             </div>
           </div>
