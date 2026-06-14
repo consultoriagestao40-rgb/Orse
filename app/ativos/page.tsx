@@ -2872,12 +2872,12 @@ export default function AtivosPage() {
                             {hoveredKpiOsType ? (
                               (() => {
                                 const activeItem = osTypeList.find(o => o.tipo === hoveredKpiOsType);
-                                const displayPct = activeItem?.tipo === 'RETIRADA' ? activeItem.pctBaseAtivos : activeItem?.pct || 0;
+                                const displayPct = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(activeItem?.tipo || '') ? activeItem?.pctBaseAtivos : activeItem?.pct || 0;
                                 return (
                                   <>
                                     <span className="text-[7.5px] font-black text-slate-405 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
                                     <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
-                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({displayPct.toFixed(displayPct < 1 && displayPct > 0 ? 2 : 1)}%)</span>
+                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({(displayPct || 0).toFixed((displayPct || 0) < 1 && (displayPct || 0) > 0 ? 2 : 1)}%)</span>
                                   </>
                                 );
                               })()
@@ -2890,26 +2890,72 @@ export default function AtivosPage() {
                           </div>
                         </div>
 
-                        {/* Legenda Customizada */}
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4 w-full select-none">
+                        {/* Legenda Customizada (Lista Vertical) */}
+                        <div className="flex flex-col gap-1.5 mt-4 w-full select-none border-b border-slate-200/50 pb-3.5">
                           {osTypeList.map(item => {
                             const isHovered = hoveredKpiOsType === item.tipo;
-                            const displayPct = item.tipo === 'RETIRADA' ? item.pctBaseAtivos : item.pct;
+                            const displayPct = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo) ? item.pctBaseAtivos : item.pct;
                             return (
                               <div 
                                 key={item.tipo} 
-                                className={`flex items-center gap-1.5 p-1 rounded-lg transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-102' : ''}`}
+                                className={`flex items-center justify-between p-1.5 rounded-xl transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-102' : ''}`}
                                 onMouseEnter={() => setHoveredKpiOsType(item.tipo)}
                                 onMouseLeave={() => setHoveredKpiOsType(null)}
                               >
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
-                                <span className="text-[9px] font-bold text-slate-655 truncate uppercase leading-none">
-                                  {item.label}: <strong className="text-slate-850 font-black">{item.count}</strong>
-                                  <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(displayPct < 1 && displayPct > 0 ? 2 : 1)}%)</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
+                                  <span className="text-[9.5px] font-extrabold text-slate-600 uppercase leading-none">
+                                    {item.label}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-black text-slate-800 leading-none">
+                                  {item.count} <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(1)}%)</span>
                                 </span>
                               </div>
                             );
                           })}
+                        </div>
+
+                        {/* Indicadores de Crescimento, Troca & Encerramento em Relação aos Ativos */}
+                        <div className="mt-3.5 grid grid-cols-3 gap-2 w-full select-none">
+                          {/* % Crescimento */}
+                          <div className="bg-emerald-50/50 border border-emerald-100 p-2 rounded-2xl text-center">
+                            <span className="text-[7.5px] font-black text-emerald-850 uppercase tracking-wider block">% Crescimento</span>
+                            <span className="text-xs font-black text-emerald-700 block mt-0.5">
+                              {(() => {
+                                const countInstalacao = osPorTipo['INSTALACAO'] || 0;
+                                const pctCrescimento = totalAtivos > 0 ? (countInstalacao / totalAtivos) * 100 : 0;
+                                return `${pctCrescimento.toFixed(1)}%`;
+                              })()}
+                            </span>
+                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Novas Inst./Ativos</span>
+                          </div>
+
+                          {/* % Troca */}
+                          <div className="bg-purple-50/50 border border-purple-100 p-2 rounded-2xl text-center">
+                            <span className="text-[7.5px] font-black text-purple-850 uppercase tracking-wider block">% Troca</span>
+                            <span className="text-xs font-black text-purple-700 block mt-0.5">
+                              {(() => {
+                                const countTroca = osPorTipo['TROCA'] || 0;
+                                const pctTroca = totalAtivos > 0 ? (countTroca / totalAtivos) * 100 : 0;
+                                return `${pctTroca.toFixed(1)}%`;
+                              })()}
+                            </span>
+                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Trocas/Ativos</span>
+                          </div>
+
+                          {/* % Encerramento */}
+                          <div className="bg-rose-50/50 border border-rose-100 p-2 rounded-2xl text-center">
+                            <span className="text-[7.5px] font-black text-rose-850 uppercase tracking-wider block">% Encerramento</span>
+                            <span className="text-xs font-black text-rose-700 block mt-0.5">
+                              {(() => {
+                                const countRetirada = osPorTipo['RETIRADA'] || 0;
+                                const pctEncerramento = totalAtivos > 0 ? (countRetirada / totalAtivos) * 100 : 0;
+                                return `${pctEncerramento.toFixed(1)}%`;
+                              })()}
+                            </span>
+                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Retiradas/Ativos</span>
+                          </div>
                         </div>
                       </div>
 
