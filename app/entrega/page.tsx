@@ -1927,13 +1927,19 @@ export default function GestaoEntregasPage() {
                 <div>
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                     <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
-                    Valor das Entregas por Mês (Faturamento)
+                    Valor & Volume das Entregas por Mês
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Total faturado em entregas nos últimos 6 meses</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Comparativo de faturamento e quantidade de entregas nos últimos 6 meses</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3.5 h-2 bg-[#1B4D3E]/20 rounded inline-block" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Entregas (Qtd)</span>
+                  </div>
                 </div>
               </div>
 
@@ -1962,6 +1968,43 @@ export default function GestaoEntregasPage() {
                       </g>
                     );
                   })}
+
+                  {/* Barras de Quantidade de Entregas (Volume) */}
+                  {(() => {
+                    const maxVolume = Math.max(...kpis.monthlyData.map(d => d.volume), 1);
+                    return kpis.monthlyData.map((d, i) => {
+                      const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
+                      const barHeight = (d.volume / maxVolume) * 110;
+                      const barY = 180 - barHeight;
+                      const showInside = barHeight >= 16;
+                      const labelY = showInside ? (barY + 10) : (barY - 4);
+                      const labelClass = showInside 
+                        ? "fill-[#1B4D3E] font-black text-[8.5px] font-sans" 
+                        : "fill-slate-400 font-extrabold text-[8.5px] font-sans";
+
+                      return (
+                        <g key={i} className="opacity-95">
+                          {d.volume > 0 && (
+                            <>
+                              <rect
+                                x={x - 12}
+                                y={barY}
+                                width="24"
+                                height={barHeight}
+                                fill="#1B4D3E"
+                                fillOpacity="0.12"
+                                rx="4"
+                                ry="4"
+                              />
+                              <text x={x} y={labelY} textAnchor="middle" className={labelClass}>
+                                {d.volume} {d.volume === 1 ? 'ent.' : 'ent.'}
+                              </text>
+                            </>
+                          )}
+                        </g>
+                      );
+                    });
+                  })()}
 
                   {/* Caminhos da Linha e Área */}
                   {(() => {
