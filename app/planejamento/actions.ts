@@ -7,6 +7,12 @@ import { revalidatePath } from 'next/cache';
 const PLANNING_TITLE = "__SYSTEM_PLANNING_DATA__";
 
 // Interface Types
+export interface CauseStage {
+  id: string;
+  nome: string;
+  color: string;
+}
+
 export interface RootCauseAnalysis {
   id: string;
   tipo: '5_PORQUES' | 'ISHIKAWA';
@@ -23,7 +29,7 @@ export interface RootCauseAnalysis {
   causaRaiz: string;
   createdAt: string;
   userId: string;
-  status: 'RASCUNHO' | 'EM_ANALISE' | 'EM_REVISAO' | 'CONCLUIDA';
+  status: string;
 }
 
 export interface SubAction {
@@ -104,6 +110,7 @@ export interface PlanningDataStore {
   planosAcao: ActionPlan[];
   okrCiclos: OKRCiclo[];
   postits: BrainstormPostit[];
+  causasStages?: CauseStage[];
 }
 
 // Get or Create Planning Ata record in DB
@@ -286,6 +293,16 @@ export async function getPlanningData() {
           }
           return c;
         });
+      }
+
+      if (!data.causasStages) {
+        data.causasStages = [
+          { id: 'RASCUNHO', nome: 'Rascunho', color: '#64748B' },
+          { id: 'EM_ANALISE', nome: 'Em análise', color: '#F59E0B' },
+          { id: 'EM_REVISAO', nome: 'Em revisão', color: '#3B82F6' },
+          { id: 'CONCLUIDA', nome: 'Concluída', color: '#10B981' }
+        ];
+        hasMigration = true;
       }
       
       if (data.planosAcao) {
@@ -611,5 +628,24 @@ export async function deletePostit(id: string) {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Erro ao excluir post-it' };
+  }
+}
+
+// Action: Save Cause Stages
+export async function saveCausaStages(stages: CauseStage[]) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    const ata = await getOrCreatePlanningAta(user.tenantId!);
+    const store = ata.pautas as unknown as PlanningDataStore;
+
+    store.causasStages = stages;
+
+    await saveStoreData(user.tenantId!, store);
+    revalidatePath('/planejamento');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Erro ao salvar estágios de causa' };
   }
 }

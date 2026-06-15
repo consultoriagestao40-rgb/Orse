@@ -21,6 +21,7 @@ import {
   Layers,
   Percent,
   Edit,
+  Edit2,
   X,
   ArrowLeft
 } from 'lucide-react';
@@ -36,13 +37,82 @@ import {
   deleteOkrCiclo, 
   savePostit, 
   deletePostit, 
+  saveCausaStages,
   RootCauseAnalysis, 
   ActionPlan, 
   OKRCiclo, 
   OKRObjective, 
   KR, 
-  BrainstormPostit 
+  BrainstormPostit,
+  CauseStage
 } from './actions';
+
+const tailwindColorMap: { [key: string]: string } = {
+  sky: '#0284c7',
+  blue: '#2563eb',
+  orange: '#ea580c',
+  amber: '#d97706',
+  emerald: '#059669',
+  green: '#16a34a',
+  red: '#dc2626',
+  rose: '#e11d48',
+  purple: '#9333ea',
+  violet: '#7c3aed',
+  yellow: '#ca8a04',
+  indigo: '#4f46e5',
+  pink: '#db2777',
+  teal: '#0d9488',
+  slate: '#475569',
+  gray: '#4b5563',
+  'bg-slate-100': '#64748b',
+  'bg-blue-100': '#3b82f6',
+  'bg-green-100': '#10b981',
+  'bg-emerald-100': '#10b981',
+  'bg-amber-100': '#f59e0b',
+  'bg-rose-100': '#f43f5e',
+  'bg-purple-100': '#8b5cf6',
+};
+
+const resolveColorToHex = (color?: string): string => {
+  if (!color) return '#64748b';
+  const lower = color.toLowerCase().trim();
+  if (lower.startsWith('#')) return lower;
+  if (tailwindColorMap[lower]) return tailwindColorMap[lower];
+  const stripped = lower.replace('bg-', '').split('-')[0];
+  return tailwindColorMap[stripped] || '#64748b';
+};
+
+const normalizeHex = (hex: string) => {
+  let h = hex.replace('#', '');
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  return '#' + h;
+};
+
+const getContrastYIQ = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 140) ? 'black' : 'white';
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const PRESET_COLORS = [
+  '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
+  '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
+  '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
+  '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
+];
 
 export default function PlanejamentoPage() {
   // Navigation Tabs
@@ -55,6 +125,15 @@ export default function PlanejamentoPage() {
   const [okrCiclos, setOkrCiclos] = useState<OKRCiclo[]>([]);
   const [postits, setPostits] = useState<BrainstormPostit[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [stagesCausa, setStagesCausa] = useState<CauseStage[]>([]);
+
+  // Editing column stages
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const [editingStageName, setEditingStageName] = useState<string>('');
+
+  // Drag and drop states for Cause Kanban
+  const [draggedCausaId, setDraggedCausaId] = useState<string | null>(null);
+  const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null);
 
   // Modals & Form States
   const [isEditingCausa, setIsEditingCausa] = useState(false);
@@ -300,11 +379,19 @@ export default function PlanejamentoPage() {
     return (
       <div 
         key={c.id} 
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData('causaId', c.id);
+          setDraggedCausaId(c.id);
+        }}
+        onDragEnd={() => setDraggedCausaId(null)}
         onClick={() => {
           setCurrentCausa(c);
           setIsEditingCausa(true);
         }}
-        className="bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs hover:shadow-2xs transition-all cursor-pointer relative group flex flex-col gap-3 text-left animate-in fade-in duration-200"
+        className={`bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs hover:shadow-2xs transition-all cursor-grab active:cursor-grabbing relative group flex flex-col gap-3 text-left animate-in fade-in duration-200 ${
+          draggedCausaId === c.id ? 'opacity-40 border-dashed border-[#1B4D3E]' : ''
+        }`}
       >
         <button 
           onClick={(e) => {
@@ -373,6 +460,12 @@ export default function PlanejamentoPage() {
       setPlanosAcao(resPlanning.data.planosAcao);
       setOkrCiclos(resPlanning.data.okrCiclos);
       setPostits(resPlanning.data.postits);
+      setStagesCausa(resPlanning.data.causasStages || [
+        { id: 'RASCUNHO', nome: 'Rascunho', color: '#64748B' },
+        { id: 'EM_ANALISE', nome: 'Em análise', color: '#F59E0B' },
+        { id: 'EM_REVISAO', nome: 'Em revisão', color: '#3B82F6' },
+        { id: 'CONCLUIDA', nome: 'Concluída', color: '#10B981' }
+      ]);
       
       if (resPlanning.data.okrCiclos.length > 0 && !activeCicloId) {
         setActiveCicloId(resPlanning.data.okrCiclos[0].id);
@@ -400,6 +493,84 @@ export default function PlanejamentoPage() {
     } else {
       alert('Erro ao salvar análise de causa: ' + res.error);
       setLoading(false);
+    }
+  };
+
+  const handleCreateCausaStage = async (insertAfterId?: string) => {
+    const nome = prompt('Nome do novo status/etapa (ex: Em Revisão):');
+    if (!nome || !nome.trim()) return;
+    
+    setLoading(true);
+    const newStage: CauseStage = {
+      id: 'stage-' + Date.now(),
+      nome: nome.trim(),
+      color: '#E2E8F0'
+    };
+
+    let updatedStages = [...stagesCausa];
+    if (insertAfterId) {
+      const idx = updatedStages.findIndex(s => s.id === insertAfterId);
+      if (idx !== -1) {
+        updatedStages.splice(idx + 1, 0, newStage);
+      } else {
+        updatedStages.push(newStage);
+      }
+    } else {
+      updatedStages.push(newStage);
+    }
+
+    const res = await saveCausaStages(updatedStages);
+    if (res.success) {
+      setStagesCausa(updatedStages);
+    } else {
+      alert('Erro ao criar etapa: ' + res.error);
+    }
+    setLoading(false);
+  };
+
+  const handleUpdateCausaStage = async (id: string, updates: Partial<CauseStage>) => {
+    const updatedStages = stagesCausa.map(s => s.id === id ? { ...s, ...updates } : s);
+    setStagesCausa(updatedStages);
+    await saveCausaStages(updatedStages);
+  };
+
+  const handleDeleteCausaStage = async (id: string) => {
+    const causesInStage = causas.filter(c => c.status === id);
+    if (causesInStage.length > 0) {
+      alert('Não é possível excluir um status/etapa que contém análises ativas. Mova as análises primeiro.');
+      return;
+    }
+
+    if (!confirm('Deseja realmente excluir esta etapa/status?')) return;
+
+    setLoading(true);
+    const updatedStages = stagesCausa.filter(s => s.id !== id);
+    const res = await saveCausaStages(updatedStages);
+    if (res.success) {
+      setStagesCausa(updatedStages);
+    } else {
+      alert('Erro ao excluir etapa: ' + res.error);
+    }
+    setLoading(false);
+  };
+
+  const handleDropCausa = async (e: React.DragEvent, targetStageId: string) => {
+    e.preventDefault();
+    setDraggedOverStageId(null);
+    const causaId = e.dataTransfer.getData('causaId') || draggedCausaId;
+    if (!causaId) return;
+
+    setDraggedCausaId(null);
+    const targetCausa = causas.find(c => c.id === causaId);
+    if (!targetCausa || targetCausa.status === targetStageId) return;
+
+    setCausas(prev => prev.map(c => c.id === causaId ? { ...c, status: targetStageId } : c));
+
+    const updatedCausa = { ...targetCausa, status: targetStageId };
+    const res = await saveRootCause(updatedCausa);
+    if (!res.success) {
+      alert('Erro ao atualizar status da causa: ' + res.error);
+      await loadData();
     }
   };
 
@@ -768,25 +939,28 @@ export default function PlanejamentoPage() {
                         <div className="space-y-1 col-span-1 md:col-span-2">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Status da Análise</label>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {[
-                              { value: 'RASCUNHO', label: 'Rascunho', bg: 'bg-slate-500 border-slate-500 text-white hover:bg-slate-600' },
-                              { value: 'EM_ANALISE', label: 'Em análise', bg: 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600' },
-                              { value: 'EM_REVISAO', label: 'Em revisão', bg: 'bg-blue-500 border-blue-500 text-white hover:bg-blue-600' },
-                              { value: 'CONCLUIDA', label: 'Concluída', bg: 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700' }
-                            ].map(st => {
-                              const active = currentCausa.status === st.value;
+                            {stagesCausa.map(st => {
+                              const active = currentCausa.status === st.id;
+                              const resolvedHex = resolveColorToHex(st.color);
+                              const contrast = getContrastYIQ(resolvedHex);
+                              const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                              const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+                              const textHex = getDarkenedHexForText(resolvedHex);
+
                               return (
                                 <button
-                                  key={st.value}
+                                  key={st.id}
                                   type="button"
-                                  onClick={() => setCurrentCausa(prev => ({ ...prev, status: st.value as any }))}
-                                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                                    active 
-                                      ? `${st.bg} shadow-2xs` 
-                                      : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                                  }`}
+                                  onClick={() => setCurrentCausa(prev => ({ ...prev, status: st.id as any }))}
+                                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer`}
+                                  style={{
+                                    backgroundColor: active ? resolvedHex : bgRgba,
+                                    borderColor: active ? resolvedHex : borderRgba,
+                                    color: active ? (contrast === 'white' ? '#fff' : '#000') : textHex,
+                                    boxShadow: active ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                                  }}
                                 >
-                                  {st.label}
+                                  {st.nome}
                                 </button>
                               );
                             })}
@@ -840,7 +1014,7 @@ export default function PlanejamentoPage() {
                       {(currentCausa.tipo === '5_PORQUES' || !currentCausa.tipo) && (
                         <div className="border-t border-slate-100 pt-4 space-y-3">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Análise dos 5 Porquês</label>
-                          {currentCausa.porques?.map((pq, idx) => (
+                          {(currentCausa.porques || []).map((pq, idx) => (
                             <div key={idx} className="flex gap-3 items-center">
                               <span className="w-20 text-[9px] font-black text-slate-400 uppercase">Porquê {idx + 1}:</span>
                               <input 
@@ -855,8 +1029,36 @@ export default function PlanejamentoPage() {
                                 className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
                                 placeholder={`Por que esse problema ocorre?`}
                               />
+                              {(currentCausa.porques || []).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newPorques = [...(currentCausa.porques || [])];
+                                    newPorques.splice(idx, 1);
+                                    setCurrentCausa(prev => ({ ...prev, porques: newPorques }));
+                                  }}
+                                  className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent"
+                                  title="Remover Porquê"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              )}
                             </div>
                           ))}
+
+                          <div className="pt-2 flex justify-start">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newPorques = [...(currentCausa.porques || [])];
+                                newPorques.push('');
+                                setCurrentCausa(prev => ({ ...prev, porques: newPorques }));
+                              }}
+                              className="px-4 py-2 border border-dashed border-slate-350 hover:border-[#1B4D3E]/50 rounded-xl text-slate-500 hover:text-[#1B4D3E] flex items-center gap-1.5 transition-all text-xs font-bold cursor-pointer bg-transparent"
+                            >
+                              <Plus size={14} /> Adicionar Porquê
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -1125,40 +1327,43 @@ export default function PlanejamentoPage() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                              {causas.map(c => {
-                                let statusBadge = 'bg-slate-50 border-slate-200 text-slate-650';
-                                let statusText = 'Rascunho';
-                                if (c.status === 'EM_ANALISE') {
-                                  statusBadge = 'bg-amber-50 border-amber-200 text-amber-755';
-                                  statusText = 'Em análise';
-                                } else if (c.status === 'EM_REVISAO') {
-                                  statusBadge = 'bg-blue-50 border-blue-200 text-blue-755';
-                                  statusText = 'Em revisão';
-                                } else if (c.status === 'CONCLUIDA') {
-                                  statusBadge = 'bg-emerald-50 border-emerald-250 text-emerald-755';
-                                  statusText = 'Concluída';
-                                }
+                               {causas.map(c => {
+                                 const stage = stagesCausa.find(s => s.id === c.status);
+                                 const statusText = stage ? stage.nome : 'Rascunho';
+                                 const stageColor = stage ? stage.color : '#64748B';
+                                 const resolvedHex = resolveColorToHex(stageColor);
+                                 const contrast = getContrastYIQ(resolvedHex);
+                                 const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                                 const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+                                 const textHex = getDarkenedHexForText(resolvedHex);
 
-                                return (
-                                  <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
-                                    <td 
-                                      className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer max-w-[250px] truncate" 
-                                      onClick={() => { setCurrentCausa(c); setIsEditingCausa(true); }}
-                                    >
-                                      {c.problema}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                      <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${
-                                        c.tipo === '5_PORQUES' ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E]' : 'bg-slate-800/10 border-slate-800/20 text-slate-850'
-                                      }`}>
-                                        {c.tipo === '5_PORQUES' ? '5 Porquês' : 'Ishikawa'}
-                                      </span>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                      <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${statusBadge}`}>
-                                        {statusText}
-                                      </span>
-                                    </td>
+                                 return (
+                                   <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                                     <td 
+                                       className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer max-w-[250px] truncate" 
+                                       onClick={() => { setCurrentCausa(c); setIsEditingCausa(true); }}
+                                     >
+                                       {c.problema}
+                                     </td>
+                                     <td className="py-4 px-6">
+                                       <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${
+                                         c.tipo === '5_PORQUES' ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E]' : 'bg-slate-800/10 border-slate-800/20 text-slate-850'
+                                       }`}>
+                                         {c.tipo === '5_PORQUES' ? '5 Porquês' : 'Ishikawa'}
+                                       </span>
+                                     </td>
+                                     <td className="py-4 px-6">
+                                       <span 
+                                         className="text-[9px] font-black uppercase border rounded-md px-2 py-0.5"
+                                         style={{
+                                           backgroundColor: bgRgba,
+                                           borderColor: borderRgba,
+                                           color: textHex
+                                         }}
+                                       >
+                                         {statusText}
+                                       </span>
+                                     </td>
                                     <td className="py-4 px-6 text-slate-500 max-w-[200px] truncate">
                                       {c.causaRaiz || '-'}
                                     </td>
@@ -1192,34 +1397,281 @@ export default function PlanejamentoPage() {
                       </div>
                     ) : (
                       /* VISÃO KANBAN */
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[
-                          { status: 'RASCUNHO', label: 'Rascunho', colorDot: 'bg-slate-400', colorBadge: 'bg-slate-100 text-slate-700' },
-                          { status: 'EM_ANALISE', label: 'Em análise', colorDot: 'bg-amber-500 animate-pulse', colorBadge: 'bg-amber-100 text-amber-800' },
-                          { status: 'EM_REVISAO', label: 'Em revisão', colorDot: 'bg-blue-500 animate-pulse', colorBadge: 'bg-blue-100 text-blue-800' },
-                          { status: 'CONCLUIDA', label: 'Concluídas', colorDot: 'bg-emerald-500', colorBadge: 'bg-emerald-100 text-emerald-800' }
-                        ].map(col => {
-                          const filteredCausas = causas.filter(c => c.status === col.status);
-                          return (
-                            <div key={col.status} className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px] relative">
-                              <div className="flex justify-between items-center px-1 select-none sticky top-0 bg-slate-50/95 backdrop-blur-xs py-2 z-10 border-b border-slate-200/50 mb-1">
-                                <h3 className="text-xs font-black text-slate-750 uppercase tracking-wider flex items-center gap-1.5">
-                                  <span className={`w-2.5 h-2.5 rounded-full ${col.colorDot}`}></span> {col.label}
-                                </h3>
-                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${col.colorBadge}`}>
-                                  {filteredCausas.length}
-                                </span>
-                              </div>
-                              <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
-                                {filteredCausas.length === 0 ? (
-                                  <span className="text-[10.5px] italic text-slate-400 text-center py-6">Sem análises nesta etapa</span>
-                                ) : (
-                                  filteredCausas.map(c => renderCausaKanbanCard(c))
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="overflow-x-auto pb-4 w-full">
+                        <div className="flex gap-[3px] select-none min-w-max pb-2">
+                          {(() => {
+                            const columns = stagesCausa.map(s => ({
+                              id: s.id,
+                              nome: s.nome,
+                              color: s.color,
+                              causas: causas.filter(c => c.status === s.id)
+                            }));
+
+                            return (
+                              <>
+                                {columns.map((col, idx) => {
+                                  const isFirst = idx === 0;
+                                  const isLast = idx === columns.length - 1;
+                                  const resolvedHex = resolveColorToHex(col.color);
+                                  const contrast = getContrastYIQ(resolvedHex);
+                                  const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                                  const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+
+                                  return (
+                                    <div
+                                      key={col.id}
+                                      className="flex flex-col flex-shrink-0 transition-opacity duration-200"
+                                      style={{ width: '274px' }}
+                                      onDragOver={(e) => {
+                                        e.preventDefault();
+                                        setDraggedOverStageId(col.id);
+                                      }}
+                                      onDragLeave={() => setDraggedOverStageId(null)}
+                                      onDrop={(e) => handleDropCausa(e, col.id)}
+                                    >
+                                      {/* Column Header Sticky */}
+                                      <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (columns.length - idx) }}>
+                                        <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                                          <svg 
+                                            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                                            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                                            preserveAspectRatio="none"
+                                            style={{ color: resolvedHex }}
+                                          >
+                                            <path 
+                                              d={isFirst 
+                                                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                                                : isLast 
+                                                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                              }
+                                              fill="currentColor" 
+                                              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                                              strokeWidth="1"
+                                            />
+                                          </svg>
+                                          <div 
+                                            className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                                            style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                                          >
+                                            <div className="flex flex-col min-w-0 justify-center">
+                                              <h3 className="font-black uppercase tracking-wider text-[11px] truncate max-w-[150px] leading-none">
+                                                {col.nome}
+                                              </h3>
+                                              <span className="text-[10px] font-bold mt-1 opacity-90 truncate select-none leading-none">
+                                                {col.causas.length} {col.causas.length === 1 ? 'análise' : 'análises'}
+                                              </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setEditingStageName(col.nome);
+                                                  setEditingStageId(col.id);
+                                                }}
+                                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-155 flex items-center justify-center cursor-pointer hover:bg-black/5 text-inherit"
+                                                title="Editar Status"
+                                              >
+                                                <Edit size={12} />
+                                              </button>
+
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleCreateCausaStage(col.id);
+                                                }}
+                                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-155 flex items-center justify-center cursor-pointer hover:bg-black/5 text-inherit"
+                                                title="Criar Novo Status"
+                                              >
+                                                <Plus size={12} />
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          {/* Editing Stage Popover */}
+                                          {editingStageId === col.id && (
+                                            <>
+                                              <div 
+                                                className="fixed inset-0 z-30 cursor-default" 
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setEditingStageId(null);
+                                                }}
+                                              />
+                                              <div 
+                                                className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3.5 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                    Editar Status de Análise
+                                                  </span>
+                                                  <button 
+                                                    onClick={() => setEditingStageId(null)}
+                                                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors border-none bg-transparent cursor-pointer"
+                                                  >
+                                                    <X size={12} />
+                                                  </button>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Etapa/Status</label>
+                                                  <input
+                                                    type="text"
+                                                    value={editingStageName}
+                                                    onChange={(e) => setEditingStageName(e.target.value)}
+                                                    className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
+                                                    placeholder="Nome do status"
+                                                    onKeyDown={async (e) => {
+                                                      if (e.key === 'Enter') {
+                                                        if (editingStageName.trim() && editingStageName.trim().toUpperCase() !== col.nome.toUpperCase()) {
+                                                          await handleUpdateCausaStage(col.id, { nome: editingStageName.trim() });
+                                                        }
+                                                        setEditingStageId(null);
+                                                      }
+                                                    }}
+                                                  />
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                                                  <div className="grid grid-cols-10 gap-1 mt-0.5">
+                                                    {PRESET_COLORS.map(c => {
+                                                      const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                                                      return (
+                                                        <button
+                                                          key={c}
+                                                          onClick={() => handleUpdateCausaStage(col.id, { color: c })}
+                                                          className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer p-0"
+                                                          style={{
+                                                            backgroundColor: c,
+                                                            borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                                            borderWidth: isSelected ? '2px' : '1px'
+                                                          }}
+                                                          title={c}
+                                                          type="button"
+                                                        >
+                                                          {isSelected && (
+                                                            <div 
+                                                              className="w-1.5 h-1.5 rounded-full" 
+                                                              style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                                            />
+                                                          )}
+                                                        </button>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                                                  <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                                                    <input 
+                                                      type="color" 
+                                                      value={resolvedHex}
+                                                      onChange={(e) => handleUpdateCausaStage(col.id, { color: e.target.value })}
+                                                      className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                                                    />
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                                                  </label>
+                                                </div>
+
+                                                <div className="flex gap-2 pt-2 border-t border-slate-100">
+                                                  <button
+                                                    onClick={() => {
+                                                      setEditingStageId(null);
+                                                      handleCreateCausaStage(col.id);
+                                                    }}
+                                                    className="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
+                                                    type="button"
+                                                  >
+                                                    <Plus size={13} />
+                                                    Novo Status
+                                                  </button>
+                                                  <button
+                                                    onClick={() => {
+                                                      setEditingStageId(null);
+                                                      handleDeleteCausaStage(col.id);
+                                                    }}
+                                                    className="flex-1 py-1.5 px-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
+                                                    type="button"
+                                                  >
+                                                    <Trash2 size={13} />
+                                                    Excluir
+                                                  </button>
+                                                </div>
+
+                                                <button
+                                                  onClick={async () => {
+                                                    if (editingStageName.trim() && editingStageName.trim().toUpperCase() !== col.nome.toUpperCase()) {
+                                                      await handleUpdateCausaStage(col.id, { nome: editingStageName.trim() });
+                                                    }
+                                                    setEditingStageId(null);
+                                                  }}
+                                                  className="w-full py-1.5 bg-[#1B4D3E] text-white rounded-lg text-xs font-bold hover:bg-[#13382d] border-none cursor-pointer"
+                                                  type="button"
+                                                >
+                                                  Salvar Nome
+                                                </button>
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Card Column Container with Dynamic Colors */}
+                                      <div
+                                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex flex-col gap-3"
+                                        style={{
+                                          width: '274px',
+                                          minWidth: '274px',
+                                          maxWidth: '274px',
+                                          backgroundColor: bgRgba,
+                                          borderColor: borderRgba,
+                                          borderWidth: '0 1px 1px 1px',
+                                          borderStyle: 'solid',
+                                          height: 'calc(100vh - 280px)',
+                                          overflowY: 'auto'
+                                        }}
+                                        onDragOver={(e) => {
+                                          e.preventDefault();
+                                          setDraggedOverStageId(col.id);
+                                        }}
+                                        onDrop={(e) => handleDropCausa(e, col.id)}
+                                      >
+                                        {draggedOverStageId === col.id && draggedCausaId && (
+                                          <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-28 w-full animate-pulse flex items-center justify-center">
+                                            <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
+                                          </div>
+                                        )}
+
+                                        {col.causas.length === 0 ? (
+                                          <div className="border border-dashed border-slate-300 rounded-lg py-10 flex flex-col items-center justify-center gap-2 flex-1 hover:bg-white/50 transition-all">
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sem análises</span>
+                                          </div>
+                                        ) : (
+                                          col.causas.map(c => renderCausaKanbanCard(c))
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+
+                                {/* Botão de Adicionar Nova Etapa no final */}
+                                <div className="w-[180px] shrink-0 flex items-start pt-1 px-2">
+                                  <button
+                                    onClick={() => handleCreateCausaStage()}
+                                    className="w-full py-3 border-2 border-dashed border-slate-300 hover:border-[#1B4D3E]/50 rounded-2xl text-slate-450 hover:text-[#1B4D3E] flex items-center justify-center gap-1.5 transition-all text-xs font-black uppercase tracking-wider cursor-pointer bg-transparent"
+                                  >
+                                    <Plus size={14} /> Status
+                                  </button>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
                       </div>
                     )}
                   </div>
