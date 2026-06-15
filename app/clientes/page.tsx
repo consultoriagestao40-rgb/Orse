@@ -84,8 +84,8 @@ export default function ClientesPage() {
     return lines;
   };
 
-  const processCSVData = (csvLines: string[][]) => {
-    if (csvLines.length < 2) return;
+  const processCSVData = (csvLines: any[][]) => {
+    if (!csvLines || !Array.isArray(csvLines) || csvLines.length < 2 || !csvLines[0]) return;
     
     const headers = csvLines[0].map(h => String(h || '').trim().toLowerCase());
     
@@ -204,14 +204,21 @@ export default function ClientesPage() {
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
-            const data = new Uint8Array(event.target?.result as ArrayBuffer);
+            const data = event.target?.result as ArrayBuffer;
+            if (!data) throw new Error('Arquivo vazio ou ilegível');
             const workbook = XLSX.read(data, { type: 'array' });
+            if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+              throw new Error('Nenhuma aba ou planilha encontrada no arquivo Excel');
+            }
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            const csvLines = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1 });
+            if (!worksheet) {
+              throw new Error(`A aba "${firstSheetName}" está vazia ou ilegível`);
+            }
+            const csvLines = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
             processCSVData(csvLines);
-          } catch (err) {
-            alert('Erro ao ler a planilha Excel. Verifique o formato do arquivo.');
+          } catch (err: any) {
+            alert('Erro ao ler a planilha Excel. Detalhes: ' + (err?.message || String(err)));
             console.error(err);
           }
         };
