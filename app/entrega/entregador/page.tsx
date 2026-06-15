@@ -12,6 +12,7 @@ import {
 } from '../actions';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { useRouter } from 'next/navigation';
+import { getChatList } from '@/app/leads/chat-actions';
 
 export default function EntregadorPage() {
   const router = useRouter();
@@ -21,6 +22,28 @@ export default function EntregadorPage() {
   const [knownEntregaIds, setKnownEntregaIds] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; title: string; text: string } | null>(null);
+  const [totalUnreadChat, setTotalUnreadChat] = useState(0);
+
+  // Polling for chat message count
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const fetchChatCount = async () => {
+      try {
+        const res = await getChatList();
+        if (res.success) {
+          setTotalUnreadChat(res.totalUnread || 0);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar total de chat não lido:', err);
+      }
+    };
+    
+    fetchChatCount();
+    const interval = setInterval(fetchChatCount, 5000);
+    
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   // Finalization Modal State
   const [activeEntregaForFinalize, setActiveEntregaForFinalize] = useState<any>(null);
@@ -715,7 +738,7 @@ export default function EntregadorPage() {
   const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col relative select-none">
+    <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col relative select-none pb-24">
       
       {/* Header Fixo Mobile */}
       <header className="sticky top-0 bg-slate-950/90 backdrop-blur-md px-5 py-3 flex flex-col gap-3 border-b border-white/5 z-40">
@@ -1153,6 +1176,55 @@ export default function EntregadorPage() {
           </div>
         );
       })()}
+
+      {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#0B1528]/95 backdrop-blur-md border-t border-white/5 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.2)] no-print">
+        
+        {isGestor && (
+          <>
+            {/* Tab CRM */}
+            <a
+              href="/leads?tab=crm"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <Building size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
+            </a>
+
+            {/* Tab Técnico */}
+            <a
+              href="/ativos/tecnico"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <Wrench size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+            </a>
+          </>
+        )}
+
+        {/* Tab Área do Entregador (Active) */}
+        <a
+          href="/entrega/entregador"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#10B981] font-black no-underline"
+        >
+          <Truck size={18} className="text-[#10B981]" />
+          <span className="text-[8px] uppercase tracking-wider">Entrega</span>
+        </a>
+
+        {/* Tab Chat Interno */}
+        <a
+          href="/leads?tab=chat"
+          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
+        >
+          <MessageSquare size={18} className="text-slate-400" />
+          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+          {totalUnreadChat > 0 && (
+            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+              {totalUnreadChat}
+            </span>
+          )}
+        </a>
+      </nav>
 
     </div>
   );

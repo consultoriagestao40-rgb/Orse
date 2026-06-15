@@ -12,6 +12,7 @@ import {
 } from '../actions';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { useRouter } from 'next/navigation';
+import { getChatList } from '@/app/leads/chat-actions';
 
 export default function TecnicoPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function TecnicoPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [tenant, setTenant] = useState<any>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; title: string; text: string } | null>(null);
+  const [totalUnreadChat, setTotalUnreadChat] = useState(0);
 
   // Finalization Modal State
   const [activeOsForFinalize, setActiveOsForFinalize] = useState<any>(null);
@@ -30,6 +32,27 @@ export default function TecnicoPage() {
   const [nomeAssinante, setNomeAssinante] = useState('');
   const [cpfAssinante, setCpfAssinante] = useState('');
   const [clienteAusente, setClienteAusente] = useState(false);
+
+  // Polling for chat message count
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const fetchChatCount = async () => {
+      try {
+        const res = await getChatList();
+        if (res.success) {
+          setTotalUnreadChat(res.totalUnread || 0);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar total de chat não lido:', err);
+      }
+    };
+    
+    fetchChatCount();
+    const interval = setInterval(fetchChatCount, 5000);
+    
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   // Canvas Drawing Ref (Cliente)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -1320,16 +1343,19 @@ export default function TecnicoPage() {
           <span className="text-[8px] uppercase tracking-wider">Técnico</span>
         </a>
 
-        {!isSomenteTecnico && (
-          /* Tab Chat Interno */
-          <a
-            href="/leads?tab=chat"
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-          >
-            <MessageSquare size={18} className="text-slate-400" />
-            <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-          </a>
-        )}
+        {/* Tab Chat Interno */}
+        <a
+          href="/leads?tab=chat"
+          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
+        >
+          <MessageSquare size={18} className="text-slate-400" />
+          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+          {totalUnreadChat > 0 && (
+            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+              {totalUnreadChat}
+            </span>
+          )}
+        </a>
       </nav>
     </div>
   );

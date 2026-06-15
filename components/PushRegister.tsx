@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { subscribeUserToPush } from '@/app/notifications/actions';
-import { Bell, X, Info } from 'lucide-react';
+import { Bell, X, Info, MessageSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { getChatList } from '@/app/leads/chat-actions';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -20,12 +22,21 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export default function PushRegister() {
+  const router = useRouter();
   const [showBanner, setShowBanner] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [permissionState, setPermissionState] = useState<string>('default');
+  
+  const [prevUnread, setPrevUnread] = useState<number | null>(null);
+  const [activeNotification, setActiveNotification] = useState<{
+    senderName: string;
+    content: string;
+    senderId: string;
+  } | null>(null);
 
   const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BHWExwoVtGyYGeMBq3FIUPYrIltpkoQDdAm0YIz6JoHzwFp1ew1QOE4ith9kpAcNxyXDlbftxCPuUDptDbPuD64";
+
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -86,6 +97,121 @@ export default function PushRegister() {
       console.error('Erro ao registrar push:', err);
     }
   };
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const checkNewMessages = async () => {
+      try {
+        const res = await getChatList();
+        if (res.success && res.chatList) {
+          const currentTotal = res.totalUnread || 0;
+          
+          if (prevUnread !== null && currentTotal > prevUnread) {
+            // New message received!
+            const chatUser = res.chatList.find((u: any) => u.unreadCount > 0);
+            if (chatUser && chatUser.lastMessage) {
+              // Play audio tone
+              try {
+                const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                if (AudioContext) {
+                  const ctx = new AudioContext();
+                  const playBeep = (delay: number, freq: number) => {
+                    setTimeout(() => {
+                      const osc = ctx.createOscillator();
+                      const gain = ctx.createGain();
+                      osc.connect(gain);
+                      gain.connect(ctx.destination);
+                      osc.type = 'sine';
+                      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                      osc.start();
+                      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+                      osc.stop(ctx.currentTime + 0.2);
+                    }, delay);
+                  };
+                  playBeep(0, 784); // G5
+                  playBeep(150, 987); // B5
+                }
+              } catch (soundErr) {
+                console.warn('Erro ao tocar som:', soundErr);
+              }
+
+              // Vibrate
+              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                navigator.vibrate([150, 80, 150]);
+              }
+
+              // Show active banner
+              setActiveNotification({
+                senderName: chatUser.nome,
+                content: chatUser.lastMessage.content,
+                senderId: chatUser.id
+              });
+            }
+          }
+          
+          setPrevUnread(currentTotal);
+        }
+      } catch (err) {
+        // Fail silently
+      }
+    };
+
+    // Initial check after a short delay
+    const initialTimeout = setTimeout(checkNewMessages, 2000);
+
+    // Setup interval
+    intervalId = setInterval(checkNewMessages, 4000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(intervalId);
+    };
+  }, [prevUnread]);
+
+  // Auto-dismiss notification banner
+  useEffect(() => {
+    if (activeNotification) {
+      const timer = setTimeout(() => {
+        setActiveNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeNotification]);
+
+  if (activeNotification) {
+    return (
+      <div 
+        onClick={() => {
+          router.push('/leads?tab=chat');
+          setActiveNotification(null);
+        }}
+        className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-white/85 backdrop-blur-md text-slate-800 p-4 rounded-2xl shadow-2xl border-l-4 border-l-blue-600 border border-slate-200/50 z-[9999] cursor-pointer animate-in fade-in slide-in-from-top-5 duration-300 flex items-start gap-3 select-none"
+      >
+        <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+          <MessageSquare size={18} />
+        </div>
+        <div className="flex-1 min-w-0 text-left font-sans">
+          <h4 className="text-[11px] font-black uppercase tracking-wider text-blue-600 leading-tight">
+            Nova mensagem de {activeNotification.senderName}
+          </h4>
+          <p className="text-[10.5px] font-semibold text-slate-600 mt-1 leading-relaxed truncate">
+            {activeNotification.content}
+          </p>
+        </div>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveNotification(null);
+          }} 
+          className="text-slate-450 hover:text-slate-700 shrink-0 self-start p-1 hover:bg-slate-100/50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    );
+  }
 
   if (!showBanner || permissionState === 'granted' || permissionState === 'denied') {
     return null;

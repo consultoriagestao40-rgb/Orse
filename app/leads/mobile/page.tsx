@@ -227,10 +227,16 @@ export default function MobileCRM() {
                           user.cargo?.toLowerCase().includes('motoboy') || 
                           user.cargo?.toLowerCase().includes('motorista');
           const isGest = user.role === 'ADMIN' || user.role === 'MANAGER';
-          if (isTech && !isGest) {
-            router.push('/ativos/tecnico');
-          } else if (isDeliv && !isGest) {
-            router.push('/entrega/entregador');
+          
+          const tabParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : '';
+          const isChatTab = tabParam === 'chat' || activeTab === 'chat';
+          
+          if (!isChatTab) {
+            if (isTech && !isGest) {
+              router.push('/ativos/tecnico');
+            } else if (isDeliv && !isGest) {
+              router.push('/entrega/entregador');
+            }
           }
         } else {
           router.push('/login');
@@ -242,11 +248,16 @@ export default function MobileCRM() {
       }
     };
     fetchUser();
-  }, [router]);
+  }, [router, activeTab]);
 
   const isTecnico = currentUser?.cargo?.toLowerCase().includes('tecnico') || currentUser?.cargo?.toLowerCase().includes('técnico');
+  const isEntregador = currentUser?.cargo?.toLowerCase().includes('entregador') || 
+                       currentUser?.cargo?.toLowerCase().includes('entrega') || 
+                       currentUser?.cargo?.toLowerCase().includes('motoboy') || 
+                       currentUser?.cargo?.toLowerCase().includes('motorista');
   const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
   const isSomenteTecnico = isTecnico && !isGestor;
+  const isSomenteEntregador = isEntregador && !isGestor;
 
   // Load CRM Data (Leads, Stages, Segments)
   const loadCRMData = async (pipeId?: string) => {
@@ -1291,7 +1302,7 @@ export default function MobileCRM() {
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         
-        {!isSomenteTecnico && (
+        {!isSomenteTecnico && !isSomenteEntregador && (
           <>
             {/* Tab CRM */}
             <button
@@ -1335,29 +1346,47 @@ export default function MobileCRM() {
           </>
         )}
 
-
-
-        {!isSomenteTecnico && (
-          /* Tab Chat Interno */
-          <button
-            onClick={() => {
-              setActiveTab('chat');
-              setActiveChatUser(null);
-              loadChatListMobile();
-            }}
-            className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative ${
-              activeTab === 'chat' ? 'text-blue-600 font-black' : 'text-slate-400 font-bold'
-            }`}
+        {isSomenteTecnico && (
+          /* Tab Técnico return link */
+          <a
+            href="/ativos/tecnico"
+            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
           >
-            <MessageSquare size={18} className={activeTab === 'chat' ? 'text-blue-600' : 'text-slate-400'} />
-            <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-            {totalUnreadChat > 0 && (
-              <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
-                {totalUnreadChat}
-              </span>
-            )}
-          </button>
+            <Wrench size={18} className="text-slate-400" />
+            <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+          </a>
         )}
+
+        {isSomenteEntregador && (
+          /* Tab Entregador return link */
+          <a
+            href="/entrega/entregador"
+            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+          >
+            <Truck size={18} className="text-slate-400" />
+            <span className="text-[8px] uppercase tracking-wider">Entrega</span>
+          </a>
+        )}
+
+        {/* Tab Chat Interno (Globally Available) */}
+        <button
+          onClick={() => {
+            setActiveTab('chat');
+            setActiveChatUser(null);
+            loadChatListMobile();
+          }}
+          className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative ${
+            activeTab === 'chat' ? 'text-blue-600 font-black' : 'text-slate-400 font-bold'
+          }`}
+        >
+          <MessageSquare size={18} className={activeTab === 'chat' ? 'text-blue-600' : 'text-slate-400'} />
+          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+          {totalUnreadChat > 0 && (
+            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+              {totalUnreadChat}
+            </span>
+          )}
+        </button>
       </nav>
 
       {/* FULL-SCREEN LEAD DETAIL & EDIT OVERLAY */}

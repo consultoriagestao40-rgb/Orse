@@ -93,7 +93,7 @@ export async function sendInternalMessage(receiverId: string, content: string) {
       const { sendWebPush } = await import('@/app/notifications/actions');
       const pushTitle = `💬 Mensagem de ${user.nome}`;
       const pushBody = content.trim();
-      await sendWebPush(receiverId, pushTitle, pushBody, '/leads');
+      await sendWebPush(receiverId, pushTitle, pushBody, '/leads?tab=chat');
     } catch (pushErr) {
       console.error('Falha ao acionar web push para mensagem de chat:', pushErr);
     }
