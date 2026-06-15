@@ -125,6 +125,8 @@ model User {
   taskHistories            TaskHistory[]
   taskViews                TaskView[]
   picActions               PicAction[]
+  createdOSs               OrdemServicoAtivo[] @relation("OSCreator")
+  createdEntregas          Entrega[]           @relation("EntregaCreator")
 }
 
 model Client {
@@ -1204,6 +1206,8 @@ model OrdemServicoAtivo {
   ordemExecucao                Int?              @default(0)
   tenantId           String?
   tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  criadorId          String?
+  criador            User?             @relation("OSCreator", fields: [criadorId], references: [id], onDelete: SetNull)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 }
@@ -1247,6 +1251,8 @@ model Entrega {
   ordemExecucao                 Int?              @default(0)
   tenantId                      String?
   tenant                        Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  criadorId                     String?
+  criador                       User?             @relation("EntregaCreator", fields: [criadorId], references: [id], onDelete: SetNull)
   createdAt                     DateTime          @default(now())
   updatedAt                     DateTime          @updatedAt
 }

@@ -600,7 +600,8 @@ export async function getOrdensServicoAtivo() {
           }
         },
         ativo: { include: { categoria: true } },
-        ativoDestino: { include: { categoria: true } }
+        ativoDestino: { include: { categoria: true } },
+        criador: true
       },
       orderBy: { codigo: 'desc' }
     });
@@ -638,12 +639,14 @@ export async function createOrdemServicoAtivo(data: {
         tecnicoEmail: data.tecnicoEmail || '',
         status: 'PENDENTE',
         dataPrevista: data.dataPrevista ? new Date(data.dataPrevista) : null,
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
+        criadorId: user.id
       },
       include: {
         client: true,
         contratoComodato: true,
-        ativo: true
+        ativo: true,
+        criador: true
       }
     });
 

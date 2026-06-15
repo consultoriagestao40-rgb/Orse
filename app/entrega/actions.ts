@@ -92,7 +92,7 @@ export async function getEntregas() {
     const user = await checkAuth();
     const entregas = await prisma.entrega.findMany({
       where: { tenantId: user.tenantId },
-      include: { client: true },
+      include: { client: true, criador: true },
       orderBy: { codigo: 'desc' }
     });
     return { success: true, entregas };
@@ -116,9 +116,10 @@ export async function createEntrega(data: {
         clientId: data.clientId,
         observacao: data.observacao || '',
         status: 'BACKLOG',
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
+        criadorId: user.id
       },
-      include: { client: true }
+      include: { client: true, criador: true }
     });
     revalidatePath('/entrega');
     return { success: true, entrega };

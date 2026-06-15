@@ -93,6 +93,8 @@ export default function AtivosPage() {
   // OS edit tab selection (details vs history/lifecycle log)
   const [activeOsTab, setActiveOsTab] = useState<'details' | 'history'>('details');
 
+  const currentOsItem = ordens.find(o => o.id === osForm.id);
+
   // Route Management Modal State
   const [modalManageRoutesOpen, setModalManageRoutesOpen] = useState(false);
   const [selectedRouteTecnico, setSelectedRouteTecnico] = useState('');
@@ -4090,6 +4092,20 @@ export default function AtivosPage() {
                         onChange={(e) => setOsForm({...osForm, observacao: e.target.value})}
                       />
                     </div>
+
+                    {/* Criador da OS */}
+                    {osForm.id && currentOsItem?.criador && (
+                      <div className="bg-slate-50/50 border border-slate-200/60 p-4 rounded-xl flex items-center justify-between text-xs select-none">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Criado por</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-5.5 h-5.5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase">
+                            {currentOsItem.criador.nome ? currentOsItem.criador.nome.substring(0, 2) : "US"}
+                          </div>
+                          <span className="font-extrabold text-slate-700 uppercase">{currentOsItem.criador.nome}</span>
+                          <span className="text-slate-400 font-bold">({currentOsItem.criador.email})</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
