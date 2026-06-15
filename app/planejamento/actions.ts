@@ -25,25 +25,40 @@ export interface RootCauseAnalysis {
   userId: string;
 }
 
+export interface SubAction {
+  id: string;
+  what: string;
+  why: string;
+  where: string;
+  when: string;      // Prazo desta ação individual
+  who: string;       // responsavelId do usuário ou texto
+  how: string;
+  howMuch: number;
+  status: 'PENDENTE' | 'CONCLUIDO';
+  percentualRealizado: number; // 0 ou 100
+}
+
 export interface ActionPlan {
   id: string;
   causaRaizId?: string;
   problemaDireto?: string;
   titulo: string;
-  responsavelId: string;
+  responsavelId: string; // Criador/Responsável geral
   resultadoEsperado: string;
   resultadoAtingido?: string;
-  what: string;
-  why: string;
-  where: string;
-  when: string;
-  who: string;
-  how: string;
-  howMuch: number;
-  status: 'PENDENTE' | 'NO_PRAZO' | 'FORA_DO_PRAZO' | 'ATRASADO' | 'CONCLUIDO';
-  dataConclusao?: string;
-  percentualRealizado: number;
+  dataFim: string;       // Prazo final consolidado do plano de ação
+  status: 'PENDENTE' | 'ATRASADO' | 'CONCLUIDO';
+  percentualRealizado: number; // Média baseada nas sub-ações
+  acoes: SubAction[];    // Lista de ações 5W2H
   createdAt: string;
+  // Opcionais para compatibilidade
+  what?: string;
+  why?: string;
+  where?: string;
+  when?: string;
+  who?: string;
+  how?: string;
+  howMuch?: number;
 }
 
 export interface KR {
@@ -151,16 +166,23 @@ async function getOrCreatePlanningAta(tenantId: string) {
           responsavelId: "",
           resultadoEsperado: "Gestor sendo notificado sonoramente e visualmente em tempo real no chat sobre o início/fim das rotas, reduzindo o tempo de resposta em 20%",
           resultadoAtingido: "Notificações sonoras e visuais implementadas com sucesso no chat",
-          what: "Adicionar alertas visuais e sonoros quando o entregador/técnico inicia rota, inicia serviço ou conclui entrega/OS",
-          why: "Para que os gestores tenham visibilidade imediata das rotas de atendimento sem precisar consultar o mapa manualmente",
-          where: "Módulo de Ativos (sidebar desktop e mobile PWA)",
-          when: new Date().toISOString().split('T')[0],
-          who: "Desenvolvedor Responsável",
-          how: "Integrar webhooks de eventos de mudança de status com alertas sonoros e mensagens automáticas no chat interno",
-          howMuch: 0,
+          dataFim: new Date().toISOString().split('T')[0],
           status: "CONCLUIDO",
-          dataConclusao: new Date().toISOString(),
           percentualRealizado: 100,
+          acoes: [
+            {
+              id: "sub-pa1-1",
+              what: "Adicionar alertas visuais e sonoros quando o entregador/técnico inicia rota, inicia serviço ou conclui entrega/OS",
+              why: "Para que os gestores tenham visibilidade imediata das rotas de atendimento sem precisar consultar o mapa manualmente",
+              where: "Módulo de Ativos (sidebar desktop e mobile PWA)",
+              when: new Date().toISOString().split('T')[0],
+              who: "Desenvolvedor Responsável",
+              how: "Integrar webhooks de eventos de mudança de status com alertas sonoros e mensagens automáticas no chat interno",
+              howMuch: 0,
+              status: "CONCLUIDO",
+              percentualRealizado: 100
+            }
+          ],
           createdAt: new Date().toISOString()
         }
       ],
@@ -249,6 +271,38 @@ export async function getPlanningData() {
   try {
     const ata = await getOrCreatePlanningAta(user.tenantId!);
     const data = ata.pautas as unknown as PlanningDataStore;
+
+    // Migração de dados em tempo de execução para novo modelo de múltiplos sub-planos
+    let hasMigration = false;
+    if (data && data.planosAcao) {
+      data.planosAcao = data.planosAcao.map(pa => {
+        if (!pa.acoes) {
+          pa.acoes = [
+            {
+              id: 'sub-' + pa.id + '-' + Date.now(),
+              what: pa.what || '',
+              why: pa.why || '',
+              where: pa.where || '',
+              when: pa.when || pa.createdAt || new Date().toISOString().split('T')[0],
+              who: pa.who || pa.responsavelId || '',
+              how: pa.how || '',
+              howMuch: pa.howMuch || 0,
+              status: pa.status === 'CONCLUIDO' ? 'CONCLUIDO' : 'PENDENTE',
+              percentualRealizado: pa.percentualRealizado || 0
+            }
+          ];
+          pa.dataFim = pa.when || pa.createdAt || new Date().toISOString().split('T')[0];
+          hasMigration = true;
+        }
+        return pa;
+      });
+
+      if (hasMigration) {
+        // Persistir imediatamente no banco para evitar repetidas migrações
+        await saveStoreData(user.tenantId!, data);
+      }
+    }
+
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Erro ao carregar dados de planejamento' };
@@ -356,14 +410,21 @@ export async function saveActionPlan(plano: Omit<ActionPlan, 'id' | 'createdAt'>
     const ata = await getOrCreatePlanningAta(user.tenantId!);
     const store = ata.pautas as unknown as PlanningDataStore;
 
-    // Determine status based on dates and percentage completed
-    let status = plano.status;
-    if (plano.percentualRealizado === 100) {
+    // Recalcular percentualRealizado e status consolidado do plano com base nas sub-ações
+    const subActions = plano.acoes || [];
+    let percentualRealizado = 0;
+    if (subActions.length > 0) {
+      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
+      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
+    }
+
+    let status: 'PENDENTE' | 'ATRASADO' | 'CONCLUIDO' = 'PENDENTE';
+    if (percentualRealizado === 100) {
       status = 'CONCLUIDO';
     } else {
       const today = new Date();
       today.setHours(0,0,0,0);
-      const limitDate = new Date(plano.when);
+      const limitDate = new Date(plano.dataFim);
       if (limitDate < today) {
         status = 'ATRASADO';
       } else {
@@ -374,7 +435,8 @@ export async function saveActionPlan(plano: Omit<ActionPlan, 'id' | 'createdAt'>
     const cleanPlano = {
       ...plano,
       status,
-      dataConclusao: status === 'CONCLUIDO' ? (plano.dataConclusao || new Date().toISOString()) : undefined
+      percentualRealizado,
+      acoes: subActions
     };
 
     if (plano.id) {

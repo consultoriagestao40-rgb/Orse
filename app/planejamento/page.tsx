@@ -71,6 +71,8 @@ export default function PlanejamentoPage() {
     causaRaiz: ''
   });
 
+  const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('kanban');
+
   const [isPlanoModalOpen, setIsPlanoModalOpen] = useState(false);
   const [currentPlano, setCurrentPlano] = useState<Partial<ActionPlan>>({
     titulo: '',
@@ -78,6 +80,16 @@ export default function PlanejamentoPage() {
     problemaDireto: '',
     responsavelId: '',
     resultadoEsperado: '',
+    resultadoAtingido: '',
+    dataFim: '',
+    percentualRealizado: 0,
+    status: 'PENDENTE',
+    acoes: []
+  });
+
+  // State to add/edit a sub-action in the plan's 5W2H table
+  const [showSubActionForm, setShowSubActionForm] = useState(false);
+  const [currentSubAction, setCurrentSubAction] = useState<Partial<SubAction>>({
     what: '',
     why: '',
     where: '',
@@ -85,9 +97,187 @@ export default function PlanejamentoPage() {
     who: '',
     how: '',
     howMuch: 0,
-    percentualRealizado: 0,
-    status: 'PENDENTE'
+    status: 'PENDENTE',
+    percentualRealizado: 0
   });
+
+  const handleAddOrUpdateSubAction = () => {
+    if (!currentSubAction.what) {
+      alert("O campo 'What (O que fará)' é obrigatório.");
+      return;
+    }
+    
+    const subActions = [...(currentPlano.acoes || [])];
+    const isNew = !currentSubAction.id;
+    
+    const cleanSub: SubAction = {
+      id: currentSubAction.id || 'sub-action-' + Date.now(),
+      what: currentSubAction.what || '',
+      why: currentSubAction.why || '',
+      where: currentSubAction.where || '',
+      when: currentSubAction.when || new Date().toISOString().split('T')[0],
+      who: currentSubAction.who || '',
+      how: currentSubAction.how || '',
+      howMuch: Number(currentSubAction.howMuch) || 0,
+      status: currentSubAction.status || 'PENDENTE',
+      percentualRealizado: currentSubAction.status === 'CONCLUIDO' ? 100 : 0
+    };
+
+    if (isNew) {
+      subActions.push(cleanSub);
+    } else {
+      const idx = subActions.findIndex(a => a.id === cleanSub.id);
+      if (idx !== -1) {
+        subActions[idx] = cleanSub;
+      }
+    }
+
+    // Recalcular progresso geral
+    let percentualRealizado = 0;
+    if (subActions.length > 0) {
+      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
+      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
+    }
+
+    setCurrentPlano(prev => ({
+      ...prev,
+      acoes: subActions,
+      percentualRealizado
+    }));
+
+    // Reset sub-action form
+    setCurrentSubAction({
+      what: '',
+      why: '',
+      where: '',
+      when: '',
+      who: '',
+      how: '',
+      howMuch: 0,
+      status: 'PENDENTE',
+      percentualRealizado: 0
+    });
+    setShowSubActionForm(false);
+  };
+
+  const handleDeleteSubAction = (subId: string) => {
+    const subActions = (currentPlano.acoes || []).filter(a => a.id !== subId);
+    let percentualRealizado = 0;
+    if (subActions.length > 0) {
+      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
+      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
+    }
+    setCurrentPlano(prev => ({
+      ...prev,
+      acoes: subActions,
+      percentualRealizado
+    }));
+  };
+
+  const handleToggleSubActionStatus = (subId: string, isChecked: boolean) => {
+    const subActions = (currentPlano.acoes || []).map(a => {
+      if (a.id === subId) {
+        const status = isChecked ? 'CONCLUIDO' : 'PENDENTE';
+        return {
+          ...a,
+          status,
+          percentualRealizado: isChecked ? 100 : 0
+        } as SubAction;
+      }
+      return a;
+    });
+
+    let percentualRealizado = 0;
+    if (subActions.length > 0) {
+      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
+      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
+    }
+
+    setCurrentPlano(prev => ({
+      ...prev,
+      acoes: subActions,
+      percentualRealizado
+    }));
+  };
+
+  const renderKanbanCard = (pa: ActionPlan) => {
+    const associatedCausa = causas.find(c => c.id === pa.causaRaizId);
+    const responsavel = users.find(u => u.id === pa.responsavelId);
+    const acoesRealizadas = pa.acoes?.filter(a => a.status === 'CONCLUIDO').length || 0;
+    const totalAcoes = pa.acoes?.length || 0;
+
+    return (
+      <div 
+        key={pa.id} 
+        onClick={() => {
+          setCurrentPlano(pa);
+          setShowSubActionForm(false);
+          setIsPlanoModalOpen(true);
+        }}
+        className="bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs hover:shadow-2xs transition-all cursor-pointer relative group flex flex-col gap-3 text-left"
+      >
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeletePlanoObj(pa.id);
+          }}
+          className="absolute top-3 right-3 text-slate-350 hover:text-red-500 p-1 hover:bg-slate-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent"
+        >
+          <Trash2 size={13} />
+        </button>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-start gap-2 pr-6">
+            <span className="text-[8.5px] font-black uppercase bg-slate-100 border border-slate-200 text-slate-500 rounded px-1.5 py-0.5 truncate max-w-[150px]">
+              {associatedCausa ? `Causa: ${associatedCausa.causaRaiz}` : pa.problemaDireto ? `Prob: ${pa.problemaDireto}` : 'Entrada Direta'}
+            </span>
+            <span className="text-[8.5px] font-black text-slate-400 font-mono shrink-0">
+              Prazo: {pa.dataFim ? new Date(pa.dataFim).toLocaleDateString('pt-BR') : '-'}
+            </span>
+          </div>
+
+          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider leading-tight">
+            {pa.titulo}
+          </h4>
+        </div>
+
+        {/* Progress & Responsibility */}
+        <div className="border-t border-slate-100 pt-2.5 flex justify-between items-center mt-1">
+          <div className="flex-1 pr-4 flex flex-col gap-1">
+            <div className="flex justify-between text-[9px] font-black text-slate-400">
+              <span>PROGRESSO</span>
+              <span>{pa.percentualRealizado}% ({acoesRealizadas}/{totalAcoes})</span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-300 ${pa.status === 'CONCLUIDO' ? 'bg-[#1B4D3E]' : 'bg-blue-500'}`}
+                style={{ width: `${pa.percentualRealizado}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Avatar com tooltip de nome */}
+          <div className="relative group/avatar cursor-pointer">
+            {responsavel?.avatarUrl ? (
+              <img 
+                src={responsavel.avatarUrl} 
+                alt={responsavel.nome} 
+                className="w-7 h-7 rounded-full object-cover border border-slate-150 shadow-2xs shrink-0"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-[#1B4D3E] text-white font-black text-[9.5px] flex items-center justify-center border border-slate-150 shadow-2xs shrink-0 uppercase">
+                {responsavel?.nome ? responsavel.nome.substring(0, 2) : 'RS'}
+              </div>
+            )}
+            
+            <div className="absolute right-0 bottom-8 bg-slate-900 text-white text-[9px] font-black uppercase tracking-wider py-1 px-2.5 rounded shadow-xl opacity-0 group-hover/avatar:opacity-100 pointer-events-none transition-all duration-150 whitespace-nowrap z-30 border border-white/10">
+              {responsavel?.nome || 'Sem responsável'}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const [isOkrModalOpen, setIsOkrModalOpen] = useState(false);
   const [currentOkrCiclo, setCurrentOkrCiclo] = useState<Partial<OKRCiclo>>({
@@ -268,14 +458,25 @@ export default function PlanejamentoPage() {
   };
 
   // KPI Calculations
-  const totalAcoes = planosAcao.length;
-  const concluídasAcoes = planosAcao.filter(pa => pa.status === 'CONCLUIDO').length;
-  const atrasadasAcoes = planosAcao.filter(pa => pa.status === 'ATRASADO').length;
-  const pendentesAcoes = planosAcao.filter(pa => pa.status === 'PENDENTE').length;
+  const allSubActions = planosAcao.reduce((acc, pa) => [...acc, ...(pa.acoes || [])], [] as SubAction[]);
+  const totalSubActions = allSubActions.length;
+  
+  const concluídasAcoesCount = allSubActions.filter(a => a.status === 'CONCLUIDO').length;
+  const pendentesAcoesList = allSubActions.filter(a => a.status === 'PENDENTE');
+  
+  const todayDate = new Date();
+  todayDate.setHours(0,0,0,0);
+  
+  const atrasadasAcoesCount = pendentesAcoesList.filter(a => new Date(a.when) < todayDate).length;
+  const noPrazoAcoesCount = pendentesAcoesList.filter(a => new Date(a.when) >= todayDate).length;
 
-  const pctExecucao = totalAcoes > 0 ? Math.round((concluídasAcoes / totalAcoes) * 100) : 0;
-  const pctAtrasadas = totalAcoes > 0 ? Math.round((atrasadasAcoes / totalAcoes) * 100) : 0;
-  const pctPendentes = totalAcoes > 0 ? Math.round((pendentesAcoes / totalAcoes) * 100) : 0;
+  const pctExecucao = totalSubActions > 0 ? Math.round((concluídasAcoesCount / totalSubActions) * 100) : 0;
+  const pctAtrasadas = totalSubActions > 0 ? Math.round((atrasadasAcoesCount / totalSubActions) * 100) : 0;
+  const pctPendentes = totalSubActions > 0 ? Math.round((noPrazoAcoesCount / totalSubActions) * 100) : 0;
+
+  const concluídasAcoes = concluídasAcoesCount;
+  const atrasadasAcoes = atrasadasAcoesCount;
+  const pendentesAcoes = noPrazoAcoesCount;
 
   // OKR calculations
   const activeCiclo = okrCiclos.find(c => c.id === activeCicloId);
@@ -356,16 +557,13 @@ export default function PlanejamentoPage() {
                       problemaDireto: '',
                       responsavelId: '',
                       resultadoEsperado: '',
-                      what: '',
-                      why: '',
-                      where: '',
-                      when: new Date().toISOString().split('T')[0],
-                      who: '',
-                      how: '',
-                      howMuch: 0,
+                      resultadoAtingido: '',
+                      dataFim: new Date().toISOString().split('T')[0],
                       percentualRealizado: 0,
-                      status: 'PENDENTE'
+                      status: 'PENDENTE',
+                      acoes: []
                     });
+                    setShowSubActionForm(false);
                     setIsPlanoModalOpen(true);
                   }}
                   className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
@@ -645,94 +843,169 @@ export default function PlanejamentoPage() {
               {/* ABA 2: PLANO DE AÇÃO 5W2H */}
               {activeTab === 'planos' && (
                 <div className="space-y-6">
+                  {/* Alternador de Modo de Exibição */}
+                  <div className="flex justify-between items-center select-none pb-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPlanoViewMode('kanban')}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                          planoViewMode === 'kanban'
+                            ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
+                            : 'bg-white border-slate-250 text-slate-650 hover:bg-slate-50'
+                        }`}
+                      >
+                        Visão Kanban
+                      </button>
+                      <button
+                        onClick={() => setPlanoViewMode('list')}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                          planoViewMode === 'list'
+                            ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
+                            : 'bg-white border-slate-250 text-slate-650 hover:bg-slate-50'
+                        }`}
+                      >
+                        Visão Lista
+                      </button>
+                    </div>
+                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest">
+                      {planosAcao.length} Planos de Ação
+                    </span>
+                  </div>
+
                   {planosAcao.length === 0 ? (
                     <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center text-slate-400 italic text-sm">
                       Nenhum plano de ação cadastrado. Clique em "Novo Plano 5W2H" para iniciar.
                     </div>
+                  ) : planoViewMode === 'list' ? (
+                    /* VISÃO LISTA */
+                    <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50/75 border-b border-slate-200 select-none text-[9.5px] font-black text-slate-400 uppercase tracking-wider">
+                              <th className="py-3.5 px-6">Plano de Ação</th>
+                              <th className="py-3.5 px-6">Causa Vinculada / Problema</th>
+                              <th className="py-3.5 px-6">Responsável</th>
+                              <th className="py-3.5 px-6">Prazo Final</th>
+                              <th className="py-3.5 px-6">Status</th>
+                              <th className="py-3.5 px-6">Progresso</th>
+                              <th className="py-3.5 px-6 text-right">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                            {planosAcao.map(pa => {
+                              const associatedCausa = causas.find(c => c.id === pa.causaRaizId);
+                              const responsavel = users.find(u => u.id === pa.responsavelId);
+                              const acoesRealizadas = pa.acoes?.filter(a => a.status === 'CONCLUIDO').length || 0;
+                              const totalAcoes = pa.acoes?.length || 0;
+
+                              let statusBadge = 'bg-blue-50 border-blue-200 text-blue-750';
+                              if (pa.status === 'CONCLUIDO') statusBadge = 'bg-emerald-50 border-emerald-200 text-emerald-750';
+                              else if (pa.status === 'ATRASADO') statusBadge = 'bg-red-50 border-red-200 text-red-750';
+
+                              return (
+                                <tr key={pa.id} className="hover:bg-slate-50/50 transition-colors group">
+                                  <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer" onClick={() => { setCurrentPlano(pa); setShowSubActionForm(false); setIsPlanoModalOpen(true); }}>
+                                    {pa.titulo}
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-500 max-w-[200px] truncate">
+                                    {associatedCausa ? associatedCausa.causaRaiz : pa.problemaDireto || 'Entrada Direta'}
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    <div className="flex items-center gap-2">
+                                      {responsavel?.avatarUrl ? (
+                                        <img src={responsavel.avatarUrl} alt={responsavel.nome} className="w-6 h-6 rounded-full object-cover border border-slate-200" />
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full bg-[#1B4D3E] text-white font-black text-[9px] flex items-center justify-center border border-slate-200 uppercase">
+                                          {responsavel?.nome ? responsavel.nome.substring(0, 2) : 'RS'}
+                                        </div>
+                                      )}
+                                      <span className="text-[10px] uppercase font-bold text-slate-600">{responsavel?.nome || 'Sem resp.'}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-500 font-mono">
+                                    {pa.dataFim ? new Date(pa.dataFim).toLocaleDateString('pt-BR') : '-'}
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${statusBadge}`}>
+                                      {pa.status === 'CONCLUIDO' ? 'Concluído' : pa.status === 'ATRASADO' ? 'Atrasado' : 'Pendente'}
+                                    </span>
+                                  </td>
+                                  <td className="py-4 px-6 min-w-[140px]">
+                                    <div className="flex flex-col gap-1 w-full">
+                                      <div className="flex justify-between text-[9px] font-black text-slate-450">
+                                        <span>{pa.percentualRealizado}%</span>
+                                        <span>{acoesRealizadas}/{totalAcoes}</span>
+                                      </div>
+                                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                        <div className={`h-full rounded-full ${pa.status === 'CONCLUIDO' ? 'bg-[#1B4D3E]' : 'bg-blue-500'}`} style={{ width: `${pa.percentualRealizado}%` }}></div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-6 text-right">
+                                    <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button onClick={() => { setCurrentPlano(pa); setShowSubActionForm(false); setIsPlanoModalOpen(true); }} className="p-1.5 text-slate-400 hover:text-[#1B4D3E] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent">
+                                        <Edit size={14} />
+                                      </button>
+                                      <button onClick={() => handleDeletePlanoObj(pa.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent">
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {planosAcao.map(pa => {
-                        const associatedCausa = causas.find(c => c.id === pa.causaRaizId);
-                        const responsavel = users.find(u => u.id === pa.responsavelId);
-                        
-                        let statusColor = 'bg-blue-50 border-blue-200 text-blue-700';
-                        if (pa.status === 'CONCLUIDO') statusColor = 'bg-emerald-50 border-emerald-200 text-emerald-700';
-                        else if (pa.status === 'ATRASADO') statusColor = 'bg-red-50 border-red-200 text-red-700';
+                    /* VISÃO KANBAN */
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* PENDENTES */}
+                      <div className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px]">
+                        <div className="flex justify-between items-center px-1 select-none">
+                          <h3 className="text-xs font-black text-slate-750 uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span> Pendentes
+                          </h3>
+                          <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
+                            {planosAcao.filter(pa => pa.status === 'PENDENTE').length}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
+                          {planosAcao.filter(pa => pa.status === 'PENDENTE').map(pa => renderKanbanCard(pa))}
+                        </div>
+                      </div>
 
-                        return (
-                          <div key={pa.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-sm transition-all relative group">
-                            
-                            <button 
-                              onClick={() => handleDeletePlanoObj(pa.id)}
-                              className="absolute top-4 right-4 text-slate-350 hover:text-red-500 p-1.5 hover:bg-slate-50 rounded-xl transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                      {/* ATRASADOS */}
+                      <div className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px]">
+                        <div className="flex justify-between items-center px-1 select-none">
+                          <h3 className="text-xs font-black text-slate-755 uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span> Atrasados
+                          </h3>
+                          <span className="text-[10px] font-black bg-red-100 text-red-800 px-2 py-0.5 rounded-md">
+                            {planosAcao.filter(pa => pa.status === 'ATRASADO').length}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
+                          {planosAcao.filter(pa => pa.status === 'ATRASADO').map(pa => renderKanbanCard(pa))}
+                        </div>
+                      </div>
 
-                            <div className="space-y-3">
-                              {/* Causa raiz vinculada */}
-                              <div className="flex justify-between items-start gap-2">
-                                <span className="text-[8.5px] font-black uppercase bg-slate-100 border border-slate-250 text-slate-500 rounded px-1.5 py-0.5 truncate max-w-[200px]">
-                                  {associatedCausa ? `Causa: ${associatedCausa.causaRaiz}` : pa.problemaDireto ? `Prob: ${pa.problemaDireto}` : 'Problema Direto'}
-                                </span>
-                                <span className={`text-[8.5px] font-black uppercase border rounded px-1.5 py-0.5 ${statusColor}`}>
-                                  {pa.status === 'CONCLUIDO' ? 'Concluído' : pa.status === 'ATRASADO' ? 'Atrasado' : 'Pendente'}
-                                </span>
-                              </div>
-
-                              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider leading-tight">
-                                {pa.titulo}
-                              </h3>
-
-                              {/* 5W2H Details */}
-                              <div className="bg-slate-50/60 rounded-xl p-3 border border-slate-100 text-[10px] space-y-1.5">
-                                <div><span className="font-extrabold text-slate-500 uppercase">What (O que):</span> <span className="font-bold text-slate-700">{pa.what}</span></div>
-                                <div><span className="font-extrabold text-slate-500 uppercase">Why (Por que):</span> <span className="font-bold text-slate-700">{pa.why}</span></div>
-                                <div><span className="font-extrabold text-slate-500 uppercase">Where (Onde):</span> <span className="font-bold text-slate-700">{pa.where}</span></div>
-                                <div><span className="font-extrabold text-slate-500 uppercase">How (Como):</span> <span className="font-bold text-slate-700">{pa.how}</span></div>
-                                <div><span className="font-extrabold text-slate-500 uppercase">Cost (Quanto):</span> <span className="font-bold text-slate-700">{pa.howMuch > 0 ? `R$ ${pa.howMuch}` : 'Sem custo'}</span></div>
-                              </div>
-                            </div>
-
-                            {/* Progress & Responsibility */}
-                            <div className="border-t border-slate-100 pt-3 flex justify-between items-center">
-                              {/* Slider de progresso */}
-                              <div className="flex-1 pr-6 flex flex-col gap-1">
-                                <div className="flex justify-between text-[9px] font-black text-slate-400">
-                                  <span>PROGRESO</span>
-                                  <span>{pa.percentualRealizado}%</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5 relative overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full transition-all duration-300 ${pa.status === 'CONCLUIDO' ? 'bg-[#1B4D3E]' : 'bg-blue-500'}`}
-                                    style={{ width: `${pa.percentualRealizado}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              {/* Avatar com tooltip de nome */}
-                              <div className="relative group/avatar cursor-pointer">
-                                {responsavel?.avatarUrl ? (
-                                  <img 
-                                    src={responsavel.avatarUrl} 
-                                    alt={responsavel.nome} 
-                                    className="w-8 h-8 rounded-full object-cover border border-slate-150 shadow-2xs shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-full bg-[#1B4D3E] text-white font-black text-[10px] flex items-center justify-center border border-slate-150 shadow-2xs shrink-0 uppercase">
-                                    {responsavel?.nome ? responsavel.nome.substring(0, 2) : 'RS'}
-                                  </div>
-                                )}
-                                
-                                {/* Tooltip */}
-                                <div className="absolute right-0 bottom-9 bg-slate-900 text-white text-[9.5px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/avatar:opacity-100 pointer-events-none transition-all duration-150 whitespace-nowrap z-30 border border-white/10">
-                                  {responsavel?.nome || pa.who || 'Sem responsável'}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {/* CONCLUÍDOS */}
+                      <div className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px]">
+                        <div className="flex justify-between items-center px-1 select-none">
+                          <h3 className="text-xs font-black text-slate-750 uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Concluídos
+                          </h3>
+                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
+                            {planosAcao.filter(pa => pa.status === 'CONCLUIDO').length}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
+                          {planosAcao.filter(pa => pa.status === 'CONCLUIDO').map(pa => renderKanbanCard(pa))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1197,34 +1470,37 @@ export default function PlanejamentoPage() {
       {/* MODAL PLANO DE AÇÃO 5W2H */}
       {isPlanoModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Cadastrar Plano de Ação 5W2H</h3>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                {currentPlano.id ? 'Detalhamento do Plano de Ação' : 'Criar Novo Plano de Ação'}
+              </h3>
               <button onClick={() => setIsPlanoModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
             
-            <form onSubmit={handleSavePlano} className="p-6 overflow-y-auto space-y-4">
+            <form onSubmit={handleSavePlano} className="p-6 overflow-y-auto space-y-5">
+              {/* Informações Gerais do Plano */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Título da Ação</label>
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Título do Plano</label>
                   <input 
                     type="text" 
                     required
                     value={currentPlano.titulo || ''}
                     onChange={(e) => setCurrentPlano(prev => ({ ...prev, titulo: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                    placeholder="Ex: Treinamento de motoristas no aplicativo"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Ex: Plano de Melhoria de Entregas"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Vincular Análise Causa Raiz</label>
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Vincular Causa Raiz</label>
                   <select
                     value={currentPlano.causaRaizId || ''}
                     onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
                   >
                     <option value="">Nenhum vínculo (Entrada Direta)</option>
                     {causas.map(c => (
@@ -1232,31 +1508,29 @@ export default function PlanejamentoPage() {
                     ))}
                   </select>
                 </div>
-              </div>
 
-              {!currentPlano.causaRaizId && (
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Problema Direto (Opcional)</label>
-                  <input 
-                    type="text"
-                    value={currentPlano.problemaDireto || ''}
-                    onChange={(e) => setCurrentPlano(prev => ({ ...prev, problemaDireto: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                    placeholder="Caso não tenha feito a análise, insira o problema aqui"
-                  />
-                </div>
-              )}
+                {!currentPlano.causaRaizId && (
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Problema Direto (Opcional)</label>
+                    <input 
+                      type="text"
+                      value={currentPlano.problemaDireto || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, problemaDireto: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                      placeholder="Caso não tenha feito a análise, insira o problema direto aqui"
+                    />
+                  </div>
+                )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Responsável (Sistema)</label>
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Dono do Plano (Responsável Geral)</label>
                   <select
                     required
                     value={currentPlano.responsavelId || ''}
                     onChange={(e) => setCurrentPlano(prev => ({ ...prev, responsavelId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
                   >
-                    <option value="">Selecione o Responsável...</option>
+                    <option value="">Selecione o Responsável Geral...</option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>{u.nome}</option>
                     ))}
@@ -1264,89 +1538,260 @@ export default function PlanejamentoPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Resultado Esperado</label>
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Prazo Final Consolidado</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={currentPlano.dataFim || ''}
+                    onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                  />
+                </div>
+
+                <div className="space-y-1 col-span-1 md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Resultado Esperado</label>
                   <input 
                     type="text" 
                     required
                     value={currentPlano.resultadoEsperado || ''}
                     onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoEsperado: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
                     placeholder="Métricas ou resultados que desejamos atingir"
                   />
                 </div>
-              </div>
 
-              {/* 5W2H Framework */}
-              <div className="border-t border-slate-100 pt-3 space-y-3">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Campos 5W2H</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase">What (O que fará)</label>
-                    <input type="text" required value={currentPlano.what || ''} onChange={(e) => setCurrentPlano(prev => ({ ...prev, what: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase">Why (Por que fará)</label>
-                    <input type="text" required value={currentPlano.why || ''} onChange={(e) => setCurrentPlano(prev => ({ ...prev, why: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase">Where (Onde fará)</label>
-                    <input type="text" required value={currentPlano.where || ''} onChange={(e) => setCurrentPlano(prev => ({ ...prev, where: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase">When (Quando / Prazo)</label>
-                    <input type="date" required value={currentPlano.when || ''} onChange={(e) => setCurrentPlano(prev => ({ ...prev, when: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase">How (Como fará)</label>
-                    <input type="text" required value={currentPlano.how || ''} onChange={(e) => setCurrentPlano(prev => ({ ...prev, how: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase">How Much (Custo R$)</label>
-                    <input type="number" required value={currentPlano.howMuch || 0} onChange={(e) => setCurrentPlano(prev => ({ ...prev, howMuch: parseFloat(e.target.value) }))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Percentual Realizado ({currentPlano.percentualRealizado}%)</label>
-                  <input 
-                    type="range" 
-                    min="0"
-                    max="100"
-                    step="5"
-                    value={currentPlano.percentualRealizado || 0}
-                    onChange={(e) => setCurrentPlano(prev => ({ ...prev, percentualRealizado: parseInt(e.target.value) }))}
-                    className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#1B4D3E]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Resultado Atingido (Pós-Execução)</label>
+                <div className="space-y-1 col-span-1 md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Resultados Atingidos (Pós-Execução)</label>
                   <input 
                     type="text"
                     value={currentPlano.resultadoAtingido || ''}
                     onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                    placeholder="Resultados alcançados"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Descrição dos resultados reais após a execução"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
-                <button 
-                  type="button" 
-                  onClick={() => setIsPlanoModalOpen(false)}
-                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
-                >
-                  Salvar
-                </button>
+              {/* Tabela de Ações 5W2H - Apenas exibido se o plano já possuir um ID */}
+              {currentPlano.id ? (
+                <div className="border-t border-slate-100 pt-4 space-y-4">
+                  <div className="flex justify-between items-center select-none">
+                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Tabela de Ações 5W2H</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentSubAction({
+                          what: '',
+                          why: '',
+                          where: '',
+                          when: new Date().toISOString().split('T')[0],
+                          who: '',
+                          how: '',
+                          howMuch: 0,
+                          status: 'PENDENTE',
+                          percentualRealizado: 0
+                        });
+                        setShowSubActionForm(true);
+                      }}
+                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9.5px] font-black uppercase px-3 py-1.5 rounded-lg transition-colors cursor-pointer border-none flex items-center gap-1 shadow-sm"
+                    >
+                      <Plus size={12} /> Adicionar Ação (5W2H)
+                    </button>
+                  </div>
+
+                  {/* Form de Ação 5W2H individual */}
+                  {showSubActionForm && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-150 text-left">
+                      <div className="flex justify-between items-center select-none border-b border-slate-200 pb-1.5 mb-1.5">
+                        <span className="text-[9.5px] font-black text-[#1B4D3E] uppercase tracking-wider">
+                          {currentSubAction.id ? 'Editar Ação 5W2H' : 'Nova Ação 5W2H'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowSubActionForm(false)}
+                          className="text-slate-400 hover:text-slate-600 font-bold border-none bg-transparent cursor-pointer text-sm"
+                        >
+                          &times;
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">What (O que fará)</label>
+                          <input type="text" required value={currentSubAction.what || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, what: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="O que será feito?" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Why (Por que fará)</label>
+                          <input type="text" value={currentSubAction.why || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, why: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="Por que será feito?" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Where (Onde fará)</label>
+                          <input type="text" value={currentSubAction.where || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, where: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="Onde será feito?" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">When (Quando / Prazo)</label>
+                          <input type="date" value={currentSubAction.when || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, when: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Who (Quem fará)</label>
+                          <select value={currentSubAction.who || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, who: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]">
+                            <option value="">Selecione o Executor...</option>
+                            {users.map(u => (
+                              <option key={u.id} value={u.id}>{u.nome}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">How (Como fará)</label>
+                          <input type="text" value={currentSubAction.how || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, how: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="Como será feito?" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">How Much (Custo R$)</label>
+                          <input type="number" value={currentSubAction.howMuch || 0} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, howMuch: parseFloat(e.target.value) || 0 }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Status</label>
+                          <select value={currentSubAction.status || 'PENDENTE'} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, status: e.target.value as any }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]">
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="CONCLUIDO">Concluído</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowSubActionForm(false)}
+                          className="px-4 py-1.5 border border-slate-200 rounded-lg text-[10px] font-black text-slate-550 uppercase tracking-wider hover:bg-slate-100 bg-white cursor-pointer"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAddOrUpdateSubAction}
+                          className="px-4 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-lg text-[10px] font-black uppercase tracking-wider cursor-pointer border-none"
+                        >
+                          Confirmar Ação
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tabela de exibição 5W2H */}
+                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-3xs max-h-[300px] overflow-y-auto bg-slate-50/50">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 border-b border-slate-200 select-none text-[8.5px] font-black text-slate-450 uppercase tracking-wider">
+                          <th className="py-2.5 px-3 w-8 text-center">Status</th>
+                          <th className="py-2.5 px-3">What (O que)</th>
+                          <th className="py-2.5 px-3">Why (Por que)</th>
+                          <th className="py-2.5 px-3">Where (Onde)</th>
+                          <th className="py-2.5 px-3">When (Prazo)</th>
+                          <th className="py-2.5 px-3 text-center">Who (Quem)</th>
+                          <th className="py-2.5 px-3">How (Como)</th>
+                          <th className="py-2.5 px-3">Cost (Quanto)</th>
+                          <th className="py-2.5 px-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-150 text-[10.5px] font-bold text-slate-650">
+                        {(!currentPlano.acoes || currentPlano.acoes.length === 0) ? (
+                          <tr>
+                            <td colSpan={9} className="py-6 px-3 text-center italic text-slate-400 text-[10px]">
+                              Nenhuma ação cadastrada. Adicione ações no botão acima para montar o plano.
+                            </td>
+                          </tr>
+                        ) : (
+                          currentPlano.acoes.map(a => {
+                            const executor = users.find(u => u.id === a.who);
+                            return (
+                              <tr key={a.id} className="hover:bg-slate-100/30 transition-colors">
+                                <td className="py-2 px-3 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={a.status === 'CONCLUIDO'}
+                                    onChange={(e) => handleToggleSubActionStatus(a.id, e.target.checked)}
+                                    className="w-3.5 h-3.5 rounded text-[#1B4D3E] focus:ring-[#1B4D3E] border-slate-350 cursor-pointer"
+                                  />
+                                </td>
+                                <td className="py-2 px-3 break-words max-w-[120px]">{a.what}</td>
+                                <td className="py-2 px-3 break-words max-w-[120px]">{a.why}</td>
+                                <td className="py-2 px-3 truncate max-w-[80px]">{a.where}</td>
+                                <td className="py-2 px-3 font-mono text-[9.5px]">
+                                  {a.when ? new Date(a.when).toLocaleDateString('pt-BR') : '-'}
+                                </td>
+                                <td className="py-2 px-3 text-center">
+                                  <div className="relative group/user inline-flex items-center justify-center cursor-pointer">
+                                    {executor?.avatarUrl ? (
+                                      <img src={executor.avatarUrl} alt={executor.nome} className="w-5 h-5 rounded-full object-cover border border-slate-200" />
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full bg-[#1B4D3E] text-white font-black text-[8px] flex items-center justify-center border border-slate-200 uppercase">
+                                        {executor?.nome ? executor.nome.substring(0, 2) : 'EX'}
+                                      </div>
+                                    )}
+                                    <div className="absolute left-1/2 bottom-6 -translate-x-1/2 bg-slate-900 text-white text-[8px] font-black uppercase py-0.5 px-1.5 rounded opacity-0 group-hover/user:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                                      {executor?.nome || 'Não definido'}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3 break-words max-w-[100px]">{a.how}</td>
+                                <td className="py-2 px-3 text-slate-500 font-mono text-[9.5px]">
+                                  {a.howMuch > 0 ? `R$ ${a.howMuch}` : 'Sem custo'}
+                                </td>
+                                <td className="py-2 px-3 text-right">
+                                  <div className="flex justify-end gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCurrentSubAction(a);
+                                        setShowSubActionForm(true);
+                                      }}
+                                      className="p-1 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-255 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                    >
+                                      <Edit size={11} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteSubAction(a.id)}
+                                      className="p-1 text-slate-400 hover:text-red-500 hover:bg-slate-255 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                    >
+                                      <Trash2 size={11} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center text-slate-500 italic text-[11px]">
+                  Salve o plano de ação primeiro para começar a adicionar ações 5W2H individuais.
+                </div>
+              )}
+
+              {/* Botões de Rodapé do Modal */}
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100 select-none">
+                <div className="text-[10px] font-black text-slate-400 uppercase">
+                  Progresso Geral: <span className="text-slate-755">{currentPlano.percentualRealizado || 0}%</span>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsPlanoModalOpen(false)}
+                    className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                  >
+                    Salvar
+                  </button>
+                </div>
               </div>
             </form>
           </div>
