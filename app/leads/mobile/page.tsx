@@ -750,59 +750,75 @@ export default function MobileCRM() {
         </div>
 
         {/* Pipeline Selector Line */}
-        <div className="flex items-center justify-between gap-3 mt-3.5">
-          <div className="flex items-center gap-2">
+        {activeTab !== 'chat' ? (
+          <div className="flex items-center justify-between gap-3 mt-3.5">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => router.push('/leads')}
+                className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
+                  className="flex items-center gap-1.5 text-xs font-black tracking-tight uppercase text-white hover:text-emerald-450 bg-slate-800/40 border border-slate-800/60 px-3.5 py-2 rounded-xl cursor-pointer text-left"
+                >
+                  <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'SmartBid'}</span>
+                  <ChevronDown size={12} className="text-slate-450" />
+                </button>
+
+                {isPipelineDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40 bg-transparent" 
+                      onClick={() => setIsPipelineDropdownOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-2 w-[240px] bg-slate-900 border border-slate-800 rounded-xl shadow-xl p-2 z-50 text-slate-200">
+                      <div className="px-2 py-1 text-[9px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 mb-1">
+                        Seus Funis
+                      </div>
+                      <div className="max-h-[160px] overflow-y-auto space-y-0.5">
+                        {pipelines.map((p) => (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              setActivePipelineId(p.id);
+                              localStorage.setItem('orse_active_pipeline_id', p.id);
+                              setIsPipelineDropdownOpen(false);
+                              loadCRMData(p.id);
+                            }}
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                              p.id === activePipelineId
+                                ? 'bg-emerald-500/10 text-emerald-400 font-bold'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                            }`}
+                          >
+                            <span className="truncate text-xs flex-1">{p.nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 mt-3.5">
             <button 
-              onClick={() => router.push('/leads')}
+              onClick={() => {
+                if (isSomenteTecnico) router.push('/ativos/tecnico');
+                else if (isSomenteEntregador) router.push('/entrega/entregador');
+                else setActiveTab('crm');
+              }}
               className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center"
             >
               <ArrowLeft size={16} />
             </button>
-            <div className="relative">
-              <button 
-                onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
-                className="flex items-center gap-1.5 text-xs font-black tracking-tight uppercase text-white hover:text-emerald-450 bg-slate-800/40 border border-slate-800/60 px-3.5 py-2 rounded-xl cursor-pointer text-left"
-              >
-                <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'SmartBid'}</span>
-                <ChevronDown size={12} className="text-slate-450" />
-              </button>
-
-              {isPipelineDropdownOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40 bg-transparent" 
-                    onClick={() => setIsPipelineDropdownOpen(false)}
-                  />
-                  <div className="absolute left-0 top-full mt-2 w-[240px] bg-slate-900 border border-slate-800 rounded-xl shadow-xl p-2 z-50 text-slate-200">
-                    <div className="px-2 py-1 text-[9px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 mb-1">
-                      Seus Funis
-                    </div>
-                    <div className="max-h-[160px] overflow-y-auto space-y-0.5">
-                      {pipelines.map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={() => {
-                            setActivePipelineId(p.id);
-                            localStorage.setItem('orse_active_pipeline_id', p.id);
-                            setIsPipelineDropdownOpen(false);
-                            loadCRMData(p.id);
-                          }}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-                            p.id === activePipelineId
-                              ? 'bg-emerald-500/10 text-emerald-400 font-bold'
-                              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                          }`}
-                        >
-                          <span className="truncate text-xs flex-1">{p.nome}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <h1 className="text-xs font-black uppercase tracking-wider text-white">Chat da Equipe</h1>
           </div>
-        </div>
+        )}
 
         {/* Dynamic Search Bar (Only shown on CRM tab) */}
         {activeTab === 'crm' && (

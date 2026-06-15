@@ -38,12 +38,42 @@ export default function PushRegister() {
   const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BHWExwoVtGyYGeMBq3FIUPYrIltpkoQDdAm0YIz6JoHzwFp1ew1QOE4ith9kpAcNxyXDlbftxCPuUDptDbPuD64";
 
 
+  const subscribeUser = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return;
+    }
+    try {
+      const register = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+
+      const subscription = await register.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+      });
+
+      const subJson = subscription.toJSON();
+      if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+        await subscribeUserToPush({
+          endpoint: subJson.endpoint,
+          p256dh: subJson.keys.p256dh,
+          auth: subJson.keys.auth
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao inscrever push automático:', err);
+    }
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     // Check permissions
     if ('Notification' in window) {
       setPermissionState(Notification.permission);
+      if (Notification.permission === 'granted') {
+        subscribeUser();
+      }
     }
 
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
