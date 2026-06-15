@@ -23,6 +23,7 @@ export interface RootCauseAnalysis {
   causaRaiz: string;
   createdAt: string;
   userId: string;
+  status: 'RASCUNHO' | 'EM_ANALISE' | 'EM_REVISAO' | 'CONCLUIDA';
 }
 
 export interface SubAction {
@@ -137,7 +138,8 @@ async function getOrCreatePlanningAta(tenantId: string) {
           },
           causaRaiz: "Falta de integração e notificações automáticas de deslocamento de técnicos no sistema central de gestão",
           createdAt: new Date().toISOString(),
-          userId: "system"
+          userId: "system",
+          status: "CONCLUIDA"
         },
         {
           id: "c2",
@@ -154,7 +156,8 @@ async function getOrCreatePlanningAta(tenantId: string) {
           },
           causaRaiz: "Incompatibilidade da pressão hidráulica e falta de treinamento do operador local",
           createdAt: new Date().toISOString(),
-          userId: "system"
+          userId: "system",
+          status: "CONCLUIDA"
         }
       ],
       planosAcao: [
@@ -272,30 +275,42 @@ export async function getPlanningData() {
     const ata = await getOrCreatePlanningAta(user.tenantId!);
     const data = ata.pautas as unknown as PlanningDataStore;
 
-    // Migração de dados em tempo de execução para novo modelo de múltiplos sub-planos
+    // Migração de dados em tempo de execução para novo modelo de múltiplos sub-planos e status de causas
     let hasMigration = false;
-    if (data && data.planosAcao) {
-      data.planosAcao = data.planosAcao.map(pa => {
-        if (!pa.acoes) {
-          pa.acoes = [
-            {
-              id: 'sub-' + pa.id + '-' + Date.now(),
-              what: pa.what || '',
-              why: pa.why || '',
-              where: pa.where || '',
-              when: pa.when || pa.createdAt || new Date().toISOString().split('T')[0],
-              who: pa.who || pa.responsavelId || '',
-              how: pa.how || '',
-              howMuch: pa.howMuch || 0,
-              status: pa.status === 'CONCLUIDO' ? 'CONCLUIDO' : 'PENDENTE',
-              percentualRealizado: pa.percentualRealizado || 0
-            }
-          ];
-          pa.dataFim = pa.when || pa.createdAt || new Date().toISOString().split('T')[0];
-          hasMigration = true;
-        }
-        return pa;
-      });
+    if (data) {
+      if (data.causas) {
+        data.causas = data.causas.map(c => {
+          if (!c.status) {
+            c.status = c.causaRaiz ? 'CONCLUIDA' : 'RASCUNHO';
+            hasMigration = true;
+          }
+          return c;
+        });
+      }
+      
+      if (data.planosAcao) {
+        data.planosAcao = data.planosAcao.map(pa => {
+          if (!pa.acoes) {
+            pa.acoes = [
+              {
+                id: 'sub-' + pa.id + '-' + Date.now(),
+                what: pa.what || '',
+                why: pa.why || '',
+                where: pa.where || '',
+                when: pa.when || pa.createdAt || new Date().toISOString().split('T')[0],
+                who: pa.who || pa.responsavelId || '',
+                how: pa.how || '',
+                howMuch: pa.howMuch || 0,
+                status: pa.status === 'CONCLUIDO' ? 'CONCLUIDO' : 'PENDENTE',
+                percentualRealizado: pa.percentualRealizado || 0
+              }
+            ];
+            pa.dataFim = pa.when || pa.createdAt || new Date().toISOString().split('T')[0];
+            hasMigration = true;
+          }
+          return pa;
+        });
+      }
 
       if (hasMigration) {
         // Persistir imediatamente no banco para evitar repetidas migrações
@@ -367,7 +382,8 @@ export async function saveRootCause(causa: Omit<RootCauseAnalysis, 'id' | 'creat
         ...causa,
         id: 'causa-' + Date.now(),
         createdAt: new Date().toISOString(),
-        userId: user.id
+        userId: user.id,
+        status: causa.status || 'RASCUNHO'
       };
       store.causas.push(newCausa);
     }
