@@ -1617,7 +1617,7 @@ export default function AtivosPage() {
 
               {/* VISÃO KANBAN */}
               {contratosViewMode === 'kanban' && (
-                <div className="pb-6 select-none bg-slate-50 pl-2 pr-1 overflow-x-auto">
+                <div className="pb-6 select-none bg-slate-50 pl-2 pr-1">
                   <div className="flex gap-[3px] min-w-max">
                     {(['RASCUNHO', 'VIGENTE', 'SUSPENSO', 'ENCERRADO'] as const).map((colStatus, idx) => {
                       const colContratos = filteredContratos.filter(c => c.status === colStatus);
@@ -1690,13 +1690,20 @@ export default function AtivosPage() {
                             </div>
                           </div>
 
-                          {/* Column Body Container */}
+                          {/* Cards list with customized scroll background */}
                           <div 
-                            className="flex-1 p-3 space-y-3 overflow-y-auto min-h-[400px] border border-solid border-slate-200 mt-[3px] rounded-b-2xl transition-colors duration-150"
+                            className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
                             style={{ 
+                              width: '274px',
+                              minWidth: '274px',
+                              maxWidth: '274px',
+                              marginLeft: '0px',
                               backgroundColor: conf.bg,
                               borderColor: conf.border,
-                              borderTopWidth: 0
+                              borderWidth: '0 1px 1px 1px',
+                              borderStyle: 'solid',
+                              height: 'calc(100vh - 52px)',
+                              overflowY: 'auto',
                             }}
                           >
                             {colContratos.length === 0 ? (
