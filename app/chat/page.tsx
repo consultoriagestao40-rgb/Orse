@@ -233,72 +233,107 @@ export default function ChatPage() {
       
       {/* HEADER PREMIUM STICKY */}
       <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-40 shadow-md p-4 shrink-0 select-none">
-        
-        {/* Gestor Quick Nav Toggle */}
-        {isGestor && (
-          <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1 mb-3">
-            <button
-              onClick={() => router.push('/leads/mobile')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
-            >
-              <Building size={11} /> CRM
-            </button>
-            <button
-              onClick={() => router.push('/ativos/tecnico')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
-            >
-              <Wrench size={11} /> Técnico
-            </button>
-            <button
-              onClick={() => router.push('/entrega/entregador')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
-            >
-              <Truck size={11} /> Entrega
-            </button>
-          </div>
-        )}
-
-        {/* User Info Line */}
-        <div className="flex justify-between items-center mb-3.5 w-full">
-          <div className="flex items-center gap-3 min-w-0">
-            {currentUser?.avatarUrl ? (
-              <img 
-                src={currentUser.avatarUrl} 
-                alt={currentUser.nome} 
-                className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
-                {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'U'}
+        {activeChatUser ? (
+          /* CONVERSATION HEADER (SHOW ACTIVE PARTNER) */
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3 min-w-0">
+              <button 
+                onClick={() => setActiveChatUser(null)}
+                className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center text-white"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              
+              {activeChatUser.avatarUrl ? (
+                <img 
+                  src={activeChatUser.avatarUrl} 
+                  alt={activeChatUser.nome} 
+                  className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                  {activeChatUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                </div>
+              )}
+              
+              <div className="min-w-0 text-left">
+                <span className="text-xs font-black uppercase block text-white leading-tight truncate">{activeChatUser.nome}</span>
+                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest block leading-none mt-0.5">
+                  {activeChatUser.cargo ? `${activeChatUser.cargo} • Online` : 'Online'}
+                </span>
               </div>
-            )}
-            <div className="min-w-0 text-left">
-              <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome}</span>
-              <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Membro da Equipe'}</span>
             </div>
           </div>
+        ) : (
+          /* DEFAULT MAIN CHAT LIST HEADER (SHOW LOGGED IN USER) */
+          <>
+            {/* Gestor Quick Nav Toggle */}
+            {isGestor && (
+              <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1 mb-3">
+                <button
+                  onClick={() => router.push('/leads/mobile')}
+                  className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
+                >
+                  <Building size={11} /> CRM
+                </button>
+                <button
+                  onClick={() => router.push('/ativos/tecnico')}
+                  className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+                >
+                  <Wrench size={11} /> Técnico
+                </button>
+                <button
+                  onClick={() => router.push('/entrega/entregador')}
+                  className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+                >
+                  <Truck size={11} /> Entrega
+                </button>
+              </div>
+            )}
 
-          <a 
-            href="/api/auth/logout"
-            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
-            title="Sair da Conta (Logout)"
-          >
-            <LogOut size={16} />
-          </a>
-        </div>
+            {/* User Info Line */}
+            <div className="flex justify-between items-center mb-3.5 w-full">
+              <div className="flex items-center gap-3 min-w-0">
+                {currentUser?.avatarUrl ? (
+                  <img 
+                    src={currentUser.avatarUrl} 
+                    alt={currentUser.nome} 
+                    className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                    {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'U'}
+                  </div>
+                )}
+                <div className="min-w-0 text-left">
+                  <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome}</span>
+                  <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Membro da Equipe'}</span>
+                </div>
+              </div>
 
-        {/* Back and Page Title Line */}
-        <div className="flex items-center gap-2 mt-3.5">
-          <button 
-            onClick={handleBackNavigation}
-            className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center"
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <h1 className="text-xs font-black uppercase tracking-wider text-white">
-            {activeChatUser ? `Conversa com ${activeChatUser.nome}` : 'Chat da Equipe'}
-          </h1>
-        </div>
+              <a 
+                href="/api/auth/logout"
+                className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+                title="Sair da Conta (Logout)"
+              >
+                <LogOut size={16} />
+              </a>
+            </div>
+
+            {/* Back and Page Title Line */}
+            <div className="flex items-center gap-2 mt-3.5">
+              <button 
+                onClick={handleBackNavigation}
+                className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <h1 className="text-xs font-black uppercase tracking-wider text-white">
+                Chat da Equipe
+              </h1>
+            </div>
+          </>
+        )}
       </header>
 
       {/* CORE VIEW */}
