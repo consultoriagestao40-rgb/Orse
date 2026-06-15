@@ -1145,16 +1145,16 @@ export default function AtivosPage() {
       <Sidebar />
       
       <main className={`flex-1 no-print ${
-        activeTab === 'ordens' && osViewMode === 'kanban' 
+        (activeTab === 'ordens' && osViewMode === 'kanban') || (activeTab === 'contratos' && contratosViewMode === 'kanban')
           ? 'overflow-auto h-screen p-0 bg-slate-50' 
-          : 'p-8 overflow-y-auto'
+          : 'p-4 md:p-6 overflow-y-auto'
       }`}>
         <div className={`space-y-6 ${
-          activeTab === 'ordens' && osViewMode === 'kanban' 
+          (activeTab === 'ordens' && osViewMode === 'kanban') || (activeTab === 'contratos' && contratosViewMode === 'kanban')
             ? 'w-full flex flex-col' 
-            : 'max-w-7xl mx-auto'
+            : 'max-w-[1600px] mx-auto w-full px-2 sm:px-4'
         }`}>
-          <div className={activeTab === 'ordens' && osViewMode === 'kanban' ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'}>
+          <div className={(activeTab === 'ordens' && osViewMode === 'kanban') || (activeTab === 'contratos' && contratosViewMode === 'kanban') ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'}>
           
           {/* HEADER DO MÓDULO */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-5 gap-4">
@@ -1617,72 +1617,156 @@ export default function AtivosPage() {
 
               {/* VISÃO KANBAN */}
               {contratosViewMode === 'kanban' && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
-                  {(['RASCUNHO', 'VIGENTE', 'SUSPENSO', 'ENCERRADO'] as const).map(colStatus => {
-                    const colContratos = filteredContratos.filter(c => c.status === colStatus);
-                    const titleMap = {
-                      RASCUNHO: 'Rascunho',
-                      VIGENTE: 'Vigente',
-                      SUSPENSO: 'Suspenso',
-                      ENCERRADO: 'Encerrado'
-                    };
-                    const colorMap = {
-                      RASCUNHO: 'border-t-blue-500',
-                      VIGENTE: 'border-t-emerald-500',
-                      SUSPENSO: 'border-t-amber-500',
-                      ENCERRADO: 'border-t-red-500'
-                    };
-                    return (
-                      <div key={colStatus} className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-4 flex flex-col min-h-[400px] border-t-4 ${colorMap[colStatus]}`}>
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-200/80 mb-4 select-none">
-                          <span className="text-xs font-black text-slate-700 uppercase tracking-wider">{titleMap[colStatus]}</span>
-                          <span className="text-[10px] font-black text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">{colContratos.length}</span>
-                        </div>
-                        <div className="flex-1 space-y-3 overflow-y-auto pr-0.5">
-                          {colContratos.map(contr => (
-                            <div key={contr.id} className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-3 hover:shadow-sm transition-shadow">
-                              <div className="flex justify-between items-center">
-                                <span className="font-mono text-[9px] font-black text-slate-400">#{String(contr.codigo).padStart(4, '0')}</span>
-                                <span className="text-[9px] text-slate-400 font-bold">{contr.vigenciaMeses} Meses</span>
-                              </div>
-                              <div className="space-y-0.5">
-                                <h4 className="text-xs font-black text-slate-800 uppercase leading-tight truncate">{contr.client.nomeFantasia}</h4>
-                                <p className="text-[9.5px] text-slate-500 truncate">{contr.empresaEmissora.nomeFantasia}</p>
-                              </div>
-                              <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[10px] space-y-1">
-                                <div className="text-slate-650 font-bold leading-tight">
-                                  {contr.itens.map((it: any) => `${it.quantidade}x ${it.ativo.descricao}`).join(', ')}
-                                </div>
-                                <div className="flex justify-between items-center text-[9px] font-extrabold text-[#1B4D3E] pt-1 mt-1 border-t border-slate-200/55">
-                                  <span>Consumo Mínimo:</span>
-                                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contr.valorMinimoMensal)}</span>
-                                </div>
-                              </div>
-                              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                                <button 
-                                  onClick={() => { setSelectedContratoForPdf(contr); setModalContratoPdfOpen(true); }}
-                                  className="text-[9px] font-black uppercase text-slate-500 hover:text-[#1B4D3E] transition-colors flex items-center gap-1 cursor-pointer"
-                                >
-                                  <Printer size={10} /> Imprimir PDF
-                                </button>
-                                <div className="flex gap-1">
-                                  {colStatus !== 'RASCUNHO' && (
-                                    <button onClick={() => handleUpdateContratoStatus(contr.id, 'RASCUNHO')} className="text-[9px] font-bold text-slate-450 hover:text-blue-600 hover:bg-blue-50 px-1.5 py-0.5 rounded transition-all">Desativar</button>
-                                  )}
-                                  {colStatus !== 'VIGENTE' && (
-                                    <button onClick={() => handleUpdateContratoStatus(contr.id, 'VIGENTE')} className="text-[9px] font-black text-white bg-[#1B4D3E] hover:bg-[#13382D] px-2 py-0.5 rounded transition-all">Ativar</button>
-                                  )}
+                <div className="pb-6 select-none bg-slate-50 pl-2 pr-1 overflow-x-auto">
+                  <div className="flex gap-[3px] min-w-max">
+                    {(['RASCUNHO', 'VIGENTE', 'SUSPENSO', 'ENCERRADO'] as const).map((colStatus, idx) => {
+                      const colContratos = filteredContratos.filter(c => c.status === colStatus);
+                      const isFirst = idx === 0;
+                      const isLast = idx === 3;
+
+                      const titleMap = {
+                        RASCUNHO: 'Rascunho',
+                        VIGENTE: 'Vigente',
+                        SUSPENSO: 'Suspenso',
+                        ENCERRADO: 'Encerrado'
+                      };
+
+                      const configMap = {
+                        RASCUNHO: { hex: '#3B82F6', contrast: 'white', bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.18)' },
+                        VIGENTE: { hex: '#10B981', contrast: 'white', bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.18)' },
+                        SUSPENSO: { hex: '#F59E0B', contrast: 'black', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.35)' },
+                        ENCERRADO: { hex: '#EF4444', contrast: 'white', bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.18)' }
+                      };
+
+                      const conf = configMap[colStatus];
+                      const resolvedHex = conf.hex;
+                      const contrast = conf.contrast;
+
+                      return (
+                        <div 
+                          key={colStatus} 
+                          className="flex flex-col flex-shrink-0"
+                          style={{ width: '274px' }}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            const contratoId = e.dataTransfer.getData('text/plain');
+                            handleUpdateContratoStatus(contratoId, colStatus);
+                          }}
+                        >
+                          {/* Column Header Sticky */}
+                          <div className="sticky top-0 select-none z-10 bg-slate-50" style={{ zIndex: 20 + (4 - idx) }}>
+                            <div className="relative h-[52px] shrink-0 w-full pointer-events-auto">
+                              <svg 
+                                className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                                viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                                preserveAspectRatio="none"
+                                style={{ color: resolvedHex }}
+                              >
+                                <path 
+                                  d={isFirst 
+                                    ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                                    : isLast 
+                                      ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                      : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                  }
+                                  fill="currentColor" 
+                                  stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                                  strokeWidth="1"
+                                />
+                              </svg>
+                              <div 
+                                className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                                style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                              >
+                                <div className="flex flex-col min-w-0 justify-center">
+                                  <h3 className="font-black uppercase tracking-wider text-[11px] truncate max-w-[150px] leading-none">
+                                    {titleMap[colStatus]}
+                                  </h3>
+                                  <span className="text-[10px] font-bold mt-1 opacity-90 truncate select-none leading-none">
+                                    {colContratos.length} {colContratos.length === 1 ? 'contrato' : 'contratos'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                          ))}
-                          {colContratos.length === 0 && (
-                            <div className="py-12 text-center text-slate-350 italic text-[10px]">Arraste ou ative contratos para esta etapa.</div>
-                          )}
+                          </div>
+
+                          {/* Column Body Container */}
+                          <div 
+                            className="flex-1 p-3 space-y-3 overflow-y-auto min-h-[400px] border border-solid border-slate-200 mt-[3px] rounded-b-2xl transition-colors duration-150"
+                            style={{ 
+                              backgroundColor: conf.bg,
+                              borderColor: conf.border,
+                              borderTopWidth: 0
+                            }}
+                          >
+                            {colContratos.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-12 px-4 text-center select-none text-slate-400 font-semibold italic text-[10.5px]">
+                                Arraste ou ative contratos para esta etapa
+                              </div>
+                            ) : (
+                              colContratos.map(contr => (
+                                <div 
+                                  key={contr.id} 
+                                  className={`relative bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-xl p-3.5 shadow-xs space-y-3 hover:shadow-sm transition-all text-left cursor-pointer ${
+                                    loading ? 'opacity-65 pointer-events-none select-none' : ''
+                                  }`}
+                                  draggable={!loading}
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.setData('text/plain', contr.id);
+                                  }}
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-mono text-[9px] font-black text-slate-400">#{String(contr.codigo).padStart(4, '0')}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">{contr.vigenciaMeses} Meses</span>
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <h4 className="text-xs font-black text-slate-800 uppercase leading-tight truncate">{contr.client.nomeFantasia}</h4>
+                                    <p className="text-[9.5px] text-slate-500 truncate">{contr.empresaEmissora.nomeFantasia}</p>
+                                  </div>
+                                  <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[10px] space-y-1">
+                                    <div className="text-slate-650 font-bold leading-tight">
+                                      {contr.itens.map((it: any) => `${it.quantidade}x ${it.ativo.descricao}`).join(', ')}
+                                    </div>
+                                    <div className="flex justify-between items-center text-[9px] font-extrabold text-[#1B4D3E] pt-1 mt-1 border-t border-slate-200/55">
+                                      <span>Consumo Mínimo:</span>
+                                      <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contr.valorMinimoMensal)}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                    <button 
+                                      onClick={() => { setSelectedContratoForPdf(contr); setModalContratoPdfOpen(true); }}
+                                      className="text-[9px] font-black uppercase text-slate-500 hover:text-[#1B4D3E] transition-colors flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <FileText size={12} /> Imprimir PDF
+                                    </button>
+
+                                    <div className="flex gap-2">
+                                      {colStatus !== 'RASCUNHO' && (
+                                        <button 
+                                          onClick={() => handleUpdateContratoStatus(contr.id, 'RASCUNHO')} 
+                                          className="text-[9px] font-bold text-slate-450 hover:text-blue-600 hover:bg-blue-50 px-1.5 py-0.5 rounded transition-all cursor-pointer border-none bg-transparent"
+                                        >
+                                          Desativar
+                                        </button>
+                                      )}
+                                      {colStatus === 'RASCUNHO' && (
+                                        <button 
+                                          onClick={() => handleUpdateContratoStatus(contr.id, 'VIGENTE')} 
+                                          className="text-[9px] font-black text-white bg-[#1B4D3E] hover:bg-[#13382D] px-2 py-0.5 rounded transition-all cursor-pointer border-none"
+                                        >
+                                          Ativar
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
