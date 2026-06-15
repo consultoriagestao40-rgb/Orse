@@ -216,6 +216,57 @@ export default function ChatPage() {
     }
   };
 
+  const compressImageIfNeeded = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(e.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          resolve(e.target?.result as string);
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Handle chat file selection and upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -223,51 +274,48 @@ export default function ChatPage() {
 
     setUploadingFile(true);
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
-      if (!base64) {
-        setUploadingFile(false);
-        return;
-      }
+    try {
+      const base64 = await compressImageIfNeeded(file);
+      
+      const fileType = file.type.startsWith('image/') ? 'image/jpeg' : file.type;
+      const fileName = file.type.startsWith('image/') 
+        ? (file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') ? file.name : `${file.name.substring(0, file.name.lastIndexOf('.')) || file.name}.jpg`)
+        : file.name;
 
       // Optimistic insert for file/photo
       const tempMsg = {
         id: 'temp-' + Date.now(),
         senderId: currentUser.id,
         receiverId: activeChatUser.id,
-        content: file.name,
+        content: fileName,
         read: false,
         fileUrl: base64, // Local Base64 preview
-        fileType: file.type,
+        fileType: fileType,
         createdAt: new Date()
       };
       setChatMessages(prev => [...prev, tempMsg]);
 
-      try {
-        const res = await uploadChatFileAction(base64, file.name);
-        if (res.success && res.fileUrl) {
-          const sendRes = await sendInternalMessage(activeChatUser.id, file.name, res.fileUrl, file.type);
-          if (sendRes.success && sendRes.message) {
-            setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
-            loadChatListMobile();
-          } else {
-            alert("Erro ao enviar arquivo: " + sendRes.error);
-            setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
-          }
+      const res = await uploadChatFileAction(base64, fileName);
+      if (res.success && res.fileUrl) {
+        const sendRes = await sendInternalMessage(activeChatUser.id, fileName, res.fileUrl, fileType);
+        if (sendRes.success && sendRes.message) {
+          setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
+          loadChatListMobile();
         } else {
-          alert("Erro no upload do arquivo: " + res.error);
+          alert("Erro ao enviar arquivo: " + sendRes.error);
           setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
         }
-      } catch (err) {
-        console.error(err);
+      } else {
+        alert("Erro no upload do arquivo: " + res.error);
         setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
-      } finally {
-        setUploadingFile(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao processar arquivo");
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   // Send message
@@ -494,27 +542,36 @@ export default function ChatPage() {
                               : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/40'
                           }`}
                         >
-                          {isImage ? (
-                            <div className="mb-1 rounded-lg overflow-hidden border border-slate-200/50 bg-slate-100 max-w-[240px]">
-                              <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
-                                <img 
-                                  src={msg.fileUrl} 
-                                  alt="Imagem" 
-                                  className="w-full h-auto object-cover max-h-[180px] hover:opacity-90 transition-opacity"
-                                />
-                              </a>
-                            </div>
-                          ) : msg.fileUrl ? (
-                            <a 
-                              href={msg.fileUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="mb-1 p-2 bg-slate-100 rounded-lg flex items-center gap-2 hover:bg-slate-200 transition-colors text-slate-800 font-bold no-underline text-[10px] border border-slate-200/50 max-w-[240px] block"
-                            >
-                              <FileText size={16} className="text-blue-600 shrink-0" />
-                              <span className="truncate block flex-1">{msg.content || 'Arquivo Anexo'}</span>
-                            </a>
-                          ) : null}
+                          {(() => {
+                            const isTemp = msg.id && String(msg.id).startsWith('temp-');
+                            const fileDownloadUrl = isTemp ? msg.fileUrl : `/api/chat/file/${msg.id}`;
+                            if (isImage) {
+                              return (
+                                <div className="mb-1 rounded-lg overflow-hidden border border-slate-200/50 bg-slate-100 max-w-[240px]">
+                                  <a href={fileDownloadUrl} target="_blank" rel="noopener noreferrer">
+                                    <img 
+                                      src={fileDownloadUrl} 
+                                      alt="Imagem" 
+                                      className="w-full h-auto object-cover max-h-[180px] hover:opacity-90 transition-opacity"
+                                    />
+                                  </a>
+                                </div>
+                              );
+                            } else if (msg.fileUrl) {
+                              return (
+                                <a 
+                                  href={fileDownloadUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="mb-1 p-2 bg-slate-100 rounded-lg flex items-center gap-2 hover:bg-slate-200 transition-colors text-slate-800 font-bold no-underline text-[10px] border border-slate-200/50 max-w-[240px] block"
+                                >
+                                  <FileText size={16} className="text-blue-600 shrink-0" />
+                                  <span className="truncate block flex-1">{msg.content || 'Arquivo Anexo'}</span>
+                                </a>
+                              );
+                            }
+                            return null;
+                          })()}
 
                           {msg.content && (!msg.fileUrl || !isImage) && (
                             <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>

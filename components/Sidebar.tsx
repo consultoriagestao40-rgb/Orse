@@ -433,6 +433,7 @@ const Sidebar = () => {
           const freshUser = await getLoggedUser();
           if (freshUser) {
             const userObj = {
+              id: freshUser.id,
               nome: freshUser.nome,
               role: freshUser.role,
               email: freshUser.email,
@@ -726,6 +727,57 @@ const Sidebar = () => {
     }
   };
 
+  const compressImageIfNeeded = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(e.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          resolve(e.target?.result as string);
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Handle desktop chat file upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -733,51 +785,48 @@ const Sidebar = () => {
 
     setUploadingFile(true);
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
-      if (!base64) {
-        setUploadingFile(false);
-        return;
-      }
+    try {
+      const base64 = await compressImageIfNeeded(file);
+      
+      const fileType = file.type.startsWith('image/') ? 'image/jpeg' : file.type;
+      const fileName = file.type.startsWith('image/') 
+        ? (file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') ? file.name : `${file.name.substring(0, file.name.lastIndexOf('.')) || file.name}.jpg`)
+        : file.name;
 
       // Optimistic insert
       const tempMsg = {
         id: 'temp-' + Date.now(),
         senderId: user.id,
         receiverId: activeChatUser.id,
-        content: file.name,
+        content: fileName,
         read: false,
         fileUrl: base64, // local Base64 preview
-        fileType: file.type,
+        fileType: fileType,
         createdAt: new Date()
       };
       setChatMessages(prev => [...prev, tempMsg]);
 
-      try {
-        const res = await uploadChatFileAction(base64, file.name);
-        if (res.success && res.fileUrl) {
-          const sendRes = await sendInternalMessage(activeChatUser.id, file.name, res.fileUrl, file.type);
-          if (sendRes.success && sendRes.message) {
-            setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
-            loadChatListData();
-          } else {
-            alert("Erro ao enviar arquivo: " + sendRes.error);
-            setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
-          }
+      const res = await uploadChatFileAction(base64, fileName);
+      if (res.success && res.fileUrl) {
+        const sendRes = await sendInternalMessage(activeChatUser.id, fileName, res.fileUrl, fileType);
+        if (sendRes.success && sendRes.message) {
+          setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
+          loadChatListData();
         } else {
-          alert("Erro no upload do arquivo: " + res.error);
+          alert("Erro ao enviar arquivo: " + sendRes.error);
           setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
         }
-      } catch (err) {
-        console.error(err);
+      } else {
+        alert("Erro no upload do arquivo: " + res.error);
         setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
-      } finally {
-        setUploadingFile(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao processar arquivo");
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   // Efeito para carregar leads do WhatsApp com polling de 5 segundos
@@ -2729,12 +2778,14 @@ const Sidebar = () => {
                                         msg.fileType?.startsWith('image/') || 
                                         /\.(jpg|jpeg|png|webp|gif)$/i.test(msg.fileUrl)
                                       );
+                                      const isTemp = msg.id && String(msg.id).startsWith('temp-');
+                                      const fileDownloadUrl = isTemp ? msg.fileUrl : `/api/chat/file/${msg.id}`;
                                       if (isImage) {
                                         return (
                                           <div className="mb-1.5 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 max-w-[200px]">
-                                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                            <a href={fileDownloadUrl} target="_blank" rel="noopener noreferrer">
                                               <img 
-                                                src={msg.fileUrl} 
+                                                src={fileDownloadUrl} 
                                                 alt="Imagem" 
                                                 className="w-full h-auto object-cover max-h-[140px] hover:opacity-90 transition-opacity"
                                               />
@@ -2744,7 +2795,7 @@ const Sidebar = () => {
                                       } else if (msg.fileUrl) {
                                         return (
                                           <a 
-                                            href={msg.fileUrl} 
+                                            href={fileDownloadUrl} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="mb-1.5 p-1.5 bg-slate-100 hover:bg-slate-200 transition-colors rounded-lg flex items-center gap-1.5 text-slate-800 font-bold no-underline text-[10px] border border-slate-200 max-w-[200px] block"

@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const isProduction = process.env.NODE_ENV === 'production'
 
     const userData = {
+      id: user.id,
       nome: user.nome,
       role: user.role,
       email: user.email,

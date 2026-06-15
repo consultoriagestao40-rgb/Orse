@@ -108,6 +108,7 @@ export async function GET(request: Request) {
     })
 
     response.cookies.set('sb_user', JSON.stringify({
+      id: user.id,
       nome: user.nome,
       role: user.role,
       email: user.email,
