@@ -3,6 +3,47 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
+import { sendInternalMessage } from '@/app/leads/chat-actions';
+
+// Helper to format date as DD/MM/YYYY
+function formatLocalDate(dateInput: Date | string | null | undefined): string {
+  if (!dateInput) return 'Não definida';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'Não definida';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+// Helper to find a user's ID by email in a specific tenant
+async function getUserIdByEmail(email: string | null | undefined, tenantId: string | null): Promise<string | null> {
+  if (!email || !tenantId) return null;
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' }, tenantId }
+  });
+  return user ? user.id : null;
+}
+
+// Helper to find the manager/creator of an OS (with fallback to first admin in tenant)
+async function getManagerIdForOs(criadorId: string | null | undefined, tenantId: string | null): Promise<string | null> {
+  if (criadorId) return criadorId;
+  if (!tenantId) return null;
+  const manager = await prisma.user.findFirst({
+    where: { tenantId, cargo: { in: ['ADMIN', 'GESTOR', 'GERENTE'] } }
+  });
+  return manager ? manager.id : null;
+}
+
+// Helper to safely send a chat message without blocking the main flow
+async function safeSendChatNotification(receiverId: string | null | undefined, content: string) {
+  if (!receiverId) return;
+  try {
+    await sendInternalMessage(receiverId, content);
+  } catch (err) {
+    console.error("Falha ao enviar notificação de chat:", err);
+  }
+}
 
 // Helper to check user auth and get tenantId
 async function checkAuth() {
@@ -651,6 +692,26 @@ export async function createOrdemServicoAtivo(data: {
     });
 
     revalidatePath('/ativos');
+
+    // Notificar técnico designado via chat
+    if (data.tecnicoEmail) {
+      try {
+        const techId = await getUserIdByEmail(data.tecnicoEmail, user.tenantId);
+        if (techId) {
+          const clientName = os.client ? os.client.nomeFantasia : 'Cliente';
+          const msg = `🛠️ *Nova Ordem de Serviço Programada!*\n` +
+                      `• Código: OS #${String(os.codigo).padStart(4, '0')}\n` +
+                      `• Cliente: ${clientName}\n` +
+                      `• Tipo: ${os.tipo}\n` +
+                      `• Data Prevista: ${formatLocalDate(os.dataPrevista)}\n` +
+                      `• Instruções: ${os.instrucoes || 'Nenhuma'}`;
+          await safeSendChatNotification(techId, msg);
+        }
+      } catch (err) {
+        console.error("Erro ao enviar notificação de nova OS por chat:", err);
+      }
+    }
+
     return { success: true, os };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -1058,6 +1119,81 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     }
 
     revalidatePath('/ativos');
+
+    // --- NOTIFICAÇÕES DE CHAT AUTOMÁTICAS ---
+    try {
+      const clientName = currentOs.client?.nomeFantasia || 'Cliente';
+      const formattedCodigo = `OS #${String(os.codigo).padStart(4, '0')}`;
+
+      // 1. Notificação para o Técnico
+      const techEmail = data.tecnicoEmail !== undefined ? data.tecnicoEmail : currentOs.tecnicoEmail;
+      if (techEmail) {
+        const techId = await getUserIdByEmail(techEmail, user.tenantId);
+        if (techId) {
+          // Caso A: Técnico foi alterado (reatribuído)
+          if (data.tecnicoEmail !== undefined && data.tecnicoEmail !== currentOs.tecnicoEmail) {
+            const msg = `🛠️ *Uma Ordem de Serviço foi designada para você!*\n` +
+                        `• Código: ${formattedCodigo}\n` +
+                        `• Cliente: ${clientName}\n` +
+                        `• Tipo: ${os.tipo}\n` +
+                        `• Data Prevista: ${formatLocalDate(os.dataPrevista)}\n` +
+                        `• Instruções: ${os.instrucoes || 'Nenhuma'}`;
+            await safeSendChatNotification(techId, msg);
+          }
+          // Caso B: Mudanças críticas de programação (mas o técnico continua o mesmo)
+          else if (
+            (data.dataPrevista !== undefined && data.dataPrevista !== (currentOs.dataPrevista ? currentOs.dataPrevista.toISOString() : null)) ||
+            (data.tipo !== undefined && data.tipo !== currentOs.tipo) ||
+            (data.instrucoes !== undefined && data.instrucoes !== currentOs.instrucoes) ||
+            (data.status !== undefined && data.status !== currentOs.status)
+          ) {
+            const msg = `🛠️ *A Ordem de Serviço ${formattedCodigo} foi alterada!*\n` +
+                        `• Cliente: ${clientName}\n` +
+                        `• Tipo: ${os.tipo}\n` +
+                        `• Status: ${os.status}\n` +
+                        `• Data Prevista: ${formatLocalDate(os.dataPrevista)}\n` +
+                        `• Instruções: ${os.instrucoes || 'Nenhuma'}`;
+            await safeSendChatNotification(techId, msg);
+          }
+        }
+      }
+
+      // 2. Notificação de Avanço para o Gestor (Criador/Administrador)
+      if (data.status !== undefined && data.status !== currentOs.status) {
+        const managerId = await getManagerIdForOs(os.criadorId, user.tenantId);
+        if (managerId) {
+          const techName = os.tecnicoResponsavel || 'Técnico';
+          
+          // Rota Iniciada
+          if (data.status === 'EM_DESLOCAMENTO') {
+            const msg = `🚗 *Rota Iniciada!*\n` +
+                        `O técnico *${techName}* iniciou o deslocamento para realizar o atendimento da *${formattedCodigo}* (Cliente: ${clientName}).`;
+            await safeSendChatNotification(managerId, msg);
+          }
+          // Serviço Iniciado
+          else if (data.status === 'EM_ANDAMENTO') {
+            const msg = `🛠️ *Serviço Iniciado!*\n` +
+                        `O técnico *${techName}* iniciou o atendimento presencial da *${formattedCodigo}* no cliente *${clientName}*.`;
+            await safeSendChatNotification(managerId, msg);
+          }
+          // Serviço Concluído (Aguardando Validação)
+          else if (data.status === 'VALIDACAO') {
+            const msg = `✅ *Serviço Concluído (Aguardando Validação)!*\n` +
+                        `O técnico *${techName}* concluiu o atendimento da *${formattedCodigo}* (Cliente: ${clientName}). O relatório está aguardando sua validação.`;
+            await safeSendChatNotification(managerId, msg);
+          }
+          // Serviço Concluído Totalmente
+          else if (data.status === 'CONCLUIDA') {
+            const msg = `🎉 *Serviço Concluído!*\n` +
+                        `O atendimento da *${formattedCodigo}* (Cliente: ${clientName}) foi finalizado e validado com sucesso.`;
+            await safeSendChatNotification(managerId, msg);
+          }
+        }
+      }
+    } catch (chatErr) {
+      console.error("Erro no fluxo de envio de notificações por chat:", chatErr);
+    }
+
     return { success: true, os };
   } catch (error: any) {
     return { success: false, error: error.message };

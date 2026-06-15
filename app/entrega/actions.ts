@@ -3,6 +3,47 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
+import { sendInternalMessage } from '@/app/leads/chat-actions';
+
+// Helper to format date as DD/MM/YYYY
+function formatLocalDate(dateInput: Date | string | null | undefined): string {
+  if (!dateInput) return 'Não definida';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'Não definida';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+// Helper to find a user's ID by email in a specific tenant
+async function getUserIdByEmail(email: string | null | undefined, tenantId: string | null): Promise<string | null> {
+  if (!email || !tenantId) return null;
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' }, tenantId }
+  });
+  return user ? user.id : null;
+}
+
+// Helper to find the manager/creator of a Delivery (with fallback to first admin in tenant)
+async function getManagerIdForEntrega(criadorId: string | null | undefined, tenantId: string | null): Promise<string | null> {
+  if (criadorId) return criadorId;
+  if (!tenantId) return null;
+  const manager = await prisma.user.findFirst({
+    where: { tenantId, cargo: { in: ['ADMIN', 'GESTOR', 'GERENTE'] } }
+  });
+  return manager ? manager.id : null;
+}
+
+// Helper to safely send a chat message without blocking the main flow
+async function safeSendChatNotification(receiverId: string | null | undefined, content: string) {
+  if (!receiverId) return;
+  try {
+    await sendInternalMessage(receiverId, content);
+  } catch (err) {
+    console.error("Falha ao enviar notificação de chat:", err);
+  }
+}
 
 // Helper to check user auth and get tenantId
 async function checkAuth() {
@@ -385,6 +426,73 @@ export async function updateEntrega(id: string, data: {
     }
     if (data.entregadorEmail !== undefined && currentEntrega.entregadorEmail && data.entregadorEmail !== currentEntrega.entregadorEmail) {
       await otimizarRotaEntregador(currentEntrega.entregadorEmail);
+    }
+
+    // --- NOTIFICAÇÕES DE CHAT AUTOMÁTICAS ---
+    try {
+      const clientName = entrega.client?.nomeFantasia || 'Cliente';
+      const formattedNf = `NF ${entrega.numeroNf}`;
+
+      // 1. Notificação para o Entregador
+      const currentDelEmail = data.entregadorEmail !== undefined ? data.entregadorEmail : currentEntrega.entregadorEmail;
+      if (currentDelEmail) {
+        const delivererId = await getUserIdByEmail(currentDelEmail, user.tenantId);
+        if (delivererId) {
+          // Caso A: Entregador foi alterado (reatribuído)
+          if (data.entregadorEmail !== undefined && data.entregadorEmail !== currentEntrega.entregadorEmail) {
+            const msg = `📦 *Uma Entrega foi designada para você!*\n` +
+                        `• NF: ${formattedNf}\n` +
+                        `• Cliente: ${clientName}\n` +
+                        `• Valor: R$ ${entrega.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+                        `• Data Programada: ${formatLocalDate(entrega.dataProgramada)}\n` +
+                        `• Obs: ${entrega.observacao || 'Nenhuma'}`;
+            await safeSendChatNotification(delivererId, msg);
+          }
+          // Caso B: Alterações críticas na entrega (mas entregador continua o mesmo)
+          else if (
+            (data.dataProgramada !== undefined && data.dataProgramada !== (currentEntrega.dataProgramada ? currentEntrega.dataProgramada.toISOString() : null)) ||
+            (data.valor !== undefined && Number(data.valor) !== currentEntrega.valor) ||
+            (data.observacao !== undefined && data.observacao !== currentEntrega.observacao) ||
+            (data.status !== undefined && data.status !== currentEntrega.status)
+          ) {
+            const msg = `📦 *A Entrega (${formattedNf}) foi alterada!*\n` +
+                        `• Cliente: ${clientName}\n` +
+                        `• Status: ${entrega.status}\n` +
+                        `• Data Programada: ${formatLocalDate(entrega.dataProgramada)}\n` +
+                        `• Obs: ${entrega.observacao || 'Nenhuma'}`;
+            await safeSendChatNotification(delivererId, msg);
+          }
+        }
+      }
+
+      // 2. Notificação de Avanço para o Gestor (Criador/Administrador)
+      if (data.status !== undefined && data.status !== currentEntrega.status) {
+        const managerId = await getManagerIdForEntrega(entrega.criadorId, user.tenantId);
+        if (managerId) {
+          const delivererName = entrega.entregadorResponsavel || 'Entregador';
+
+          // Rota Iniciada
+          if (data.status === 'EM_DESLOCAMENTO') {
+            const msg = `🚗 *Rota Iniciada!*\n` +
+                        `O entregador *${delivererName}* iniciou o trajeto de entrega da *${formattedNf}* (Cliente: ${clientName}).`;
+            await safeSendChatNotification(managerId, msg);
+          }
+          // Entrega Finalizada (Aguardando Validação)
+          else if (data.status === 'VALIDACAO') {
+            const msg = `✅ *Entrega Finalizada (Aguardando Validação)!*\n` +
+                        `O entregador *${delivererName}* finalizou a entrega da *${formattedNf}* (Cliente: ${clientName}). Aguardando sua validação.`;
+            await safeSendChatNotification(managerId, msg);
+          }
+          // Entrega Concluída (Entregue)
+          else if (data.status === 'ENTREGUE') {
+            const msg = `🎉 *Entrega Concluída!*\n` +
+                        `A entrega da *${formattedNf}* (Cliente: ${clientName}) foi validada e marcada como Concluída.`;
+            await safeSendChatNotification(managerId, msg);
+          }
+        }
+      }
+    } catch (chatErr) {
+      console.error("Erro no fluxo de envio de notificações de entrega por chat:", chatErr);
     }
 
     revalidatePath('/entrega');
