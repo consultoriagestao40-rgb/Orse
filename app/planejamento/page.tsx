@@ -149,6 +149,10 @@ export default function PlanejamentoPage() {
   const [draggedCausaId, setDraggedCausaId] = useState<string | null>(null);
   const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null);
 
+  // Drag and drop states for Action Plan Kanban
+  const [draggedPlanoId, setDraggedPlanoId] = useState<string | null>(null);
+  const [draggedOverPlanoStageId, setDraggedOverPlanoStageId] = useState<string | null>(null);
+
   // Modals & Form States
   const [isEditingCausa, setIsEditingCausa] = useState(false);
   const [causaViewMode, setCausaViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -305,12 +309,20 @@ export default function PlanejamentoPage() {
     return (
       <div 
         key={pa.id} 
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData('planoId', pa.id);
+          setDraggedPlanoId(pa.id);
+        }}
+        onDragEnd={() => setDraggedPlanoId(null)}
         onClick={() => {
           setCurrentPlano(pa);
           setShowSubActionForm(false);
           setIsPlanoModalOpen(true);
         }}
-        className="bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs hover:shadow-2xs transition-all cursor-pointer relative group flex flex-col gap-3 text-left"
+        className={`bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs hover:shadow-2xs transition-all cursor-grab active:cursor-grabbing relative group flex flex-col gap-3 text-left animate-in fade-in duration-200 ${
+          draggedPlanoId === pa.id ? 'opacity-40 border-dashed border-[#1B4D3E]' : ''
+        }`}
       >
         <button 
           onClick={(e) => {
@@ -588,6 +600,26 @@ export default function PlanejamentoPage() {
     }
   };
 
+  const handleDropPlano = async (e: React.DragEvent, targetStatus: 'PENDENTE' | 'ATRASADO' | 'CONCLUIDO') => {
+    e.preventDefault();
+    setDraggedOverPlanoStageId(null);
+    const planoId = e.dataTransfer.getData('planoId') || draggedPlanoId;
+    if (!planoId) return;
+
+    setDraggedPlanoId(null);
+    const targetPlano = planosAcao.find(p => p.id === planoId);
+    if (!targetPlano || targetPlano.status === targetStatus) return;
+
+    setPlanosAcao(prev => prev.map(p => p.id === planoId ? { ...p, status: targetStatus } : p));
+
+    const updatedPlano = { ...targetPlano, status: targetStatus };
+    const res = await saveActionPlan(updatedPlano as ActionPlan);
+    if (!res.success) {
+      alert('Erro ao atualizar status do plano: ' + res.error);
+      await loadData();
+    }
+  };
+
   const handleDeleteCausaObj = async (id: string) => {
     if (confirm('Deseja realmente excluir esta análise de causa raiz?')) {
       setLoading(true);
@@ -748,7 +780,9 @@ export default function PlanejamentoPage() {
     }).length;
   }
 
-  const isKanbanMode = activeTab === 'causas' && causaViewMode === 'kanban' && !isEditingCausa;
+  const isKanbanMode = 
+    (activeTab === 'causas' && causaViewMode === 'kanban' && !isEditingCausa) ||
+    (activeTab === 'planos' && planoViewMode === 'kanban');
 
   return (
     <div id="planejamento-layout-root" className="flex min-h-screen bg-[#F8FAFC]">
@@ -1668,50 +1702,119 @@ export default function PlanejamentoPage() {
                     </div>
                   ) : (
                     /* VISÃO KANBAN */
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* PENDENTES */}
-                      <div className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px]">
-                        <div className="flex justify-between items-center px-1 select-none">
-                          <h3 className="text-xs font-black text-slate-750 uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span> Pendentes
-                          </h3>
-                          <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
-                            {planosAcao.filter(pa => pa.status === 'PENDENTE').length}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
-                          {planosAcao.filter(pa => pa.status === 'PENDENTE').map(pa => renderKanbanCard(pa))}
-                        </div>
-                      </div>
+                    <div className="pb-6 select-none bg-slate-50 pl-8 pr-8">
+                      <div className="flex gap-[3px] min-w-max">
+                        {(() => {
+                          const columns = [
+                            { id: 'PENDENTE', nome: 'Pendentes', color: '#3b82f6' },
+                            { id: 'ATRASADO', nome: 'Atrasados', color: '#ef4444' },
+                            { id: 'CONCLUIDO', nome: 'Concluídos', color: '#10b981' }
+                          ].map(s => ({
+                            id: s.id,
+                            nome: s.nome,
+                            color: s.color,
+                            planos: planosAcao.filter(p => p.status === s.id)
+                          }));
 
-                      {/* ATRASADOS */}
-                      <div className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px]">
-                        <div className="flex justify-between items-center px-1 select-none">
-                          <h3 className="text-xs font-black text-slate-755 uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span> Atrasados
-                          </h3>
-                          <span className="text-[10px] font-black bg-red-100 text-red-800 px-2 py-0.5 rounded-md">
-                            {planosAcao.filter(pa => pa.status === 'ATRASADO').length}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
-                          {planosAcao.filter(pa => pa.status === 'ATRASADO').map(pa => renderKanbanCard(pa))}
-                        </div>
-                      </div>
+                          return (
+                            <>
+                              {columns.map((col, idx) => {
+                                const isFirst = idx === 0;
+                                const isLast = idx === columns.length - 1;
+                                const resolvedHex = resolveColorToHex(col.color);
+                                const contrast = getContrastYIQ(resolvedHex);
+                                const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                                const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
 
-                      {/* CONCLUÍDOS */}
-                      <div className="bg-slate-150/40 border border-slate-200 rounded-3xl p-4 flex flex-col gap-4 min-h-[500px]">
-                        <div className="flex justify-between items-center px-1 select-none">
-                          <h3 className="text-xs font-black text-slate-750 uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Concluídos
-                          </h3>
-                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
-                            {planosAcao.filter(pa => pa.status === 'CONCLUIDO').length}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-1">
-                          {planosAcao.filter(pa => pa.status === 'CONCLUIDO').map(pa => renderKanbanCard(pa))}
-                        </div>
+                                return (
+                                  <div
+                                    key={col.id}
+                                    className="flex flex-col flex-shrink-0 transition-opacity duration-200"
+                                    style={{ width: '274px' }}
+                                    onDragOver={(e) => {
+                                      e.preventDefault();
+                                      setDraggedOverPlanoStageId(col.id);
+                                    }}
+                                    onDragLeave={() => setDraggedOverPlanoStageId(null)}
+                                    onDrop={(e) => handleDropPlano(e, col.id as any)}
+                                  >
+                                    {/* Column Header Sticky */}
+                                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (columns.length - idx) }}>
+                                      <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                                        <svg 
+                                          className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                                          viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                                          preserveAspectRatio="none"
+                                          style={{ color: resolvedHex }}
+                                        >
+                                          <path 
+                                            d={isFirst 
+                                              ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                                              : isLast 
+                                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                                : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                            }
+                                            fill="currentColor" 
+                                            stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                                            strokeWidth="1"
+                                          />
+                                        </svg>
+                                        <div 
+                                          className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                                          style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                                        >
+                                          <div className="flex flex-col min-w-0 justify-center">
+                                            <h3 className="font-black uppercase tracking-wider text-[11px] truncate max-w-[150px] leading-none">
+                                              {col.nome}
+                                            </h3>
+                                            <span className="text-[10px] font-bold mt-1 opacity-90 truncate select-none leading-none">
+                                              {col.planos.length} {col.planos.length === 1 ? 'plano' : 'planos'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Card Column Container with Dynamic Colors */}
+                                    <div
+                                      className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex flex-col gap-3"
+                                      style={{
+                                        width: '274px',
+                                        minWidth: '274px',
+                                        maxWidth: '274px',
+                                        backgroundColor: bgRgba,
+                                        borderColor: borderRgba,
+                                        borderWidth: '0 1px 1px 1px',
+                                        borderStyle: 'solid',
+                                        height: 'calc(100vh - 52px)',
+                                        overflowY: 'auto'
+                                      }}
+                                      onDragOver={(e) => {
+                                        e.preventDefault();
+                                        setDraggedOverPlanoStageId(col.id);
+                                      }}
+                                      onDrop={(e) => handleDropPlano(e, col.id as any)}
+                                    >
+                                      {draggedOverPlanoStageId === col.id && draggedPlanoId && (
+                                        <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-28 w-full animate-pulse flex items-center justify-center">
+                                          <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
+                                        </div>
+                                      )}
+
+                                      {col.planos.length === 0 ? (
+                                        <div className="border border-dashed border-slate-300 rounded-lg py-10 flex flex-col items-center justify-center gap-2 flex-1 hover:bg-white/50 transition-all">
+                                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sem planos</span>
+                                        </div>
+                                      ) : (
+                                        col.planos.map(pa => renderKanbanCard(pa))
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
