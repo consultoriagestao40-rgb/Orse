@@ -1408,8 +1408,8 @@ export default function PlanejamentoPage() {
                       </div>
                     ) : (
                       /* VISÃO KANBAN */
-                      <div className="overflow-x-auto pb-4 w-full">
-                        <div className="flex gap-[3px] select-none min-w-max pb-2">
+                      <div className="pb-6 select-none bg-slate-50/55 pl-2 pr-1 rounded-3xl border border-slate-200">
+                        <div className="flex gap-[3px] min-w-max">
                           {(() => {
                             const columns = stagesCausa.map(s => ({
                               id: s.id,
