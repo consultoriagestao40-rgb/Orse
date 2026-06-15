@@ -214,7 +214,7 @@ export default function PushRegister() {
     return (
       <div 
         onClick={() => {
-          router.push('/leads?tab=chat');
+          router.push('/chat');
           setActiveNotification(null);
         }}
         className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-white/85 backdrop-blur-md text-slate-800 p-4 rounded-2xl shadow-2xl border-l-4 border-l-blue-600 border border-slate-200/50 z-[9999] cursor-pointer animate-in fade-in slide-in-from-top-5 duration-300 flex items-start gap-3 select-none"

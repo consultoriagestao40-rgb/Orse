@@ -8,12 +8,20 @@ export const metadata = {
   title: 'Pipeline de Leads | SmartBid',
 };
 
-export default async function LeadsPage() {
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined };
+}) {
   const headersList = await headers();
   const userAgent = headersList.get('user-agent') || '';
   const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
   if (isMobile) {
-    redirect('/leads/mobile');
+    const resolvedParams = searchParams instanceof Promise ? await searchParams : searchParams;
+    const queryString = resolvedParams && Object.keys(resolvedParams).length > 0
+      ? '?' + new URLSearchParams(resolvedParams as any).toString()
+      : '';
+    redirect(`/leads/mobile${queryString}`);
   }
 
   return (

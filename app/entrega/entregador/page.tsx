@@ -1184,7 +1184,7 @@ export default function EntregadorPage() {
           <>
             {/* Tab CRM */}
             <a
-              href="/leads?tab=crm"
+              href="/leads/mobile?tab=crm"
               className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
             >
               <Building size={18} className="text-slate-400" />
@@ -1213,7 +1213,7 @@ export default function EntregadorPage() {
 
         {/* Tab Chat Interno */}
         <a
-          href="/leads?tab=chat"
+          href="/chat"
           className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
         >
           <MessageSquare size={18} className="text-slate-400" />

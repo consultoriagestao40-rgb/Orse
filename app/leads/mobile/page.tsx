@@ -1387,9 +1387,7 @@ export default function MobileCRM() {
         {/* Tab Chat Interno (Globally Available) */}
         <button
           onClick={() => {
-            setActiveTab('chat');
-            setActiveChatUser(null);
-            loadChatListMobile();
+            router.push('/chat');
           }}
           className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative ${
             activeTab === 'chat' ? 'text-blue-600 font-black' : 'text-slate-400 font-bold'
