@@ -18,8 +18,11 @@ import {
   Layers,
   Percent,
   Edit,
+  Edit2,
   X,
-  ArrowLeft
+  ArrowLeft,
+  LayoutList,
+  Kanban
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { 
@@ -777,7 +780,32 @@ export default function PlanejamentoPage() {
             {/* Botões rápidos */}
             <div className="flex gap-2 shrink-0">
               {activeTab === 'causas' && !isEditingCausa && (
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-1 shadow-sm gap-1 flex-shrink-0 mr-1.5 select-none">
+                    <button
+                      type="button"
+                      onClick={() => setCausaViewMode('list')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer border-none ${
+                        causaViewMode === 'list'
+                          ? 'bg-[#1B4D3E] text-white shadow-3xs'
+                          : 'text-amber-500 hover:text-amber-600 bg-transparent'
+                      }`}
+                    >
+                      <LayoutList size={14} /> Lista
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCausaViewMode('kanban')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer border-none ${
+                        causaViewMode === 'kanban'
+                          ? 'bg-[#1B4D3E] text-white shadow-3xs'
+                          : 'text-amber-500 hover:text-amber-600 bg-transparent'
+                      }`}
+                    >
+                      <Kanban size={14} /> Kanban
+                    </button>
+                  </div>
+
                   <button 
                     onClick={() => {
                       setCurrentCausa({
@@ -790,7 +818,7 @@ export default function PlanejamentoPage() {
                       });
                       setIsEditingCausa(true);
                     }}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
                   >
                     <PlusCircle size={14} /> Novo 5 Porquês
                   </button>
@@ -806,34 +834,61 @@ export default function PlanejamentoPage() {
                       });
                       setIsEditingCausa(true);
                     }}
-                    className="bg-slate-800 hover:bg-slate-900 text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
                   >
                     <PlusCircle size={14} /> Novo Ishikawa
                   </button>
                 </div>
               )}
               {activeTab === 'planos' && (
-                <button 
-                  onClick={() => {
-                    setCurrentPlano({
-                      titulo: '',
-                      causaRaizId: '',
-                      problemaDireto: '',
-                      responsavelId: '',
-                      resultadoEsperado: '',
-                      resultadoAtingido: '',
-                      dataFim: new Date().toISOString().split('T')[0],
-                      percentualRealizado: 0,
-                      status: 'PENDENTE',
-                      acoes: []
-                    });
-                    setShowSubActionForm(false);
-                    setIsPlanoModalOpen(true);
-                  }}
-                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                >
-                  <PlusCircle size={14} /> Novo Plano 5W2H
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-1 shadow-sm gap-1 flex-shrink-0 mr-1.5 select-none">
+                    <button
+                      type="button"
+                      onClick={() => setPlanoViewMode('list')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer border-none ${
+                        planoViewMode === 'list'
+                          ? 'bg-[#1B4D3E] text-white shadow-3xs'
+                          : 'text-amber-500 hover:text-amber-600 bg-transparent'
+                      }`}
+                    >
+                      <LayoutList size={14} /> Lista
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPlanoViewMode('kanban')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all whitespace-nowrap cursor-pointer border-none ${
+                        planoViewMode === 'kanban'
+                          ? 'bg-[#1B4D3E] text-white shadow-3xs'
+                          : 'text-amber-500 hover:text-amber-600 bg-transparent'
+                      }`}
+                    >
+                      <Kanban size={14} /> Kanban
+                    </button>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      setCurrentPlano({
+                        titulo: '',
+                        causaRaizId: '',
+                        problemaDireto: '',
+                        responsavelId: '',
+                        resultadoEsperado: '',
+                        resultadoAtingido: '',
+                        dataFim: new Date().toISOString().split('T')[0],
+                        percentualRealizado: 0,
+                        status: 'PENDENTE',
+                        acoes: []
+                      });
+                      setShowSubActionForm(false);
+                      setIsPlanoModalOpen(true);
+                    }}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
+                  >
+                    <PlusCircle size={14} /> Novo Plano 5W2H
+                  </button>
+                </div>
               )}
               {activeTab === 'metas' && (
                 <button 
@@ -1301,31 +1356,9 @@ export default function PlanejamentoPage() {
                 ) : (
                   /* LISTAGEM PRINCIPAL (KANBAN / LISTA) */
                   <div className="space-y-6">
-                    {/* Alternador de Modo de Exibição */}
+                    {/* Indicador de Quantidade */}
                     <div className="flex justify-between items-center select-none pb-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setCausaViewMode('kanban')}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                            causaViewMode === 'kanban'
-                              ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
-                              : 'bg-white border-slate-250 text-slate-650 hover:bg-slate-50'
-                          }`}
-                        >
-                          Visão Kanban
-                        </button>
-                        <button
-                          onClick={() => setCausaViewMode('list')}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                            causaViewMode === 'list'
-                              ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
-                              : 'bg-white border-slate-250 text-slate-650 hover:bg-slate-50'
-                          }`}
-                        >
-                          Visão Lista
-                        </button>
-                      </div>
-                      <span className="text-[10px] font-black text-slate-455 uppercase tracking-widest">
+                      <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest">
                         {causas.length} Análises de Causa
                       </span>
                     </div>
@@ -1704,31 +1737,9 @@ export default function PlanejamentoPage() {
               {/* ABA 2: PLANO DE AÇÃO 5W2H */}
               {activeTab === 'planos' && (
                 <div className="space-y-6">
-                  {/* Alternador de Modo de Exibição */}
+                  {/* Indicador de Quantidade */}
                   <div className="flex justify-between items-center select-none pb-2">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setPlanoViewMode('kanban')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                          planoViewMode === 'kanban'
-                            ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
-                            : 'bg-white border-slate-250 text-slate-650 hover:bg-slate-50'
-                        }`}
-                      >
-                        Visão Kanban
-                      </button>
-                      <button
-                        onClick={() => setPlanoViewMode('list')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                          planoViewMode === 'list'
-                            ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
-                            : 'bg-white border-slate-250 text-slate-650 hover:bg-slate-50'
-                        }`}
-                      >
-                        Visão Lista
-                      </button>
-                    </div>
-                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest">
+                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest">
                       {planosAcao.length} Planos de Ação
                     </span>
                   </div>
