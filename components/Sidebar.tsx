@@ -3013,21 +3013,16 @@ const Sidebar = () => {
                                       } else if (isAudio) {
                                         return (
                                           <div className="mb-1.5 p-1.5 bg-slate-100/80 rounded-lg flex flex-col gap-1 border border-slate-200/50 max-w-[220px]">
-                                            <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1 select-none">
+                                            <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1 select-none mb-0.5">
                                               <span>🎙️ Mensagem de Voz</span>
                                             </div>
-                                            <audio 
-                                              src={fileDownloadUrl} 
-                                              controls 
-                                              className="w-full h-8 max-w-[200px]" 
-                                              preload="metadata"
-                                            />
+                                            <CustomAudioPlayer src={fileDownloadUrl} fileName={msg.content} />
                                             <a
                                               href={fileDownloadUrl}
                                               download={msg.content || "audio.wav"}
                                               target="_blank"
                                               rel="noreferrer"
-                                              className="text-[9px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-0.5 mt-0.5 no-underline"
+                                              className="text-[9px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-0.5 mt-1 no-underline"
                                               onClick={e => e.stopPropagation()}
                                             >
                                               <Download size={10} /> Baixar Áudio
@@ -3180,6 +3175,119 @@ const Sidebar = () => {
         </>
       )}
     </>
+  );
+};
+
+const CustomAudioPlayer = ({ src, fileName }: { src: string; fileName?: string }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(src);
+    audioRef.current = audio;
+
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onLoadedMetadata = () => {
+      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
+    const onEnded = () => setIsPlaying(false);
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('ended', onEnded);
+
+    audio.load();
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('ended', onEnded);
+    };
+  }, [src]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    const interval = setInterval(() => {
+      const audio = audioRef.current;
+      if (audio && audio.duration && !isNaN(audio.duration) && isFinite(audio.duration) && duration === 0) {
+        setDuration(audio.duration);
+        clearInterval(interval);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [duration]);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch(err => console.log(err));
+      setIsPlaying(true);
+    }
+  };
+
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (!audioRef.current || duration === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const newTime = (clickX / width) * duration;
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const formatTime = (time: number) => {
+    if (isNaN(time) || !isFinite(time)) return '00:00';
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-3 bg-white/95 rounded-2xl p-2 min-w-[210px] max-w-[230px] border border-slate-200/60 shadow-xs mt-1 select-none">
+      <button
+        type="button"
+        onClick={togglePlay}
+        className="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center cursor-pointer transition-colors shadow-xs shrink-0 border-none outline-none active:scale-95"
+      >
+        {isPlaying ? (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+            <path fillRule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 ml-0.5">
+            <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
+          </svg>
+        )}
+      </button>
+      <div className="flex-1 flex flex-col gap-1">
+        {/* Progress bar container */}
+        <div 
+          onClick={handleProgressBarClick}
+          className="w-full bg-slate-100 h-1 rounded-full cursor-pointer relative py-1"
+        >
+          <div className="absolute inset-x-0 top-1 bg-slate-200 h-1 rounded-full overflow-hidden">
+            <div 
+              className="bg-emerald-500 h-full rounded-full transition-all duration-75" 
+              style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+            />
+          </div>
+        </div>
+        <div className="flex justify-between items-center text-[8px] text-slate-500 font-bold leading-none">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
+    </div>
   );
 };
 
