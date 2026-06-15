@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { cookies } from "next/headers";
+import PushRegister from "@/components/PushRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -172,7 +173,10 @@ export default async function RootLayout({
           })();
         ` }} />
       </head>
-      <body className={`min-h-full bg-[#F8FAFC] ${isCollapsed ? "sidebar-collapsed" : ""}`}>{children}</body>
+      <body className={`min-h-full bg-[#F8FAFC] ${isCollapsed ? "sidebar-collapsed" : ""}`}>
+        {children}
+        <PushRegister />
+      </body>
     </html>
   );
 }

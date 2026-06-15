@@ -127,6 +127,7 @@ model User {
   picActions               PicAction[]
   createdOSs               OrdemServicoAtivo[] @relation("OSCreator")
   createdEntregas          Entrega[]           @relation("EntregaCreator")
+  pushSubscriptions        PushSubscription[]  @relation("UserPushSubscriptions")
 }
 
 model Client {
@@ -1255,4 +1256,14 @@ model Entrega {
   criador                       User?             @relation("EntregaCreator", fields: [criadorId], references: [id], onDelete: SetNull)
   createdAt                     DateTime          @default(now())
   updatedAt                     DateTime          @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String
+  user      User     @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }

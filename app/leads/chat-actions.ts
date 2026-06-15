@@ -88,6 +88,16 @@ export async function sendInternalMessage(receiverId: string, content: string) {
       }
     });
 
+    // Enviar Web Push Notification
+    try {
+      const { sendWebPush } = await import('@/app/notifications/actions');
+      const pushTitle = `💬 Mensagem de ${user.nome}`;
+      const pushBody = content.trim();
+      await sendWebPush(receiverId, pushTitle, pushBody, '/leads');
+    } catch (pushErr) {
+      console.error('Falha ao acionar web push para mensagem de chat:', pushErr);
+    }
+
     revalidatePath('/leads');
     return { success: true, message };
   } catch (error: any) {
