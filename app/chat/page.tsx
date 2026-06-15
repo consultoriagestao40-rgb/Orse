@@ -6,7 +6,8 @@ import {
   getChatList, 
   getInternalMessages, 
   sendInternalMessage, 
-  markInternalMessagesAsRead 
+  markInternalMessagesAsRead,
+  uploadChatFileAction
 } from '@/app/leads/chat-actions';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { formatTimeBrasilia } from '@/lib/timezone';
@@ -28,7 +29,10 @@ import {
   Truck, 
   LogOut, 
   RefreshCw,
-  Bell
+  Bell,
+  Paperclip,
+  Image,
+  FileText
 } from 'lucide-react';
 
 export default function ChatPage() {
@@ -49,6 +53,9 @@ export default function ChatPage() {
   const [chatSearchTerm, setChatSearchTerm] = useState('');
   const [loadingChatMessages, setLoadingChatMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Fetch logged user on mount
   useEffect(() => {
@@ -166,6 +173,60 @@ export default function ChatPage() {
     } finally {
       setLoadingChatMessages(false);
     }
+  };
+
+  // Handle chat file selection and upload
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeChatUser) return;
+
+    setUploadingFile(true);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      if (!base64) {
+        setUploadingFile(false);
+        return;
+      }
+
+      // Optimistic insert for file/photo
+      const tempMsg = {
+        id: 'temp-' + Date.now(),
+        senderId: currentUser.id,
+        receiverId: activeChatUser.id,
+        content: file.name,
+        read: false,
+        fileUrl: base64, // Local Base64 preview
+        fileType: file.type,
+        createdAt: new Date()
+      };
+      setChatMessages(prev => [...prev, tempMsg]);
+
+      try {
+        const res = await uploadChatFileAction(base64, file.name);
+        if (res.success && res.fileUrl) {
+          const sendRes = await sendInternalMessage(activeChatUser.id, file.name, res.fileUrl, file.type);
+          if (sendRes.success && sendRes.message) {
+            setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
+            loadChatListMobile();
+          } else {
+            alert("Erro ao enviar arquivo: " + sendRes.error);
+            setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+          }
+        } else {
+          alert("Erro no upload do arquivo: " + res.error);
+          setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+        }
+      } catch (err) {
+        console.error(err);
+        setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+      } finally {
+        setUploadingFile(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Send message
@@ -368,6 +429,10 @@ export default function ChatPage() {
                   chatMessages.map((msg, index) => {
                     const isMe = msg.senderId === currentUser.id;
                     const showDoubleCheck = msg.read;
+                    const isImage = msg.fileUrl && (
+                      msg.fileType?.startsWith('image/') || 
+                      /\.(jpg|jpeg|png|webp|gif)$/i.test(msg.fileUrl)
+                    );
                     
                     return (
                       <div
@@ -381,7 +446,31 @@ export default function ChatPage() {
                               : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/40'
                           }`}
                         >
-                          <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
+                          {isImage ? (
+                            <div className="mb-1 rounded-lg overflow-hidden border border-slate-200/50 bg-slate-100 max-w-[240px]">
+                              <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                <img 
+                                  src={msg.fileUrl} 
+                                  alt="Imagem" 
+                                  className="w-full h-auto object-cover max-h-[180px] hover:opacity-90 transition-opacity"
+                                />
+                              </a>
+                            </div>
+                          ) : msg.fileUrl ? (
+                            <a 
+                              href={msg.fileUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="mb-1 p-2 bg-slate-100 rounded-lg flex items-center gap-2 hover:bg-slate-200 transition-colors text-slate-800 font-bold no-underline text-[10px] border border-slate-200/50 max-w-[240px] block"
+                            >
+                              <FileText size={16} className="text-blue-600 shrink-0" />
+                              <span className="truncate block flex-1">{msg.content || 'Arquivo Anexo'}</span>
+                            </a>
+                          ) : null}
+
+                          {msg.content && (!msg.fileUrl || !isImage) && (
+                            <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
+                          )}
                           
                           <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-bold text-slate-400 select-none">
                             <span>
@@ -401,22 +490,46 @@ export default function ChatPage() {
                 <div ref={chatEndRef} />
               </div>
 
+              {/* Hidden File Input */}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                className="hidden"
+                accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              />
+
               {/* Input Form */}
               <form 
                 onSubmit={handleSendChatMessageMobile}
                 className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid"
               >
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={sendingChat || uploadingFile}
+                  className="w-9 h-9 bg-slate-200 hover:bg-slate-350 text-slate-650 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 border-none"
+                  title="Anexar Foto ou Arquivo"
+                >
+                  {uploadingFile ? (
+                    <RefreshCw className="animate-spin text-slate-600" size={14} />
+                  ) : (
+                    <Paperclip size={14} className="text-slate-600" />
+                  )}
+                </button>
+
                 <input
                   type="text"
                   placeholder="Digite uma mensagem..."
                   value={newChatMessage}
                   onChange={e => setNewChatMessage(e.target.value)}
                   className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
-                  disabled={sendingChat}
+                  disabled={sendingChat || uploadingFile}
                 />
+                
                 <button
                   type="submit"
-                  disabled={sendingChat || !newChatMessage.trim()}
+                  disabled={sendingChat || uploadingFile || !newChatMessage.trim()}
                   className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
                 >
                   <Send size={14} className="fill-white" />

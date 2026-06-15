@@ -727,6 +727,8 @@ model InternalMessage {
   receiverId  String
   content     String   @db.Text
   read        Boolean  @default(false)
+  fileUrl     String?
+  fileType    String?
   createdAt   DateTime @default(now())
 
   sender      User     @relation("SentInternalMessages", fields: [senderId], references: [id], onDelete: Cascade)

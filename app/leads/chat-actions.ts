@@ -3,6 +3,8 @@
 import { prisma } from '@/lib/prisma';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { revalidatePath } from 'next/cache';
+import path from 'path';
+import fs from 'fs';
 
 // Auto-migration helper to ensure the InternalMessage table exists in the DB
 export async function ensureInternalMessageTableExists() {
@@ -50,13 +52,34 @@ export async function ensureInternalMessageTableExists() {
       console.error("Falha ao criar a tabela InternalMessage:", createErr);
     }
   }
+
+  // Ensure columns fileUrl and fileType exist
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "InternalMessage" ADD COLUMN IF NOT EXISTS "fileUrl" TEXT;
+    `);
+  } catch (colErr) {
+    console.log("Erro ao garantir coluna fileUrl:", colErr);
+  }
+
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "InternalMessage" ADD COLUMN IF NOT EXISTS "fileType" TEXT;
+    `);
+  } catch (colErr) {
+    console.log("Erro ao garantir coluna fileType:", colErr);
+  }
 }
 
 // Send an internal message to another system user
-export async function sendInternalMessage(receiverId: string, content: string) {
+export async function sendInternalMessage(receiverId: string, content: string, fileUrl?: string, fileType?: string) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Usuário não autenticado.' };
-  if (!content || !content.trim()) return { success: false, error: 'Mensagem vazia.' };
+  
+  // A message can be empty if it contains a file/photo
+  if ((!content || !content.trim()) && !fileUrl) {
+    return { success: false, error: 'Mensagem vazia.' };
+  }
 
   await ensureInternalMessageTableExists();
 
@@ -74,17 +97,23 @@ export async function sendInternalMessage(receiverId: string, content: string) {
       data: {
         senderId: user.id,
         receiverId,
-        content: content.trim(),
-        read: false
+        content: content ? content.trim() : '',
+        read: false,
+        fileUrl: fileUrl || null,
+        fileType: fileType || null
       }
     });
 
     // Create a system notification for the receiver
+    const notificationText = fileUrl 
+      ? `📷 Foto/Arquivo recebido de ${user.nome}`
+      : `💬 Nova mensagem de ${user.nome}: "${content.length > 50 ? content.substring(0, 47) + '...' : content}"`;
+
     await prisma.notification.create({
       data: {
         userId: receiverId,
-        texto: `💬 Nova mensagem de ${user.nome}: "${content.length > 50 ? content.substring(0, 47) + '...' : content}"`,
-        link: `/leads` // or mobile chat link if opened from mobile
+        texto: notificationText,
+        link: `/chat`
       }
     });
 
@@ -92,17 +121,76 @@ export async function sendInternalMessage(receiverId: string, content: string) {
     try {
       const { sendWebPush } = await import('@/app/notifications/actions');
       const pushTitle = `💬 Mensagem de ${user.nome}`;
-      const pushBody = content.trim();
+      const pushBody = fileUrl ? '📷 [Foto/Arquivo]' : content.trim();
       await sendWebPush(receiverId, pushTitle, pushBody, '/chat');
     } catch (pushErr) {
       console.error('Falha ao acionar web push para mensagem de chat:', pushErr);
     }
 
     revalidatePath('/leads');
+    revalidatePath('/chat');
     return { success: true, message };
   } catch (error: any) {
     console.error('Erro ao enviar mensagem interna:', error);
     return { success: false, error: error.message };
+  }
+}
+
+// Upload a file or image for the chat
+export async function uploadChatFileAction(base64Data: string, fileName: string) {
+  try {
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Usuário não autenticado.' };
+
+    // Split base64 prefix
+    const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      if (base64Data.startsWith('http') || base64Data.startsWith('/uploads/')) {
+        return { success: true, fileUrl: base64Data };
+      }
+      return { success: false, error: 'Formato de arquivo inválido' };
+    }
+
+    const fileType = matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+    
+    // Validate size (less than 15MB)
+    if (buffer.length > 15 * 1024 * 1024) {
+      return { success: false, error: 'Arquivo muito grande (máximo 15MB)' };
+    }
+
+    // Determine extension
+    let ext = path.extname(fileName).toLowerCase();
+    if (!ext) {
+      ext = '.png';
+      if (fileType.includes('jpeg') || fileType.includes('jpg')) ext = '.jpg';
+      else if (fileType.includes('webp')) ext = '.webp';
+      else if (fileType.includes('gif')) ext = '.gif';
+      else if (fileType.includes('pdf')) ext = '.pdf';
+      else if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('ms-excel')) ext = '.xlsx';
+      else if (fileType.includes('word') || fileType.includes('officedocument')) ext = '.docx';
+    }
+
+    const cleanFileName = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const filePath = path.join(uploadDir, cleanFileName);
+      fs.writeFileSync(filePath, buffer);
+
+      const fileUrl = `/uploads/${cleanFileName}`;
+      return { success: true, fileUrl };
+    } catch (fsErr) {
+      console.warn('Filesystem read-only. Usando fallback Base64 Data URL:', fsErr);
+      return { success: true, fileUrl: base64Data };
+    }
+  } catch (err: any) {
+    console.error('Erro no upload do arquivo do chat:', err);
+    return { success: false, error: err.message || 'Erro ao gravar arquivo no servidor' };
   }
 }
 
