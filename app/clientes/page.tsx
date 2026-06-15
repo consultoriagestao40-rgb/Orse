@@ -118,7 +118,7 @@ export default function ClientesPage() {
       const razaoSocial = getVal(idxRazao) || nomeFantasia;
       const cnpj = getVal(idxCnpj);
       const email = getVal(idxEmail);
-      const whatsapp = getVal(idxCelular) || getVal(idxTelefone);
+      const whatsapp = getVal(idxTelefone) || getVal(idxCelular);
 
       // Monta o Endereço Completo
       const street = getVal(idxEndereco);
