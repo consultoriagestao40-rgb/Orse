@@ -1099,28 +1099,60 @@ const CustomAudioPlayer = ({ src, fileName }: { src: string; fileName?: string }
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const audio = new Audio(src);
-    audioRef.current = audio;
+    let active = true;
+    let objectUrl = '';
+    
+    let timeUpdateListener: () => void;
+    let loadedMetadataListener: () => void;
+    let endedListener: () => void;
+    let targetAudio: HTMLAudioElement;
 
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onLoadedMetadata = () => {
-      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
-        setDuration(audio.duration);
+    const loadAudio = async () => {
+      try {
+        let audioSrc = src;
+        if (!src.startsWith('data:')) {
+          const res = await fetch(src);
+          if (!res.ok) throw new Error("Status " + res.status);
+          const blob = await res.blob();
+          if (!active) return;
+          objectUrl = URL.createObjectURL(blob);
+          audioSrc = objectUrl;
+        }
+
+        targetAudio = new Audio(audioSrc);
+        audioRef.current = targetAudio;
+
+        timeUpdateListener = () => setCurrentTime(targetAudio.currentTime);
+        loadedMetadataListener = () => {
+          if (targetAudio.duration && !isNaN(targetAudio.duration) && isFinite(targetAudio.duration)) {
+            setDuration(targetAudio.duration);
+          }
+        };
+        endedListener = () => setIsPlaying(false);
+
+        targetAudio.addEventListener('timeupdate', timeUpdateListener);
+        targetAudio.addEventListener('loadedmetadata', loadedMetadataListener);
+        targetAudio.addEventListener('ended', endedListener);
+
+        targetAudio.load();
+      } catch (err) {
+        console.error("Failed to load audio:", err);
       }
     };
-    const onEnded = () => setIsPlaying(false);
 
-    audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('loadedmetadata', onLoadedMetadata);
-    audio.addEventListener('ended', onEnded);
-
-    audio.load();
+    loadAudio();
 
     return () => {
-      audio.pause();
-      audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-      audio.removeEventListener('ended', onEnded);
+      active = false;
+      if (targetAudio) {
+        targetAudio.pause();
+        if (timeUpdateListener) targetAudio.removeEventListener('timeupdate', timeUpdateListener);
+        if (loadedMetadataListener) targetAudio.removeEventListener('loadedmetadata', loadedMetadataListener);
+        if (endedListener) targetAudio.removeEventListener('ended', endedListener);
+      }
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [src]);
 
@@ -1143,7 +1175,7 @@ const CustomAudioPlayer = ({ src, fileName }: { src: string; fileName?: string }
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(err => console.log(err));
+      audioRef.current.play().catch(err => console.log("Play failed:", err));
       setIsPlaying(true);
     }
   };
@@ -1167,36 +1199,36 @@ const CustomAudioPlayer = ({ src, fileName }: { src: string; fileName?: string }
   };
 
   return (
-    <div className="flex items-center gap-3 bg-white/95 rounded-2xl p-2 min-w-[210px] max-w-[230px] border border-slate-200/60 shadow-xs mt-1 select-none">
+    <div className="flex items-center gap-2 bg-white/95 rounded-xl p-1.5 w-full max-w-[190px] border border-slate-200/60 shadow-xs mt-1 select-none">
       <button
         type="button"
         onClick={togglePlay}
-        className="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center cursor-pointer transition-colors shadow-xs shrink-0 border-none outline-none active:scale-95"
+        className="w-7 h-7 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center cursor-pointer transition-colors shadow-xs shrink-0 border-none outline-none active:scale-95"
       >
         {isPlaying ? (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
             <path fillRule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clipRule="evenodd" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 ml-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 ml-0.5">
             <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
           </svg>
         )}
       </button>
-      <div className="flex-1 flex flex-col gap-1">
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
         {/* Progress bar container */}
         <div 
           onClick={handleProgressBarClick}
-          className="w-full bg-slate-100 h-1 rounded-full cursor-pointer relative py-1"
+          className="w-full bg-slate-100 h-1 rounded-full cursor-pointer relative py-0.5"
         >
-          <div className="absolute inset-x-0 top-1 bg-slate-200 h-1 rounded-full overflow-hidden">
+          <div className="absolute inset-x-0 top-0.5 bg-slate-200 h-1 rounded-full overflow-hidden">
             <div 
               className="bg-emerald-500 h-full rounded-full transition-all duration-75" 
               style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
             />
           </div>
         </div>
-        <div className="flex justify-between items-center text-[8px] text-slate-500 font-bold leading-none">
+        <div className="flex justify-between items-center text-[7.5px] text-slate-500 font-bold leading-none select-none">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>

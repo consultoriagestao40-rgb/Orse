@@ -30,10 +30,39 @@ export async function GET(
     const fileBuffer = Buffer.from(matches[2], 'base64');
     const fileName = message.content || 'arquivo';
 
+    const range = request.headers.get('range');
     const headers = new Headers();
-    headers.set('Content-Type', fileType || message.fileType || 'application/octet-stream');
+    headers.set('Accept-Ranges', 'bytes');
     headers.set('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
     headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileBuffer.length - 1;
+      
+      if (start >= fileBuffer.length || end >= fileBuffer.length) {
+        return new NextResponse('Faixa de alcance inválida', {
+          status: 416,
+          headers: { 'Content-Range': `bytes */${fileBuffer.length}` }
+        });
+      }
+
+      const chunksize = (end - start) + 1;
+      const slicedBuffer = fileBuffer.slice(start, end + 1);
+
+      headers.set('Content-Range', `bytes ${start}-${end}/${fileBuffer.length}`);
+      headers.set('Content-Length', chunksize.toString());
+      headers.set('Content-Type', fileType || message.fileType || 'application/octet-stream');
+
+      return new NextResponse(slicedBuffer, {
+        status: 206,
+        headers,
+      });
+    }
+
+    headers.set('Content-Length', fileBuffer.length.toString());
+    headers.set('Content-Type', fileType || message.fileType || 'application/octet-stream');
 
     return new NextResponse(fileBuffer, {
       status: 200,
