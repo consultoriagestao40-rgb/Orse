@@ -8,10 +8,7 @@ import {
   Users, 
   Plus, 
   Trash2, 
-  Check, 
   AlertTriangle, 
-  Calendar, 
-  DollarSign, 
   PlusCircle, 
   StickyNote, 
   ArrowRight, 
@@ -21,7 +18,6 @@ import {
   Layers,
   Percent,
   Edit,
-  Edit2,
   X,
   ArrowLeft
 } from 'lucide-react';
@@ -501,7 +497,7 @@ export default function PlanejamentoPage() {
   const handleSaveCausa = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await saveRootCause(currentCausa as RootCauseAnalysis);
+    const res = await saveRootCause(currentCausa as any);
     if (res.success) {
       setIsEditingCausa(false);
       await loadData();
@@ -582,7 +578,7 @@ export default function PlanejamentoPage() {
     setCausas(prev => prev.map(c => c.id === causaId ? { ...c, status: targetStageId } : c));
 
     const updatedCausa = { ...targetCausa, status: targetStageId };
-    const res = await saveRootCause(updatedCausa);
+    const res = await saveRootCause(updatedCausa as any);
     if (!res.success) {
       alert('Erro ao atualizar status da causa: ' + res.error);
       await loadData();
