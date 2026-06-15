@@ -4495,162 +4495,143 @@ export default function AtivosPage() {
               </div>
             </header>
             
-            <div className="p-10 flex-1 overflow-y-auto font-sans text-xs text-slate-800 leading-relaxed space-y-6 max-w-[210mm] mx-auto bg-white shadow-inner">
-              
-              {/* Logo / Header */}
-              <div className="text-center space-y-2 pb-6 border-b border-slate-200">
-                <h1 className="text-lg font-extrabold tracking-tight text-[#1B4D3E] uppercase">CONTRATO DE COMODATO DE EQUIPAMENTOS</h1>
-                <p className="text-[10px] font-bold text-slate-450 tracking-wider uppercase">Instrumento Particular de Comodato de Ativos</p>
-              </div>
-
-              <div className="space-y-4">
-                <p className="font-extrabold uppercase select-none text-[11px] leading-relaxed">
-                  PELO PRESENTE INSTRUMENTO PARTICULAR DE COMODATO, DE UM LADO:
-                </p>
-                <div className="space-y-1.5 pl-4 border-l-2 border-[#1B4D3E]/20">
-                  <span className="font-black text-[#1B4D3E] text-[10px] tracking-wider uppercase block">COMODANTE:</span>
-                  <p className="text-[11px] font-bold text-slate-700 leading-normal">
-                    {selectedContratoForPdf.empresaEmissora.razaoSocial || selectedContratoForPdf.empresaEmissora.nomeFantasia}, inscrita no CNPJ sob o nº {selectedContratoForPdf.empresaEmissora.cnpj}, com sede à {selectedContratoForPdf.empresaEmissora.endereco || '-'}, doravante denominada COMODANTE.
-                  </p>
-                </div>
-
-                <p className="font-extrabold uppercase select-none text-[11px] leading-relaxed">
-                  E, DE OUTRO LADO:
-                </p>
-                <div className="space-y-1.5 pl-4 border-l-2 border-[#1B4D3E]/20">
-                  <span className="font-black text-[#1B4D3E] text-[10px] tracking-wider uppercase block">COMODATÁRIO:</span>
-                  <p className="text-[11px] font-bold text-slate-700 leading-normal">
-                    {selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}, inscrita no CNPJ/CPF {selectedContratoForPdf.client.cnpj || selectedContratoForPdf.client.cpf || '-'}, com sede à {selectedContratoForPdf.client.endereco || '-'}, doravante denominado COMODATÁRIO.
-                  </p>
-                </div>
-                
-                <p className="font-bold text-slate-700 italic select-none">
-                  Têm entre si, justo e contratado, o seguinte:
-                </p>
-              </div>
-
-              {/* Cláusulas Dinâmicas */}
-              <div className="space-y-6">
-                {selectedContratoForPdf.clausulas.map((c: any, index: number) => {
-                  const isClausula1 = c.titulo.includes('CLÁUSULA 1') || c.titulo.includes('OBJETO');
-                  return (
-                    <div key={index} className="space-y-2">
-                      <h4 className="font-black text-[11px] text-[#1B4D3E] uppercase tracking-wide border-b border-slate-100 pb-1">{c.titulo}</h4>
-                      <p className="font-semibold text-slate-700 whitespace-pre-wrap leading-relaxed">{c.texto}</p>
-
-                      {/* Tabela Injetada na Cláusula 1 */}
-                      {isClausula1 && (
-                        <div className="pt-3 overflow-hidden rounded-xl border border-slate-200">
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead>
-                              <tr className="bg-[#1B4D3E] text-white text-[9px] font-black uppercase tracking-wider text-center border-none">
-                                <th className="px-3 py-2 w-16 text-center">Código</th>
-                                <th className="px-4 py-2 text-left">Descrição do Produto</th>
-                                <th className="px-3 py-2 w-32 text-center">Categoria</th>
-                                <th className="px-3 py-2 w-20 text-center">Qtde</th>
-                                <th className="px-3 py-2 w-32 text-right">Pr. Venda Unit.</th>
-                                <th className="px-3 py-2 w-36 text-right">Pr. Venda Total</th>
-                              </tr>
-                            </thead>
-                            <tbody className="font-bold text-slate-700">
-                              {selectedContratoForPdf.itens.map((it: any, idx: number) => (
-                                <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50/20 bg-white last:border-b-0">
-                                  <td className="px-3 py-2 text-center text-[10px] font-mono text-slate-500">{it.ativo.codigo}</td>
-                                  <td className="px-4 py-2 text-slate-800 text-[11px] uppercase">{it.ativo.descricao}</td>
-                                  <td className="px-3 py-2 text-center text-[10px] text-slate-500 uppercase">{it.ativo.categoria?.nome || 'COMODATO'}</td>
-                                  <td className="px-3 py-2 text-center text-[11px] text-slate-800 font-extrabold">{it.quantidade}</td>
-                                  <td className="px-3 py-2 text-right text-[11px]">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.valorUnitario)}
-                                  </td>
-                                  <td className="px-3 py-2 text-right text-[11px] text-slate-900 font-black">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.valorUnitario * it.quantidade)}
-                                  </td>
-                                </tr>
-                              ))}
-                              {/* Totalizador */}
-                              <tr className="bg-slate-50 text-[11px] font-black border-t border-slate-300">
-                                <td colSpan={3} className="px-4 py-2 text-right text-[#1B4D3E] uppercase tracking-wider">Total em Comodato:</td>
-                                <td className="px-3 py-2 text-center text-slate-900">
-                                  {selectedContratoForPdf.itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0)}
-                                </td>
-                                <td></td>
-                                <td className="px-3 py-2 text-right text-[#1B4D3E]">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                                    selectedContratoForPdf.itens.reduce((acc: number, curr: any) => acc + (curr.valorUnitario * curr.quantidade), 0)
-                                  )}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+            <div className="p-10 flex-1 overflow-y-auto font-sans text-xs text-slate-800 leading-relaxed max-w-[210mm] mx-auto bg-white shadow-inner">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="hidden print:table-row">
+                    <td>
+                      <div className="h-[15mm]"></div>
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div className="space-y-6 text-justify">
+                        {/* Logo / Header */}
+                        <div className="text-center space-y-2 pb-6 border-b border-slate-200">
+                          <h1 className="text-lg font-extrabold tracking-tight text-[#1B4D3E] uppercase">CONTRATO DE COMODATO DE EQUIPAMENTOS</h1>
+                          <p className="text-[10px] font-bold text-slate-450 tracking-wider uppercase">Instrumento Particular de Comodato de Ativos</p>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
 
-              {/* Assinaturas */}
-              <div className="pt-12 select-none print:pt-16 avoid-break">
-                <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  E por estarem assim justos e contratados, firmam o presente instrumento em duas vias.
-                </p>
-                <div className="grid grid-cols-2 gap-12 pt-16 text-[10.5px] font-bold text-slate-700 text-center">
-                  <div className="space-y-4">
-                    <div className="border-t border-slate-350 pt-2.5 flex flex-col items-center">
-                      <span className="font-black text-[#1B4D3E] uppercase tracking-wider">COMODANTE</span>
-                      <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.empresaEmissora.nomeFantasia}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="border-t border-slate-350 pt-2.5 flex flex-col items-center">
-                      <span className="font-black text-slate-800 uppercase tracking-wider">COMODATÁRIO</span>
-                      <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                        <div className="space-y-4">
+                          <p className="font-extrabold uppercase select-none text-[11px] leading-relaxed">
+                            PELO PRESENTE INSTRUMENTO PARTICULAR DE COMODATO, DE UM LADO:
+                          </p>
+                          <div className="space-y-1.5 pl-4 border-l-2 border-[#1B4D3E]/20">
+                            <span className="font-black text-[#1B4D3E] text-[10px] tracking-wider uppercase block">COMODANTE:</span>
+                            <p className="text-[11px] font-bold text-slate-700 leading-normal">
+                              {selectedContratoForPdf.empresaEmissora.razaoSocial || selectedContratoForPdf.empresaEmissora.nomeFantasia}, inscrita no CNPJ sob o nº {selectedContratoForPdf.empresaEmissora.cnpj}, com sede à {selectedContratoForPdf.empresaEmissora.endereco || '-'}, doravante denominada COMODANTE.
+                            </p>
+                          </div>
 
-              {/* Testemunhas (Conforme segunda imagem do usuário) */}
-              <div className="pt-12 select-none print:pt-16 avoid-break">
-                <span className="font-black text-slate-800 text-[10px] tracking-wider uppercase block text-left mb-8">TESTEMUNHAS:</span>
-                <div className="grid grid-cols-2 gap-16 text-[10.5px] font-bold text-slate-700 text-left">
-                  <div className="space-y-3">
-                    <span className="block text-[10px] text-slate-400 font-extrabold uppercase">1. ___________________________________________</span>
-                    <span className="block text-[9.5px] text-slate-500 uppercase mt-2">Nome:</span>
-                    <span className="block text-[9.5px] text-slate-500 uppercase mt-1">CPF:</span>
-                  </div>
-                  <div className="space-y-3">
-                    <span className="block text-[10px] text-slate-400 font-extrabold uppercase">2. ___________________________________________</span>
-                    <span className="block text-[9.5px] text-slate-500 uppercase mt-2">Nome:</span>
-                    <span className="block text-[9.5px] text-slate-500 uppercase mt-1">CPF:</span>
-                  </div>
-                </div>
-              </div>
+                          <p className="font-extrabold uppercase select-none text-[11px] leading-relaxed">
+                            E, DE OUTRO LADO:
+                          </p>
+                          <div className="space-y-1.5 pl-4 border-l-2 border-[#1B4D3E]/20">
+                            <span className="font-black text-[#1B4D3E] text-[10px] tracking-wider uppercase block">COMODATÁRIO:</span>
+                            <p className="text-[11px] font-bold text-slate-700 leading-normal">
+                              {selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}, inscrita no CNPJ/CPF {selectedContratoForPdf.client.cnpj || selectedContratoForPdf.client.cpf || '-'}, com sede à {selectedContratoForPdf.client.endereco || '-'}, doravante denominado COMODATÁRIO.
+                            </p>
+                          </div>
+                          
+                          <p className="font-bold text-slate-700 italic select-none">
+                            Têm entre si, justo e contratado, o seguinte:
+                          </p>
+                        </div>
 
-              {/* Rodapé Corporativo Slimpe (Conforme segunda imagem do usuário) */}
-              <div className="pt-12 border-t border-slate-200 mt-16 flex justify-between items-end avoid-break text-slate-400 text-[8.5px] font-semibold leading-normal select-none">
-                <div className="space-y-0.5 text-left">
-                  <p className="font-extrabold text-[#1B4D3E] text-[9.5px]">Slimpe Comércio de Artigos para Limpeza Ltda</p>
-                  <p>CNPJ 32.463.831/0001-96 / Insc. Est. 90.801.686-64</p>
-                  <p>Avenida Maringá, 1273, Barracão A, Bairro Emiliano Perneta, Pinhais/PR, CEP 83.324-432</p>
-                  <p>Telefone: (41) 3732-4665 / WhatsApp: (41) 9-8855-8959</p>
-                </div>
-                <div className="shrink-0 flex flex-col items-end">
-                  {currentTenant?.logoUrl ? (
-                    <img
-                      src={`/api/tenant/logo?tenantId=${currentTenant.id}&v=${currentTenant.logoUrl.length > 30 ? encodeURIComponent(currentTenant.logoUrl.substring(currentTenant.logoUrl.length - 10)) : encodeURIComponent(currentTenant.logoUrl.substring(0, 10))}`}
-                      alt="Logo Slimpe"
-                      className="h-10 max-w-[140px] object-contain"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 bg-[#1B4D3E] text-white rounded-lg flex flex-col items-center justify-center font-black text-[8px] uppercase tracking-tighter leading-none shrink-0 border border-[#13382D]">
-                      <span className="text-[10px] font-extrabold tracking-tighter">SLIMPE</span>
-                      <span className="text-[5px] font-black tracking-widest mt-0.5 opacity-80">HIGIENE</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                        {/* Cláusulas Dinâmicas */}
+                        <div className="space-y-6">
+                          {selectedContratoForPdf.clausulas.map((c: any, index: number) => {
+                            const isClausula1 = c.titulo.includes('CLÁUSULA 1') || c.titulo.includes('OBJETO');
+                            return (
+                              <div key={index} className="space-y-2">
+                                <h4 className="font-black text-[11px] text-[#1B4D3E] uppercase tracking-wide border-b border-slate-100 pb-1">{c.titulo}</h4>
+                                <p className="font-semibold text-slate-700 whitespace-pre-wrap leading-relaxed">{c.texto}</p>
 
+                                {/* Tabela Injetada na Cláusula 1 */}
+                                {isClausula1 && (
+                                  <div className="pt-3 overflow-hidden rounded-xl border border-slate-200">
+                                    <table className="w-full text-left text-xs border-collapse">
+                                      <thead>
+                                        <tr className="bg-[#1B4D3E] text-white text-[9px] font-black uppercase tracking-wider text-center border-none">
+                                          <th className="px-3 py-2 w-16 text-center">Código</th>
+                                          <th className="px-4 py-2 text-left">Descrição do Produto</th>
+                                          <th className="px-3 py-2 w-32 text-center">Categoria</th>
+                                          <th className="px-3 py-2 w-20 text-center">Qtde</th>
+                                          <th className="px-3 py-2 w-32 text-right">Pr. Venda Unit.</th>
+                                          <th className="px-3 py-2 w-36 text-right">Pr. Venda Total</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="font-bold text-slate-700">
+                                        {selectedContratoForPdf.itens.map((it: any, idx: number) => (
+                                          <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50/20 bg-white last:border-b-0">
+                                            <td className="px-3 py-2 text-center text-[10px] font-mono text-slate-500">{it.ativo.codigo}</td>
+                                            <td className="px-4 py-2 text-slate-800 text-[11px] uppercase">{it.ativo.descricao}</td>
+                                            <td className="px-3 py-2 text-center text-[10px] text-slate-500 uppercase">{it.ativo.categoria?.nome || 'COMODATO'}</td>
+                                            <td className="px-3 py-2 text-center text-[11px] text-slate-800 font-extrabold">{it.quantidade}</td>
+                                            <td className="px-3 py-2 text-right text-[11px]">
+                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.valorUnitario)}
+                                            </td>
+                                            <td className="px-3 py-2 text-right text-[11px] text-slate-900 font-black">
+                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.valorUnitario * it.quantidade)}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                        {/* Totalizador */}
+                                        <tr className="bg-slate-50 text-[11px] font-black border-t border-slate-300">
+                                          <td colSpan={3} className="px-4 py-2 text-right text-[#1B4D3E] uppercase tracking-wider">Total em Comodato:</td>
+                                          <td className="px-3 py-2 text-center text-slate-900">
+                                            {selectedContratoForPdf.itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0)}
+                                          </td>
+                                          <td></td>
+                                          <td className="px-3 py-2 text-right text-[#1B4D3E]">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                              selectedContratoForPdf.itens.reduce((acc: number, curr: any) => acc + (curr.valorUnitario * curr.quantidade), 0)
+                                            )}
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Assinaturas */}
+                        <div className="pt-12 select-none print:pt-16 avoid-break">
+                          <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                            E por estarem assim justos e contratados, firmam o presente instrumento em duas vias.
+                          </p>
+                          <div className="grid grid-cols-2 gap-12 pt-16 text-[10.5px] font-bold text-slate-700 text-center">
+                            <div className="space-y-4">
+                              <div className="border-t border-slate-350 pt-2.5 flex flex-col items-center">
+                                <span className="font-black text-[#1B4D3E] uppercase tracking-wider">COMODANTE</span>
+                                <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.empresaEmissora.nomeFantasia}</span>
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              <div className="border-t border-slate-350 pt-2.5 flex flex-col items-center">
+                                <span className="font-black text-slate-800 uppercase tracking-wider">COMODATÁRIO</span>
+                                <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr className="hidden print:table-row">
+                    <td>
+                      <div className="h-[15mm]"></div>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
         </div>
@@ -5434,7 +5415,7 @@ export default function AtivosPage() {
             overflow: visible !important;
             height: auto !important;
             max-height: none !important;
-            padding: 15mm 12mm 15mm 12mm !important;
+            padding: 0mm 12mm 0mm 12mm !important;
             margin: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
