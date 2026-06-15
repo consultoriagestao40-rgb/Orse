@@ -96,10 +96,10 @@ export default function ClientesPage() {
     const idxEndereco = headers.findIndex(h => h.includes('endereço') || h.includes('endereco') || h === 'rua');
     const idxNumero = headers.findIndex(h => h.includes('numero') || h.includes('número') || h === 'num');
     const idxCompleme = headers.findIndex(h => h.includes('compleme') || h.includes('complemento'));
-    const idxBairro = headers.findIndex(h === 'bairro');
+    const idxBairro = headers.findIndex(h => h === 'bairro');
     const idxMunicipio = headers.findIndex(h => h.includes('municipio') || h.includes('município') || h === 'cidade');
-    const idxUF = headers.findIndex(h === 'uf' || h === 'estado');
-    const idxCep = headers.findIndex(h === 'cep');
+    const idxUF = headers.findIndex(h => h === 'uf' || h === 'estado');
+    const idxCep = headers.findIndex(h => h === 'cep');
     const idxEmail = headers.findIndex(h => h.includes('email') || h.includes('e-mail') || h.includes('mail'));
     const idxTelefone = headers.findIndex(h => h.includes('telefone') || h.includes('tel') || h === 'fone');
     const idxCelular = headers.findIndex(h => h.includes('celular') || h.includes('cel') || h === 'whatsapp');
