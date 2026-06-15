@@ -4,7 +4,7 @@ self.addEventListener('push', function (event) {
       const data = event.data.json();
       const options = {
         body: data.body,
-        icon: '/icon.svg?v=4',
+        icon: data.icon || '/icon.svg?v=4',
         badge: '/icon.svg?v=4',
         vibrate: [100, 50, 100],
         data: {

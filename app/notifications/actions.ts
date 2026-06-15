@@ -61,7 +61,7 @@ export async function subscribeUserToPush(sub: {
 }
 
 // Helper function to send web push notifications (called from backend actions)
-export async function sendWebPush(userId: string, title: string, body: string, url?: string) {
+export async function sendWebPush(userId: string, title: string, body: string, url?: string, icon?: string) {
   try {
     const subscriptions = await prisma.pushSubscription.findMany({
       where: { userId }
@@ -72,7 +72,8 @@ export async function sendWebPush(userId: string, title: string, body: string, u
     const payload = JSON.stringify({
       title,
       body,
-      url: url || '/leads'
+      url: url || '/leads',
+      icon
     });
 
     let sentCount = 0;
