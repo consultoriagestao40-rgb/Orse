@@ -1607,7 +1607,7 @@ export default function PlanejamentoPage() {
               {activeTab === 'planos' && (
                 <div className="space-y-6">
                   {/* Indicador de Quantidade */}
-                  <div className="flex justify-between items-center select-none pb-2">
+                  <div className={`flex justify-between items-center select-none pb-2 ${isKanbanMode ? 'px-8' : ''}`}>
                     <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest">
                       {planosAcao.length} Planos de Ação
                     </span>
