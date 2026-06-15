@@ -745,12 +745,23 @@ export default function PlanejamentoPage() {
     }).length;
   }
 
+  const isKanbanMode = activeTab === 'causas' && causaViewMode === 'kanban' && !isEditingCausa;
+
   return (
     <div id="planejamento-layout-root" className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
 
-      <main className="flex-1 no-print p-4 md:p-6 overflow-y-auto">
-        <div className="space-y-6 max-w-[1600px] mx-auto w-full px-2 sm:px-4">
+      <main className={`flex-1 no-print ${
+        isKanbanMode 
+          ? 'overflow-auto h-screen p-0 bg-slate-50' 
+          : 'p-4 md:p-6 overflow-y-auto'
+      }`}>
+        <div className={`space-y-6 ${
+          isKanbanMode 
+            ? 'w-full flex flex-col' 
+            : 'max-w-[1600px] mx-auto w-full px-2 sm:px-4'
+        }`}>
+          <div className={isKanbanMode ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'}>
           
           {/* HEADER DO MÓDULO */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-5 gap-4">
@@ -912,6 +923,7 @@ export default function PlanejamentoPage() {
                 </button>
               ))}
             </div>
+          </div>
           </div>
 
           {/* TAB CONTENTS */}
@@ -1408,7 +1420,7 @@ export default function PlanejamentoPage() {
                       </div>
                     ) : (
                       /* VISÃO KANBAN */
-                      <div className="pb-6 select-none bg-slate-50/55 pl-2 pr-1 rounded-3xl border border-slate-200">
+                      <div className="pb-6 select-none bg-slate-50 pl-8 pr-8">
                         <div className="flex gap-[3px] min-w-max">
                           {(() => {
                             const columns = stagesCausa.map(s => ({
