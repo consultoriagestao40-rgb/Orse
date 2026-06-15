@@ -6,13 +6,14 @@ import webpush from 'web-push';
 import { revalidatePath } from 'next/cache';
 
 // Configure VAPID details
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    'mailto:suporte@smartbid.com',
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
-}
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "BHWExwoVtGyYGeMBq3FIUPYrIltpkoQDdAm0YIz6JoHzwFp1ew1QOE4ith9kpAcNxyXDlbftxCPuUDptDbPuD64";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "IXeTLnxe68DAbrCn4n7FRgcKduFnby0r_B7uccGb49I";
+
+webpush.setVapidDetails(
+  'mailto:suporte@smartbid.com',
+  vapidPublicKey,
+  vapidPrivateKey
+);
 
 // Action to save user's push subscription
 export async function subscribeUserToPush(sub: {
