@@ -205,7 +205,11 @@ export default function MobileCRM() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab === 'crm' || tab === 'prospeccao' || tab === 'chat') {
+      if (tab === 'chat') {
+        router.replace('/chat');
+        return;
+      }
+      if (tab === 'crm' || tab === 'prospeccao') {
         setActiveTab(tab as any);
       }
       const openCreate = params.get('openCreate');
@@ -213,7 +217,7 @@ export default function MobileCRM() {
         setIsCreateModalOpen(true);
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -1115,204 +1119,7 @@ export default function MobileCRM() {
           </div>
         )}
 
-        {/* ================= TAB 3: TEAM CHAT MOBILE ================= */}
-        {activeTab === 'chat' && (
-          <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-3xl shadow-md overflow-hidden h-[65vh]">
-            
-            {/* If a Chat conversation partner is active */}
-            {activeChatUser ? (
-              <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
-                {/* Chat Header */}
-                <div className="p-3 bg-gradient-to-r from-blue-900 to-slate-900 text-white flex justify-between items-center shrink-0 select-none">
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => setActiveChatUser(null)}
-                      className="p-1 text-slate-300 hover:text-white rounded-lg active:scale-95 bg-transparent border-none"
-                    >
-                      <ArrowLeft size={16} />
-                    </button>
-                    
-                    {activeChatUser.avatarUrl ? (
-                      <img
-                        src={activeChatUser.avatarUrl}
-                        alt={activeChatUser.nome}
-                        className="w-8 h-8 rounded-full border border-slate-600 object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-black uppercase">
-                        {activeChatUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                      </div>
-                    )}
-                    
-                    <div>
-                      <h4 className="text-xs font-bold leading-tight">{activeChatUser.nome}</h4>
-                      <p className="text-[8px] text-emerald-400 font-bold mt-0.5 uppercase tracking-wider">online</p>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Messages Feed */}
-                <div 
-                  className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#efeae2]"
-                  style={{
-                    backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
-                    backgroundBlendMode: 'overlay',
-                  }}
-                >
-                  {loadingChatMessages ? (
-                    <div className="flex h-full items-center justify-center bg-white/20">
-                      <RefreshCw className="animate-spin text-blue-600" size={24} />
-                    </div>
-                  ) : chatMessages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center p-6 text-center select-none">
-                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-xs border border-slate-200/60 mb-2">
-                        <MessageSquare size={16} />
-                      </div>
-                      <p className="text-[10px] font-black text-slate-600 uppercase">Nenhuma mensagem</p>
-                    </div>
-                  ) : (
-                    chatMessages.map((msg, index) => {
-                      const isMe = msg.senderId === currentUser.id;
-                      const showDoubleCheck = msg.read;
-                      
-                      return (
-                        <div
-                          key={msg.id || index}
-                          className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[75%] rounded-2xl px-3 py-2 text-xs shadow-xs relative ${
-                              isMe
-                                ? 'bg-[#d9fdd3] text-slate-800 rounded-tr-none'
-                                : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/40'
-                            }`}
-                          >
-                            <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
-                            
-                            <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-bold text-slate-400 select-none">
-                              <span>
-                                {formatTimeBrasilia(msg.createdAt)}
-                              </span>
-                              {isMe && (
-                                <span className={`font-black ${showDoubleCheck ? 'text-blue-500' : 'text-slate-400'}`}>
-                                  {showDoubleCheck ? '✓✓' : '✓'}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Input form */}
-                <form 
-                  onSubmit={handleSendChatMessageMobile}
-                  className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid"
-                >
-                  <input
-                    type="text"
-                    placeholder="Digite uma mensagem..."
-                    value={newChatMessage}
-                    onChange={e => setNewChatMessage(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
-                    disabled={sendingChat}
-                  />
-                  <button
-                    type="submit"
-                    disabled={sendingChat || !newChatMessage.trim()}
-                    className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
-                  >
-                    <Send size={14} className="fill-white" />
-                  </button>
-                </form>
-              </div>
-            ) : (
-              // Chat List (list of team members)
-              <div className="flex-1 flex flex-col overflow-hidden bg-white">
-                <div className="p-3 bg-white border-b border-slate-100 shrink-0">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                    <input 
-                      type="text"
-                      placeholder="Pesquisar contatos..."
-                      value={chatSearchTerm}
-                      onChange={e => setChatSearchTerm(e.target.value)}
-                      className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-blue-600 outline-none transition-all font-semibold text-slate-700 placeholder-slate-400"
-                    />
-                    {chatSearchTerm && (
-                      <button 
-                        onClick={() => setChatSearchTerm('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 bg-transparent border-none"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white no-scrollbar divide-solid">
-                  {chatList
-                    .filter(u => u.nome.toLowerCase().includes(chatSearchTerm.toLowerCase()))
-                    .map((u) => {
-                      const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                      
-                      return (
-                        <div
-                          key={u.id}
-                          onClick={() => handleSelectChatUserMobile(u)}
-                          className="p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 border-b border-slate-100 border-solid"
-                        >
-                          <div className="relative shrink-0">
-                            {u.avatarUrl ? (
-                              <img
-                                src={u.avatarUrl}
-                                alt={u.nome}
-                                className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 bg-slate-100 text-slate-700 border border-slate-200/80 rounded-xl flex items-center justify-center text-[10px] font-black uppercase">
-                                {initials}
-                              </div>
-                            )}
-                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
-                          </div>
-
-                          <div className="flex-1 min-w-0 space-y-0.5">
-                            <div className="flex justify-between items-baseline">
-                              <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate">{u.nome}</h4>
-                              {u.lastMessage && (
-                                <span className="text-[8px] text-slate-400 font-semibold ml-1">
-                                  {formatTimeBrasilia(u.lastMessage.createdAt)}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="text-[9px] text-slate-400 font-bold uppercase truncate">{u.cargo || 'Membro da Equipe'}</div>
-
-                            {u.lastMessage && (
-                              <p className={`text-xs truncate mt-1 ${u.unreadCount > 0 ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
-                                {u.lastMessage.senderId === currentUser.id ? 'Você: ' : ''}
-                                {u.lastMessage.content}
-                              </p>
-                            )}
-                          </div>
-
-                          {u.unreadCount > 0 && (
-                            <span className="bg-blue-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0">
-                              {u.unreadCount}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </main>
 
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}

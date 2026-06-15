@@ -2,7 +2,7 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -10,7 +10,7 @@ import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas
 import { getLeads, getAllUsers, updateLeadData, changeLeadOwner } from '@/app/leads/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
-import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList } from '@/app/leads/chat-actions';
+import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList, uploadChatFileAction } from '@/app/leads/chat-actions';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -531,6 +531,10 @@ const Sidebar = () => {
   const [loadingChatMessages, setLoadingChatMessages] = useState(false);
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Desktop Chat Attachment States
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
   // Estados para edição inline no widget de WhatsApp
   const [isEditingWidgetInline, setIsEditingWidgetInline] = useState(false);
   const [widgetInlineForm, setWidgetInlineForm] = useState({
@@ -720,6 +724,60 @@ const Sidebar = () => {
     } finally {
       setSendingChat(false);
     }
+  };
+
+  // Handle desktop chat file upload
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeChatUser) return;
+
+    setUploadingFile(true);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      if (!base64) {
+        setUploadingFile(false);
+        return;
+      }
+
+      // Optimistic insert
+      const tempMsg = {
+        id: 'temp-' + Date.now(),
+        senderId: user.id,
+        receiverId: activeChatUser.id,
+        content: file.name,
+        read: false,
+        fileUrl: base64, // local Base64 preview
+        fileType: file.type,
+        createdAt: new Date()
+      };
+      setChatMessages(prev => [...prev, tempMsg]);
+
+      try {
+        const res = await uploadChatFileAction(base64, file.name);
+        if (res.success && res.fileUrl) {
+          const sendRes = await sendInternalMessage(activeChatUser.id, file.name, res.fileUrl, file.type);
+          if (sendRes.success && sendRes.message) {
+            setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
+            loadChatListData();
+          } else {
+            alert("Erro ao enviar arquivo: " + sendRes.error);
+            setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+          }
+        } else {
+          alert("Erro no upload do arquivo: " + res.error);
+          setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+        }
+      } catch (err) {
+        console.error(err);
+        setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+      } finally {
+        setUploadingFile(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Efeito para carregar leads do WhatsApp com polling de 5 segundos
@@ -2665,7 +2723,44 @@ const Sidebar = () => {
                                         : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/40'
                                     }`}
                                   >
-                                    <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
+                                    {/* Render file attachments if present */}
+                                    {(() => {
+                                      const isImage = msg.fileUrl && (
+                                        msg.fileType?.startsWith('image/') || 
+                                        /\.(jpg|jpeg|png|webp|gif)$/i.test(msg.fileUrl)
+                                      );
+                                      if (isImage) {
+                                        return (
+                                          <div className="mb-1.5 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 max-w-[200px]">
+                                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                              <img 
+                                                src={msg.fileUrl} 
+                                                alt="Imagem" 
+                                                className="w-full h-auto object-cover max-h-[140px] hover:opacity-90 transition-opacity"
+                                              />
+                                            </a>
+                                          </div>
+                                        );
+                                      } else if (msg.fileUrl) {
+                                        return (
+                                          <a 
+                                            href={msg.fileUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="mb-1.5 p-1.5 bg-slate-100 hover:bg-slate-200 transition-colors rounded-lg flex items-center gap-1.5 text-slate-800 font-bold no-underline text-[10px] border border-slate-200 max-w-[200px] block"
+                                          >
+                                            <FileText size={14} className="text-blue-600 shrink-0" />
+                                            <span className="truncate block flex-1">{msg.content || 'Arquivo Anexo'}</span>
+                                          </a>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
+
+                                    {/* Only show text if it's not a standalone image/file preview */}
+                                    {msg.content && (!msg.fileUrl || !(msg.fileType?.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(msg.fileUrl))) && (
+                                      <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
+                                    )}
                                     
                                     <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-bold text-slate-400 select-none">
                                       <span>
@@ -2685,22 +2780,45 @@ const Sidebar = () => {
                           <div ref={chatMessagesEndRef} />
                         </div>
 
+                        {/* Hidden File Input */}
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleFileChange} 
+                          className="hidden"
+                          accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        />
+
                         {/* Input de Envio de Mensagens */}
                         <form 
                           onSubmit={handleSendChatMessage}
                           className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid"
                         >
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={sendingChat || uploadingFile}
+                            className="w-9 h-9 bg-slate-200 hover:bg-slate-350 text-slate-650 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 border-none"
+                            title="Anexar Foto ou Arquivo"
+                          >
+                            {uploadingFile ? (
+                              <RefreshCw className="animate-spin text-slate-600" size={14} />
+                            ) : (
+                              <Paperclip size={14} className="text-slate-600" />
+                            )}
+                          </button>
+
                           <input
                             type="text"
                             placeholder="Digite uma mensagem..."
                             value={newChatMessage}
                             onChange={e => setNewChatMessage(e.target.value)}
                             className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
-                            disabled={sendingChat}
+                            disabled={sendingChat || uploadingFile}
                           />
                           <button
                             type="submit"
-                            disabled={sendingChat || !newChatMessage.trim()}
+                            disabled={sendingChat || uploadingFile || !newChatMessage.trim()}
                             className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
                           >
                             <Send size={15} className="fill-white" />

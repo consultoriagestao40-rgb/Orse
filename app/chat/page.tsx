@@ -57,6 +57,10 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  // Dynamic height viewport state for mobile keyboards (especially iOS Safari)
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+  const [viewportOffsetTop, setViewportOffsetTop] = useState<number>(0);
+
   // Fetch logged user on mount
   useEffect(() => {
     const fetchUser = async () => {
@@ -75,6 +79,43 @@ export default function ChatPage() {
     };
     fetchUser();
   }, [router]);
+
+  // Handle dynamic sizing under virtual keyboards
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateViewport = () => {
+      const vv = window.visualViewport;
+      if (vv) {
+        setViewportHeight(vv.height);
+        setViewportOffsetTop(vv.offsetTop);
+      } else {
+        setViewportHeight(window.innerHeight);
+      }
+    };
+
+    updateViewport();
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', updateViewport);
+      vv.addEventListener('scroll', updateViewport);
+      return () => {
+        vv.removeEventListener('resize', updateViewport);
+        vv.removeEventListener('scroll', updateViewport);
+      };
+    } else {
+      window.addEventListener('resize', updateViewport);
+      return () => window.removeEventListener('resize', updateViewport);
+    }
+  }, []);
+
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+    }, 80);
+  };
 
   const isTecnico = currentUser?.cargo?.toLowerCase().includes('tecnico') || currentUser?.cargo?.toLowerCase().includes('técnico');
   const isEntregador = currentUser?.cargo?.toLowerCase().includes('entregador') || 
@@ -290,10 +331,17 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 font-sans flex flex-col relative text-slate-800">
+    <div 
+      className="fixed inset-x-0 bg-slate-50 font-sans flex flex-col overflow-hidden text-slate-800"
+      style={{
+        height: viewportHeight ? `${viewportHeight}px` : '100vh',
+        top: `${viewportOffsetTop}px`,
+        bottom: 'auto',
+      }}
+    >
       
       {/* HEADER PREMIUM STICKY */}
-      <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-40 shadow-md p-4 shrink-0 select-none">
+      <header className="bg-gradient-to-r from-slate-900 to-slate-950 text-white z-40 shadow-md p-4 shrink-0 select-none">
         {activeChatUser ? (
           /* CONVERSATION HEADER (SHOW ACTIVE PARTNER) */
           <div className="flex items-center justify-between w-full">
@@ -398,9 +446,9 @@ export default function ChatPage() {
       </header>
 
       {/* CORE VIEW */}
-      <main className="flex-1 px-3 py-4 max-w-lg mx-auto w-full flex flex-col h-[70vh]">
+      <main className="flex-1 max-w-lg mx-auto w-full flex flex-col overflow-hidden relative min-h-0 bg-slate-50">
         
-        <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-3xl shadow-md overflow-hidden h-full min-h-[60vh]">
+        <div className="flex-1 flex flex-col bg-white border-x border-slate-200 overflow-hidden h-full">
           
           {/* Active Conversation Feed */}
           {activeChatUser ? (
@@ -408,7 +456,7 @@ export default function ChatPage() {
               
               {/* Messages Feed */}
               <div 
-                className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#efeae2] min-h-[45vh]"
+                className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#efeae2]"
                 style={{
                   backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
                   backgroundBlendMode: 'overlay',
@@ -525,6 +573,7 @@ export default function ChatPage() {
                   onChange={e => setNewChatMessage(e.target.value)}
                   className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
                   disabled={sendingChat || uploadingFile}
+                  onFocus={handleInputFocus}
                 />
                 
                 <button
@@ -539,7 +588,7 @@ export default function ChatPage() {
           ) : (
             
             // Contacts Chat List
-            <div className="flex-1 flex flex-col overflow-hidden bg-white min-h-[50vh]">
+            <div className="flex-1 flex flex-col overflow-hidden bg-white">
               <div className="p-3 bg-white border-b border-slate-100 shrink-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
@@ -623,84 +672,86 @@ export default function ChatPage() {
       </main>
 
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
-        
-        {!isSomenteTecnico && !isSomenteEntregador && (
-          <>
-            {/* Tab CRM */}
-            <button
-              onClick={() => {
-                router.push('/leads/mobile');
-              }}
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
-            >
-              <Building size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
-            </button>
+      {!activeChatUser && (
+        <nav className="bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)] shrink-0">
+          
+          {!isSomenteTecnico && !isSomenteEntregador && (
+            <>
+              {/* Tab CRM */}
+              <button
+                onClick={() => {
+                  router.push('/leads/mobile');
+                }}
+                className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
+              >
+                <Building size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
+              </button>
 
-            {/* Tab Prospecção */}
-            <button
-              onClick={() => {
-                router.push('/leads/mobile?tab=prospeccao');
-              }}
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
-            >
-              <Target size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
-            </button>
+              {/* Tab Prospecção */}
+              <button
+                onClick={() => {
+                  router.push('/leads/mobile?tab=prospeccao');
+                }}
+                className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
+              >
+                <Target size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+              </button>
 
-            {/* Tab Novo Lead */}
-            <button
-              onClick={() => {
-                router.push('/leads/mobile?openCreate=true');
-              }}
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
-            >
-              <PlusCircle size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
-            </button>
-          </>
-        )}
-
-        {isSomenteTecnico && (
-          /* Tab Técnico return link */
-          <a
-            href="/ativos/tecnico"
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-          >
-            <Wrench size={18} className="text-slate-400" />
-            <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-          </a>
-        )}
-
-        {isSomenteEntregador && (
-          /* Tab Entregador return link */
-          <a
-            href="/entrega/entregador"
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-          >
-            <Truck size={18} className="text-slate-400" />
-            <span className="text-[8px] uppercase tracking-wider">Entrega</span>
-          </a>
-        )}
-
-        {/* Tab Chat Interno (Active) */}
-        <button
-          onClick={() => {
-            setActiveChatUser(null);
-            loadChatListMobile();
-          }}
-          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative text-blue-600 font-black"
-        >
-          <MessageSquare size={18} className="text-blue-600" />
-          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-          {totalUnreadChat > 0 && (
-            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
-              {totalUnreadChat}
-            </span>
+              {/* Tab Novo Lead */}
+              <button
+                onClick={() => {
+                  router.push('/leads/mobile?openCreate=true');
+                }}
+                className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
+              >
+                <PlusCircle size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
+              </button>
+            </>
           )}
-        </button>
-      </nav>
+
+          {isSomenteTecnico && (
+            /* Tab Técnico return link */
+            <a
+              href="/ativos/tecnico"
+              className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <Wrench size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+            </a>
+          )}
+
+          {isSomenteEntregador && (
+            /* Tab Entregador return link */
+            <a
+              href="/entrega/entregador"
+              className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+            >
+              <Truck size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Entrega</span>
+            </a>
+          )}
+
+          {/* Tab Chat Interno (Active) */}
+          <button
+            onClick={() => {
+              setActiveChatUser(null);
+              loadChatListMobile();
+            }}
+            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative text-blue-600 font-black"
+          >
+            <MessageSquare size={18} className="text-blue-600" />
+            <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+            {totalUnreadChat > 0 && (
+              <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+                {totalUnreadChat}
+              </span>
+            )}
+          </button>
+        </nav>
+      )}
 
     </div>
   );
