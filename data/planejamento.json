@@ -1,0 +1,106 @@
+{
+  "causas": [
+    {
+      "id": "c1",
+      "problema": "Queda no índice de satisfação do cliente com o tempo de atendimento técnico",
+      "porques": [
+        "Os técnicos demoram para iniciar o atendimento local",
+        "A roteirização e estimativa de tempo de trânsito está imprecisa",
+        "Não tínhamos acompanhamento em tempo real do trajeto do técnico",
+        "O sistema de chat/GPS não notificava o gestor sobre os deslocamentos técnicos"
+      ],
+      "ishikawa": {
+        "metodo": ["Roteirização manual sem algoritmos de trânsito", "Falta de processo de notificação automática"],
+        "materiaPrima": [],
+        "maoDeObra": ["Falta de treinamento no uso do aplicativo móvel de rotas"],
+        "maquina": ["Dispositivos móveis antigos com lentidão de GPS"],
+        "medida": ["Nenhum indicador de tempo de resposta era monitorado anteriormente"],
+        "meioAmbiente": ["Congestionamentos nos horários de pico nas capitais"]
+      },
+      "causaRaiz": "Falta de integração e notificações automáticas de deslocamento de técnicos no sistema central de gestão",
+      "createdAt": "2026-06-15T10:00:00.000Z",
+      "userId": "system"
+    }
+  ],
+  "planosAcao": [
+    {
+      "id": "pa1",
+      "causaRaizId": "c1",
+      "problemaDireto": "",
+      "titulo": "Implementar Notificações de Status de Deslocamento de Técnicos",
+      "responsavelId": "",
+      "resultadoEsperado": "Gestor sendo notificado sonoramente e visualmente em tempo real no chat sobre o início/fim das rotas, reduzindo o tempo de resposta em 20%",
+      "resultadoAtingido": "Notificações sonoras e visuais implementadas com sucesso no chat",
+      "what": "Adicionar alertas visuais e sonoros quando o entregador/técnico inicia rota, inicia serviço ou conclui entrega/OS",
+      "why": "Para que os gestores tenham visibilidade imediata das rotas de atendimento sem precisar consultar o mapa manualmente",
+      "where": "Módulo de Ativos (sidebar desktop e mobile PWA)",
+      "when": "2026-06-16",
+      "who": "Desenvolvedor Responsável",
+      "how": "Integrar webhooks de eventos de mudança de status com alertas sonoros e mensagens automáticas no chat interno",
+      "howMuch": 0,
+      "status": "CONCLUIDO",
+      "dataConclusao": "2026-06-15T15:00:00.000Z",
+      "percentualRealizado": 100,
+      "createdAt": "2026-06-15T10:30:00.000Z"
+    }
+  ],
+  "okrCiclos": [
+    {
+      "id": "ciclo1",
+      "nome": "Q3 2026",
+      "dataInicio": "2026-07-01",
+      "dataFim": "2026-09-30",
+      "objetivos": [
+        {
+          "id": "obj1",
+          "titulo": "Alcançar a excelência operacional em serviços de campo e entregas",
+          "cicloId": "ciclo1",
+          "fase": "Fase de Otimização",
+          "progresso": 0,
+          "krs": [
+            {
+              "id": "kr1",
+              "descricao": "Reduzir o tempo médio de atendimento técnico (SLA) para menos de 45 minutos",
+              "valorInicial": 65.0,
+              "valorAlvo": 45.0,
+              "valorAtual": 60.0,
+              "unidade": "minutos"
+            },
+            {
+              "id": "kr2",
+              "descricao": "Aumentar o índice de satisfação do cliente (CSAT) no atendimento local",
+              "valorInicial": 85.0,
+              "valorAlvo": 95.0,
+              "valorAtual": 88.0,
+              "unidade": "%"
+            }
+          ],
+          "iniciativas": [
+            "Implementação de player de áudio premium e alertas visuais no chat de suporte técnico",
+            "Otimização do Kanban de Comodatos com chevrons e drag-and-drop para facilitar a gestão comercial"
+          ]
+        }
+      ]
+    }
+  ],
+  "postits": [
+    {
+      "id": "p1",
+      "texto": "Ideia: Permitir gravação de áudio em chat interno com um design semelhante ao WhatsApp",
+      "cor": "bg-emerald-100 border-emerald-300 text-emerald-800",
+      "x": 100,
+      "y": 120,
+      "userId": "system",
+      "createdAt": "2026-06-15T09:00:00.000Z"
+    },
+    {
+      "id": "p2",
+      "texto": "Ideia: Ajustar margens de impressão do contrato de comodato no formato A4 com repeat tfoot/thead",
+      "cor": "bg-blue-100 border-blue-300 text-blue-800",
+      "x": 420,
+      "y": 150,
+      "userId": "system",
+      "createdAt": "2026-06-15T09:15:00.000Z"
+    }
+  ]
+}

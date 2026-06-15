@@ -2,7 +2,7 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -1296,6 +1296,7 @@ const Sidebar = () => {
     { icon: Wrench, label: 'Equipes Técnicas (SPOT)', href: '/admin/equipes-tecnicas', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Users, label: 'Clientes', href: '/clientes', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Boxes, label: 'Gestão de Ativos', href: '/ativos', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: Brain, label: 'Planejamento e Metas', href: '/planejamento', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Wrench, label: 'Área do Técnico', href: '/ativos/tecnico', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Truck, label: 'Gestão de Entregas', href: '/entrega', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Smartphone, label: 'Área do Entregador', href: '/entrega/entregador', roles: ['ADMIN', 'MANAGER', 'USER'] },
