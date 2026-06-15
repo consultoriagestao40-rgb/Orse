@@ -107,6 +107,21 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const getDarkenedHexForText = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  let r = parseInt(normalized.slice(1, 3), 16);
+  let g = parseInt(normalized.slice(3, 5), 16);
+  let b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  if (yiq > 170) {
+    r = Math.max(0, Math.floor(r * 0.5));
+    g = Math.max(0, Math.floor(g * 0.5));
+    b = Math.max(0, Math.floor(b * 0.5));
+  }
+  const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
+  return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
+};
+
 const PRESET_COLORS = [
   '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
   '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
