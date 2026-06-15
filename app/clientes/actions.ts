@@ -86,3 +86,69 @@ export async function deleteCliente(id: string) {
     throw error;
   }
 }
+
+export async function importClientes(clientes: any[]) {
+  const user = await getLoggedUser();
+  if (!user) return { error: 'Não autorizado' };
+  
+  let inserted = 0;
+  let updated = 0;
+  
+  try {
+    for (const c of clientes) {
+      // Limpa CNPJ para busca
+      const cleanedCnpj = c.cnpj ? c.cnpj.replace(/\D/g, '') : '';
+      
+      if (cleanedCnpj) {
+        const existing = await prisma.client.findFirst({
+          where: {
+            cnpj: {
+              contains: cleanedCnpj
+            },
+            tenantId: user.tenantId
+          }
+        });
+        
+        if (existing) {
+          // Atualiza dados cadastrais existentes
+          await prisma.client.update({
+            where: { id: existing.id },
+            data: {
+              nomeFantasia: c.nomeFantasia || existing.nomeFantasia,
+              razaoSocial: c.razaoSocial || existing.razaoSocial,
+              email: c.email || existing.email,
+              whatsapp: c.whatsapp || existing.whatsapp,
+              endereco: c.endereco || existing.endereco,
+              segmento: c.segmento || existing.segmento
+            }
+          });
+          updated++;
+          continue;
+        }
+      }
+      
+      // Cria novo cliente
+      await prisma.client.create({
+        data: {
+          nomeFantasia: c.nomeFantasia || 'Importado',
+          razaoSocial: c.razaoSocial || '',
+          cnpj: c.cnpj || '',
+          email: c.email || '',
+          whatsapp: c.whatsapp || '',
+          endereco: c.endereco || '',
+          contato: c.contato || '',
+          contatoCargo: c.contatoCargo || '',
+          segmento: c.segmento || '',
+          tenantId: user.tenantId || null
+        }
+      });
+      inserted++;
+    }
+    
+    revalidatePath('/clientes');
+    return { success: true, inserted, updated };
+  } catch (error: any) {
+    console.error('Erro ao importar clientes:', error);
+    return { error: error?.message || 'Erro ao processar importação de clientes' };
+  }
+}
