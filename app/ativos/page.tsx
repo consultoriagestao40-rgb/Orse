@@ -93,8 +93,6 @@ export default function AtivosPage() {
   // OS edit tab selection (details vs history/lifecycle log)
   const [activeOsTab, setActiveOsTab] = useState<'details' | 'history'>('details');
 
-  const currentOsItem = ordens.find(o => o.id === osForm.id);
-
   // Route Management Modal State
   const [modalManageRoutesOpen, setModalManageRoutesOpen] = useState(false);
   const [selectedRouteTecnico, setSelectedRouteTecnico] = useState('');
@@ -1139,6 +1137,8 @@ export default function AtivosPage() {
     }
     return Object.entries(map);
   };
+
+  const currentOsItem = ordens.find(o => o.id === osForm.id);
 
   return (
     <div id="ativos-layout-root" className="flex min-h-screen bg-[#F8FAFC]">
