@@ -1461,17 +1461,17 @@ export default function PlanejamentoPage() {
                                       {new Date(c.createdAt).toLocaleDateString('pt-BR')}
                                     </td>
                                     <td className="py-4 px-6 text-right">
-                                      <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div className="flex justify-end gap-1.5">
                                         <button 
                                           onClick={() => { setCurrentCausa(c); setIsEditingCausa(true); }} 
-                                          className="p-1.5 text-slate-400 hover:text-[#1B4D3E] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                                          className="p-1.5 text-slate-550 hover:text-[#1B4D3E] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
                                           title="Editar Análise"
                                         >
                                           <Edit size={14} />
                                         </button>
                                         <button 
                                           onClick={() => handleDeleteCausaObj(c.id)} 
-                                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                                          className="p-1.5 text-slate-550 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
                                           title="Excluir Análise"
                                         >
                                           <Trash2 size={14} />
@@ -1684,11 +1684,11 @@ export default function PlanejamentoPage() {
                                     </div>
                                   </td>
                                   <td className="py-4 px-6 text-right">
-                                    <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <button onClick={() => { setCurrentPlano(pa); setShowSubActionForm(false); setIsPlanoModalOpen(true); }} className="p-1.5 text-slate-400 hover:text-[#1B4D3E] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent">
+                                    <div className="flex justify-end gap-1.5">
+                                      <button onClick={() => { setCurrentPlano(pa); setShowSubActionForm(false); setIsPlanoModalOpen(true); }} className="p-1.5 text-slate-550 hover:text-[#1B4D3E] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-none bg-transparent" title="Editar Plano">
                                         <Edit size={14} />
                                       </button>
-                                      <button onClick={() => handleDeletePlanoObj(pa.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent">
+                                      <button onClick={() => handleDeletePlanoObj(pa.id)} className="p-1.5 text-slate-550 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent" title="Excluir Plano">
                                         <Trash2 size={14} />
                                       </button>
                                     </div>
