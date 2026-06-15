@@ -1655,7 +1655,7 @@ export default function PlanejamentoPage() {
                                           borderColor: borderRgba,
                                           borderWidth: '0 1px 1px 1px',
                                           borderStyle: 'solid',
-                                          height: 'calc(100vh - 280px)',
+                                          height: 'calc(100vh - 52px)',
                                           overflowY: 'auto'
                                         }}
                                         onDragOver={(e) => {
