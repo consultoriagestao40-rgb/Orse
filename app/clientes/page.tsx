@@ -157,9 +157,28 @@ export default function ClientesPage() {
     setImportedClients(mappedClients);
   };
 
+  const loadSheetJS = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).XLSX) {
+        resolve((window as any).XLSX);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      script.onload = () => resolve((window as any).XLSX);
+      script.onerror = () => reject(new Error('Falha ao carregar o leitor de planilhas Excel'));
+      document.body.appendChild(script);
+    });
+  };
+
   // Re-lê o arquivo sempre que mudar o uploadedFile ou a codificação (encoding)
   useEffect(() => {
     if (!uploadedFile) return;
+    const fileName = uploadedFile.name.toLowerCase();
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      // Excel XLSX não precisa de encoding de texto (já vem em UTF-8 empacotado no ZIP)
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
@@ -171,10 +190,48 @@ export default function ClientesPage() {
     reader.readAsText(uploadedFile, encoding);
   }, [uploadedFile, encoding]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
+    if (!file) return;
+
+    setUploadedFile(file);
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      setLoading(true);
+      try {
+        const XLSX = await loadSheetJS();
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = new Uint8Array(event.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const csvLines = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1 });
+            processCSVData(csvLines);
+          } catch (err) {
+            alert('Erro ao ler a planilha Excel. Verifique o formato do arquivo.');
+            console.error(err);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (err: any) {
+        alert(err.message || 'Falha ao carregar o leitor de Excel');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // É um CSV comum
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        if (text) {
+          const parsed = parseCSV(text);
+          processCSVData(parsed);
+        }
+      };
+      reader.readAsText(file, encoding);
     }
   };
 
@@ -420,7 +477,7 @@ export default function ClientesPage() {
               <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
                 <div className="flex items-center gap-2">
                   <Upload size={16} className="text-slate-600" />
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Importar Clientes via Planilha CSV</h3>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Importar Clientes via Planilha Excel/CSV</h3>
                 </div>
                 <button onClick={() => setIsImportModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                   <X size={16} />
@@ -440,15 +497,16 @@ export default function ClientesPage() {
                   <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-250 rounded-2xl p-12 bg-slate-50 hover:bg-slate-100/40 hover:border-[#1b4d3e]/50 transition-all cursor-pointer relative group">
                     <input 
                       type="file" 
-                      accept=".csv"
+                      accept=".csv, .xlsx, .xls"
                       onChange={handleFileUpload}
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                     <Upload size={36} className="text-slate-400 group-hover:text-[#1B4D3E] transition-colors mb-3" />
-                    <p className="text-sm font-black text-slate-700 uppercase tracking-wider">Selecione o Arquivo CSV</p>
+                    <p className="text-sm font-black text-slate-700 uppercase tracking-wider">Selecione o Arquivo Excel ou CSV</p>
                     <p className="text-slate-400 text-xs mt-1.5 text-center font-medium max-w-sm leading-relaxed">
-                      Salve seu arquivo Excel como{" "}
-                      <strong>CSV (Separado por vírgula ou ponto-e-vírgula)</strong>. O sistema mapeará as colunas de Nome, Razão Social, CNPJ, E-mail, Telefone, Endereço e Segmento.
+                      Selecione um arquivo de planilha do Excel{" "}
+                      <strong>(.xlsx, .xls)</strong> ou arquivo{" "}
+                      <strong>.csv</strong>. O sistema mapeará automaticamente as colunas correspondentes.
                     </p>
                   </div>
                 ) : (
