@@ -87,7 +87,7 @@ export default function ClientesPage() {
   const processCSVData = (csvLines: string[][]) => {
     if (csvLines.length < 2) return;
     
-    const headers = csvLines[0].map(h => h.trim().toLowerCase());
+    const headers = csvLines[0].map(h => String(h || '').trim().toLowerCase());
     
     // Procura índices das colunas de forma inteligente
     const idxRazao = headers.findIndex(h => h.includes('razão') || h.includes('razao'));
@@ -112,7 +112,7 @@ export default function ClientesPage() {
       const row = csvLines[i];
       if (row.length < 2) continue; // Pula linhas em branco ou incompletas
 
-      const getVal = (idx: number) => (idx !== -1 && row[idx]) ? row[idx].trim() : '';
+      const getVal = (idx: number) => (idx !== -1 && row[idx] !== undefined && row[idx] !== null) ? String(row[idx]).trim() : '';
 
       const nomeFantasia = getVal(idxNome) || getVal(idxRazao) || 'Cliente Importado';
       const razaoSocial = getVal(idxRazao) || nomeFantasia;
