@@ -95,3 +95,56 @@ export function formatDateTimeBrasilia(dateInput: any): string {
     return '';
   }
 }
+
+/**
+ * Formata o status de "Último Visto" do usuário no fuso horário do usuário
+ */
+export function formatLastSeen(lastActiveInput: any): string {
+  if (!lastActiveInput) return 'Offline';
+  
+  try {
+    const date = parseDateUTC(lastActiveInput);
+    const tz = getUserTimezone();
+    const now = new Date();
+    
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    
+    // Se for ativo nos últimos 20 segundos, considera online
+    if (diffSecs < 20 && diffSecs >= 0) {
+      return 'Online';
+    }
+    
+    const timeStr = date.toLocaleTimeString('pt-BR', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Verificar se é hoje/ontem no fuso horário especificado
+    const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+    const dateParts = formatter.format(date); // Formato YYYY-MM-DD
+    const nowParts = formatter.format(now);
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayParts = formatter.format(yesterday);
+    
+    if (dateParts === nowParts) {
+      return `Visto por último hoje às ${timeStr}`;
+    } else if (dateParts === yesterdayParts) {
+      return `Visto por último ontem às ${timeStr}`;
+    } else {
+      const dateStr = date.toLocaleDateString('pt-BR', {
+        timeZone: tz,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      return `Visto por último em ${dateStr} às ${timeStr}`;
+    }
+  } catch (e) {
+    return 'Offline';
+  }
+}
+

@@ -10,7 +10,8 @@ import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas
 import { getLeads, getAllUsers, updateLeadData, changeLeadOwner } from '@/app/leads/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
-import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList, uploadChatFileAction } from '@/app/leads/chat-actions';
+import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList, uploadChatFileAction, updateUserLastActive } from '@/app/leads/chat-actions';
+import { formatLastSeen } from '@/lib/timezone';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -536,6 +537,55 @@ const Sidebar = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  // Refs to monitor unread count changes and trigger sound alerts
+  const prevUnreadChatRef = useRef(-1);
+  const prevUnreadNotifRef = useRef(-1);
+
+  // Play chime helper using Web Audio API
+  const playNotificationChime = () => {
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+      console.warn("Chime play blocked or unsupported:", e);
+    }
+  };
+
+  useEffect(() => {
+    const wasChatInitialized = prevUnreadChatRef.current !== -1;
+    const wasNotifInitialized = prevUnreadNotifRef.current !== -1;
+    
+    const hasNewChat = wasChatInitialized && (totalUnreadChat > prevUnreadChatRef.current);
+    const hasNewNotif = wasNotifInitialized && (unreadCount > prevUnreadNotifRef.current);
+    
+    if (hasNewChat || hasNewNotif) {
+      playNotificationChime();
+    }
+    
+    prevUnreadChatRef.current = totalUnreadChat;
+    prevUnreadNotifRef.current = unreadCount;
+  }, [totalUnreadChat, unreadCount]);
+
   // Estados para edição inline no widget de WhatsApp
   const [isEditingWidgetInline, setIsEditingWidgetInline] = useState(false);
   const [widgetInlineForm, setWidgetInlineForm] = useState({
@@ -634,6 +684,31 @@ const Sidebar = () => {
       return () => clearInterval(interval);
     }
   }, [user]);
+
+  // Heartbeat para atualizar o lastActive do usuário logado a cada 10 segundos
+  useEffect(() => {
+    if (user) {
+      updateUserLastActive();
+      const interval = setInterval(() => {
+        updateUserLastActive();
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Sincroniza o activeChatUser com os dados atualizados do chatList (status online/offline em tempo real)
+  useEffect(() => {
+    if (activeChatUser && chatList.length > 0) {
+      const updatedUser = chatList.find(u => u.id === activeChatUser.id);
+      if (updatedUser) {
+        if (updatedUser.lastActive !== activeChatUser.lastActive || 
+            updatedUser.nome !== activeChatUser.nome || 
+            updatedUser.avatarUrl !== activeChatUser.avatarUrl) {
+          setActiveChatUser(updatedUser);
+        }
+      }
+    }
+  }, [chatList, activeChatUser]);
 
   // Efeito para carregar mensagens do chat ativo
   const fetchChatMessages = async (otherUserId: string) => {
@@ -2016,11 +2091,14 @@ const Sidebar = () => {
                     const chatUser = chatList.find(c => c.id === u.id);
                     const unread = chatUser?.unreadCount || 0;
 
+                    const activeTime = u.lastActive || chatUser?.lastActive;
+                    const isOnline = activeTime && (new Date().getTime() - new Date(activeTime).getTime() < 20000);
+
                     return (
                       <div
                         key={u.id}
                         className="relative group cursor-pointer"
-                        title={`${u.nome} (Equipe)`}
+                        title={`${u.nome} (${isOnline ? 'Online' : formatLastSeen(activeTime)})`}
                         onClick={() => {
                           setShowChatWidget(true);
                           setShowWhatsAppWidget(false);
@@ -2039,8 +2117,8 @@ const Sidebar = () => {
                             {initials}
                           </div>
                         )}
-                        {/* Indicador de Status Online (Bolinha Verde) */}
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
+                        {/* Indicador de Status Online/Offline */}
+                        <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white shadow-xs ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                         {unread > 0 && (
                           <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
                             {unread}
@@ -2641,6 +2719,7 @@ const Sidebar = () => {
                       return filtered.map(u => {
                         const isSelected = activeChatUser?.id === u.id;
                         const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                        const isOnline = u.lastActive && (new Date().getTime() - new Date(u.lastActive).getTime() < 20000);
                         
                         return (
                           <div
@@ -2664,8 +2743,8 @@ const Sidebar = () => {
                                   {initials}
                                 </div>
                               )}
-                              {/* Green online indicator bubble */}
-                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
+                              {/* Online/Offline indicator bubble */}
+                              <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white shadow-xs ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                             </div>
 
                             <div className="flex-1 min-w-0 space-y-0.5">
@@ -2725,10 +2804,24 @@ const Sidebar = () => {
                             )}
                             <div className="min-w-0">
                               <h4 className="text-xs font-bold text-slate-800 truncate leading-tight">{activeChatUser.nome}</h4>
-                              <p className="text-[9px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
-                                online
-                              </p>
+                              {(() => {
+                                const isOnline = activeChatUser.lastActive && (new Date().getTime() - new Date(activeChatUser.lastActive).getTime() < 20000);
+                                if (isOnline) {
+                                  return (
+                                    <p className="text-[9px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                                      online
+                                    </p>
+                                  );
+                                } else {
+                                  return (
+                                    <p className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 mt-0.5">
+                                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full inline-block" />
+                                      {formatLastSeen(activeChatUser.lastActive)}
+                                    </p>
+                                  );
+                                }
+                              })()}
                             </div>
                           </div>
                         </div>

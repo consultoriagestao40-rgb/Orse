@@ -27,10 +27,15 @@ async function getUserIdByEmail(email: string | null | undefined, tenantId: stri
 
 // Helper to find the manager/creator of a Delivery (with fallback to first admin in tenant)
 async function getManagerIdForEntrega(criadorId: string | null | undefined, tenantId: string | null): Promise<string | null> {
-  if (criadorId) return criadorId;
+  if (criadorId) {
+    const creator = await prisma.user.findUnique({ where: { id: criadorId } });
+    if (creator && (creator.role === 'ADMIN' || creator.role === 'MANAGER')) {
+      return criadorId;
+    }
+  }
   if (!tenantId) return null;
   const manager = await prisma.user.findFirst({
-    where: { tenantId, cargo: { in: ['ADMIN', 'GESTOR', 'GERENTE'] } }
+    where: { tenantId, role: { in: ['ADMIN', 'MANAGER'] } }
   });
   return manager ? manager.id : null;
 }
@@ -475,6 +480,12 @@ export async function updateEntrega(id: string, data: {
           if (data.status === 'EM_DESLOCAMENTO') {
             const msg = `🚗 *Rota Iniciada!*\n` +
                         `O entregador *${delivererName}* iniciou o trajeto de entrega da *${formattedNf}* (Cliente: ${clientName}).`;
+            await safeSendChatNotification(managerId, msg);
+          }
+          // Chegada ao Cliente / Serviço Iniciado
+          else if (data.status === 'ENTREGA') {
+            const msg = `📍 *Início de Serviço / Chegada ao Cliente!*\n` +
+                        `O entregador *${delivererName}* chegou ao cliente e iniciou a entrega local da *${formattedNf}* (Cliente: ${clientName}).`;
             await safeSendChatNotification(managerId, msg);
           }
           // Entrega Finalizada (Aguardando Validação)

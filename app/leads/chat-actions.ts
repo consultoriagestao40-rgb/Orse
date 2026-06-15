@@ -235,7 +235,8 @@ export async function getChatList() {
         email: true,
         cargo: true,
         avatarUrl: true,
-        color: true
+        color: true,
+        lastActive: true
       },
       orderBy: { nome: 'asc' }
     });
@@ -291,6 +292,23 @@ export async function getChatList() {
     return { success: true, chatList, totalUnread };
   } catch (error: any) {
     console.error('Erro ao buscar lista de chat:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Update the user's last active timestamp
+export async function updateUserLastActive() {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Usuário não autenticado.' };
+
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastActive: new Date() }
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao atualizar atividade do usuário:', error);
     return { success: false, error: error.message };
   }
 }

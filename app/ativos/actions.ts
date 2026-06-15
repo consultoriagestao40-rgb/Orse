@@ -27,10 +27,15 @@ async function getUserIdByEmail(email: string | null | undefined, tenantId: stri
 
 // Helper to find the manager/creator of an OS (with fallback to first admin in tenant)
 async function getManagerIdForOs(criadorId: string | null | undefined, tenantId: string | null): Promise<string | null> {
-  if (criadorId) return criadorId;
+  if (criadorId) {
+    const creator = await prisma.user.findUnique({ where: { id: criadorId } });
+    if (creator && (creator.role === 'ADMIN' || creator.role === 'MANAGER')) {
+      return criadorId;
+    }
+  }
   if (!tenantId) return null;
   const manager = await prisma.user.findFirst({
-    where: { tenantId, cargo: { in: ['ADMIN', 'GESTOR', 'GERENTE'] } }
+    where: { tenantId, role: { in: ['ADMIN', 'MANAGER'] } }
   });
   return manager ? manager.id : null;
 }

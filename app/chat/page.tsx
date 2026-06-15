@@ -7,10 +7,11 @@ import {
   getInternalMessages, 
   sendInternalMessage, 
   markInternalMessagesAsRead,
-  uploadChatFileAction
+  uploadChatFileAction,
+  updateUserLastActive
 } from '@/app/leads/chat-actions';
 import { getLoggedUser } from '@/app/propostas/actions';
-import { formatTimeBrasilia } from '@/lib/timezone';
+import { formatTimeBrasilia, formatLastSeen } from '@/lib/timezone';
 import { 
   Phone, 
   MessageCircle, 
@@ -156,6 +157,74 @@ export default function ChatPage() {
       return () => clearInterval(interval);
     }
   }, [currentUser, searchParams]);
+
+  // Refs to monitor unread chat count changes and trigger sound alerts
+  const prevUnreadChatRef = useRef(-1);
+
+  // Play chime helper using Web Audio API
+  const playNotificationChime = () => {
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+      console.warn("Chime play blocked or unsupported:", e);
+    }
+  };
+
+  useEffect(() => {
+    const wasChatInitialized = prevUnreadChatRef.current !== -1;
+    const hasNewChat = wasChatInitialized && (totalUnreadChat > prevUnreadChatRef.current);
+    
+    if (hasNewChat) {
+      playNotificationChime();
+    }
+    prevUnreadChatRef.current = totalUnreadChat;
+  }, [totalUnreadChat]);
+
+  // Heartbeat para atualizar o lastActive do usuário logado a cada 10 segundos
+  useEffect(() => {
+    if (currentUser) {
+      updateUserLastActive();
+      const interval = setInterval(() => {
+        updateUserLastActive();
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [currentUser]);
+
+  // Sincroniza o activeChatUser com os dados atualizados do chatList (status online/offline em tempo real)
+  useEffect(() => {
+    if (activeChatUser && chatList.length > 0) {
+      const updatedUser = chatList.find(u => u.id === activeChatUser.id);
+      if (updatedUser) {
+        if (updatedUser.lastActive !== activeChatUser.lastActive || 
+            updatedUser.nome !== activeChatUser.nome || 
+            updatedUser.avatarUrl !== activeChatUser.avatarUrl) {
+          setActiveChatUser(updatedUser);
+        }
+      }
+    }
+  }, [chatList, activeChatUser]);
 
   // Load active chat messages
   const loadActiveChatMessages = async (otherId: string) => {
@@ -415,9 +484,23 @@ export default function ChatPage() {
               
               <div className="min-w-0 text-left">
                 <span className="text-xs font-black uppercase block text-white leading-tight truncate">{activeChatUser.nome}</span>
-                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest block leading-none mt-0.5">
-                  {activeChatUser.cargo ? `${activeChatUser.cargo} • Online` : 'Online'}
-                </span>
+                {(() => {
+                  const isOnline = activeChatUser.lastActive && (new Date().getTime() - new Date(activeChatUser.lastActive).getTime() < 20000);
+                  const cargoPrefix = activeChatUser.cargo ? `${activeChatUser.cargo} • ` : '';
+                  if (isOnline) {
+                    return (
+                      <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest block leading-none mt-0.5 animate-pulse">
+                        {cargoPrefix}Online
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block leading-none mt-0.5">
+                        {cargoPrefix}{formatLastSeen(activeChatUser.lastActive)}
+                      </span>
+                    );
+                  }
+                })()}
               </div>
             </div>
           </div>
@@ -691,7 +774,12 @@ export default function ChatPage() {
                               {initials}
                             </div>
                           )}
-                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
+                          {(() => {
+                            const isOnline = u.lastActive && (new Date().getTime() - new Date(u.lastActive).getTime() < 20000);
+                            return (
+                              <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white shadow-xs ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                            );
+                          })()}
                         </div>
 
                         <div className="flex-1 min-w-0 space-y-0.5">

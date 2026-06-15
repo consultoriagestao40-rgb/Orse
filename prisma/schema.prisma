@@ -93,6 +93,7 @@ model User {
   celular        String?
   managerId      String?
   createdAt      DateTime        @default(now())
+  lastActive     DateTime?
   propostas      Proposta[]
   manager        User?           @relation("UserToManager", fields: [managerId], references: [id])
   subordinates   User[]          @relation("UserToManager")
