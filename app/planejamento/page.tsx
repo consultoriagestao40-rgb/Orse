@@ -1357,7 +1357,7 @@ export default function PlanejamentoPage() {
                   /* LISTAGEM PRINCIPAL (KANBAN / LISTA) */
                   <div className="space-y-6">
                     {/* Indicador de Quantidade */}
-                    <div className="flex justify-between items-center select-none pb-2">
+                    <div className={`flex justify-between items-center select-none pb-2 ${isKanbanMode ? 'px-8' : ''}`}>
                       <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest">
                         {causas.length} Análises de Causa
                       </span>
@@ -1530,7 +1530,7 @@ export default function PlanejamentoPage() {
                                                 className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-155 flex items-center justify-center cursor-pointer hover:bg-black/5 text-inherit"
                                                 title="Editar Status"
                                               >
-                                                <Edit size={12} />
+                                                <Edit2 size={12} />
                                               </button>
 
                                               <button
