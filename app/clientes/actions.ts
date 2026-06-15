@@ -23,14 +23,30 @@ export async function getClientes() {
   }
 }
 
+function cleanAndFormatDocument(doc: string | null | undefined): { cleaned: string, formatted: string | null } {
+  if (!doc) return { cleaned: '', formatted: null };
+  const cleaned = doc.replace(/\D/g, '');
+  if (cleaned.length === 14) {
+    const formatted = `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.${cleaned.slice(5, 8)}/${cleaned.slice(8, 12)}-${cleaned.slice(12, 14)}`;
+    return { cleaned, formatted };
+  }
+  if (cleaned.length === 11) {
+    const formatted = `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-${cleaned.slice(9, 11)}`;
+    return { cleaned, formatted };
+  }
+  const isInvalid = !cleaned || cleaned === '-' || cleaned === '';
+  return { cleaned: isInvalid ? '' : cleaned, formatted: isInvalid ? null : doc };
+}
+
 export async function createCliente(data: any) {
   const user = await getLoggedUser();
   try {
+    const { formatted } = cleanAndFormatDocument(data.cnpj);
     const novoCliente = await prisma.client.create({
       data: {
         nomeFantasia: data.nomeFantasia || 'Novo Cliente',
         razaoSocial: data.razaoSocial || '',
-        cnpj: data.cnpj || '',
+        cnpj: formatted, // Salva null em vez de '' para evitar quebras de unique
         email: data.email || '',
         whatsapp: data.whatsapp || '',
         endereco: data.endereco || '',
@@ -54,7 +70,10 @@ export async function updateCliente(id: string, data: any) {
     const updateData: any = {};
     if (data.nomeFantasia !== undefined) updateData.nomeFantasia = data.nomeFantasia;
     if (data.razaoSocial !== undefined) updateData.razaoSocial = data.razaoSocial;
-    if (data.cnpj !== undefined) updateData.cnpj = data.cnpj;
+    if (data.cnpj !== undefined) {
+      const { formatted } = cleanAndFormatDocument(data.cnpj);
+      updateData.cnpj = formatted;
+    }
     if (data.email !== undefined) updateData.email = data.email;
     if (data.whatsapp !== undefined) updateData.whatsapp = data.whatsapp;
     if (data.endereco !== undefined) updateData.endereco = data.endereco;
@@ -96,14 +115,14 @@ export async function importClientes(clientes: any[]) {
   
   try {
     for (const c of clientes) {
-      // Limpa CNPJ para busca
-      const cleanedCnpj = c.cnpj ? c.cnpj.replace(/\D/g, '') : '';
+      const { cleaned, formatted } = cleanAndFormatDocument(c.cnpj);
       
-      if (cleanedCnpj) {
+      if (cleaned) {
+        // Busca inteligente comparando o formato original, apenas números e o formato padrão
         const existing = await prisma.client.findFirst({
           where: {
             cnpj: {
-              contains: cleanedCnpj
+              in: [c.cnpj, cleaned, formatted].filter(Boolean) as string[]
             },
             tenantId: user.tenantId
           }
@@ -132,7 +151,7 @@ export async function importClientes(clientes: any[]) {
         data: {
           nomeFantasia: c.nomeFantasia || 'Importado',
           razaoSocial: c.razaoSocial || '',
-          cnpj: c.cnpj || '',
+          cnpj: cleaned ? (formatted || c.cnpj) : null, // Salva null se vazio para evitar conflito de unique
           email: c.email || '',
           whatsapp: c.whatsapp || '',
           endereco: c.endereco || '',
