@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getLoggedUser } from '@/app/propostas/actions';
 import { 
   getChatList, 
   getInternalMessages, 
@@ -10,8 +11,8 @@ import {
   uploadChatFileAction,
   updateUserLastActive
 } from '@/app/leads/chat-actions';
-import { getLoggedUser } from '@/app/propostas/actions';
 import { formatTimeBrasilia, formatLastSeen } from '@/lib/timezone';
+import { WavAudioRecorder } from '@/lib/WavAudioRecorder';
 import { 
   Phone, 
   MessageCircle, 
@@ -33,7 +34,10 @@ import {
   Bell,
   Paperclip,
   Image,
-  FileText
+  FileText,
+  Mic,
+  Trash,
+  Download
 } from 'lucide-react';
 
 export default function ChatPage() {
@@ -57,6 +61,26 @@ export default function ChatPage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+
+  // Audio Recording States
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const wavRecorderRef = useRef<WavAudioRecorder | null>(null);
+  const recordingIntervalRef = useRef<any>(null);
+
+  // Cleanup recording on unmount or chat change
+  useEffect(() => {
+    return () => {
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+      if (wavRecorderRef.current) {
+        try {
+          wavRecorderRef.current.cancel();
+        } catch (e) {}
+      }
+    };
+  }, [activeChatUser]);
 
   // Dynamic height viewport state for mobile keyboards (especially iOS Safari)
   const [viewportHeight, setViewportHeight] = useState<number | null>(null);
@@ -336,6 +360,106 @@ export default function ChatPage() {
     });
   };
 
+  // Audio Recording Functions
+  const startRecording = async () => {
+    try {
+      const recorder = new WavAudioRecorder();
+      wavRecorderRef.current = recorder;
+      await recorder.start();
+      
+      setIsRecordingVoice(true);
+      setRecordingDuration(0);
+      
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      alert('Erro ao acessar o microfone. Certifique-se de dar as devidas permissões no seu navegador.');
+      console.error(err);
+    }
+  };
+
+  const stopAndSendRecording = () => {
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
+    setIsRecordingVoice(false);
+    
+    if (wavRecorderRef.current) {
+      try {
+        const audioBlob = wavRecorderRef.current.stop();
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          setUploadingFile(true);
+          
+          const fileName = `audio_${Date.now()}.wav`;
+          const fileType = 'audio/wav';
+          
+          // Optimistic insert for audio
+          const tempMsg = {
+            id: 'temp-' + Date.now(),
+            senderId: currentUser.id,
+            receiverId: activeChatUser.id,
+            content: fileName,
+            read: false,
+            fileUrl: base64, // Local Base64 preview
+            fileType: fileType,
+            createdAt: new Date()
+          };
+          setChatMessages(prev => [...prev, tempMsg]);
+          
+          try {
+            const res = await uploadChatFileAction(base64, fileName);
+            if (res.success && res.fileUrl) {
+              const sendRes = await sendInternalMessage(activeChatUser.id, fileName, res.fileUrl, fileType);
+              if (sendRes.success && sendRes.message) {
+                setChatMessages(prev => prev.map(m => m.id === tempMsg.id ? sendRes.message : m));
+                loadChatListMobile();
+              } else {
+                alert('Erro ao enviar mensagem de voz: ' + sendRes.error);
+                setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+              }
+            } else {
+              alert('Erro no upload do áudio: ' + res.error);
+              setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+            }
+          } catch (err: any) {
+            console.error("Audio recording send error:", err);
+            alert("Falha ao enviar mensagem de voz.");
+            setChatMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+          } finally {
+            setUploadingFile(false);
+          }
+        };
+        reader.readAsDataURL(audioBlob);
+      } catch (err) {
+        console.error('Wav stop error:', err);
+      }
+    }
+  };
+
+  const cancelRecording = () => {
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
+    setIsRecordingVoice(false);
+    
+    if (wavRecorderRef.current) {
+      try {
+        wavRecorderRef.current.cancel();
+      } catch (err) {
+        console.error('Wav cancel error:', err);
+      }
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Handle chat file selection and upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -612,6 +736,10 @@ export default function ChatPage() {
                       msg.fileType?.startsWith('image/') || 
                       /\.(jpg|jpeg|png|webp|gif)$/i.test(msg.fileUrl)
                     );
+                    const isAudio = msg.fileUrl && (
+                      msg.fileType?.startsWith('audio/') || 
+                      /\.(wav|mp3|ogg|webm|m4a)$/i.test(msg.fileUrl)
+                    );
                     
                     return (
                       <div
@@ -640,13 +768,37 @@ export default function ChatPage() {
                                   </a>
                                 </div>
                               );
+                            } else if (isAudio) {
+                              return (
+                                <div className="mb-1.5 p-1.5 bg-slate-100/85 rounded-lg flex flex-col gap-1 border border-slate-200/50 max-w-[220px]">
+                                  <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1 select-none">
+                                    <span>🎙️ Mensagem de Voz</span>
+                                  </div>
+                                  <audio 
+                                    src={fileDownloadUrl} 
+                                    controls 
+                                    className="w-full h-8 max-w-[200px]" 
+                                    preload="metadata"
+                                  />
+                                  <a
+                                    href={fileDownloadUrl}
+                                    download={msg.content || "audio.wav"}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-[9px] text-blue-650 hover:text-blue-700 font-bold flex items-center gap-0.5 mt-0.5 no-underline"
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <Download size={10} /> Baixar Áudio
+                                  </a>
+                                </div>
+                              );
                             } else if (msg.fileUrl) {
                               return (
                                 <a 
                                   href={fileDownloadUrl} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="mb-1 p-2 bg-slate-100 rounded-lg flex items-center gap-2 hover:bg-slate-200 transition-colors text-slate-800 font-bold no-underline text-[10px] border border-slate-200/50 max-w-[240px] block"
+                                  className="mb-1 p-2 bg-slate-100 rounded-lg flex items-center gap-2 hover:bg-slate-250 transition-colors text-slate-800 font-bold no-underline text-[10px] border border-slate-200/50 max-w-[240px] block"
                                 >
                                   <FileText size={16} className="text-blue-600 shrink-0" />
                                   <span className="truncate block flex-1">{msg.content || 'Arquivo Anexo'}</span>
@@ -656,7 +808,7 @@ export default function ChatPage() {
                             return null;
                           })()}
 
-                          {msg.content && (!msg.fileUrl || !isImage) && (
+                          {msg.content && (!msg.fileUrl || !(isImage || isAudio)) && (
                             <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
                           )}
                           
@@ -687,43 +839,86 @@ export default function ChatPage() {
                 accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               />
 
-              {/* Input Form */}
-              <form 
-                onSubmit={handleSendChatMessageMobile}
-                className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid"
-              >
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={sendingChat || uploadingFile}
-                  className="w-9 h-9 bg-slate-200 hover:bg-slate-350 text-slate-650 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 border-none"
-                  title="Anexar Foto ou Arquivo"
-                >
-                  {uploadingFile ? (
-                    <RefreshCw className="animate-spin text-slate-600" size={14} />
-                  ) : (
-                    <Paperclip size={14} className="text-slate-600" />
-                  )}
-                </button>
 
-                <input
-                  type="text"
-                  placeholder="Digite uma mensagem..."
-                  value={newChatMessage}
-                  onChange={e => setNewChatMessage(e.target.value)}
-                  className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
-                  disabled={sendingChat || uploadingFile}
-                  onFocus={handleInputFocus}
-                />
-                
-                <button
-                  type="submit"
-                  disabled={sendingChat || uploadingFile || !newChatMessage.trim()}
-                  className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
+              {/* Input Form */}
+              {isRecordingVoice ? (
+                <div className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid w-full">
+                  {/* Cancel Button */}
+                  <button
+                    type="button"
+                    onClick={cancelRecording}
+                    className="w-9 h-9 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0 transition-colors border-none cursor-pointer active:scale-95"
+                    title="Cancelar gravação"
+                  >
+                    <Trash size={15} />
+                  </button>
+
+                  {/* Pulsing red mic + Duration timer */}
+                  <div className="flex-1 flex items-center justify-center gap-2 text-red-500 font-bold text-xs bg-white border border-slate-200 rounded-xl py-2 shadow-xs animate-pulse">
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-ping shrink-0"></span>
+                    <span>Gravando... {formatDuration(recordingDuration)}</span>
+                  </div>
+
+                  {/* Stop and Send Button */}
+                  <button
+                    type="button"
+                    onClick={stopAndSendRecording}
+                    className="w-9 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm border-none cursor-pointer active:scale-95"
+                    title="Enviar Áudio"
+                  >
+                    <Send size={14} className="fill-white" />
+                  </button>
+                </div>
+              ) : (
+                <form 
+                  onSubmit={handleSendChatMessageMobile}
+                  className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid"
                 >
-                  <Send size={14} className="fill-white" />
-                </button>
-              </form>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={sendingChat || uploadingFile}
+                    className="w-9 h-9 bg-slate-200 hover:bg-slate-350 text-slate-650 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 border-none"
+                    title="Anexar Foto ou Arquivo"
+                  >
+                    {uploadingFile ? (
+                      <RefreshCw className="animate-spin text-slate-600" size={14} />
+                    ) : (
+                      <Paperclip size={14} className="text-slate-600" />
+                    )}
+                  </button>
+
+                  <input
+                    type="text"
+                    placeholder="Digite uma mensagem..."
+                    value={newChatMessage}
+                    onChange={e => setNewChatMessage(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
+                    disabled={sendingChat || uploadingFile}
+                    onFocus={handleInputFocus}
+                  />
+                  
+                  {newChatMessage.trim() ? (
+                    <button
+                      type="submit"
+                      disabled={sendingChat || uploadingFile}
+                      className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
+                    >
+                      <Send size={14} className="fill-white" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      disabled={sendingChat || uploadingFile}
+                      className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
+                      title="Gravar Mensagem de Voz"
+                    >
+                      <Mic size={14} />
+                    </button>
+                  )}
+                </form>
+              )}
             </div>
           ) : (
             
