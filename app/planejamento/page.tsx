@@ -314,20 +314,38 @@ export default function PlanejamentoPage() {
             {/* Botões rápidos */}
             <div className="flex gap-2 shrink-0">
               {activeTab === 'causas' && (
-                <button 
-                  onClick={() => {
-                    setCurrentCausa({
-                      problema: '',
-                      porques: ['', '', '', '', ''],
-                      ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
-                      causaRaiz: ''
-                    });
-                    setIsCausaModalOpen(true);
-                  }}
-                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                >
-                  <PlusCircle size={14} /> Nova Análise
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      setCurrentCausa({
+                        tipo: '5_PORQUES',
+                        problema: '',
+                        porques: ['', '', '', '', ''],
+                        ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
+                        causaRaiz: ''
+                      });
+                      setIsCausaModalOpen(true);
+                    }}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <PlusCircle size={14} /> Novo 5 Porquês
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setCurrentCausa({
+                        tipo: 'ISHIKAWA',
+                        problema: '',
+                        porques: ['', '', '', '', ''],
+                        ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
+                        causaRaiz: ''
+                      });
+                      setIsCausaModalOpen(true);
+                    }}
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-black py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <PlusCircle size={14} /> Novo Ishikawa
+                  </button>
+                </div>
               )}
               {activeTab === 'planos' && (
                 <button 
@@ -463,80 +481,160 @@ export default function PlanejamentoPage() {
                   ) : (
                     causas.map(c => (
                       <div key={c.id} className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-                        <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                        <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center select-none">
                           <div>
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide truncate max-w-2xl">{c.problema}</h3>
-                            <span className="text-[10px] font-bold text-slate-400 block mt-0.5 uppercase tracking-wide">
-                              Análise criada em {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[8.5px] font-black uppercase tracking-wider bg-slate-200 text-slate-650 px-1.5 py-0.5 rounded">
+                                {c.tipo === '5_PORQUES' ? '5 Porquês' : 'Ishikawa / Espinha de Peixe'}
+                              </span>
+                              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide truncate max-w-[250px] sm:max-w-xl">
+                                {c.tipo === '5_PORQUES' ? c.problema : `Efeito: ${c.problema}`}
+                              </h3>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 block mt-1 uppercase tracking-wide">
+                              Criada em {new Date(c.createdAt).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
-                          <button 
-                            onClick={() => handleDeleteCausaObj(c.id)}
-                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setCurrentCausa(c);
+                                setIsCausaModalOpen(true);
+                              }}
+                              className="p-2 text-slate-400 hover:text-[#1B4D3E] hover:bg-emerald-50 rounded-xl transition-all cursor-pointer"
+                              title="Editar Análise"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteCausaObj(c.id)}
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                              title="Excluir Análise"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-8">
-                          {/* 5 Porquês */}
-                          <div className="space-y-4 border-r border-slate-100/60 pr-6">
-                            <h4 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1">
-                              <Sparkles size={13} /> Análise dos 5 Porquês
-                            </h4>
-                            <div className="relative pl-6 space-y-4">
-                              <div className="absolute left-2.5 top-2 bottom-6 w-0.5 border-l-2 border-dashed border-[#1B4D3E]/20"></div>
-                              {c.porques.map((pq, idx) => pq && (
-                                <div key={idx} className="relative flex items-start gap-3">
-                                  <div className="absolute -left-[23px] top-1.5 w-3 h-3 bg-[#1B4D3E] border-2 border-white rounded-full shadow-xs"></div>
-                                  <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex-1">
-                                    <span className="text-[9px] font-black text-slate-400 block uppercase mb-1">Porquê {idx + 1}</span>
-                                    <p className="text-xs font-bold text-slate-700 leading-relaxed">{pq}</p>
+                        <div className="p-6">
+                          {c.tipo === '5_PORQUES' ? (
+                            /* 5 Porquês view */
+                            <div className="max-w-3xl mx-auto space-y-4">
+                              <h4 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1 pb-2 border-b border-slate-100">
+                                <Sparkles size={13} /> Análise dos 5 Porquês
+                              </h4>
+                              <div className="relative pl-6 space-y-4 mt-3">
+                                <div className="absolute left-2.5 top-2 bottom-6 w-0.5 border-l-2 border-dashed border-[#1B4D3E]/20"></div>
+                                {c.porques.map((pq, idx) => pq && (
+                                  <div key={idx} className="relative flex items-start gap-3">
+                                    <div className="absolute -left-[23px] top-1.5 w-3 h-3 bg-[#1B4D3E] border-2 border-white rounded-full shadow-xs"></div>
+                                    <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex-1">
+                                      <span className="text-[9px] font-black text-slate-400 block uppercase mb-1">Porquê {idx + 1}</span>
+                                      <p className="text-xs font-bold text-slate-700 leading-relaxed">{pq}</p>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
+                              
+                              <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 mt-4">
+                                <span className="text-[9px] font-black text-[#1B4D3E] block uppercase tracking-wider">Causa Raiz Conclusiva</span>
+                                <p className="text-xs font-black text-slate-800 mt-1 leading-relaxed">{c.causaRaiz}</p>
+                              </div>
                             </div>
-                            
-                            <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
-                              <span className="text-[9px] font-black text-[#1B4D3E] block uppercase tracking-wider">Causa Raiz Identificada</span>
-                              <p className="text-xs font-black text-slate-800 mt-1 leading-relaxed">{c.causaRaiz}</p>
-                            </div>
-                          </div>
+                          ) : (
+                            /* Diagrama de Ishikawa / Fishbone view */
+                            <div className="space-y-6">
+                              <h4 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1 pb-2 border-b border-slate-100">
+                                <Activity size={13} /> Diagrama de Ishikawa Padrão (Espinha de Peixe)
+                              </h4>
+                              
+                              <div className="overflow-x-auto w-full select-none bg-slate-50/50 border border-slate-200 rounded-2xl p-6 min-w-[850px] relative">
+                                <div className="flex flex-col relative w-full h-[360px] max-w-[950px] mx-auto">
+                                  
+                                  {/* 1. TOP BONES */}
+                                  <div className="grid grid-cols-3 gap-6 absolute top-0 left-0 w-[80%] h-[140px] z-10">
+                                    {[
+                                      { title: 'Método', key: 'metodo', bg: 'bg-blue-50 border-blue-200 text-blue-800' },
+                                      { title: 'Mão de Obra', key: 'maoDeObra', bg: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
+                                      { title: 'Máquina', key: 'maquina', bg: 'bg-purple-50 border-purple-200 text-purple-800' }
+                                    ].map((cat, idx) => {
+                                      const list = (c.ishikawa as any)[cat.key] || [];
+                                      return (
+                                        <div key={cat.key} className="flex flex-col justify-between h-full relative">
+                                          <div className={`border rounded-xl p-2.5 shadow-2xs text-[10px] ${cat.bg} overflow-y-auto max-h-[105px]`}>
+                                            <span className="font-black uppercase tracking-wider block border-b border-current/20 pb-0.5 mb-1">{cat.title}</span>
+                                            {list.length === 0 ? (
+                                              <span className="italic opacity-60 text-[9px]">Sem causas</span>
+                                            ) : (
+                                              <ul className="list-disc list-inside space-y-0.5 font-bold">
+                                                {list.map((item: string, i: number) => <li key={i} className="truncate">{item}</li>)}
+                                              </ul>
+                                            )}
+                                          </div>
+                                          
+                                          {/* Diagonal SVG line to backbone */}
+                                          <svg className="absolute bottom-[-35px] left-[50%] h-[35px] w-[60px] overflow-visible pointer-events-none" style={{ transform: 'translateX(-50%)' }}>
+                                            <line x1="0" y1="0" x2="40" y2="35" stroke="#64748B" strokeWidth="2" />
+                                          </svg>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
 
-                          {/* Diagrama de Ishikawa */}
-                          <div className="space-y-4">
-                            <h4 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1">
-                              <Activity size={13} /> Diagrama de Ishikawa (Espinha de Peixe)
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {[
-                                { title: 'Método', key: 'metodo', bg: 'bg-blue-50/55 border-blue-100 text-blue-800' },
-                                { title: 'Mão de Obra', key: 'maoDeObra', bg: 'bg-emerald-50/55 border-emerald-100 text-emerald-800' },
-                                { title: 'Máquina', key: 'maquina', bg: 'bg-purple-50/55 border-purple-100 text-purple-800' },
-                                { title: 'Matéria-prima', key: 'materiaPrima', bg: 'bg-indigo-50/55 border-indigo-100 text-indigo-800' },
-                                { title: 'Medida', key: 'medida', bg: 'bg-amber-50/55 border-amber-100 text-amber-800' },
-                                { title: 'Meio Ambiente', key: 'meioAmbiente', bg: 'bg-rose-50/55 border-rose-100 text-rose-800' },
-                              ].map(cat => {
-                                const causes = (c.ishikawa as any)[cat.key] || [];
-                                return (
-                                  <div key={cat.key} className={`border rounded-xl p-3 ${cat.bg}`}>
-                                    <span className="text-[9px] font-black uppercase tracking-wider block border-b border-current/25 pb-1 mb-2">
-                                      {cat.title}
-                                    </span>
-                                    {causes.length === 0 ? (
-                                      <span className="text-[10px] italic opacity-60">Nenhuma causa apontada</span>
-                                    ) : (
-                                      <ul className="list-disc list-inside text-[11px] font-semibold space-y-1">
-                                        {causes.map((item: string, idx: number) => (
-                                          <li key={idx} className="leading-snug">{item}</li>
-                                        ))}
-                                      </ul>
-                                    )}
+                                  {/* 2. BACKBONE / CENTER SPINE */}
+                                  <div className="absolute top-[175px] left-0 w-full h-[15px] flex items-center z-0">
+                                    <div className="h-1 bg-slate-400 flex-1 relative">
+                                      {/* backbone arrow end */}
+                                      <div className="absolute right-[-10px] top-[50%] translate-y-[-50%] border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[15px] border-l-slate-400"></div>
+                                    </div>
+                                    
+                                    {/* Fish Head / Problem box */}
+                                    <div className="w-[20%] shrink-0 ml-4 bg-[#1B4D3E] text-white border border-[#10B981]/30 rounded-2xl p-3 shadow-md flex items-center justify-center text-center text-[10.5px] font-black uppercase tracking-wider h-[80px] overflow-y-auto">
+                                      {c.problema}
+                                    </div>
                                   </div>
-                                );
-                              })}
+
+                                  {/* 3. BOTTOM BONES */}
+                                  <div className="grid grid-cols-3 gap-6 absolute bottom-0 left-0 w-[80%] h-[140px] z-10">
+                                    {[
+                                      { title: 'Matéria-prima', key: 'materiaPrima', bg: 'bg-indigo-50 border-indigo-200 text-indigo-800' },
+                                      { title: 'Medida', key: 'medida', bg: 'bg-amber-50 border-amber-200 text-amber-800' },
+                                      { title: 'Meio Ambiente', key: 'meioAmbiente', bg: 'bg-rose-50 border-rose-200 text-rose-800' }
+                                    ].map((cat, idx) => {
+                                      const list = (c.ishikawa as any)[cat.key] || [];
+                                      return (
+                                        <div key={cat.key} className="flex flex-col justify-end h-full relative">
+                                          
+                                          {/* Diagonal SVG line to backbone */}
+                                          <svg className="absolute top-[-35px] left-[50%] h-[35px] w-[60px] overflow-visible pointer-events-none" style={{ transform: 'translateX(-50%)' }}>
+                                            <line x1="0" y1="35" x2="40" y2="0" stroke="#64748B" strokeWidth="2" />
+                                          </svg>
+
+                                          <div className={`border rounded-xl p-2.5 shadow-2xs text-[10px] ${cat.bg} overflow-y-auto max-h-[105px]`}>
+                                            <span className="font-black uppercase tracking-wider block border-b border-current/20 pb-0.5 mb-1">{cat.title}</span>
+                                            {list.length === 0 ? (
+                                              <span className="italic opacity-60 text-[9px]">Sem causas</span>
+                                            ) : (
+                                              <ul className="list-disc list-inside space-y-0.5 font-bold">
+                                                {list.map((item: string, i: number) => <li key={i} className="truncate">{item}</li>)}
+                                              </ul>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                </div>
+                              </div>
+
+                              <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
+                                <span className="text-[9px] font-black text-[#1B4D3E] block uppercase tracking-wider">Causa Raiz Identificada</span>
+                                <p className="text-xs font-black text-slate-800 mt-1 leading-relaxed">{c.causaRaiz}</p>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     ))
@@ -881,76 +979,188 @@ export default function PlanejamentoPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Cadastrar Causa Raiz & Ishikawa</h3>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                {currentCausa.id 
+                  ? `Editar Análise: ${currentCausa.tipo === '5_PORQUES' ? '5 Porquês' : 'Ishikawa'}`
+                  : `Nova Análise: ${currentCausa.tipo === '5_PORQUES' ? '5 Porquês' : 'Ishikawa'}`
+                }
+              </h3>
               <button onClick={() => setIsCausaModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
             
             <form onSubmit={handleSaveCausa} className="p-6 overflow-y-auto space-y-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Problema Principal</label>
-                <input 
-                  type="text" 
-                  required
-                  value={currentCausa.problema || ''}
-                  onChange={(e) => setCurrentCausa(prev => ({ ...prev, problema: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                  placeholder="Ex: Queda na qualidade de entrega de ativos"
-                />
-              </div>
-
-              <div className="border-t border-slate-100 pt-3 space-y-3">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Análise dos 5 Porquês</label>
-                {currentCausa.porques?.map((pq, idx) => (
-                  <div key={idx} className="flex gap-3 items-center">
-                    <span className="w-20 text-[9px] font-black text-slate-400 uppercase">Porquê {idx + 1}:</span>
-                    <input 
-                      type="text"
-                      required={idx < 3} // Exige no mínimo 3
-                      value={pq || ''}
-                      onChange={(e) => {
-                        const newPorques = [...(currentCausa.porques || [])];
-                        newPorques[idx] = e.target.value;
-                        setCurrentCausa(prev => ({ ...prev, porques: newPorques }));
-                      }}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                      placeholder={`Por que esse problema ocorre?`}
-                    />
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Método de Análise</label>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentCausa(prev => ({ ...prev, tipo: '5_PORQUES' }))}
+                      className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${
+                        currentCausa.tipo === '5_PORQUES'
+                          ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
+                          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      5 Porquês
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentCausa(prev => ({ ...prev, tipo: 'ISHIKAWA' }))}
+                      className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${
+                        currentCausa.tipo === 'ISHIKAWA'
+                          ? 'bg-slate-800 border-slate-800 text-white shadow-2xs'
+                          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      Ishikawa (6 Ms)
+                    </button>
                   </div>
-                ))}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Efeito / Problema Principal</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={currentCausa.problema || ''}
+                    onChange={(e) => setCurrentCausa(prev => ({ ...prev, problema: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Ex: Queda na qualidade de entrega de ativos"
+                  />
+                </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-3 space-y-3">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Espinhos de Ishikawa (6 Ms)</label>
+              {/* Condicional para 5 Porquês */}
+              {(currentCausa.tipo === '5_PORQUES' || !currentCausa.tipo) && (
+                <div className="border-t border-slate-100 pt-3 space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Análise dos 5 Porquês</label>
+                  {currentCausa.porques?.map((pq, idx) => (
+                    <div key={idx} className="flex gap-3 items-center">
+                      <span className="w-20 text-[9px] font-black text-slate-400 uppercase">Porquê {idx + 1}:</span>
+                      <input 
+                        type="text"
+                        required={idx < 3} // Exige no mínimo 3
+                        value={pq || ''}
+                        onChange={(e) => {
+                          const newPorques = [...(currentCausa.porques || [])];
+                          newPorques[idx] = e.target.value;
+                          setCurrentCausa(prev => ({ ...prev, porques: newPorques }));
+                        }}
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                        placeholder={`Por que esse problema ocorre?`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Condicional para Diagrama de Ishikawa */}
+              {currentCausa.tipo === 'ISHIKAWA' && (
+                <div className="border-t border-slate-100 pt-3 space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Espinhos de Ishikawa (6 Ms)</label>
                 {[
-                  { title: 'Método (Procedimentos e processos)', key: 'metodo' },
-                  { title: 'Mão de Obra (Erros, treinamento)', key: 'maoDeObra' },
-                  { title: 'Máquina (Equipamentos, software)', key: 'maquina' },
-                  { title: 'Matéria-prima (Insumos, fornecedores)', key: 'materiaPrima' },
-                  { title: 'Medida (Indicadores, avaliações)', key: 'medida' },
-                  { title: 'Meio Ambiente (Clima, trânsito)', key: 'meioAmbiente' },
-                ].map(cat => (
-                  <div key={cat.key} className="flex gap-3 items-start">
-                    <span className="w-28 text-[9px] font-black text-slate-400 uppercase shrink-0 pt-2">{cat.title}:</span>
-                    <input 
-                      type="text"
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                      placeholder="Causa (use vírgula para separar múltiplas causas)"
-                      onChange={(e) => {
-                        const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                        setCurrentCausa(prev => ({
-                          ...prev,
-                          ishikawa: {
-                            ...(prev.ishikawa || {}),
-                            [cat.key]: list
-                          } as any
-                        }));
-                      }}
-                    />
-                  </div>
-                ))}
+                  { title: 'Método', key: 'metodo', desc: 'Processos, regras e procedimentos' },
+                  { title: 'Mão de Obra', key: 'maoDeObra', desc: 'Treinamento, erros, capacitação' },
+                  { title: 'Máquina', key: 'maquina', desc: 'Equipamentos, ferramentas, sistemas' },
+                  { title: 'Matéria-prima', key: 'materiaPrima', desc: 'Insumos, materiais, fornecedores' },
+                  { title: 'Medida', key: 'medida', desc: 'Métricas, KPIs, metas' },
+                  { title: 'Meio Ambiente', key: 'meioAmbiente', desc: 'Clima, trânsito, infraestrutura externa' }
+                ].map(m => {
+                  const currentList = (currentCausa.ishikawa as any)?.[m.key] || [];
+                  return (
+                    <div key={m.key} className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                      <div className="flex justify-between items-center select-none">
+                        <div>
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider block">{m.title}</span>
+                          <span className="text-[9px] text-slate-400 font-bold block">{m.desc}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Badge list */}
+                      <div className="flex flex-wrap gap-1.5 min-h-[30px] items-center">
+                        {currentList.length === 0 ? (
+                          <span className="text-[9.5px] italic text-slate-400">Nenhuma causa adicionada</span>
+                        ) : (
+                          currentList.map((item: string, idx: number) => (
+                            <span key={idx} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 text-[9.5px] font-bold px-2 py-0.5 rounded-lg shadow-2xs">
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newList = currentList.filter((_: any, i: number) => i !== idx);
+                                  setCurrentCausa(prev => ({
+                                    ...prev,
+                                    ishikawa: {
+                                      ...(prev.ishikawa || {}),
+                                      [m.key]: newList
+                                    } as any
+                                  }));
+                                }}
+                                className="text-slate-400 hover:text-red-500 font-black ml-1 cursor-pointer border-none bg-transparent"
+                              >
+                                &times;
+                              </button>
+                            </span>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Input for adding new cause */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          id={`input-ishikawa-${m.key}`}
+                          className="flex-1 bg-white border border-slate-250 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                          placeholder="Adicionar causa..."
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const inputEl = e.currentTarget;
+                              const val = inputEl.value.trim();
+                              if (val) {
+                                const newList = [...currentList, val];
+                                setCurrentCausa(prev => ({
+                                  ...prev,
+                                  ishikawa: {
+                                    ...(prev.ishikawa || {}),
+                                    [m.key]: newList
+                                  } as any
+                                }));
+                                inputEl.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const inputEl = document.getElementById(`input-ishikawa-${m.key}`) as HTMLInputElement;
+                            const val = inputEl?.value.trim();
+                            if (val) {
+                              const newList = [...currentList, val];
+                              setCurrentCausa(prev => ({
+                                    ...prev,
+                                    ishikawa: {
+                                      ...(prev.ishikawa || {}),
+                                      [m.key]: newList
+                                    } as any
+                              }));
+                              inputEl.value = '';
+                            }
+                          }}
+                          className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg transition-colors cursor-pointer border-none"
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+              )}
 
               <div className="border-t border-slate-100 pt-3 space-y-1">
                 <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider block">Causa Raiz Conclusiva</label>
