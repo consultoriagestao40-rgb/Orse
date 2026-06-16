@@ -2307,6 +2307,8 @@ export default function PlanejamentoPage() {
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <input type="date" value={a.when || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
+                                  onClick={(e) => (e.target as any).showPicker?.()}
+                                  onFocus={(e) => (e.target as any).showPicker?.()}
                                   className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white cursor-pointer" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
