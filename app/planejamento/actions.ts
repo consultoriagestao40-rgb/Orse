@@ -75,6 +75,15 @@ export interface ActionPlan {
   metaAtingir?: string;
 }
 
+export interface KRTask {
+  id: string;
+  descricao: string;
+  responsavelId?: string;
+  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO';
+  progresso: number;      // 0 a 100
+  comentario?: string;
+}
+
 export interface KR {
   id: string;
   descricao: string;
@@ -82,6 +91,9 @@ export interface KR {
   valorAlvo: number;
   valorAtual: number;
   unidade: string;
+  responsavelId?: string;
+  status?: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'QUASE_LA';
+  tarefas?: KRTask[];
 }
 
 export interface OKRObjective {
@@ -92,6 +104,7 @@ export interface OKRObjective {
   krs: KR[];
   iniciativas: string[];
   progresso: number;
+  dataFim?: string;
 }
 
 export interface OKRCiclo {
@@ -542,11 +555,31 @@ export async function saveOkrCiclo(ciclo: OKRCiclo) {
           return { ...obj, progresso: 0 };
         }
         const krProgresses = obj.krs.map(kr => {
-          const totalDelta = kr.valorAlvo - kr.valorInicial;
-          if (totalDelta === 0) return 100;
-          const currentDelta = kr.valorAtual - kr.valorInicial;
-          const progress = (currentDelta / totalDelta) * 100;
-          return Math.min(Math.max(progress, 0), 100);
+          let progress = 0;
+          if (kr.tarefas && kr.tarefas.length > 0) {
+            const avgTaskProgress = kr.tarefas.reduce((acc, t) => acc + (t.progresso || 0), 0) / kr.tarefas.length;
+            kr.valorAtual = Number((kr.valorInicial + (kr.valorAlvo - kr.valorInicial) * (avgTaskProgress / 100)).toFixed(2));
+            progress = avgTaskProgress;
+          } else {
+            const totalDelta = kr.valorAlvo - kr.valorInicial;
+            if (totalDelta === 0) {
+              progress = 100;
+            } else {
+              const currentDelta = kr.valorAtual - kr.valorInicial;
+              progress = Math.min(Math.max((currentDelta / totalDelta) * 100, 0), 100);
+            }
+          }
+
+          // Automatically set status based on progress
+          if (progress >= 100) {
+            kr.status = 'CONCLUIDO';
+          } else if (progress >= 80) {
+            kr.status = 'QUASE_LA';
+          } else {
+            kr.status = 'EM_ANDAMENTO';
+          }
+
+          return progress;
         });
         const avgProgress = krProgresses.reduce((acc, p) => acc + p, 0) / krProgresses.length;
         return { ...obj, progresso: Math.round(avgProgress) };
