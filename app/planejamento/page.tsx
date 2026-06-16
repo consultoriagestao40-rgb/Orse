@@ -645,6 +645,48 @@ export default function PlanejamentoPage() {
     setEditingKrTasks(kr.tarefas || []);
   };
 
+  const handleOpenActionsModal = (objectiveId: string, kr: KR) => {
+    setActionsModalObjectiveId(objectiveId);
+    setActionsModalKr(kr);
+    setEditingKrId(kr.id);
+    setEditingKrObjectiveId(objectiveId);
+    setEditingKrTasks(kr.tarefas || []);
+    setIsEditingActions(false);
+    setIsActionsModalOpen(true);
+  };
+
+  const handleSaveActionsModal = async () => {
+    if (!activeCiclo || !editingKrId || !editingKrObjectiveId) return;
+
+    const objetivos = (activeCiclo.objetivos || []).map(obj => {
+      if (obj.id === editingKrObjectiveId) {
+        const krs = (obj.krs || []).map(kr => {
+          if (kr.id === editingKrId) {
+            const updatedKr = {
+              ...kr,
+              tarefas: editingKrTasks
+            };
+            setActionsModalKr(updatedKr);
+            return updatedKr;
+          }
+          return kr;
+        });
+        return { ...obj, krs };
+      }
+      return obj;
+    });
+
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos
+    };
+
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+    setIsEditingActions(false);
+    setIsActionsModalOpen(false);
+  };
+
   const handleAddTaskRow = () => {
     const newTask: KRTask = {
       id: `task-${Date.now()}`,
@@ -925,6 +967,12 @@ export default function PlanejamentoPage() {
   const [okrUserFilter, setOkrUserFilter] = useState<string>('todos');
   const [expandedObjectives, setExpandedObjectives] = useState<Record<string, boolean>>({});
   const [expandedKrs, setExpandedKrs] = useState<Record<string, boolean>>({});
+
+  // Actions modal states
+  const [isActionsModalOpen, setIsActionsModalOpen] = useState(false);
+  const [actionsModalKr, setActionsModalKr] = useState<KR | null>(null);
+  const [actionsModalObjectiveId, setActionsModalObjectiveId] = useState<string | null>(null);
+  const [isEditingActions, setIsEditingActions] = useState(false);
 
   // KR modal states
   const [isKrModalOpen, setIsKrModalOpen] = useState(false);
