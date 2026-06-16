@@ -1835,6 +1835,7 @@ export default function PlanejamentoPage() {
                               <th className="py-3.5 px-6">Valor Total</th>
                               <th className="py-3.5 px-6">Status</th>
                               <th className="py-3.5 px-6">Progresso</th>
+                              <th className="py-3.5 px-6">Resumo Conclusão</th>
                               <th className="py-3.5 px-6 text-right">Ações</th>
                             </tr>
                           </thead>
@@ -1890,6 +1891,9 @@ export default function PlanejamentoPage() {
                                         <div className={`h-full rounded-full ${pa.status === 'CONCLUIDO' ? 'bg-[#1B4D3E]' : 'bg-blue-500'}`} style={{ width: `${pa.percentualRealizado}%` }}></div>
                                       </div>
                                     </div>
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-500 max-w-[200px] truncate" title={pa.resumoConclusao || ''}>
+                                    {pa.resumoConclusao || '-'}
                                   </td>
                                   <td className="py-4 px-6 text-right">
                                     <div className="flex justify-end gap-1.5">
@@ -2357,8 +2361,8 @@ export default function PlanejamentoPage() {
                   </div>
                 </div>
 
-                {/* Segunda linha: Responsável + Row (Tipo, Início, Fim, Status) */}
-                <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6 mt-6 pt-4 border-t border-slate-100 items-center">
+                {/* Segunda linha: Responsável + Indicadores + Datas */}
+                <div className="flex flex-wrap gap-x-5 gap-y-3 mt-6 pt-4 border-t border-slate-100 justify-between items-center">
                   {/* Responsável */}
                   <div className="flex items-center gap-2.5">
                     {responsavelGeral?.avatarUrl ? (
@@ -2379,64 +2383,61 @@ export default function PlanejamentoPage() {
                     </div>
                   </div>
 
-                  {/* Row: Tipo, Causa, Data Início, Data Fim, Status */}
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador a Melhorar:</span>
-                      <input type="text" value={currentPlano.indicadorMelhorar || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, indicadorMelhorar: e.target.value }))}
-                        placeholder="Ex: NPS, Faturamento"
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[130px] focus:bg-slate-50 focus:px-1 rounded" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Resultado Atual:</span>
-                      <input type="text" value={currentPlano.resultadoAtual || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtual: e.target.value }))}
-                        placeholder="Ex: 70%, R$ 50k"
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Meta a Atingir:</span>
-                      <input type="text" value={currentPlano.metaAtingir || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, metaAtingir: e.target.value }))}
-                        placeholder="Ex: 90%, R$ 80k"
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
-                    </div>
-                    {currentPlano.status === 'CONCLUIDO' && (
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resultado Atingido:</span>
-                        <input type="text" value={currentPlano.resultadoAtingido || ''}
-                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
-                          placeholder="Ex: 85%"
-                          className="text-xs font-black text-emerald-600 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início:</span>
-                      <input type="date" value={currentPlano.dataInicio || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataInicio: e.target.value }))}
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim:</span>
-                      <input type="date" required value={currentPlano.dataFim || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
-                    </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador a Melhorar:</span>
+                    <input type="text" value={currentPlano.indicadorMelhorar || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, indicadorMelhorar: e.target.value }))}
+                      placeholder="Ex: NPS"
+                      className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[115px] focus:bg-slate-50 focus:px-1 rounded" />
                   </div>
-
-                  {/* Se o plano estiver Concluído, mostrar Resumo de Execução abaixo da linha principal */}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Resultado Atual:</span>
+                    <input type="text" value={currentPlano.resultadoAtual || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtual: e.target.value }))}
+                      placeholder="Ex: 45%"
+                      className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[80px] focus:bg-slate-50 focus:px-1 rounded" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Meta a Atingir:</span>
+                    <input type="text" value={currentPlano.metaAtingir || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, metaAtingir: e.target.value }))}
+                      placeholder="Ex: 90%"
+                      className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[80px] focus:bg-slate-50 focus:px-1 rounded" />
+                  </div>
                   {currentPlano.status === 'CONCLUIDO' && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resumo de Execução:</span>
-                      <textarea value={currentPlano.resumoConclusao || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
-                        placeholder="Digite o resumo da execução..."
-                        rows={2}
-                        className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-2 rounded resize-none" />
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resultado Atingido:</span>
+                      <input type="text" value={currentPlano.resultadoAtingido || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
+                        placeholder="Ex: 85%"
+                        className="text-xs font-black text-emerald-600 bg-transparent border-none outline-none mt-1 w-[80px] focus:bg-slate-50 focus:px-1 rounded" />
                     </div>
                   )}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início:</span>
+                    <input type="date" value={currentPlano.dataInicio || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataInicio: e.target.value }))}
+                      className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim:</span>
+                    <input type="date" required value={currentPlano.dataFim || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
+                      className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
+                  </div>
                 </div>
+
+                {/* Se o plano estiver Concluído, mostrar Resumo de Execução abaixo da linha principal */}
+                {currentPlano.status === 'CONCLUIDO' && (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resumo de Execução:</span>
+                    <textarea value={currentPlano.resumoConclusao || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
+                      placeholder="Digite o resumo da execução..."
+                      rows={2}
+                      className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-2 rounded resize-none" />
+                  </div>
+                )}
               </div>
 
               {/* Card Direita: Donut Metrics */}
