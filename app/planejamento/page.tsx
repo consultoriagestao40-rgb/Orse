@@ -2405,9 +2405,10 @@ export default function PlanejamentoPage() {
                             })
                             .map((obj, objIdx) => {
                               const isExpanded = expandedObjectives[obj.id] ?? true; // expand default
-                              const uniqueResponsables = Array.from(new Set(
-                                (obj.krs || []).map(kr => kr.responsavelId).filter(Boolean)
-                              )).map(id => users.find(u => u.id === id)).filter(Boolean);
+                              const uniqueResponsables = Array.from(new Set([
+                                ...(obj.krs || []).map(kr => kr.responsavelId),
+                                ...(obj.krs || []).flatMap(kr => (kr.tarefas || []).map(t => t.responsavelId))
+                              ].filter(Boolean))).map(id => users.find(u => u.id === id)).filter(Boolean);
 
                               return (
                                 <div key={obj.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-all duration-300 space-y-4">
@@ -2457,10 +2458,14 @@ export default function PlanejamentoPage() {
                                             return (
                                               <div 
                                                 key={u.id} 
-                                                className="w-6 h-6 rounded-full bg-[#7C3AED]/20 border-2 border-white flex items-center justify-center text-[7.5px] font-black uppercase text-[#7C3AED]"
+                                                className="w-6 h-6 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0 border-2 border-white"
                                                 title={u.nome}
                                               >
-                                                {initials}
+                                                {u.avatarUrl ? (
+                                                  <img src={u.avatarUrl} alt={u.nome} className="w-full h-full object-cover" />
+                                                ) : (
+                                                  <span className="text-[7.5px] font-black uppercase text-[#7C3AED]">{initials}</span>
+                                                )}
                                               </div>
                                             );
                                           })}
@@ -2540,7 +2545,7 @@ export default function PlanejamentoPage() {
                                             return (
                                               <div 
                                                 key={kr.id} 
-                                                className="bg-slate-50/40 border border-slate-200 hover:border-slate-300 rounded-2xl p-4 transition-all duration-250 space-y-3 relative"
+                                                onClick={() => handleOpenActionsModal(obj.id, kr)} className="bg-slate-50/40 border border-slate-200 hover:border-slate-350 hover:bg-slate-50/60 rounded-2xl p-4 transition-all duration-250 space-y-3 relative cursor-pointer"
                                               >
                                                 <div className="flex justify-between items-start gap-4">
                                                   <div className="flex-1">
@@ -2590,9 +2595,17 @@ export default function PlanejamentoPage() {
 
                                                     {/* Avatar & Name */}
                                                     <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-1 pr-3 py-0.5 shadow-3xs">
-                                                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7.5px] font-bold uppercase">
-                                                        {initialsKr}
-                                                      </div>
+                                                      {responsavelKr?.avatarUrl ? (
+                                                        <img 
+                                                          src={responsavelKr.avatarUrl} 
+                                                          alt={responsavelKr.nome} 
+                                                          className="w-5 h-5 rounded-full object-cover border border-slate-200 shrink-0" 
+                                                        />
+                                                      ) : (
+                                                        <div className="w-5 h-5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7.5px] font-bold uppercase shrink-0">
+                                                          {initialsKr}
+                                                        </div>
+                                                      )}
                                                       <span className="text-[9px] font-black text-slate-600 truncate max-w-[150px]">
                                                         {responsavelKr ? responsavelKr.nome : 'Sem responsável'}
                                                       </span>
@@ -2602,15 +2615,17 @@ export default function PlanejamentoPage() {
                                                   <div className="flex items-center gap-2">
                                                     <button
                                                       type="button"
-                                                      onClick={() => setExpandedKrs(prev => ({ ...prev, [kr.id]: !isKrExpanded }))}
-                                                      className="text-[9.5px] font-black text-slate-455 hover:text-slate-700 flex items-center gap-1 uppercase tracking-wider bg-transparent border-none cursor-pointer"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenActionsModal(obj.id, kr);
+                                                      }}
+                                                      className="text-[9.5px] font-black text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 uppercase tracking-wider bg-transparent border-none cursor-pointer"
                                                     >
-                                                      {isKrExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                                       Ações ({kr.tarefas?.length || 0})
                                                     </button>
                                                     <button
                                                       type="button"
-                                                      onClick={() => handleOpenKrModal(obj.id, kr)}
+                                                      onClick={(e) => { e.stopPropagation(); handleOpenKrModal(obj.id, kr); }}
                                                       className="p-1 text-slate-450 hover:text-slate-655 hover:bg-white rounded transition-colors cursor-pointer border-none bg-transparent"
                                                       title="Editar KR"
                                                     >
@@ -2618,7 +2633,7 @@ export default function PlanejamentoPage() {
                                                     </button>
                                                     <button
                                                       type="button"
-                                                      onClick={() => handleDeleteKr(obj.id, kr.id)}
+                                                      onClick={(e) => { e.stopPropagation(); handleDeleteKr(obj.id, kr.id); }}
                                                       className="p-1 text-slate-455 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer border-none bg-transparent"
                                                       title="Excluir KR"
                                                     >
@@ -2627,210 +2642,7 @@ export default function PlanejamentoPage() {
                                                   </div>
                                                 </div>
 
-                                                {isKrExpanded && (
-                                                  <div className="mt-3 bg-white border border-slate-200/80 rounded-2xl p-4 space-y-4">
-                                                    {editingKrId === kr.id && editingKrObjectiveId === obj.id ? (
-                                                      /* EDIT MODE */
-                                                      <div className="space-y-4">
-                                                        <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                                                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Editar Tarefas do KR</span>
-                                                          <button
-                                                            type="button"
-                                                            onClick={handleAddTaskRow}
-                                                            className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs"
-                                                          >
-                                                            <Plus size={10} /> + Nova Tarefa
-                                                          </button>
-                                                        </div>
-
-                                                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                                                          {editingKrTasks.length === 0 ? (
-                                                            <p className="text-[11px] text-slate-400 italic py-2">Nenhuma tarefa adicionada. Clique em "+ Nova Tarefa" acima.</p>
-                                                          ) : (
-                                                            editingKrTasks.map((task, tIdx) => {
-                                                              return (
-                                                                <div key={task.id} className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-3 relative">
-                                                                  <button
-                                                                    type="button"
-                                                                    onClick={() => handleRemoveTaskRow(task.id)}
-                                                                    className="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer border-none bg-transparent"
-                                                                    title="Remover Tarefa"
-                                                                  >
-                                                                    <Trash2 size={12} />
-                                                                  </button>
-
-                                                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                                    <div className="space-y-1">
-                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Descrição da Ação #{tIdx + 1}</label>
-                                                                      <input
-                                                                        type="text"
-                                                                        required
-                                                                        value={task.descricao || ''}
-                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'descricao', e.target.value)}
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                                                        placeholder="Ex: Definir plano de ação"
-                                                                      />
-                                                                    </div>
-
-                                                                    <div className="space-y-1">
-                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Responsável</label>
-                                                                      <select
-                                                                        value={task.responsavelId || ''}
-                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'responsavelId', e.target.value)}
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                                                      >
-                                                                        <option value="">Selecione...</option>
-                                                                        {users.map(u => (
-                                                                          <option key={u.id} value={u.id}>{u.nome}</option>
-                                                                        ))}
-                                                                      </select>
-                                                                    </div>
-                                                                  </div>
-
-                                                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                                    <div className="space-y-1">
-                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso ({task.progresso}%)</label>
-                                                                      <input
-                                                                        type="range"
-                                                                        min="0"
-                                                                        max="100"
-                                                                        step="5"
-                                                                        value={task.progresso}
-                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'progresso', parseInt(e.target.value))}
-                                                                        className="w-full h-1 bg-slate-255 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] mt-2.5"
-                                                                      />
-                                                                    </div>
-
-                                                                    <div className="space-y-1">
-                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Status</label>
-                                                                      <select
-                                                                        value={task.status}
-                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'status', e.target.value)}
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                                                      >
-                                                                        <option value="PENDENTE">Pendente</option>
-                                                                        <option value="EM_ANDAMENTO">Em Progresso</option>
-                                                                        <option value="CONCLUIDO">Concluído</option>
-                                                                      </select>
-                                                                    </div>
-
-                                                                    <div className="space-y-1">
-                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Comentário / Observação</label>
-                                                                      <input
-                                                                        type="text"
-                                                                        value={task.comentario || ''}
-                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'comentario', e.target.value)}
-                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                                                        placeholder="Ex: Aguardando dados"
-                                                                      />
-                                                                    </div>
-                                                                  </div>
-                                                                </div>
-                                                              );
-                                                            })
-                                                          )}
-                                                        </div>
-
-                                                        <div className="flex gap-2 justify-end border-t border-slate-100 pt-3">
-                                                          <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                              setEditingKrId(null);
-                                                              setEditingKrObjectiveId(null);
-                                                            }}
-                                                            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
-                                                          >
-                                                            Cancelar
-                                                          </button>
-                                                          <button
-                                                            type="button"
-                                                            onClick={handleSaveTasks}
-                                                            className="px-5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
-                                                          >
-                                                            Salvar no KR
-                                                          </button>
-                                                        </div>
-                                                      </div>
-                                                    ) : (
-                                                      /* READ-ONLY MODE */
-                                                      <div className="space-y-3">
-                                                        {(!kr.tarefas || kr.tarefas.length === 0) ? (
-                                                          <div className="text-center py-4 text-[11px] text-slate-400 italic">
-                                                            Nenhuma ação/tarefa cadastrada para este KR.
-                                                          </div>
-                                                        ) : (
-                                                          <div className="space-y-2">
-                                                            {kr.tarefas.map(task => {
-                                                              const responsavelTask = users.find(u => u.id === task.responsavelId);
-                                                              const initialsTask = responsavelTask?.nome ? responsavelTask.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
-
-                                                              return (
-                                                                <div key={task.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-150 rounded-xl transition-all">
-                                                                  <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                                                                    <input
-                                                                      type="checkbox"
-                                                                      checked={task.status === 'CONCLUIDO'}
-                                                                      disabled
-                                                                      className="mt-0.5 rounded text-[#7C3AED] focus:ring-[#7C3AED] cursor-not-allowed"
-                                                                    />
-                                                                    <div className="min-w-0">
-                                                                      <p className="text-[11px] font-bold text-slate-750 break-words">{task.descricao}</p>
-                                                                      {task.comentario && (
-                                                                        <p className="text-[9.5px] font-bold text-slate-450 italic mt-0.5 break-words">
-                                                                          Obs: {task.comentario}
-                                                                        </p>
-                                                                      )}
-                                                                    </div>
-                                                                  </div>
-
-                                                                  <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-                                                                    {responsavelTask && (
-                                                                      <div 
-                                                                        className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-2 py-0.5"
-                                                                        title={`Responsável: ${responsavelTask.nome}`}
-                                                                      >
-                                                                        <div className="w-3.5 h-3.5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[6.5px] font-bold uppercase">
-                                                                          {initialsTask}
-                                                                        </div>
-                                                                        <span className="text-[8.5px] font-bold text-slate-555 max-w-[80px] truncate">{responsavelTask.nome}</span>
-                                                                      </div>
-                                                                    )}
-
-                                                                    <div className="flex items-center gap-2">
-                                                                      <div className="w-16 bg-slate-200/85 rounded-full h-1.5 overflow-hidden">
-                                                                        <div className="h-full bg-emerald-500" style={{ width: `${task.progresso}%` }}></div>
-                                                                      </div>
-                                                                      <span className="text-[9.5px] font-black text-slate-655 w-8 text-right">{task.progresso}%</span>
-                                                                    </div>
-
-                                                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
-                                                                      task.status === 'CONCLUIDO' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
-                                                                      task.status === 'EM_ANDAMENTO' ? 'bg-blue-50 border-blue-250 text-blue-600' :
-                                                                      'bg-slate-50 border-slate-200 text-slate-600'
-                                                                    }`}>
-                                                                      {task.status === 'CONCLUIDO' ? 'Concluído' :
-                                                                       task.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
-                                                                    </span>
-                                                                  </div>
-                                                                </div>
-                                                              );
-                                                            })}
-                                                          </div>
-                                                        )}
-
-                                                        <div className="flex justify-end pt-1">
-                                                          <button
-                                                            type="button"
-                                                            onClick={() => handleStartEditTasks(obj.id, kr)}
-                                                            className="text-[10px] font-black text-[#7C3AED] hover:text-[#6D28D9] hover:bg-[#7C3AED]/5 px-3 py-1.5 rounded-lg transition-all border-none bg-transparent cursor-pointer uppercase tracking-wider"
-                                                          >
-                                                            Gerenciar Ações
-                                                          </button>
-                                                        </div>
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                )}
+                                                
                                               </div>
                                             );
                                           })
@@ -4410,6 +4222,309 @@ export default function PlanejamentoPage() {
         </div>
       )}
 
-    </div>
+    
+      {/* MODAL DE AÇÕES & RESPONSÁVEIS */}
+      {isActionsModalOpen && actionsModalKr && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
+              <div className="min-w-0">
+                <span className="text-[9px] font-black text-[#7C3AED] uppercase tracking-wider">Ações e Responsáveis</span>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate mt-0.5">
+                  {actionsModalKr.descricao}
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsActionsModalOpen(false);
+                  setIsEditingActions(false);
+                }} 
+                className="text-slate-400 hover:text-slate-655 cursor-pointer border-none bg-transparent p-1 rounded-lg hover:bg-slate-100 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </header>
+
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-left">
+              {/* Visão por Responsável com % de Avanço */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Avanço por Responsável</h4>
+                {(() => {
+                  if (!editingKrTasks || editingKrTasks.length === 0) {
+                    return <p className="text-[11px] text-slate-400 italic">Nenhum responsável com ações atribuídas.</p>;
+                  }
+                  
+                  // Group by responsavelId
+                  const groups: Record<string, KRTask[]> = {};
+                  editingKrTasks.forEach(t => {
+                    const rId = t.responsavelId || 'unassigned';
+                    if (!groups[rId]) groups[rId] = [];
+                    groups[rId].push(t);
+                  });
+
+                  # We will format this loop in JS code
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Object.entries(groups).map(([rId, tasks]) => {
+                        const user = rId === 'unassigned' ? null : users.find(u => u.id === rId);
+                        const uName = user ? user.nome : 'Sem responsável';
+                        const initials = user?.nome ? user.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                        const totalProgress = (tasks as any[]).reduce((sum, t) => sum + (t.progresso || 0), 0);
+                        const avgProgress = Math.round(totalProgress / (tasks as any[]).length);
+
+                        return (
+                          <div key={rId} className="bg-white border border-slate-150 rounded-xl p-3 flex items-center gap-3 shadow-3xs">
+                            <div className="w-8 h-8 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0">
+                              {user?.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={uName} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[9px] font-black uppercase text-[#7C3AED]">{initials}</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center gap-2 mb-1">
+                                <span className="text-[10.5px] font-black text-slate-700 truncate">{uName}</span>
+                                <span className="text-[10.5px] font-black text-[#7C3AED]">{avgProgress}%</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="h-full bg-[#7C3AED] rounded-full" style={{ width: `${avgProgress}%` }}></div>
+                              </div>
+                              <span className="text-[8.5px] font-bold text-slate-400 block mt-1">{(tasks as any[]).length} {(tasks as any[]).length === 1 ? 'ação' : 'ações'}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Tabela / Lista de Ações */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tarefas da Ação</span>
+                  {isEditingActions && (
+                    <button
+                      type="button"
+                      onClick={handleAddTaskRow}
+                      className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs transition-all"
+                    >
+                      <Plus size={10} /> + Nova Tarefa
+                    </button>
+                  )}
+                </div>
+
+                {isEditingActions ? (
+                  /* EDIT MODE */
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    {editingKrTasks.length === 0 ? (
+                      <p className="text-[11px] text-slate-400 italic py-2">Nenhuma tarefa adicionada. Clique em "+ Nova Tarefa" acima.</p>
+                    ) : (
+                      editingKrTasks.map((task, tIdx) => {
+                        return (
+                          <div key={task.id} className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-3 relative">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTaskRow(task.id)}
+                              className="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer border-none bg-transparent"
+                              title="Remover Tarefa"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Descrição da Ação #{tIdx + 1}</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={task.descricao || ''}
+                                  onChange={(e) => handleUpdateTaskField(task.id, 'descricao', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                  placeholder="Ex: Anunciar veículo"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Responsável</label>
+                                <select
+                                  value={task.responsavelId || ''}
+                                  onChange={(e) => handleUpdateTaskField(task.id, 'responsavelId', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                >
+                                  <option value="">Selecione...</option>
+                                  {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso ({task.progresso}%)</label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  step="5"
+                                  value={task.progresso}
+                                  onChange={(e) => handleUpdateTaskField(task.id, 'progresso', parseInt(e.target.value))}
+                                  className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] mt-2.5"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Status</label>
+                                <select
+                                  value={task.status}
+                                  onChange={(e) => handleUpdateTaskField(task.id, 'status', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                >
+                                  <option value="PENDENTE">Pendente</option>
+                                  <option value="EM_ANDAMENTO">Em Progresso</option>
+                                  <option value="CONCLUIDO">Concluído</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Comentário / Observação</label>
+                                <input
+                                  type="text"
+                                  value={task.comentario || ''}
+                                  onChange={(e) => handleUpdateTaskField(task.id, 'comentario', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                  placeholder="Ex: Aguardando dados"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : (
+                  /* READ-ONLY MODE */
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    {(!editingKrTasks || editingKrTasks.length === 0) ? (
+                      <div className="text-center py-8 text-[11px] text-slate-400 italic bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
+                        Nenhuma ação/tarefa cadastrada para este KR.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {editingKrTasks.map(task => {
+                          const responsavelTask = users.find(u => u.id === task.responsavelId);
+                          const initialsTask = responsavelTask?.nome ? responsavelTask.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+
+                          return (
+                            <div key={task.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-150 rounded-xl transition-all">
+                              <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={task.status === 'CONCLUIDO'}
+                                  disabled
+                                  className="mt-0.5 rounded text-[#7C3AED] focus:ring-[#7C3AED] cursor-not-allowed"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-[11px] font-bold text-slate-750 break-words">{task.descricao}</p>
+                                  {task.comentario && (
+                                    <p className="text-[9.5px] font-bold text-slate-450 italic mt-0.5 break-words">
+                                      Obs: {task.comentario}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                                {responsavelTask && (
+                                  <div 
+                                    className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-2.5 py-0.5 shadow-3xs"
+                                    title={`Responsável: ${responsavelTask.nome}`}
+                                  >
+                                    <div className="w-4 h-4 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0">
+                                      {responsavelTask.avatarUrl ? (
+                                        <img src={responsavelTask.avatarUrl} alt={responsavelTask.nome} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-[7.5px] font-bold uppercase text-[#7C3AED]">{initialsTask}</span>
+                                      )}
+                                    </div>
+                                    <span className="text-[8.5px] font-bold text-slate-655 max-w-[100px] truncate">{responsavelTask.nome}</span>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                  <div className="w-16 bg-slate-200/85 rounded-full h-1.5 overflow-hidden">
+                                    <div className="h-full bg-emerald-500" style={{ width: `${task.progresso}%` }}></div>
+                                  </div>
+                                  <span className="text-[9.5px] font-black text-slate-655 w-8 text-right">{task.progresso}%</span>
+                                </div>
+
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
+                                  task.status === 'CONCLUIDO' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                                  task.status === 'EM_ANDAMENTO' ? 'bg-blue-50 border-blue-200 text-blue-600' :
+                                  'bg-slate-50 border-slate-200 text-slate-600'
+                                }`}>
+                                  {task.status === 'CONCLUIDO' ? 'Concluído' :
+                                   task.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <footer className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end bg-slate-50 select-none shrink-0">
+              {isEditingActions ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingKrTasks(actionsModalKr.tarefas || []);
+                      setIsEditingActions(false);
+                    }}
+                    className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveActionsModal}
+                    className="px-6 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                  >
+                    Salvar no KR
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsActionsModalOpen(false);
+                    }}
+                    className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
+                  >
+                    Fechar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingActions(true)}
+                    className="px-6 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                  >
+                    Gerenciar Ações
+                  </button>
+                </>
+              )}
+            </footer>
+          </div>
+        </div>
+      )}
+
+</div>
   );
 }
