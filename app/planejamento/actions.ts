@@ -54,6 +54,7 @@ export interface ActionPlan {
   responsavelId: string; // Criador/Responsável geral
   resultadoEsperado: string;
   resultadoAtingido?: string;
+  resumoConclusao?: string;
   dataInicio?: string;   // Data de início do plano de ação
   dataFim: string;       // Prazo final consolidado do plano de ação
   status: 'PENDENTE' | 'ATRASADO' | 'CONCLUIDO';
@@ -458,7 +459,7 @@ export async function saveActionPlan(plano: Omit<ActionPlan, 'id' | 'createdAt'>
     }
 
     let status: 'PENDENTE' | 'ATRASADO' | 'CONCLUIDO' = 'PENDENTE';
-    if (percentualRealizado === 100) {
+    if (plano.status === 'CONCLUIDO' || percentualRealizado === 100) {
       status = 'CONCLUIDO';
     } else {
       const today = new Date();

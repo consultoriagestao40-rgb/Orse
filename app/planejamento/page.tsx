@@ -99,6 +99,23 @@ const getContrastYIQ = (hex: string) => {
   return (yiq >= 140) ? 'black' : 'white';
 };
 
+const parseCurrency = (val: string | number): number => {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  let clean = val.replace(/R\$\s?/, '').trim();
+  if (clean.includes('.') && clean.includes(',')) {
+    clean = clean.replace(/\./g, '').replace(',', '.');
+  } else if (clean.includes(',')) {
+    clean = clean.replace(',', '.');
+  }
+  return parseFloat(clean) || 0;
+};
+
+const formatCurrency = (val: number | undefined | null): string => {
+  if (val === undefined || val === null || isNaN(val)) return 'R$ 0,00';
+  return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
 const hexToRgba = (hex: string, alpha: number) => {
   const normalized = normalizeHex(hex);
   const r = parseInt(normalized.slice(1, 3), 16);
@@ -225,6 +242,10 @@ export default function PlanejamentoPage() {
   const [editingAcao, setEditingAcao] = useState<Partial<SubAction> | null>(null);
   const [completingAcao, setCompletingAcao] = useState<Partial<SubAction> | null>(null);
   const [reviewingAcao, setReviewingAcao] = useState<Partial<SubAction> | null>(null);
+  const [isConclusaoPlanoModalOpen, setIsConclusaoPlanoModalOpen] = useState(false);
+  const [editingHowMuch, setEditingHowMuch] = useState<Record<string, string>>({});
+  const [newAcaoHowMuchStr, setNewAcaoHowMuchStr] = useState('');
+  const [editingAcaoHowMuchStr, setEditingAcaoHowMuchStr] = useState('');
   const updateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
     setCurrentPlano(prev => {
       const acoes = (prev.acoes || []).map(a => {
@@ -281,6 +302,7 @@ export default function PlanejamentoPage() {
       status: 'PENDENTE',
       evidencia: ''
     });
+    setNewAcaoHowMuchStr('0,00');
     setIsAcaoModalOpen(true);
   };
 
@@ -434,6 +456,23 @@ export default function PlanejamentoPage() {
     setReviewingAcao(null);
   };
 
+  const handleSaveConclusaoPlano = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPlano.resultadoAtingido?.trim()) {
+      alert("O resultado atingido é obrigatório.");
+      return;
+    }
+    if (!currentPlano.resumoConclusao?.trim()) {
+      alert("O resumo de conclusão é obrigatório.");
+      return;
+    }
+    setCurrentPlano(prev => ({
+      ...prev,
+      status: 'CONCLUIDO'
+    }));
+    setIsConclusaoPlanoModalOpen(false);
+  };
+
   const handleUpdateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
     setCurrentPlano(prev => {
       const acoes = (prev.acoes || []).map(a => {
@@ -519,6 +558,10 @@ export default function PlanejamentoPage() {
                 className={`h-full rounded-full transition-all duration-300 ${pa.status === 'CONCLUIDO' ? 'bg-[#1B4D3E]' : 'bg-blue-500'}`}
                 style={{ width: `${pa.percentualRealizado}%` }}
               ></div>
+            </div>
+            <div className="flex justify-between text-[9px] font-black text-slate-400 mt-1">
+              <span>VALOR TOTAL</span>
+              <span className="text-[#1B4D3E] font-black">{formatCurrency(pa.acoes?.reduce((acc, a) => acc + (a.howMuch || 0), 0) || 0)}</span>
             </div>
           </div>
 
@@ -1789,6 +1832,7 @@ export default function PlanejamentoPage() {
                               <th className="py-3.5 px-6">Causa Vinculada / Problema</th>
                               <th className="py-3.5 px-6">Responsável</th>
                               <th className="py-3.5 px-6">Prazo Final</th>
+                              <th className="py-3.5 px-6">Valor Total</th>
                               <th className="py-3.5 px-6">Status</th>
                               <th className="py-3.5 px-6">Progresso</th>
                               <th className="py-3.5 px-6 text-right">Ações</th>
@@ -1827,6 +1871,9 @@ export default function PlanejamentoPage() {
                                   </td>
                                   <td className="py-4 px-6 text-slate-500 font-mono">
                                     {formatLocalDate(pa.dataFim)}
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-700 font-mono font-bold whitespace-nowrap">
+                                    {formatCurrency(pa.acoes?.reduce((acc, a) => acc + (a.howMuch || 0), 0) || 0)}
                                   </td>
                                   <td className="py-4 px-6">
                                     <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${statusBadge}`}>
@@ -2292,7 +2339,14 @@ export default function PlanejamentoPage() {
                   <div className="shrink-0 text-right">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
                     <select value={currentPlano.status || 'PENDENTE'}
-                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, status: e.target.value as any }))}
+                      onChange={(e) => {
+                        const val = e.target.value as any;
+                        if (val === 'CONCLUIDO') {
+                          setIsConclusaoPlanoModalOpen(true);
+                        } else {
+                          setCurrentPlano(prev => ({ ...prev, status: val }));
+                        }
+                      }}
                       className={`text-lg font-black bg-transparent border-none outline-none cursor-pointer p-0 mt-0.5 ${
                         currentPlano.status === 'CONCLUIDO' ? 'text-emerald-600' : currentPlano.status === 'ATRASADO' ? 'text-rose-600' : 'text-blue-600'
                       }`}>
@@ -2361,6 +2415,27 @@ export default function PlanejamentoPage() {
                         className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
                     </div>
                   </div>
+
+                  {/* Se o plano estiver Concluído, mostrar Resultado Atingido e Resumo de Execução */}
+                  {currentPlano.status === 'CONCLUIDO' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resultado Atingido:</span>
+                        <input type="text" value={currentPlano.resultadoAtingido || ''}
+                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
+                          placeholder="Digite o resultado..."
+                          className="text-xs font-black text-emerald-600 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-1 rounded" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resumo de Execução:</span>
+                        <textarea value={currentPlano.resumoConclusao || ''}
+                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
+                          placeholder="Digite o resumo da execução..."
+                          rows={2}
+                          className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-2 rounded resize-none" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2396,6 +2471,13 @@ export default function PlanejamentoPage() {
                       style={{ width: `${currentPlano.percentualRealizado || 0}%` }} />
                   </div>
                   <span className="text-[10px] font-black text-[#1B4D3E] whitespace-nowrap">{currentPlano.percentualRealizado || 0}%</span>
+                </div>
+                {/* Custo Total do Plano */}
+                <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                  <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider">Valor Total do Plano:</span>
+                  <span className="text-sm font-black text-[#1B4D3E]">
+                    {formatCurrency(currentPlano.acoes?.reduce((acc, a) => acc + (a.howMuch || 0), 0) || 0)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -2513,8 +2595,33 @@ export default function PlanejamentoPage() {
                               <td className="py-2 px-2.5 border-r border-slate-100 align-middle">
                                 <div className="relative">
                                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
-                                  <input type="number" value={a.howMuch || 0} onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-5 pr-1 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
+                                  <input 
+                                    type="text" 
+                                    value={
+                                      editingHowMuch[a.id] !== undefined 
+                                        ? editingHowMuch[a.id] 
+                                        : (a.howMuch !== undefined && a.howMuch !== null 
+                                            ? a.howMuch.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                                            : '0,00')
+                                    }
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setEditingHowMuch(prev => ({ ...prev, [a.id]: val }));
+                                    }}
+                                    onBlur={() => {
+                                      const rawVal = editingHowMuch[a.id];
+                                      if (rawVal !== undefined) {
+                                        const numeric = parseCurrency(rawVal);
+                                        handleUpdateSubActionField(a.id, 'howMuch', numeric);
+                                        setEditingHowMuch(prev => {
+                                          const next = { ...prev };
+                                          delete next[a.id];
+                                          return next;
+                                        });
+                                      }
+                                    }}
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-6 pr-1 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                  />
                                 </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100 align-middle">
@@ -2537,7 +2644,10 @@ export default function PlanejamentoPage() {
                               </td>
                               <td className="py-2 px-2.5 text-center align-middle">
                                 <div className="flex items-center justify-center gap-1.5 min-w-[170px] h-full">
-                                  <button type="button" onClick={() => setEditingAcao(a)}
+                                  <button type="button" onClick={() => {
+                                      setEditingAcao(a);
+                                      setEditingAcaoHowMuchStr((a.howMuch || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                                    }}
                                     className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none flex items-center gap-1">
                                     Editar
                                   </button>
@@ -2740,10 +2850,17 @@ export default function PlanejamentoPage() {
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
                     <input 
-                      type="number" 
+                      type="text" 
                       required
-                      value={newAcao.howMuch ?? 0}
-                      onChange={(e) => setNewAcao(prev => ({ ...prev, howMuch: parseFloat(e.target.value) || 0 }))}
+                      value={newAcaoHowMuchStr}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewAcaoHowMuchStr(val);
+                        setNewAcao(prev => ({ ...prev, howMuch: parseCurrency(val) }));
+                      }}
+                      onBlur={() => {
+                        setNewAcaoHowMuchStr(parseCurrency(newAcaoHowMuchStr).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                      }}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
                       placeholder="Custo estimado"
                     />
@@ -2889,10 +3006,17 @@ export default function PlanejamentoPage() {
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
                     <input 
-                      type="number" 
+                      type="text" 
                       required
-                      value={editingAcao.howMuch ?? 0}
-                      onChange={(e) => setEditingAcao(prev => ({ ...prev!, howMuch: parseFloat(e.target.value) || 0 }))}
+                      value={editingAcaoHowMuchStr}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingAcaoHowMuchStr(val);
+                        setEditingAcao(prev => ({ ...prev!, howMuch: parseCurrency(val) }));
+                      }}
+                      onBlur={() => {
+                        setEditingAcaoHowMuchStr(parseCurrency(editingAcaoHowMuchStr).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                      }}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
                       placeholder="Custo estimado"
                     />
@@ -3230,6 +3354,66 @@ export default function PlanejamentoPage() {
                   className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
                 >
                   Aprovar Conclusão
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL CONCLUIR PLANO DE AÇÃO */}
+      {isConclusaoPlanoModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Concluir Plano de Ação</h3>
+              <button type="button" onClick={() => setIsConclusaoPlanoModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+                <X size={16} />
+              </button>
+            </header>
+            
+            <form onSubmit={handleSaveConclusaoPlano} className="p-6 space-y-4">
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Plano de Ação</span>
+                <p className="text-sm font-bold text-slate-800 mt-1 leading-normal break-words">{currentPlano.titulo}</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Resultado Atingido (Obrigatório)</label>
+                <input 
+                  type="text"
+                  required
+                  value={currentPlano.resultadoAtingido || ''}
+                  onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                  placeholder="Ex: Aumento de 20% nas vendas, R$ 100 mil gerados"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Resumo de Execução (Obrigatório)</label>
+                <textarea 
+                  required
+                  rows={4}
+                  value={currentPlano.resumoConclusao || ''}
+                  onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                  placeholder="Faça um resumo geral de como foi a execução do plano e o aprendizado obtido..."
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setIsConclusaoPlanoModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Salvar Conclusão
                 </button>
               </div>
             </form>
