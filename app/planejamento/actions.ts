@@ -41,8 +41,9 @@ export interface SubAction {
   who: string;       // responsavelId do usuário ou texto
   how: string;
   howMuch: number;
-  status: 'PENDENTE' | 'CONCLUIDO';
+  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'EM_ATRASO' | 'CONCLUIDO';
   percentualRealizado: number; // 0 ou 100
+  evidencia?: string;
 }
 
 export interface ActionPlan {
