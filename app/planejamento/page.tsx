@@ -194,7 +194,7 @@ export default function PlanejamentoPage() {
 
   // Modals & Form States
   const [isEditingCausa, setIsEditingCausa] = useState(false);
-  const [causaViewMode, setCausaViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [causaViewMode, setCausaViewMode] = useState<'kanban' | 'list'>('list');
   const [currentCausa, setCurrentCausa] = useState<Partial<RootCauseAnalysis>>({
     problema: '',
     porques: ['', '', '', '', ''],
