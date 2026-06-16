@@ -43,7 +43,8 @@ import {
   OKRObjective, 
   KR, 
   BrainstormPostit,
-  CauseStage
+  CauseStage,
+  SubAction
 } from './actions';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -294,8 +295,7 @@ export default function PlanejamentoPage() {
         onDragEnd={() => setDraggedPlanoId(null)}
         onClick={() => {
           setCurrentPlano(pa);
-          setShowSubActionForm(false);
-          setIsPlanoModalOpen(true);
+          setIsEditingPlano(true);
         }}
         className={`bg-white border border-slate-200 rounded-2xl p-4 shadow-3xs hover:shadow-2xs transition-all cursor-grab active:cursor-grabbing relative group flex flex-col gap-3 text-left animate-in fade-in duration-200 ${
           draggedPlanoId === pa.id ? 'opacity-40 border-dashed border-[#1B4D3E]' : ''
@@ -616,7 +616,7 @@ export default function PlanejamentoPage() {
     setLoading(true);
     const res = await saveActionPlan(currentPlano as ActionPlan);
     if (res.success) {
-      setIsPlanoModalOpen(false);
+      setIsEditingPlano(false);
       await loadData();
     } else {
       alert('Erro ao salvar plano de ação: ' + res.error);
@@ -892,8 +892,7 @@ export default function PlanejamentoPage() {
                         status: 'PENDENTE',
                         acoes: []
                       });
-                      setShowSubActionForm(false);
-                      setIsPlanoModalOpen(true);
+                      setIsEditingPlano(true);
                     }}
                     className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
                   >
@@ -1623,7 +1622,7 @@ export default function PlanejamentoPage() {
 
                               return (
                                 <tr key={pa.id} className="hover:bg-slate-50/50 transition-colors group">
-                                  <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer" onClick={() => { setCurrentPlano(pa); setShowSubActionForm(false); setIsPlanoModalOpen(true); }}>
+                                  <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer" onClick={() => { setCurrentPlano(pa); setIsEditingPlano(true); }}>
                                     {pa.titulo}
                                   </td>
                                   <td className="py-4 px-6 text-slate-500 max-w-[200px] truncate">
@@ -1662,7 +1661,7 @@ export default function PlanejamentoPage() {
                                   </td>
                                   <td className="py-4 px-6 text-right">
                                     <div className="flex justify-end gap-1.5">
-                                      <button onClick={() => { setCurrentPlano(pa); setShowSubActionForm(false); setIsPlanoModalOpen(true); }} className="p-1.5 text-slate-550 hover:text-[#1B4D3E] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-none bg-transparent" title="Editar Plano">
+                                      <button onClick={() => { setCurrentPlano(pa); setIsEditingPlano(true); }} className="p-1.5 text-slate-550 hover:text-[#1B4D3E] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-none bg-transparent" title="Editar Plano">
                                         <Edit size={14} />
                                       </button>
                                       <button onClick={() => handleDeletePlanoObj(pa.id)} className="p-1.5 text-slate-550 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-none bg-transparent" title="Excluir Plano">
@@ -2035,14 +2034,14 @@ export default function PlanejamentoPage() {
       </main>
 
       {/* MODAL PLANO DE AÇÃO 5W2H */}
-      {isPlanoModalOpen && (
+      {isEditingPlano && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
                 {currentPlano.id ? 'Detalhamento do Plano de Ação' : 'Criar Novo Plano de Ação'}
               </h3>
-              <button onClick={() => setIsPlanoModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+              <button onClick={() => setIsEditingPlano(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
