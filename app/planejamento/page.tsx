@@ -160,6 +160,7 @@ export default function PlanejamentoPage() {
   const [okrCiclos, setOkrCiclos] = useState<OKRCiclo[]>([]);
   const [postits, setPostits] = useState<BrainstormPostit[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [stagesCausa, setStagesCausa] = useState<CauseStage[]>([]);
 
   // Editing column stages
@@ -221,7 +222,9 @@ export default function PlanejamentoPage() {
     status: 'PENDENTE',
     evidencia: ''
   });
-
+  const [editingAcao, setEditingAcao] = useState<Partial<SubAction> | null>(null);
+  const [completingAcao, setCompletingAcao] = useState<Partial<SubAction> | null>(null);
+  const [reviewingAcao, setReviewingAcao] = useState<Partial<SubAction> | null>(null);
   const updateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
     setCurrentPlano(prev => {
       const acoes = (prev.acoes || []).map(a => {
@@ -312,6 +315,113 @@ export default function PlanejamentoPage() {
     });
 
     setIsAcaoModalOpen(false);
+  };
+
+  const handleSaveEditedAcao = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAcao || !editingAcao.id) return;
+
+    setCurrentPlano(prev => {
+      const acoes = (prev.acoes || []).map(a => {
+        if (a.id === editingAcao.id) {
+          return {
+            ...a,
+            ...editingAcao,
+            percentualRealizado: editingAcao.status === 'CONCLUIDO' ? 100 : 0
+          } as SubAction;
+        }
+        return a;
+      });
+
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
+      }
+
+      return {
+        ...prev,
+        acoes,
+        percentualRealizado
+      };
+    });
+
+    setEditingAcao(null);
+  };
+
+  const handleSaveCompletionAcao = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!completingAcao || !completingAcao.id) return;
+    if (!completingAcao.textoConclusao?.trim()) {
+      alert("O texto de conclusão é obrigatório.");
+      return;
+    }
+
+    setCurrentPlano(prev => {
+      const acoes = (prev.acoes || []).map(a => {
+        if (a.id === completingAcao.id) {
+          return {
+            ...a,
+            textoConclusao: completingAcao.textoConclusao,
+            anexoEvidencia: completingAcao.anexoEvidencia || '',
+            status: 'AGUARDANDO_APROVACAO',
+            percentualRealizado: 0
+          } as SubAction;
+        }
+        return a;
+      });
+
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
+      }
+
+      return {
+        ...prev,
+        acoes,
+        percentualRealizado
+      };
+    });
+
+    setCompletingAcao(null);
+  };
+
+  const handleSaveReviewAcao = (e: React.FormEvent, isApproved: boolean) => {
+    e.preventDefault();
+    if (!reviewingAcao || !reviewingAcao.id) return;
+    if (!reviewingAcao.comentarioAprovacao?.trim()) {
+      alert("O comentário de avaliação é obrigatório.");
+      return;
+    }
+
+    setCurrentPlano(prev => {
+      const acoes = (prev.acoes || []).map(a => {
+        if (a.id === reviewingAcao.id) {
+          return {
+            ...a,
+            comentarioAprovacao: reviewingAcao.comentarioAprovacao,
+            status: isApproved ? 'CONCLUIDO' : 'EM_ANDAMENTO',
+            percentualRealizado: isApproved ? 100 : 0
+          } as SubAction;
+        }
+        return a;
+      });
+
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
+      }
+
+      return {
+        ...prev,
+        acoes,
+        percentualRealizado
+      };
+    });
+
+    setReviewingAcao(null);
   };
 
   const handleUpdateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
@@ -533,6 +643,9 @@ export default function PlanejamentoPage() {
       
       if (resPlanning.data.okrCiclos.length > 0 && !activeCicloId) {
         setActiveCicloId(resPlanning.data.okrCiclos[0].id);
+      }
+      if ((resPlanning as any).currentUser) {
+        setCurrentUser((resPlanning as any).currentUser);
       }
     }
 
@@ -2313,8 +2426,7 @@ export default function PlanejamentoPage() {
                         <th className="py-3.5 px-4 min-w-[130px] border-r border-slate-200">COMO <span className="normal-case font-bold text-slate-400">(How)</span></th>
                         <th className="py-3.5 px-4 w-[125px] border-r border-slate-200">QUANTO <span className="normal-case font-bold text-slate-400">(How Much)</span></th>
                         <th className="py-3.5 px-4 w-[135px] border-r border-slate-200">STATUS</th>
-                        <th className="py-3.5 px-4 min-w-[170px]">EVIDÊNCIA/COMENTÁRIOS</th>
-                        <th className="py-3.5 px-4 w-[50px]"></th>
+                        <th className="py-3.5 px-4 min-w-[170px] text-center">AÇÕES</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
@@ -2331,13 +2443,15 @@ export default function PlanejamentoPage() {
                           return (
                             <tr key={a.id} className="hover:bg-slate-50/40 transition-colors">
                               <td className="py-3 px-4 text-center text-slate-500 font-mono border-r border-slate-100">{formattedIdx}</td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" readOnly value={a.what || ''}
-                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
+                              <td className="py-2.5 px-3 border-r border-slate-100">
+                                <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[130px] max-w-[200px]">
+                                  {a.what || ''}
+                                </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" readOnly value={a.why || ''}
-                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
+                              <td className="py-2.5 px-3 border-r border-slate-100">
+                                <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[130px] max-w-[200px]">
+                                  {a.why || ''}
+                                </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <div className="flex justify-center w-full">
@@ -2361,9 +2475,10 @@ export default function PlanejamentoPage() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" readOnly value={a.where || ''}
-                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
+                              <td className="py-2.5 px-3 border-r border-slate-100">
+                                <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[100px] max-w-[150px]">
+                                  {a.where || ''}
+                                </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <div className="relative w-full h-8 flex items-center bg-slate-50/50 border border-slate-200 rounded-lg px-2 text-xs font-bold text-slate-700 focus-within:border-[#1B4D3E] focus-within:bg-white">
@@ -2380,41 +2495,58 @@ export default function PlanejamentoPage() {
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                 </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" readOnly value={a.how || ''}
-                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
+                              <td className="py-2.5 px-3 border-r border-slate-100">
+                                <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[100px] max-w-[150px]">
+                                  {a.how || ''}
+                                </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <div className="relative">
                                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
-                                  <input type="text" readOnly value={a.howMuch || 0}
-                                    className="w-full bg-slate-50 border-none rounded-lg pl-6 pr-1 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
+                                  <input type="number" value={a.howMuch || 0} onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-5 pr-1 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
                                 </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <select disabled value={a.status || 'PENDENTE'}
-                                  className={`w-full border-none rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider outline-none cursor-default text-center appearance-none ${
-                                    a.status === 'CONCLUIDO'
-                                      ? 'bg-emerald-100 text-emerald-800'
-                                      : a.status === 'EM_ANDAMENTO'
-                                      ? 'bg-blue-100 text-blue-800'
-                                      : a.status === 'EM_ATRASO'
-                                      ? 'bg-rose-100 text-rose-800'
-                                      : 'bg-amber-100 text-amber-800'
-                                  }`}>
-                                  <option value="PENDENTE">Em Aberto</option>
-                                  <option value="EM_ANDAMENTO">Em Andamento</option>
-                                  <option value="EM_ATRASO">Em Atraso</option>
-                                  <option value="CONCLUIDO">Concluído</option>
-                                </select>
+                                <span className={`block w-full text-center px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
+                                  a.status === 'CONCLUIDO'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : a.status === 'AGUARDANDO_APROVACAO'
+                                    ? 'bg-amber-100 text-amber-800 animate-pulse'
+                                    : a.status === 'EM_ANDAMENTO'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : a.status === 'EM_ATRASO'
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                  {a.status === 'PENDENTE' ? 'Em Aberto' : 
+                                   a.status === 'EM_ANDAMENTO' ? 'Em Andamento' :
+                                   a.status === 'EM_ATRASO' ? 'Em Atraso' :
+                                   a.status === 'AGUARDANDO_APROVACAO' ? 'Aguardando Aprovação' : 'Concluído'}
+                                </span>
                               </td>
-                              <td className="py-2 px-2.5">
-                                <input type="text" readOnly value={a.evidencia || ''}
-                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
-                              </td>
-                              <td className="py-2 px-2 text-center">
+                              <td className="py-2 px-2.5 text-center flex items-center justify-center gap-1.5 min-w-[170px]">
+                                <button type="button" onClick={() => setEditingAcao(a)}
+                                  className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none flex items-center gap-1">
+                                  Editar
+                                </button>
+
+                                {(a.status === 'PENDENTE' || a.status === 'EM_ANDAMENTO' || a.status === 'EM_ATRASO') && (
+                                  <button type="button" onClick={() => setCompletingAcao(a)}
+                                    className="py-1 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none">
+                                    Concluir
+                                  </button>
+                                )}
+
+                                {a.status === 'AGUARDANDO_APROVACAO' && (
+                                  <button type="button" onClick={() => setReviewingAcao(a)}
+                                    className="py-1 px-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none">
+                                    Avaliar
+                                  </button>
+                                )}
+
                                 <button type="button" onClick={() => handleDeleteSubAction(a.id)}
-                                  className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer border-none bg-transparent">
+                                  className="p-1.5 text-slate-350 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer border-none bg-transparent">
                                   <Trash2 size={13} />
                                 </button>
                               </td>
@@ -2646,6 +2778,337 @@ export default function PlanejamentoPage() {
                   className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
                 >
                   Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR AÇÃO (5W2H) */}
+      {editingAcao && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Editar Ação (5W2H)</h3>
+              <button type="button" onClick={() => setEditingAcao(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+                <X size={16} />
+              </button>
+            </header>
+            
+            <form onSubmit={handleSaveEditedAcao} className="p-6 space-y-4">
+              {/* O Quê & Por Quê */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">O QUÊ (What)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editingAcao.what || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, what: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="O que será feito?"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">POR QUÊ (Why)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editingAcao.why || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, why: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Por que será feito?"
+                  />
+                </div>
+              </div>
+
+              {/* Quem, Onde, Quando */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">QUEM (Who)</label>
+                  <select 
+                    required
+                    value={editingAcao.who || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, who: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] cursor-pointer">
+                    <option value="">Selecione...</option>
+                    {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">ONDE (Where)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editingAcao.where || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, where: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Onde será feito?"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">QUANDO (When)</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={editingAcao.when || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, when: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                  />
+                </div>
+              </div>
+
+              {/* Como & Quanto */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">COMO (How)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editingAcao.how || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, how: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Como será feito?"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">QUANTO (How Much)</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                    <input 
+                      type="number" 
+                      required
+                      value={editingAcao.howMuch ?? 0}
+                      onChange={(e) => setEditingAcao(prev => ({ ...prev!, howMuch: parseFloat(e.target.value) || 0 }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                      placeholder="Custo estimado"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Evidência */}
+              <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">STATUS</label>
+                  <select 
+                    value={editingAcao.status || 'PENDENTE'}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, status: e.target.value as any }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] cursor-pointer">
+                    <option value="PENDENTE">Em Aberto</option>
+                    <option value="EM_ANDAMENTO">Em Andamento</option>
+                    <option value="EM_ATRASO">Em Atraso</option>
+                    <option value="AGUARDANDO_APROVACAO">Aguardando Aprovação</option>
+                    <option value="CONCLUIDO">Concluído</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">EVIDÊNCIA / COMENTÁRIOS</label>
+                  <input 
+                    type="text" 
+                    value={editingAcao.evidencia || ''}
+                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, evidencia: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Evidências ou comentários"
+                  />
+                </div>
+              </div>
+
+              {/* Se houver texto de conclusão ou comentário de aprovação anterior, mostrar */}
+              {editingAcao.textoConclusao && (
+                <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Texto de Conclusão</span>
+                    <p className="text-xs font-medium text-slate-700 mt-1 leading-relaxed break-words">{editingAcao.textoConclusao}</p>
+                  </div>
+                  {editingAcao.anexoEvidencia && (
+                    <div>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Evidência Anexada</span>
+                      <a href={editingAcao.anexoEvidencia} download={editingAcao.evidencia || "evidencia"} className="text-xs font-black text-[#1B4D3E] hover:underline uppercase inline-block mt-1">
+                        Download Anexo
+                      </a>
+                    </div>
+                  )}
+                  {editingAcao.comentarioAprovacao && (
+                    <div>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Comentário de Avaliação</span>
+                      <p className="text-xs font-medium text-slate-700 mt-1 leading-relaxed break-words">{editingAcao.comentarioAprovacao}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingAcao(null)}
+                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONCLUIR AÇÃO */}
+      {completingAcao && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Concluir Ação (5W2H)</h3>
+              <button type="button" onClick={() => setCompletingAcao(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+                <X size={16} />
+              </button>
+            </header>
+            
+            <form onSubmit={handleSaveCompletionAcao} className="p-6 space-y-4">
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ação</span>
+                <p className="text-xs font-bold text-slate-800 mt-1 leading-normal break-words">{completingAcao.what}</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Texto de Conclusão (Obrigatório)</label>
+                <textarea 
+                  required
+                  rows={4}
+                  value={completingAcao.textoConclusao || ''}
+                  onChange={(e) => setCompletingAcao(prev => ({ ...prev!, textoConclusao: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                  placeholder="Descreva detalhadamente como a ação foi executada..."
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Anexar Evidências (Opcional)</label>
+                <div className="relative border border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center hover:bg-slate-50 transition-colors cursor-pointer">
+                  <input 
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setCompletingAcao(prev => prev ? {
+                            ...prev,
+                            anexoEvidencia: reader.result as string,
+                            evidencia: file.name
+                          } : null);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <span className="text-xs font-black text-[#1B4D3E] uppercase">Selecionar Arquivo</span>
+                  <span className="text-[9px] font-bold text-slate-450 mt-1">
+                    {completingAcao.evidencia ? `Selecionado: ${completingAcao.evidencia}` : "Nenhum arquivo selecionado"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setCompletingAcao(null)}
+                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Enviar para Aprovação
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL AVALIAR AÇÃO */}
+      {reviewingAcao && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Avaliar Conclusão da Ação</h3>
+              <button type="button" onClick={() => setReviewingAcao(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+                <X size={16} />
+              </button>
+            </header>
+            
+            <form className="p-6 space-y-4">
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ação</span>
+                <p className="text-xs font-bold text-slate-800 mt-1 leading-normal break-words">{reviewingAcao.what}</p>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Responsável</span>
+                <p className="text-xs font-bold text-slate-800 mt-1">{users.find(u => u.id === reviewingAcao.who)?.nome || reviewingAcao.who || 'N/A'}</p>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Texto de Conclusão do Executor</span>
+                <p className="text-xs font-medium text-slate-700 bg-slate-50 border border-slate-100 p-3 rounded-xl mt-1 leading-relaxed break-words">{reviewingAcao.textoConclusao}</p>
+              </div>
+
+              {reviewingAcao.anexoEvidencia && (
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Evidência Anexada</span>
+                  <div className="mt-1 bg-slate-50 border border-slate-150 p-3 rounded-xl flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-600 truncate max-w-[200px]">{reviewingAcao.evidencia || 'Arquivo de Evidência'}</span>
+                    <a href={reviewingAcao.anexoEvidencia} download={reviewingAcao.evidencia || "evidencia"} 
+                      className="text-[10px] font-black text-[#1B4D3E] hover:underline uppercase tracking-wider">
+                      Download Anexo
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Comentário de Avaliação (Obrigatório)</label>
+                <textarea 
+                  required
+                  rows={3}
+                  value={reviewingAcao.comentarioAprovacao || ''}
+                  onChange={(e) => setReviewingAcao(prev => ({ ...prev!, comentarioAprovacao: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                  placeholder="Escreva um comentário justificando sua decisão..."
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setReviewingAcao(null)}
+                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  onClick={(e) => handleSaveReviewAcao(e, false)}
+                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Recusar
+                </button>
+                <button 
+                  type="button"
+                  onClick={(e) => handleSaveReviewAcao(e, true)}
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Aprovar Conclusão
                 </button>
               </div>
             </form>

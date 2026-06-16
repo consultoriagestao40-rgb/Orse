@@ -41,7 +41,7 @@ export interface SubAction {
   who: string;       // responsavelId do usuário ou texto
   how: string;
   howMuch: number;
-  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'EM_ATRASO' | 'CONCLUIDO';
+  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'EM_ATRASO' | 'CONCLUIDO' | 'AGUARDANDO_APROVACAO';
   percentualRealizado: number; // 0 ou 100
   evidencia?: string;
 }
@@ -341,7 +341,7 @@ export async function getPlanningData() {
       }
     }
 
-    return { success: true, data };
+    return { success: true, data, currentUser: user };
   } catch (error: any) {
     return { success: false, error: error.message || 'Erro ao carregar dados de planejamento' };
   }
