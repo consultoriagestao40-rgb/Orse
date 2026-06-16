@@ -2635,7 +2635,7 @@ export default function PlanejamentoPage() {
                                                  </div>
 
                                                  {/* Right Column: Date, Status, Owner & Actions Menu */}
-                                                  <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end md:w-[45%] lg:w-[40%]">
+                                                  <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end md:w-[40%] lg:w-[35%]">
                                                     {/* Date Column */}
                                                     {kr.dataFim ? (
                                                       <div className="text-[10px] font-bold text-slate-550 flex items-center gap-1 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
