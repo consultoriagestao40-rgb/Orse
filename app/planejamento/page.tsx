@@ -2105,6 +2105,17 @@ export default function PlanejamentoPage() {
                       onChange={(e) => setCurrentPlano(prev => ({ ...prev, titulo: e.target.value }))}
                       className="text-lg font-black text-slate-800 bg-transparent border-none outline-none w-full p-0 focus:bg-slate-50 focus:px-2 rounded-lg mt-0.5"
                       placeholder="Implementação de Novo CRM" />
+                    
+                    {/* Causa Vinculada abaixo do título */}
+                    <div className="mt-3 flex items-center gap-2 select-none">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Causa Vinculada:</span>
+                      <select value={currentPlano.causaRaizId || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 max-w-[450px] truncate focus:bg-slate-50 focus:px-1 rounded-sm">
+                        <option value="">Entrada Direta</option>
+                        {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
+                      </select>
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
@@ -2166,15 +2177,6 @@ export default function PlanejamentoPage() {
                         className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Causa Vinculada:</span>
-                      <select value={currentPlano.causaRaizId || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1.5 max-w-[120px] truncate">
-                        <option value="">Entrada Direta</option>
-                        {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
-                      </select>
-                    </div>
-                    <div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início:</span>
                       <input type="date" value={currentPlano.dataInicio || ''}
                         onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataInicio: e.target.value }))}
@@ -2185,14 +2187,6 @@ export default function PlanejamentoPage() {
                       <input type="date" required value={currentPlano.dataFim || ''}
                         onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
                         className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
-                      <span className={`text-xs font-black mt-1.5 block uppercase ${
-                        currentPlano.status === 'CONCLUIDO' ? 'text-emerald-600' : currentPlano.status === 'ATRASADO' ? 'text-rose-600' : 'text-blue-600'
-                      }`}>
-                        {currentPlano.status === 'CONCLUIDO' ? 'Concluído' : currentPlano.status === 'ATRASADO' ? 'Atrasado' : 'Em Andamento'}
-                      </span>
                     </div>
                   </div>
                 </div>
