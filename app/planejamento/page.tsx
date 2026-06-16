@@ -2402,6 +2402,15 @@ export default function PlanejamentoPage() {
                         placeholder="Ex: 90%, R$ 80k"
                         className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
                     </div>
+                    {currentPlano.status === 'CONCLUIDO' && (
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resultado Atingido:</span>
+                        <input type="text" value={currentPlano.resultadoAtingido || ''}
+                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
+                          placeholder="Ex: 85%"
+                          className="text-xs font-black text-emerald-600 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
+                      </div>
+                    )}
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início:</span>
                       <input type="date" value={currentPlano.dataInicio || ''}
@@ -2416,24 +2425,15 @@ export default function PlanejamentoPage() {
                     </div>
                   </div>
 
-                  {/* Se o plano estiver Concluído, mostrar Resultado Atingido e Resumo de Execução */}
+                  {/* Se o plano estiver Concluído, mostrar Resumo de Execução abaixo da linha principal */}
                   {currentPlano.status === 'CONCLUIDO' && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resultado Atingido:</span>
-                        <input type="text" value={currentPlano.resultadoAtingido || ''}
-                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
-                          placeholder="Digite o resultado..."
-                          className="text-xs font-black text-emerald-600 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-1 rounded" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resumo de Execução:</span>
-                        <textarea value={currentPlano.resumoConclusao || ''}
-                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
-                          placeholder="Digite o resumo da execução..."
-                          rows={2}
-                          className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-2 rounded resize-none" />
-                      </div>
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resumo de Execução:</span>
+                      <textarea value={currentPlano.resumoConclusao || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
+                        placeholder="Digite o resumo da execução..."
+                        rows={2}
+                        className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-2 rounded resize-none" />
                     </div>
                   )}
                 </div>
@@ -3385,7 +3385,7 @@ export default function PlanejamentoPage() {
                   value={currentPlano.resultadoAtingido || ''}
                   onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                  placeholder="Ex: Aumento de 20% nas vendas, R$ 100 mil gerados"
+                  placeholder="Ex: 85%"
                 />
               </div>
 
