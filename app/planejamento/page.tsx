@@ -584,6 +584,12 @@ export default function PlanejamentoPage() {
             </div>
           </div>
         </div>
+        {pa.status === 'CONCLUIDO' && pa.resumoConclusao && (
+          <div className="border-t border-slate-100 pt-2 mt-1">
+            <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">Resumo de Execução:</span>
+            <p className="text-[10px] font-bold text-slate-650 mt-0.5 leading-normal break-words whitespace-pre-wrap">{pa.resumoConclusao}</p>
+          </div>
+        )}
       </div>
     );
   };
@@ -1835,6 +1841,7 @@ export default function PlanejamentoPage() {
                               <th className="py-3.5 px-6">Valor Total</th>
                               <th className="py-3.5 px-6">Status</th>
                               <th className="py-3.5 px-6">Progresso</th>
+                              <th className="py-3.5 px-6">Resultado Atingido</th>
                               <th className="py-3.5 px-6">Resumo Conclusão</th>
                               <th className="py-3.5 px-6 text-right">Ações</th>
                             </tr>
@@ -1891,6 +1898,9 @@ export default function PlanejamentoPage() {
                                         <div className={`h-full rounded-full ${pa.status === 'CONCLUIDO' ? 'bg-[#1B4D3E]' : 'bg-blue-500'}`} style={{ width: `${pa.percentualRealizado}%` }}></div>
                                       </div>
                                     </div>
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-700 font-mono font-bold whitespace-nowrap">
+                                    {pa.status === 'CONCLUIDO' ? (pa.resultadoAtingido || '-') : '-'}
                                   </td>
                                   <td className="py-4 px-6 text-slate-500 max-w-[200px] truncate" title={pa.resumoConclusao || ''}>
                                     {pa.resumoConclusao || '-'}
@@ -2426,18 +2436,6 @@ export default function PlanejamentoPage() {
                       className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
                   </div>
                 </div>
-
-                {/* Se o plano estiver Concluído, mostrar Resumo de Execução abaixo da linha principal */}
-                {currentPlano.status === 'CONCLUIDO' && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resumo de Execução:</span>
-                    <textarea value={currentPlano.resumoConclusao || ''}
-                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
-                      placeholder="Digite o resumo da execução..."
-                      rows={2}
-                      className="text-xs font-bold text-slate-700 bg-transparent border-none outline-none mt-1 w-full focus:bg-slate-50 focus:px-2 rounded resize-none" />
-                  </div>
-                )}
               </div>
 
               {/* Card Direita: Donut Metrics */}
@@ -2480,6 +2478,19 @@ export default function PlanejamentoPage() {
                     {formatCurrency(currentPlano.acoes?.reduce((acc, a) => acc + (a.howMuch || 0), 0) || 0)}
                   </span>
                 </div>
+                {/* Se o plano estiver Concluído, mostrar Resumo de Execução */}
+                {currentPlano.status === 'CONCLUIDO' && (
+                  <div className="border-t border-slate-100 pt-3 flex flex-col gap-1.5">
+                    <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider">Resumo de Execução:</span>
+                    <textarea 
+                      value={currentPlano.resumoConclusao || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, resumoConclusao: e.target.value }))}
+                      placeholder="Digite o resumo da execução..."
+                      rows={3}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
