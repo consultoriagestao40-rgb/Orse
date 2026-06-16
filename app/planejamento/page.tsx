@@ -209,6 +209,19 @@ export default function PlanejamentoPage() {
     acoes: []
   });
 
+  const [isAcaoModalOpen, setIsAcaoModalOpen] = useState(false);
+  const [newAcao, setNewAcao] = useState<Partial<SubAction>>({
+    what: '',
+    why: '',
+    where: '',
+    when: new Date().toISOString().split('T')[0],
+    who: '',
+    how: '',
+    howMuch: 0,
+    status: 'PENDENTE',
+    evidencia: ''
+  });
+
   const updateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
     setCurrentPlano(prev => {
       const acoes = (prev.acoes || []).map(a => {
@@ -254,25 +267,51 @@ export default function PlanejamentoPage() {
   };
 
   const handleAddSubActionInline = () => {
+    setNewAcao({
+      what: '',
+      why: '',
+      where: '',
+      when: new Date().toISOString().split('T')[0],
+      who: '',
+      how: '',
+      howMuch: 0,
+      status: 'PENDENTE',
+      evidencia: ''
+    });
+    setIsAcaoModalOpen(true);
+  };
+
+  const handleSaveNewAcao = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newSub: SubAction = {
+      id: 'sub-' + Date.now(),
+      what: newAcao.what || '',
+      why: newAcao.why || '',
+      where: newAcao.where || '',
+      when: newAcao.when || new Date().toISOString().split('T')[0],
+      who: newAcao.who || '',
+      how: newAcao.how || '',
+      howMuch: newAcao.howMuch || 0,
+      status: newAcao.status || 'PENDENTE',
+      percentualRealizado: newAcao.status === 'CONCLUIDO' ? 100 : 0,
+      evidencia: newAcao.evidencia || ''
+    };
+
     setCurrentPlano(prev => {
-      const newSub: SubAction = {
-        id: 'sub-' + Date.now(),
-        what: '',
-        why: '',
-        where: '',
-        when: new Date().toISOString().split('T')[0],
-        who: '',
-        how: '',
-        howMuch: 0,
-        status: 'PENDENTE',
-        percentualRealizado: 0,
-        evidencia: ''
-      };
+      const acoes = [...(prev.acoes || []), newSub];
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
+      }
       return {
         ...prev,
-        acoes: [...(prev.acoes || []), newSub]
+        acoes,
+        percentualRealizado
       };
     });
+
+    setIsAcaoModalOpen(false);
   };
 
   const handleUpdateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
@@ -2293,12 +2332,12 @@ export default function PlanejamentoPage() {
                             <tr key={a.id} className="hover:bg-slate-50/40 transition-colors">
                               <td className="py-3 px-4 text-center text-slate-500 font-mono border-r border-slate-100">{formattedIdx}</td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" value={a.what || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'what', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="O que fará?" />
+                                <input type="text" readOnly value={a.what || ''}
+                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" value={a.why || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'why', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Por quê?" />
+                                <input type="text" readOnly value={a.why || ''}
+                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <div className="flex justify-center w-full">
@@ -2323,8 +2362,8 @@ export default function PlanejamentoPage() {
                                 </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" value={a.where || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'where', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Onde?" />
+                                <input type="text" readOnly value={a.where || ''}
+                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <div className="relative w-full h-8 flex items-center bg-slate-50/50 border border-slate-200 rounded-lg px-2 text-xs font-bold text-slate-700 focus-within:border-[#1B4D3E] focus-within:bg-white">
@@ -2342,19 +2381,19 @@ export default function PlanejamentoPage() {
                                 </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" value={a.how || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'how', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Como?" />
+                                <input type="text" readOnly value={a.how || ''}
+                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <div className="relative">
                                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
-                                  <input type="number" value={a.howMuch || 0} onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
-                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-5 pr-1 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
+                                  <input type="text" readOnly value={a.howMuch || 0}
+                                    className="w-full bg-slate-50 border-none rounded-lg pl-6 pr-1 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
                                 </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <select value={a.status || 'PENDENTE'} onChange={(e) => handleUpdateSubActionField(a.id, 'status', e.target.value)}
-                                  className={`w-full border-none rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider outline-none cursor-pointer text-center ${
+                                <select disabled value={a.status || 'PENDENTE'}
+                                  className={`w-full border-none rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider outline-none cursor-default text-center appearance-none ${
                                     a.status === 'CONCLUIDO'
                                       ? 'bg-emerald-100 text-emerald-800'
                                       : a.status === 'EM_ANDAMENTO'
@@ -2370,8 +2409,8 @@ export default function PlanejamentoPage() {
                                 </select>
                               </td>
                               <td className="py-2 px-2.5">
-                                <input type="text" value={a.evidencia || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'evidencia', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Evidência..." />
+                                <input type="text" readOnly value={a.evidencia || ''}
+                                  className="w-full bg-slate-50 border-none rounded-lg px-2 py-1.5 text-xs font-bold text-slate-500 outline-none cursor-default" />
                               </td>
                               <td className="py-2 px-2 text-center">
                                 <button type="button" onClick={() => handleDeleteSubAction(a.id)}
@@ -2449,6 +2488,155 @@ export default function PlanejamentoPage() {
                 <button 
                   type="button" 
                   onClick={() => setIsOkrModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CADASTRAR NOVA AÇÃO (5W2H) */}
+      {isAcaoModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Cadastrar Nova Ação (5W2H)</h3>
+              <button type="button" onClick={() => setIsAcaoModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+                <X size={16} />
+              </button>
+            </header>
+            
+            <form onSubmit={handleSaveNewAcao} className="p-6 space-y-4">
+              {/* O Quê & Por Quê */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">O QUÊ (What)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={newAcao.what || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, what: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="O que será feito?"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">POR QUÊ (Why)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={newAcao.why || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, why: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Por que será feito?"
+                  />
+                </div>
+              </div>
+
+              {/* Quem, Onde, Quando */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">QUEM (Who)</label>
+                  <select 
+                    required
+                    value={newAcao.who || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, who: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] cursor-pointer">
+                    <option value="">Selecione...</option>
+                    {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">ONDE (Where)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={newAcao.where || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, where: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Onde será feito?"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">QUANDO (When)</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={newAcao.when || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, when: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                  />
+                </div>
+              </div>
+
+              {/* Como & Quanto */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">COMO (How)</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={newAcao.how || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, how: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Como será feito?"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">QUANTO (How Much)</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                    <input 
+                      type="number" 
+                      required
+                      value={newAcao.howMuch ?? 0}
+                      onChange={(e) => setNewAcao(prev => ({ ...prev, howMuch: parseFloat(e.target.value) || 0 }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                      placeholder="Custo estimado"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Evidência */}
+              <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">STATUS</label>
+                  <select 
+                    value={newAcao.status || 'PENDENTE'}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, status: e.target.value as any }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] cursor-pointer">
+                    <option value="PENDENTE">Em Aberto</option>
+                    <option value="EM_ANDAMENTO">Em Andamento</option>
+                    <option value="EM_ATRASO">Em Atraso</option>
+                    <option value="CONCLUIDO">Concluído</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">EVIDÊNCIA / COMENTÁRIOS</label>
+                  <input 
+                    type="text" 
+                    value={newAcao.evidencia || ''}
+                    onChange={(e) => setNewAcao(prev => ({ ...prev, evidencia: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Evidências ou comentários sobre a ação"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setIsAcaoModalOpen(false)}
                   className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
                 >
                   Cancelar
