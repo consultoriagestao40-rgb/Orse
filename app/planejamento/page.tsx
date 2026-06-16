@@ -2306,8 +2306,8 @@ export default function PlanejamentoPage() {
                                   className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Onde?" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="text" value={a.when || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Ex: 01/06-15/06/2024" />
+                                <input type="date" value={a.when || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white cursor-pointer" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <input type="text" value={a.how || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'how', e.target.value)}
