@@ -554,7 +554,10 @@ export default function PlanejamentoPage() {
   const handleOpenKrModal = (objectiveId: string, kr?: KR) => {
     setCurrentKrObjectiveId(objectiveId);
     if (kr) {
-      setCurrentKr(kr);
+      setCurrentKr({
+        ...kr,
+        dataFim: kr.dataFim || ''
+      });
     } else {
       setCurrentKr({
         id: '',
@@ -2841,9 +2844,16 @@ export default function PlanejamentoPage() {
                                                     className="bg-white border border-slate-250 hover:border-slate-350 rounded-2xl p-3 shadow-2xs w-full max-w-[250px] z-10 transition-all hover:shadow-xs relative"
                                                   >
                                                     <div className="flex justify-between items-start gap-2">
-                                                      <p className="text-[10px] font-extrabold text-slate-700 leading-snug text-left line-clamp-2">
-                                                        {kr.descricao}
-                                                      </p>
+                                                      <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-extrabold text-slate-700 leading-snug text-left line-clamp-2">
+                                                          {kr.descricao}
+                                                        </p>
+                                                        {kr.dataFim && (
+                                                          <span className="text-[8.5px] font-bold text-slate-400 block mt-0.5 text-left">
+                                                            Prazo: {formatLocalDate(kr.dataFim)}
+                                                          </span>
+                                                        )}
+                                                      </div>
                                                       <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm shrink-0 uppercase border ${
                                                         kr.status === 'CONCLUIDO' ? 'bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]' :
                                                         kr.status === 'QUASE_LA' ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FED7AA]' :
