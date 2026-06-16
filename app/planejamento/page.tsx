@@ -202,6 +202,7 @@ export default function PlanejamentoPage() {
     responsavelId: '',
     resultadoEsperado: '',
     resultadoAtingido: '',
+    dataInicio: '',
     dataFim: '',
     percentualRealizado: 0,
     status: 'PENDENTE',
@@ -908,6 +909,7 @@ export default function PlanejamentoPage() {
                         responsavelId: '',
                         resultadoEsperado: '',
                         resultadoAtingido: '',
+                        dataInicio: new Date().toISOString().split('T')[0],
                         dataFim: new Date().toISOString().split('T')[0],
                         percentualRealizado: 0,
                         status: 'PENDENTE',
@@ -2073,479 +2075,277 @@ export default function PlanejamentoPage() {
         const openPct = totalActions > 0 ? Math.round((openCount / totalActions) * 100) : 0;
         
         const responsavelGeral = users.find(u => u.id === currentPlano.responsavelId);
-        const associatedCausa = causas.find(c => c.id === currentPlano.causaRaizId);
 
         return (
-          <div className="animate-in fade-in duration-200">
-            <div className="bg-white rounded-[32px] shadow-sm w-full flex flex-col overflow-hidden border border-slate-200">
-              
-              {/* Cabeçalho Premium */}
-              <header className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50/50 via-white to-white select-none shrink-0">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] shadow-2xs">
-                    <ClipboardList size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest leading-none">
-                      {currentPlano.id ? 'Detalhamento do Plano de Ação' : 'Criar Novo Plano de Ação'}
-                    </h3>
-                    {currentPlano.id && (
-                      <p className="text-[10px] font-bold text-slate-400 mt-2">
-                        {completedActions} de {totalActions} sub-ações concluídas
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setIsEditingPlano(false)} 
-                  className="flex items-center gap-2 text-xs font-black uppercase text-slate-500 hover:text-[#1B4D3E] cursor-pointer border-none bg-transparent transition-colors"
-                >
-                  <ArrowLeft size={16} /> Voltar para Planos
+          <div className="space-y-4 animate-in fade-in duration-200">
+
+            {/* Barra superior com botão Voltar + Salvar */}
+            <div className="flex items-center justify-between">
+              <button type="button" onClick={() => setIsEditingPlano(false)}
+                className="flex items-center gap-2 text-xs font-black uppercase text-slate-500 hover:text-[#1B4D3E] bg-transparent border-none cursor-pointer transition-colors">
+                <ArrowLeft size={15} /> Voltar para Planos
+              </button>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setIsEditingPlano(false)}
+                  className="px-5 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white transition-all">
+                  Cancelar
                 </button>
-              </header>
-              
-              <form onSubmit={handleSavePlano} className="p-8 overflow-y-auto space-y-6 flex-1">
-                
-                {/* Painel de Resumo / Referência (Estilo do Canvas da Imagem) */}
-                {currentPlano.id && (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50/50 border border-slate-200/80 rounded-3xl p-6 shadow-3xs select-none">
-                    {/* Informações Gerais do Plano (Coluna Dupla) */}
-                    <div className="lg:col-span-2 space-y-4">
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Plano de Ação</span>
-                        <h4 className="text-base font-black text-slate-800 uppercase tracking-wide leading-tight">
-                          {currentPlano.titulo}
-                        </h4>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-                        <div>
-                          <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">Responsável</span>
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            {responsavelGeral && (
-                              responsavelGeral.avatarUrl ? (
-                                <img src={responsavelGeral.avatarUrl} alt={responsavelGeral.nome} className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200" />
-                              ) : (
-                                <div className="w-5.5 h-5.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                                  {responsavelGeral.nome.substring(0, 2)}
-                                </div>
-                              )
-                            )}
-                            <span className="text-[10px] font-black text-slate-700 uppercase">{responsavelGeral?.nome || 'Sem resp.'}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">Causa Vinculada</span>
-                          <span className="text-[10px] font-black text-slate-600 block mt-2 uppercase truncate" title={associatedCausa?.causaRaiz}>
-                            {associatedCausa ? associatedCausa.causaRaiz : currentPlano.problemaDireto || 'Entrada Direta'}
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">Prazo Final</span>
-                          <span className="text-[10px] font-black text-slate-700 font-mono block mt-2">
-                            {formatLocalDate(currentPlano.dataFim)}
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">Status do Plano</span>
-                          <div className="mt-1">
-                            <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 inline-block ${
-                              currentPlano.status === 'CONCLUIDO' 
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-                                : currentPlano.status === 'ATRASADO'
-                                ? 'bg-rose-50 border-rose-200 text-rose-800'
-                                : 'bg-blue-50 border-blue-200 text-blue-800'
-                            }`}>
-                              {currentPlano.status === 'CONCLUIDO' ? 'Concluído' : currentPlano.status === 'ATRASADO' ? 'Atrasado' : 'Em Andamento'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Métricas Circulares (Coluna Simples) */}
-                    <div className="flex gap-4 items-center justify-around border-t lg:border-t-0 lg:border-l border-slate-200/80 pt-4 lg:pt-0 lg:pl-6">
-                      <div className="flex flex-col items-center gap-1 text-center">
-                        <span className="text-[8px] font-black text-slate-450 uppercase tracking-wider">Ações Concluídas</span>
-                        <div className="relative w-12 h-12 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="24" cy="24" r="18" className="stroke-slate-100 fill-none stroke-[3.5px]" />
-                            <circle 
-                              cx="24" 
-                              cy="24" 
-                              r="18" 
-                              className="fill-none stroke-[4px] stroke-linecap-round transition-all duration-500 stroke-emerald-500" 
-                              style={{ 
-                                strokeDasharray: 2 * Math.PI * 18,
-                                strokeDashoffset: (2 * Math.PI * 18) - (completedPct / 100) * (2 * Math.PI * 18)
-                              }} 
-                            />
-                          </svg>
-                          <span className="absolute text-[9px] font-black text-slate-700">{completedPct}%</span>
-                        </div>
-                        <span className="text-[9px] font-bold text-slate-400">({completedActions})</span>
-                      </div>
-                      
-                      <div className="flex flex-col items-center gap-1 text-center">
-                        <span className="text-[8px] font-black text-slate-450 uppercase tracking-wider">Em Aberto</span>
-                        <div className="relative w-12 h-12 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="24" cy="24" r="18" className="stroke-slate-100 fill-none stroke-[3.5px]" />
-                            <circle 
-                              cx="24" 
-                              cy="24" 
-                              r="18" 
-                              className="fill-none stroke-[4px] stroke-linecap-round transition-all duration-500 stroke-amber-500" 
-                              style={{ 
-                                strokeDasharray: 2 * Math.PI * 18,
-                                strokeDashoffset: (2 * Math.PI * 18) - (openPct / 100) * (2 * Math.PI * 18)
-                              }} 
-                            />
-                          </svg>
-                          <span className="absolute text-[9px] font-black text-slate-700">{openPct}%</span>
-                        </div>
-                        <span className="text-[9px] font-bold text-slate-400">({openCount})</span>
-                      </div>
-                      
-                      <div className="flex flex-col items-center gap-1 text-center">
-                        <span className="text-[8px] font-black text-slate-450 uppercase tracking-wider">Em Atraso</span>
-                        <div className="relative w-12 h-12 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="24" cy="24" r="18" className="stroke-slate-100 fill-none stroke-[3.5px]" />
-                            <circle 
-                              cx="24" 
-                              cy="24" 
-                              r="18" 
-                              className="fill-none stroke-[4px] stroke-linecap-round transition-all duration-500 stroke-rose-500" 
-                              style={{ 
-                                strokeDasharray: 2 * Math.PI * 18,
-                                strokeDashoffset: (2 * Math.PI * 18) - (delayedPct / 100) * (2 * Math.PI * 18)
-                              }} 
-                            />
-                          </svg>
-                          <span className="absolute text-[9px] font-black text-slate-700">{delayedPct}%</span>
-                        </div>
-                        <span className="text-[9px] font-bold text-slate-400">({delayedCount})</span>
-                      </div>
-                    </div>
+              </div>
+            </div>
+
+            {/* Cards Superiores */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
+              {/* Card Esquerda: Detalhes do Plano */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+                {/* Primeira linha: Plano de Ação + Status */}
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plano de Ação:</span>
+                    <input type="text" required value={currentPlano.titulo || ''}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, titulo: e.target.value }))}
+                      className="text-lg font-black text-slate-800 bg-transparent border-none outline-none w-full p-0 focus:bg-slate-50 focus:px-2 rounded-lg mt-0.5"
+                      placeholder="Implementação de Novo CRM" />
                   </div>
-                )}
-                
-                {/* Seção 1: Informações Gerais */}
-                <div className="bg-slate-50/50 border border-slate-200/60 rounded-3xl p-6 space-y-5">
-                  <div className="flex items-center gap-2 select-none border-b border-slate-100 pb-3">
-                    <Layers size={13} className="text-[#1B4D3E]" />
-                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider">Informações Gerais do Plano</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-1.5">
-                      <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Título do Plano</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={currentPlano.titulo || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, titulo: e.target.value }))}
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 placeholder:text-slate-300"
-                        placeholder="Ex: Plano de Melhoria de Entregas"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Vincular Causa Raiz</label>
-                      <select
-                        value={currentPlano.causaRaizId || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 cursor-pointer"
-                      >
-                        <option value="">Nenhum vínculo (Entrada Direta)</option>
-                        {causas.map(c => (
-                          <option key={c.id} value={c.id}>{c.causaRaiz}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {!currentPlano.causaRaizId && (
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Problema Direto (Opcional)</label>
-                        <input 
-                          type="text"
-                          value={currentPlano.problemaDireto || ''}
-                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, problemaDireto: e.target.value }))}
-                          className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 placeholder:text-slate-300"
-                          placeholder="Caso não tenha feito a análise, insira o problema direto aqui"
-                        />
-                      </div>
-                    )}
-
-                    <div className="space-y-1.5">
-                      <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Dono do Plano (Responsável Geral)</label>
-                      <select
-                        required
-                        value={currentPlano.responsavelId || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, responsavelId: e.target.value }))}
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 cursor-pointer"
-                      >
-                        <option value="">Selecione o Responsável Geral...</option>
-                        {users.map(u => (
-                          <option key={u.id} value={u.id}>{u.nome}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Prazo Final Consolidado</label>
-                      <input 
-                        type="date" 
-                        required
-                        value={currentPlano.dataFim || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 col-span-1 md:col-span-2">
-                      <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Resultado Esperado</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={currentPlano.resultadoEsperado || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoEsperado: e.target.value }))}
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 placeholder:text-slate-300"
-                        placeholder="Métricas ou resultados que desejamos atingir"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 col-span-1 md:col-span-2">
-                      <label className="text-[9.5px] font-black text-slate-450 uppercase tracking-wider block">Resultados Atingidos (Pós-Execução)</label>
-                      <input 
-                        type="text"
-                        value={currentPlano.resultadoAtingido || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 placeholder:text-slate-300"
-                        placeholder="Descrição dos resultados reais após a execução"
-                      />
-                    </div>
+                  <div className="shrink-0 text-right">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
+                    <select value={currentPlano.status || 'PENDENTE'}
+                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, status: e.target.value as any }))}
+                      className={`text-lg font-black bg-transparent border-none outline-none cursor-pointer p-0 mt-0.5 ${
+                        currentPlano.status === 'CONCLUIDO' ? 'text-emerald-600' : currentPlano.status === 'ATRASADO' ? 'text-rose-600' : 'text-blue-600'
+                      }`}>
+                      <option value="PENDENTE">Em Andamento</option>
+                      <option value="CONCLUIDO">Concluído</option>
+                      <option value="ATRASADO">Atrasado</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Seção 2: Tabela de Ações 5W2H */}
-                {currentPlano.id ? (
-                  <div className="border border-slate-200/80 rounded-3xl p-6 space-y-4 bg-white shadow-3xs">
-                    <div className="flex justify-between items-center select-none pb-2 border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <Target size={14} className="text-[#1B4D3E]" />
-                        <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider">Tabela de Ações 5W2H (Edição Direta)</span>
+                {/* Segunda linha: Responsável + Row (Tipo, Início, Fim, Status) */}
+                <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6 mt-6 pt-4 border-t border-slate-100 items-center">
+                  {/* Responsável */}
+                  <div className="flex items-center gap-2.5">
+                    {responsavelGeral?.avatarUrl ? (
+                      <img src={responsavelGeral.avatarUrl} alt={responsavelGeral.nome} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-sm font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
+                        {responsavelGeral?.nome?.substring(0, 2) || 'RS'}
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleAddSubActionInline}
-                        className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl transition-all cursor-pointer border-none flex items-center gap-1.5 shadow-xs hover:shadow-sm"
-                      >
-                        <Plus size={14} /> Adicionar Ação (5W2H)
-                      </button>
+                    )}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Responsável:</span>
+                      <select required value={currentPlano.responsavelId || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, responsavelId: e.target.value }))}
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-0.5 truncate max-w-[150px]">
+                        <option value="">Selecione...</option>
+                        {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
+                      </select>
                     </div>
+                  </div>
 
-                    {/* Tabela de exibição 5W2H com inputs inline */}
-                    <div className="border border-slate-150 rounded-2xl overflow-hidden shadow-3xs max-h-[340px] overflow-y-auto bg-slate-50/10 overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[1250px]">
-                        <thead>
-                          <tr className="bg-slate-50 border-b border-slate-150 select-none text-[8.5px] font-black text-slate-500 uppercase tracking-widest">
-                            <th className="py-3.5 px-4 w-[60px] text-center">ID</th>
-                            <th className="py-3.5 px-4 min-w-[150px]">O QUÊ (What)</th>
-                            <th className="py-3.5 px-4 min-w-[150px]">POR QUÊ (Why)</th>
-                            <th className="py-3.5 px-4 min-w-[185px]">QUEM (Who)</th>
-                            <th className="py-3.5 px-4 min-w-[120px]">ONDE (Where)</th>
-                            <th className="py-3.5 px-4 w-[140px]">QUANDO (When)</th>
-                            <th className="py-3.5 px-4 min-w-[150px]">COMO (How)</th>
-                            <th className="py-3.5 px-4 w-[120px]">QUANTO (How Much)</th>
-                            <th className="py-3.5 px-4 w-[135px]">STATUS</th>
-                            <th className="py-3.5 px-4 min-w-[180px]">EVIDÊNCIA / COMENTÁRIOS</th>
-                            <th className="py-3.5 px-4 w-[60px] text-center">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-[11px] font-bold text-slate-650">
-                          {(!currentPlano.acoes || currentPlano.acoes.length === 0) ? (
-                            <tr>
-                              <td colSpan={11} className="py-8 px-4 text-center italic text-slate-400 text-[10.5px]">
-                                Nenhuma ação cadastrada. Adicione ações no botão acima para montar o plano.
+                  {/* Row: Tipo, Causa, Data Início, Data Fim, Status */}
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tipo:</span>
+                      <span className="text-xs font-black text-slate-800 mt-1.5 block">Estratégico</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Causa Vinculada:</span>
+                      <select value={currentPlano.causaRaizId || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1.5 max-w-[120px] truncate">
+                        <option value="">Entrada Direta</option>
+                        {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
+                      </select>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início:</span>
+                      <input type="date" value={currentPlano.dataInicio || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataInicio: e.target.value }))}
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim:</span>
+                      <input type="date" required value={currentPlano.dataFim || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 mt-1" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
+                      <span className={`text-xs font-black mt-1.5 block uppercase ${
+                        currentPlano.status === 'CONCLUIDO' ? 'text-emerald-600' : currentPlano.status === 'ATRASADO' ? 'text-rose-600' : 'text-blue-600'
+                      }`}>
+                        {currentPlano.status === 'CONCLUIDO' ? 'Concluído' : currentPlano.status === 'ATRASADO' ? 'Atrasado' : 'Em Andamento'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Direita: Donut Metrics */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-around gap-2">
+                {[
+                  { label: 'Ações Concluídas', pct: completedPct, count: completedActions, stroke: 'stroke-emerald-500' },
+                  { label: 'Em Aberto', pct: openPct, count: openCount, stroke: 'stroke-amber-400' },
+                  { label: 'Em Atraso', pct: delayedPct, count: delayedCount, stroke: 'stroke-rose-500' },
+                ].map(metric => (
+                  <div key={metric.label} className="flex flex-col items-center text-center">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">{metric.label}:</span>
+                    <span className="text-[10px] font-black text-slate-700 block mt-0.5">{metric.pct}% ({metric.count})</span>
+                    <div className="relative w-16 h-16 flex items-center justify-center mt-2">
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
+                        <circle cx="28" cy="28" r="22" className="stroke-slate-100 fill-none" strokeWidth="5.5" />
+                        <circle cx="28" cy="28" r="22"
+                          className={`fill-none ${metric.stroke} transition-all duration-700`}
+                          strokeWidth="5.5" strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 22}`}
+                          strokeDashoffset={`${(2 * Math.PI * 22) * (1 - metric.pct / 100)}`} />
+                      </svg>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tabela 5W2H */}
+            <form onSubmit={handleSavePlano} className="space-y-4">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100">
+                  <h3 className="text-sm font-black text-slate-800">5W2H Action Plan Table</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[1250px]">
+                    <thead>
+                      <tr className="bg-[#E0F2FE] border-b border-slate-200 text-[8.5px] font-black text-slate-700 uppercase tracking-widest">
+                        <th className="py-3.5 px-4 w-[70px] text-center border-r border-slate-200">Ação ID</th>
+                        <th className="py-3.5 px-4 min-w-[140px] border-r border-slate-200">O QUÊ <span className="normal-case font-bold text-slate-400">(What)</span></th>
+                        <th className="py-3.5 px-4 min-w-[140px] border-r border-slate-200">POR QUÊ <span className="normal-case font-bold text-slate-400">(Why)</span></th>
+                        <th className="py-3.5 px-4 min-w-[180px] border-r border-slate-200">QUEM <span className="normal-case font-bold text-slate-400">(Who)</span></th>
+                        <th className="py-3.5 px-4 min-w-[120px] border-r border-slate-200">ONDE <span className="normal-case font-bold text-slate-400">(Where)</span></th>
+                        <th className="py-3.5 px-4 w-[145px] border-r border-slate-200">QUANDO <span className="normal-case font-bold text-slate-400">(When)</span></th>
+                        <th className="py-3.5 px-4 min-w-[130px] border-r border-slate-200">COMO <span className="normal-case font-bold text-slate-400">(How)</span></th>
+                        <th className="py-3.5 px-4 w-[125px] border-r border-slate-200">QUANTO <span className="normal-case font-bold text-slate-400">(How Much)</span></th>
+                        <th className="py-3.5 px-4 w-[135px] border-r border-slate-200">STATUS</th>
+                        <th className="py-3.5 px-4 min-w-[170px]">EVIDÊNCIA/COMENTÁRIOS</th>
+                        <th className="py-3.5 px-4 w-[50px]"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                      {(!currentPlano.acoes || currentPlano.acoes.length === 0) ? (
+                        <tr>
+                          <td colSpan={11} className="py-12 px-4 text-center italic text-slate-400 text-xs">
+                            Nenhuma ação cadastrada. Clique em "+ Inserir Nova Ação" abaixo.
+                          </td>
+                        </tr>
+                      ) : (
+                        currentPlano.acoes.map((a, index) => {
+                          const selectedUser = users.find(u => u.id === a.who);
+                          const formattedIdx = String(index + 1).padStart(3, '0');
+                          return (
+                            <tr key={a.id} className="hover:bg-slate-50/40 transition-colors">
+                              <td className="py-3 px-4 text-center text-slate-500 font-mono border-r border-slate-100">{formattedIdx}</td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <input type="text" value={a.what || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'what', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="O que fará?" />
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <input type="text" value={a.why || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'why', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Por quê?" />
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <div className="flex items-center gap-1.5 w-full">
+                                  {selectedUser && (selectedUser.avatarUrl ? (
+                                    <img src={selectedUser.avatarUrl} alt={selectedUser.nome} className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0" />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] uppercase shrink-0">
+                                      {selectedUser.nome.substring(0, 2)}
+                                    </div>
+                                  ))}
+                                  <select value={a.who || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'who', e.target.value)}
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-1.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] cursor-pointer">
+                                    <option value="">Selecione...</option>
+                                    {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
+                                  </select>
+                                </div>
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <input type="text" value={a.where || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'where', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Onde?" />
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <input type="text" value={a.when || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Ex: 01/06-15/06/2024" />
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <input type="text" value={a.how || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'how', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Como?" />
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
+                                  <input type="number" value={a.howMuch || 0} onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-5 pr-1 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
+                                </div>
+                              </td>
+                              <td className="py-2 px-2.5 border-r border-slate-100">
+                                <select value={a.status || 'PENDENTE'} onChange={(e) => handleUpdateSubActionField(a.id, 'status', e.target.value)}
+                                  className={`w-full border-none rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider outline-none cursor-pointer text-center ${
+                                    a.status === 'CONCLUIDO'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : a.status === 'EM_ANDAMENTO'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : a.status === 'EM_ATRASO'
+                                      ? 'bg-rose-100 text-rose-800'
+                                      : 'bg-amber-100 text-amber-800'
+                                  }`}>
+                                  <option value="PENDENTE">Em Aberto</option>
+                                  <option value="EM_ANDAMENTO">Em Andamento</option>
+                                  <option value="EM_ATRASO">Em Atraso</option>
+                                  <option value="CONCLUIDO">Concluído</option>
+                                </select>
+                              </td>
+                              <td className="py-2 px-2.5">
+                                <input type="text" value={a.evidencia || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'evidencia', e.target.value)}
+                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Evidência..." />
+                              </td>
+                              <td className="py-2 px-2 text-center">
+                                <button type="button" onClick={() => handleDeleteSubAction(a.id)}
+                                  className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer border-none bg-transparent">
+                                  <Trash2 size={13} />
+                                </button>
                               </td>
                             </tr>
-                          ) : (
-                            currentPlano.acoes.map((a, index) => {
-                              const selectedUser = users.find(u => u.id === a.who);
-                              const formattedIdx = String(index + 1).padStart(3, '0');
-                              return (
-                                <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="py-3 px-3 text-center text-slate-400 font-mono text-xs">
-                                    {formattedIdx}
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <input
-                                      type="text"
-                                      value={a.what || ''}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'what', e.target.value)}
-                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
-                                      placeholder="O que fará?"
-                                    />
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <input
-                                      type="text"
-                                      value={a.why || ''}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'why', e.target.value)}
-                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
-                                      placeholder="Por que fará?"
-                                    />
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <div className="flex items-center gap-2 min-w-[160px]">
-                                      {selectedUser && (
-                                        selectedUser.avatarUrl ? (
-                                          <img 
-                                            src={selectedUser.avatarUrl} 
-                                            alt={selectedUser.nome} 
-                                            className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0"
-                                          />
-                                        ) : (
-                                          <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-black text-[#1B4D3E] uppercase shrink-0">
-                                            {selectedUser.nome.substring(0, 2)}
-                                          </div>
-                                        )
-                                      )}
-                                      <select
-                                        value={a.who || ''}
-                                        onChange={(e) => handleUpdateSubActionField(a.id, 'who', e.target.value)}
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 cursor-pointer"
-                                      >
-                                        <option value="">Selecione...</option>
-                                        {users.map(u => (
-                                          <option key={u.id} value={u.id}>{u.nome}</option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <input
-                                      type="text"
-                                      value={a.where || ''}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'where', e.target.value)}
-                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
-                                      placeholder="Onde fará?"
-                                    />
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <input
-                                      type="date"
-                                      value={a.when ? a.when.substring(0, 10) : ''}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
-                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 cursor-pointer"
-                                    />
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <input
-                                      type="text"
-                                      value={a.how || ''}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'how', e.target.value)}
-                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
-                                      placeholder="Como fará?"
-                                    />
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <div className="relative min-w-[100px]">
-                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
-                                      <input
-                                        type="number"
-                                        value={a.howMuch || 0}
-                                        onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
-                                        className="w-full bg-white border border-slate-200 rounded-xl pl-7 pr-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
-                                      />
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <select
-                                      value={a.status || 'PENDENTE'}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'status', e.target.value)}
-                                      className={`w-full border rounded-xl px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider outline-none transition-all cursor-pointer ${
-                                        a.status === 'CONCLUIDO'
-                                          ? 'bg-emerald-50 border-emerald-200/80 text-emerald-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10'
-                                          : a.status === 'EM_ANDAMENTO'
-                                          ? 'bg-blue-50 border-blue-200/80 text-blue-800 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/10'
-                                          : a.status === 'EM_ATRASO'
-                                          ? 'bg-rose-50 border-rose-200/80 text-rose-800 focus:border-rose-400 focus:ring-2 focus:ring-rose-400/10'
-                                          : 'bg-amber-50 border-amber-200/80 text-amber-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/10'
-                                      }`}
-                                    >
-                                      <option value="PENDENTE">⏳ Em Aberto</option>
-                                      <option value="EM_ANDAMENTO">⚡ Em Andamento</option>
-                                      <option value="EM_ATRASO">🚨 Em Atraso</option>
-                                      <option value="CONCLUIDO">✅ Concluído</option>
-                                    </select>
-                                  </td>
-                                  <td className="py-3 px-3">
-                                    <input
-                                      type="text"
-                                      value={a.evidencia || ''}
-                                      onChange={(e) => handleUpdateSubActionField(a.id, 'evidencia', e.target.value)}
-                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
-                                      placeholder="Link ou observações..."
-                                    />
-                                  </td>
-                                  <td className="py-3 px-3 text-center">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteSubAction(a.id)}
-                                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50/50 rounded-xl transition-all cursor-pointer border-none bg-transparent"
-                                      title="Excluir sub-ação"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-slate-50 border border-slate-200 border-dashed rounded-3xl p-6 text-center text-slate-500 italic text-xs select-none">
-                    Salve as informações gerais do plano primeiro para habilitar a criação de sub-ações 5W2H.
-                  </div>
-                )}
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Botão Inserir Nova Ação */}
+                <div className="p-4 border-t border-slate-100">
+                  <button type="button" onClick={handleAddSubActionInline}
+                    className="w-full py-2.5 bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-2 shadow-xs">
+                    <Plus size={16} /> Inserir Nova Ação
+                  </button>
+                </div>
+              </div>
 
-                {/* Botões de Rodapé do Modal com Barra de Progresso Realçado */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-5 pt-6 border-t border-slate-100 select-none shrink-0">
-                  <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <div className="flex flex-col gap-1 w-full sm:w-[260px]">
-                      <div className="flex justify-between items-center text-[10px] font-black text-slate-450 uppercase tracking-widest">
-                        <span>Progresso Geral</span>
-                        <span className="text-[#1B4D3E] font-black">{currentPlano.percentualRealizado || 0}%</span>
-                      </div>
-                      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/80">
-                        <div 
-                          className="h-full bg-gradient-to-r from-emerald-400 to-[#1B4D3E] rounded-full transition-all duration-500" 
-                          style={{ width: `${currentPlano.percentualRealizado || 0}%` }}
-                        />
-                      </div>
-                    </div>
+              {/* Rodapé: Progresso + Salvar */}
+              <div className="flex items-center justify-between gap-4 pb-2">
+                <div className="flex items-center gap-3 flex-1 max-w-xs">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Progresso</span>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div className="h-full bg-gradient-to-r from-emerald-400 to-[#1B4D3E] rounded-full transition-all duration-500"
+                      style={{ width: `${currentPlano.percentualRealizado || 0}%` }} />
                   </div>
-                  <div className="flex gap-3 w-full sm:w-auto justify-end">
-                    <button 
-                      type="button" 
-                      onClick={() => setIsEditingPlano(false)}
-                      className="px-6 py-3 border border-slate-250 rounded-2xl text-xs font-black text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer bg-white transition-all uppercase tracking-wider"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit"
-                      className="px-8 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer border-none"
+                  <span className="text-[10px] font-black text-[#1B4D3E] whitespace-nowrap">{currentPlano.percentualRealizado || 0}%</span>
+                </div>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setIsEditingPlano(false)}
+                    className="px-6 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white transition-all">
+                    Cancelar
+                  </button>
+                  <button type="submit"
+                    className="px-8 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none transition-all cursor-pointer border-none"
                     >
                       Salvar
                     </button>

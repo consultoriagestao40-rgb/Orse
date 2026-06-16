@@ -54,6 +54,7 @@ export interface ActionPlan {
   responsavelId: string; // Criador/Responsável geral
   resultadoEsperado: string;
   resultadoAtingido?: string;
+  dataInicio?: string;   // Data de início do plano de ação
   dataFim: string;       // Prazo final consolidado do plano de ação
   status: 'PENDENTE' | 'ATRASADO' | 'CONCLUIDO';
   percentualRealizado: number; // Média baseada nas sub-ações
