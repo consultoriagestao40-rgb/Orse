@@ -556,7 +556,7 @@ export default function PlanejamentoPage() {
               ></div>
             </div>
             <div className="flex justify-between text-[9px] font-black text-slate-400 mt-1">
-              <span>VALOR TOTAL</span>
+              <span>CUSTO TOTAL</span>
               <span className="text-[#1B4D3E] font-black">{formatCurrency(pa.acoes?.reduce((acc, a) => acc + (a.howMuch || 0), 0) || 0)}</span>
             </div>
           </div>
@@ -1828,7 +1828,7 @@ export default function PlanejamentoPage() {
                               <th className="py-3.5 px-6">Causa Vinculada / Problema</th>
                               <th className="py-3.5 px-6">Responsável</th>
                               <th className="py-3.5 px-6">Prazo Final</th>
-                              <th className="py-3.5 px-6">Valor Total</th>
+                              <th className="py-3.5 px-6">Custo Total</th>
                               <th className="py-3.5 px-6">Status</th>
                               <th className="py-3.5 px-6">Progresso</th>
                               <th className="py-3.5 px-6">Resultado Atingido</th>
@@ -2459,7 +2459,7 @@ export default function PlanejamentoPage() {
                 </div>
                 {/* Custo Total do Plano */}
                 <div className="flex justify-between items-center border-t border-slate-100 pt-3">
-                  <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider">Valor Total do Plano:</span>
+                  <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider">Custo Total do Plano:</span>
                   <span className="text-sm font-black text-[#1B4D3E]">
                     {formatCurrency(currentPlano.acoes?.reduce((acc, a) => acc + (a.howMuch || 0), 0) || 0)}
                   </span>
