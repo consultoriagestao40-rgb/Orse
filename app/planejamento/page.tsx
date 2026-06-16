@@ -2603,26 +2603,17 @@ export default function PlanejamentoPage() {
                                                  onClick={() => handleOpenActionsModal(obj.id, kr)} 
                                                  className="py-4 hover:bg-slate-50/30 transition-all duration-200 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-6"
                                                >
-                                                 {/* Left Column: Description, Date & Progress */}
-                                                 <div className="flex-1 min-w-0 space-y-2">
-                                                   <div className="flex justify-between items-start gap-4">
-                                                     <div className="min-w-0">
-                                                       <p className="text-xs font-black text-slate-750">
-                                                         KR {objIdx + 1}.{krIdx + 1}: {kr.descricao}
-                                                       </p>
-                                                       {kr.dataFim && (
-                                                         <div className="text-[9.5px] font-bold text-slate-400 mt-1 flex items-center gap-1">
-                                                           <Calendar size={11} className="text-slate-400 shrink-0" />
-                                                           <span>Prazo: {formatLocalDate(kr.dataFim)}</span>
-                                                         </div>
-                                                       )}
-                                                     </div>
-                                                     <span className="text-xs font-black text-slate-800 shrink-0">
-                                                       {formatKrValue(kr.valorAtual, kr.unidade)} / {formatKrValue(kr.valorAlvo, kr.unidade)}
-                                                     </span>
-                                                   </div>
-
-                                                   {/* Purple progress bar matching Mereo style */}
+                                                 {/* Left Column: Description & Progress */}
+                                                  <div className="flex-1 min-w-0 space-y-2">
+                                                    <div className="flex justify-between items-start gap-4">
+                                                      <p className="text-xs font-black text-slate-750">
+                                                        KR {objIdx + 1}.{krIdx + 1}: {kr.descricao}
+                                                      </p>
+                                                      <span className="text-xs font-black text-slate-800 shrink-0">
+                                                        {formatKrValue(kr.valorAtual, kr.unidade)} / {formatKrValue(kr.valorAlvo, kr.unidade)}
+                                                      </span>
+                                                    </div>
+                                                    {/* Purple progress bar matching Mereo style */}
                                                    <div className="relative w-full pt-1 pb-4">
                                                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                                        <div 
@@ -2643,9 +2634,19 @@ export default function PlanejamentoPage() {
                                                    </div>
                                                  </div>
 
-                                                 {/* Right Column: Status, Owner & Actions Menu */}
-                                                 <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end md:w-[35%] lg:w-[30%]">
-                                                   {/* Status Badge */}
+                                                 {/* Right Column: Date, Status, Owner & Actions Menu */}
+                                                  <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end md:w-[45%] lg:w-[40%]">
+                                                    {/* Date Column */}
+                                                    {kr.dataFim ? (
+                                                      <div className="text-[10px] font-bold text-slate-550 flex items-center gap-1 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                                                        <Calendar size={11} className="text-slate-400 shrink-0" />
+                                                        <span>{formatLocalDate(kr.dataFim)}</span>
+                                                      </div>
+                                                    ) : (
+                                                      <span className="text-[9.5px] font-bold text-slate-300 italic shrink-0">Sem prazo</span>
+                                                    )}
+
+                                                    {/* Status Badge */}
                                                    <span className={`text-[8.5px] font-black px-2.5 py-1 rounded-lg uppercase border tracking-wider shrink-0 ${
                                                      kr.status === 'CONCLUIDO' ? 'bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]' :
                                                      kr.status === 'QUASE_LA' ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FED7AA]' :
