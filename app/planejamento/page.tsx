@@ -2182,27 +2182,38 @@ export default function PlanejamentoPage() {
               </div>
 
               {/* Card Direita: Donut Metrics */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-around gap-2">
-                {[
-                  { label: 'Ações Concluídas', pct: completedPct, count: completedActions, stroke: 'stroke-emerald-500' },
-                  { label: 'Em Aberto', pct: openPct, count: openCount, stroke: 'stroke-amber-400' },
-                  { label: 'Em Atraso', pct: delayedPct, count: delayedCount, stroke: 'stroke-rose-500' },
-                ].map(metric => (
-                  <div key={metric.label} className="flex flex-col items-center text-center">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">{metric.label}:</span>
-                    <span className="text-[10px] font-black text-slate-700 block mt-0.5">{metric.pct}% ({metric.count})</span>
-                    <div className="relative w-16 h-16 flex items-center justify-center mt-2">
-                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
-                        <circle cx="28" cy="28" r="22" className="stroke-slate-100 fill-none" strokeWidth="5.5" />
-                        <circle cx="28" cy="28" r="22"
-                          className={`fill-none ${metric.stroke} transition-all duration-700`}
-                          strokeWidth="5.5" strokeLinecap="round"
-                          strokeDasharray={`${2 * Math.PI * 22}`}
-                          strokeDashoffset={`${(2 * Math.PI * 22) * (1 - metric.pct / 100)}`} />
-                      </svg>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between gap-4">
+                <div className="flex items-center justify-around gap-2">
+                  {[
+                    { label: 'Ações Concluídas', pct: completedPct, count: completedActions, stroke: 'stroke-emerald-500' },
+                    { label: 'Em Aberto', pct: openPct, count: openCount, stroke: 'stroke-amber-400' },
+                    { label: 'Em Atraso', pct: delayedPct, count: delayedCount, stroke: 'stroke-rose-500' },
+                  ].map(metric => (
+                    <div key={metric.label} className="flex flex-col items-center text-center">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">{metric.label}:</span>
+                      <span className="text-[10px] font-black text-slate-700 block mt-0.5">{metric.pct}% ({metric.count})</span>
+                      <div className="relative w-16 h-16 flex items-center justify-center mt-2">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
+                          <circle cx="28" cy="28" r="22" className="stroke-slate-100 fill-none" strokeWidth="5.5" />
+                          <circle cx="28" cy="28" r="22"
+                            className={`fill-none ${metric.stroke} transition-all duration-700`}
+                            strokeWidth="5.5" strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 22}`}
+                            strokeDashoffset={`${(2 * Math.PI * 22) * (1 - metric.pct / 100)}`} />
+                        </svg>
+                      </div>
                     </div>
+                  ))}
+                </div>
+                {/* Barra de progresso geral */}
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-3.5">
+                  <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider whitespace-nowrap">Progresso Geral:</span>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div className="h-full bg-gradient-to-r from-emerald-400 to-[#1B4D3E] rounded-full transition-all duration-500"
+                      style={{ width: `${currentPlano.percentualRealizado || 0}%` }} />
                   </div>
-                ))}
+                  <span className="text-[10px] font-black text-[#1B4D3E] whitespace-nowrap">{currentPlano.percentualRealizado || 0}%</span>
+                </div>
               </div>
             </div>
 
@@ -2339,18 +2350,7 @@ export default function PlanejamentoPage() {
                 </div>
               </div>
 
-              {/* Rodapé: Progresso + Salvar */}
-              <div className="flex items-center justify-between gap-4 pb-2">
-                <div className="flex items-center gap-3 flex-1 max-w-xs">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Progresso</span>
-                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                    <div className="h-full bg-gradient-to-r from-emerald-400 to-[#1B4D3E] rounded-full transition-all duration-500"
-                      style={{ width: `${currentPlano.percentualRealizado || 0}%` }} />
-                  </div>
-                  <span className="text-[10px] font-black text-[#1B4D3E] whitespace-nowrap">{currentPlano.percentualRealizado || 0}%</span>
-                </div>
 
-              </div>
             </form>
           </div>
         );
