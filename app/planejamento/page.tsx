@@ -2207,6 +2207,7 @@ export default function PlanejamentoPage() {
             </div>
 
             {/* Tabela 5W2H */}
+            {/* Trigger rebuild comment */}
             <form onSubmit={handleSavePlano} className="space-y-4">
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
