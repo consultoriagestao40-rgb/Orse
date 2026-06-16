@@ -321,6 +321,16 @@ export default function PlanejamentoPage() {
     e.preventDefault();
     if (!editingAcao || !editingAcao.id) return;
 
+    if ((editingAcao.status === 'CONCLUIDO' || editingAcao.status === 'AGUARDANDO_APROVACAO') && !editingAcao.textoConclusao?.trim()) {
+      alert("O texto de conclusão é obrigatório para concluir ou enviar a ação para aprovação.");
+      return;
+    }
+
+    if (editingAcao.status === 'CONCLUIDO' && !editingAcao.comentarioAprovacao?.trim()) {
+      alert("O comentário de avaliação/aprovação é obrigatório para concluir a ação.");
+      return;
+    }
+
     setCurrentPlano(prev => {
       const acoes = (prev.acoes || []).map(a => {
         if (a.id === editingAcao.id) {
@@ -2442,18 +2452,18 @@ export default function PlanejamentoPage() {
                           const formattedIdx = String(index + 1).padStart(3, '0');
                           return (
                             <tr key={a.id} className="hover:bg-slate-50/40 transition-colors">
-                              <td className="py-3 px-4 text-center text-slate-500 font-mono border-r border-slate-100">{formattedIdx}</td>
-                              <td className="py-2.5 px-3 border-r border-slate-100">
+                              <td className="py-3 px-4 text-center text-slate-500 font-mono border-r border-slate-100 align-middle">{formattedIdx}</td>
+                              <td className="py-2.5 px-3 border-r border-slate-100 align-middle">
                                 <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[130px] max-w-[200px]">
                                   {a.what || ''}
                                 </div>
                               </td>
-                              <td className="py-2.5 px-3 border-r border-slate-100">
+                              <td className="py-2.5 px-3 border-r border-slate-100 align-middle">
                                 <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[130px] max-w-[200px]">
                                   {a.why || ''}
                                 </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
+                              <td className="py-2 px-2.5 border-r border-slate-100 align-middle">
                                 <div className="flex justify-center w-full">
                                   <div className="relative flex items-center justify-center w-8 h-8 rounded-full hover:scale-105 transition-all shrink-0 select-none cursor-pointer" title={selectedUser?.nome || 'Selecionar responsável'}>
                                     {!selectedUser ? (
@@ -2475,12 +2485,12 @@ export default function PlanejamentoPage() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-2.5 px-3 border-r border-slate-100">
+                              <td className="py-2.5 px-3 border-r border-slate-100 align-middle">
                                 <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[100px] max-w-[150px]">
                                   {a.where || ''}
                                 </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
+                              <td className="py-2 px-2.5 border-r border-slate-100 align-middle">
                                 <div className="relative w-full h-8 flex items-center bg-slate-50/50 border border-slate-200 rounded-lg px-2 text-xs font-bold text-slate-700 focus-within:border-[#1B4D3E] focus-within:bg-white">
                                   {/* Campo de texto visível formatado como DD/MM/AAAA */}
                                   <input type="text" readOnly
@@ -2495,19 +2505,19 @@ export default function PlanejamentoPage() {
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                 </div>
                               </td>
-                              <td className="py-2.5 px-3 border-r border-slate-100">
+                              <td className="py-2.5 px-3 border-r border-slate-100 align-middle">
                                 <div className="text-xs font-semibold text-slate-700 break-words leading-relaxed whitespace-pre-wrap min-w-[100px] max-w-[150px]">
                                   {a.how || ''}
                                 </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
+                              <td className="py-2 px-2.5 border-r border-slate-100 align-middle">
                                 <div className="relative">
                                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400">R$</span>
                                   <input type="number" value={a.howMuch || 0} onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
                                     className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-5 pr-1 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
                                 </div>
                               </td>
-                              <td className="py-2 px-2.5 border-r border-slate-100">
+                              <td className="py-2 px-2.5 border-r border-slate-100 align-middle">
                                 <span className={`block w-full text-center px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
                                   a.status === 'CONCLUIDO'
                                     ? 'bg-emerald-100 text-emerald-800'
@@ -2525,30 +2535,32 @@ export default function PlanejamentoPage() {
                                    a.status === 'AGUARDANDO_APROVACAO' ? 'Aguardando Aprovação' : 'Concluído'}
                                 </span>
                               </td>
-                              <td className="py-2 px-2.5 text-center flex items-center justify-center gap-1.5 min-w-[170px]">
-                                <button type="button" onClick={() => setEditingAcao(a)}
-                                  className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none flex items-center gap-1">
-                                  Editar
-                                </button>
-
-                                {(a.status === 'PENDENTE' || a.status === 'EM_ANDAMENTO' || a.status === 'EM_ATRASO') && (
-                                  <button type="button" onClick={() => setCompletingAcao(a)}
-                                    className="py-1 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none">
-                                    Concluir
+                              <td className="py-2 px-2.5 text-center align-middle">
+                                <div className="flex items-center justify-center gap-1.5 min-w-[170px] h-full">
+                                  <button type="button" onClick={() => setEditingAcao(a)}
+                                    className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none flex items-center gap-1">
+                                    Editar
                                   </button>
-                                )}
 
-                                {a.status === 'AGUARDANDO_APROVACAO' && (
-                                  <button type="button" onClick={() => setReviewingAcao(a)}
-                                    className="py-1 px-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none">
-                                    Avaliar
+                                  {(a.status === 'PENDENTE' || a.status === 'EM_ANDAMENTO' || a.status === 'EM_ATRASO') && (
+                                    <button type="button" onClick={() => setCompletingAcao(a)}
+                                      className="py-1 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none">
+                                      Concluir
+                                    </button>
+                                  )}
+
+                                  {a.status === 'AGUARDANDO_APROVACAO' && (
+                                    <button type="button" onClick={() => setReviewingAcao(a)}
+                                      className="py-1 px-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none">
+                                      Avaliar
+                                    </button>
+                                  )}
+
+                                  <button type="button" onClick={() => handleDeleteSubAction(a.id)}
+                                    className="p-1.5 text-slate-350 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer border-none bg-transparent">
+                                    <Trash2 size={13} />
                                   </button>
-                                )}
-
-                                <button type="button" onClick={() => handleDeleteSubAction(a.id)}
-                                  className="p-1.5 text-slate-350 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer border-none bg-transparent">
-                                  <Trash2 size={13} />
-                                </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -2888,8 +2900,8 @@ export default function PlanejamentoPage() {
                 </div>
               </div>
 
-              {/* Status & Evidência */}
-              <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
+              {/* Status */}
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">STATUS</label>
                   <select 
@@ -2903,43 +2915,101 @@ export default function PlanejamentoPage() {
                     <option value="CONCLUIDO">Concluído</option>
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">EVIDÊNCIA / COMENTÁRIOS</label>
-                  <input 
-                    type="text" 
-                    value={editingAcao.evidencia || ''}
-                    onChange={(e) => setEditingAcao(prev => ({ ...prev!, evidencia: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                    placeholder="Evidências ou comentários"
-                  />
-                </div>
               </div>
 
-              {/* Se houver texto de conclusão ou comentário de aprovação anterior, mostrar */}
-              {editingAcao.textoConclusao && (
-                <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                  <div>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Texto de Conclusão</span>
-                    <p className="text-xs font-medium text-slate-700 mt-1 leading-relaxed break-words">{editingAcao.textoConclusao}</p>
+              {/* Se o status selecionado for AGUARDANDO_APROVACAO ou CONCLUIDO, exibir campos de conclusão */}
+              {(editingAcao.status === 'AGUARDANDO_APROVACAO' || editingAcao.status === 'CONCLUIDO') && (
+                <div className="border-t border-slate-100 pt-4 space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Informações de Conclusão da Ação</h4>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Texto de Conclusão (Obrigatório)</label>
+                    <textarea 
+                      required
+                      rows={3}
+                      value={editingAcao.textoConclusao || ''}
+                      onChange={(e) => setEditingAcao(prev => ({ ...prev!, textoConclusao: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                      placeholder="Descreva detalhadamente como a ação foi executada..."
+                    />
                   </div>
-                  {editingAcao.anexoEvidencia && (
-                    <div>
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Evidência Anexada</span>
-                      <a href={editingAcao.anexoEvidencia} download={editingAcao.evidencia || "evidencia"} className="text-xs font-black text-[#1B4D3E] hover:underline uppercase inline-block mt-1">
-                        Download Anexo
-                      </a>
-                    </div>
-                  )}
-                  {editingAcao.comentarioAprovacao && (
-                    <div>
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Comentário de Avaliação</span>
-                      <p className="text-xs font-medium text-slate-700 mt-1 leading-relaxed break-words">{editingAcao.comentarioAprovacao}</p>
-                    </div>
-                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider block">Evidência Anexada</label>
+                    {editingAcao.anexoEvidencia ? (
+                      <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-600 truncate max-w-[250px]">
+                          {editingAcao.evidencia || 'Arquivo de Evidência'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <a href={editingAcao.anexoEvidencia} download={editingAcao.evidencia || "evidencia"} 
+                            className="text-[10px] font-black text-[#1B4D3E] hover:underline uppercase tracking-wider">
+                            Baixar
+                          </a>
+                          <button type="button" onClick={() => setEditingAcao(prev => ({ ...prev!, anexoEvidencia: '', evidencia: '' }))}
+                            className="text-[10px] font-black text-rose-600 hover:underline uppercase tracking-wider cursor-pointer border-none bg-transparent">
+                            Remover
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative border border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center hover:bg-slate-50 transition-colors cursor-pointer">
+                        <input 
+                          type="file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setEditingAcao(prev => prev ? {
+                                  ...prev,
+                                  anexoEvidencia: reader.result as string,
+                                  evidencia: file.name
+                                } : null);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-[#1B4D3E] uppercase">Selecionar Arquivo de Evidência</span>
+                        <span className="text-[9px] font-bold text-slate-450 mt-1">Nenhum arquivo anexado</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              {/* Se o status selecionado for AGUARDANDO_APROVACAO ou CONCLUIDO, e houver comentário ou necessidade de comentário */}
+              {editingAcao.status === 'AGUARDANDO_APROVACAO' && (
+                <div className="border-t border-slate-100 pt-4 space-y-3">
+                  <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-wider block">Avaliação da Conclusão (Exclusivo para o Responsável do Plano)</h4>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Comentário de Avaliação (Obrigatório)</label>
+                    <textarea 
+                      rows={3}
+                      value={editingAcao.comentarioAprovacao || ''}
+                      onChange={(e) => setEditingAcao(prev => ({ ...prev!, comentarioAprovacao: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                      placeholder="Justifique a aprovação ou recusa desta ação..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              {editingAcao.status === 'CONCLUIDO' && (
+                <div className="border-t border-slate-100 pt-4 space-y-2">
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-wider block">Avaliação da Conclusão (Responsável do Plano)</h4>
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Comentário de Avaliação</span>
+                    <p className="text-xs font-medium text-slate-700 bg-slate-50 border border-slate-100 p-3 rounded-xl mt-1 leading-relaxed break-words">
+                      {editingAcao.comentarioAprovacao || 'Sem comentário registrado.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 flex-wrap">
                 <button 
                   type="button" 
                   onClick={() => setEditingAcao(null)}
@@ -2947,8 +3017,59 @@ export default function PlanejamentoPage() {
                 >
                   Cancelar
                 </button>
+                
+                {editingAcao.status === 'AGUARDANDO_APROVACAO' && (
+                  <>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        if (!editingAcao.comentarioAprovacao?.trim()) {
+                          alert("O comentário de avaliação é obrigatório.");
+                          return;
+                        }
+                        setEditingAcao(prev => {
+                          const updated = { ...prev!, status: 'EM_ANDAMENTO' as any };
+                          setTimeout(() => {
+                            const btn = document.getElementById('submit-edit-btn');
+                            btn?.click();
+                          }, 50);
+                          return updated;
+                        });
+                      }}
+                      className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                    >
+                      Recusar Conclusão
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        if (!editingAcao.comentarioAprovacao?.trim()) {
+                          alert("O comentário de avaliação é obrigatório.");
+                          return;
+                        }
+                        if (!editingAcao.textoConclusao?.trim()) {
+                          alert("O texto de conclusão é obrigatório.");
+                          return;
+                        }
+                        setEditingAcao(prev => {
+                          const updated = { ...prev!, status: 'CONCLUIDO' as any };
+                          setTimeout(() => {
+                            const btn = document.getElementById('submit-edit-btn');
+                            btn?.click();
+                          }, 50);
+                          return updated;
+                        });
+                      }}
+                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                    >
+                      Aprovar Conclusão
+                    </button>
+                  </>
+                )}
+
                 <button 
                   type="submit"
+                  id="submit-edit-btn"
                   className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
                 >
                   Salvar
