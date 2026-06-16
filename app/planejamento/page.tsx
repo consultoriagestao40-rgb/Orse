@@ -2247,7 +2247,7 @@ export default function PlanejamentoPage() {
                         <th className="py-3.5 px-4 w-[70px] text-center border-r border-slate-200">Ação ID</th>
                         <th className="py-3.5 px-4 min-w-[140px] border-r border-slate-200">O QUÊ <span className="normal-case font-bold text-slate-400">(What)</span></th>
                         <th className="py-3.5 px-4 min-w-[140px] border-r border-slate-200">POR QUÊ <span className="normal-case font-bold text-slate-400">(Why)</span></th>
-                        <th className="py-3.5 px-4 min-w-[180px] border-r border-slate-200">QUEM <span className="normal-case font-bold text-slate-400">(Who)</span></th>
+                        <th className="py-3.5 px-4 w-[90px] text-center border-r border-slate-200">QUEM <span className="normal-case font-bold text-slate-400">(Who)</span></th>
                         <th className="py-3.5 px-4 min-w-[120px] border-r border-slate-200">ONDE <span className="normal-case font-bold text-slate-400">(Where)</span></th>
                         <th className="py-3.5 px-4 w-[145px] border-r border-slate-200">QUANDO <span className="normal-case font-bold text-slate-400">(When)</span></th>
                         <th className="py-3.5 px-4 min-w-[130px] border-r border-slate-200">COMO <span className="normal-case font-bold text-slate-400">(How)</span></th>
@@ -2280,19 +2280,25 @@ export default function PlanejamentoPage() {
                                   className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Por quê?" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <div className="flex items-center gap-1.5 w-full">
-                                  {selectedUser && (selectedUser.avatarUrl ? (
-                                    <img src={selectedUser.avatarUrl} alt={selectedUser.nome} className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0" />
-                                  ) : (
-                                    <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] uppercase shrink-0">
-                                      {selectedUser.nome.substring(0, 2)}
-                                    </div>
-                                  ))}
-                                  <select value={a.who || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'who', e.target.value)}
-                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-1.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] cursor-pointer">
-                                    <option value="">Selecione...</option>
-                                    {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
-                                  </select>
+                                <div className="flex justify-center w-full">
+                                  <div className="relative flex items-center justify-center w-8 h-8 rounded-full hover:scale-105 transition-all shrink-0 select-none cursor-pointer" title={selectedUser?.nome || 'Selecionar responsável'}>
+                                    {!selectedUser ? (
+                                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 text-slate-400 text-xs font-black shrink-0">
+                                        +
+                                      </div>
+                                    ) : selectedUser.avatarUrl ? (
+                                      <img src={selectedUser.avatarUrl} alt={selectedUser.nome} className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0" />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-xs font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
+                                        {selectedUser.nome.substring(0, 2)}
+                                      </div>
+                                    )}
+                                    <select value={a.who || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'who', e.target.value)}
+                                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                      <option value="">Selecione...</option>
+                                      {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
+                                    </select>
+                                  </div>
                                 </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
