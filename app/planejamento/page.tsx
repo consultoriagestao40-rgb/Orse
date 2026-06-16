@@ -28,7 +28,8 @@ import {
   Network,
   GitBranch,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  MoreHorizontal
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { 
@@ -2470,7 +2471,7 @@ export default function PlanejamentoPage() {
                                         <Target size={15} />
                                       </div>
                                       <div className="min-w-0">
-                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide leading-snug break-words">
+                                        <h3 className="text-sm font-black text-slate-800 tracking-wide leading-snug break-words">
                                           Objetivo {objIdx + 1}: {obj.titulo}
                                         </h3>
                                         <div className="flex items-center gap-2 flex-wrap mt-0.5">
@@ -2563,7 +2564,7 @@ export default function PlanejamentoPage() {
                                   </div>
 
                                   {isExpanded && (
-                                    <div className="pt-4 border-t border-slate-100 space-y-4 pl-2 sm:pl-4">
+                                    <div className="border-t border-slate-100 divide-y divide-slate-100 pl-2 sm:pl-4">
                                       {(!obj.krs || obj.krs.length === 0) ? (
                                         <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
                                           <span className="text-slate-400 italic text-xs">Nenhum resultado-chave (KR) cadastrado para este objetivo.</span>
@@ -2593,104 +2594,117 @@ export default function PlanejamentoPage() {
                                             return (
                                               <div 
                                                 key={kr.id} 
-                                                onClick={() => handleOpenActionsModal(obj.id, kr)} className="bg-slate-50/40 border border-slate-200 hover:border-slate-350 hover:bg-slate-50/60 rounded-2xl p-4 transition-all duration-250 space-y-3 relative cursor-pointer"
+                                                onClick={() => handleOpenActionsModal(obj.id, kr)} 
+                                                className="py-4 hover:bg-slate-50/30 transition-all duration-200 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-6"
                                               >
-                                                <div className="flex justify-between items-start gap-4">
-                                                  <div className="flex-1">
+                                                {/* Left Column: Description & Progress */}
+                                                <div className="flex-1 min-w-0 space-y-2">
+                                                  <div className="flex justify-between items-start gap-4">
                                                     <p className="text-xs font-black text-slate-750">
                                                       KR {objIdx + 1}.{krIdx + 1}: {kr.descricao}
                                                     </p>
-                                                  </div>
-                                                  <div className="text-right font-black text-xs text-slate-800 shrink-0">
-                                                    {formatKrValue(kr.valorAtual, kr.unidade)} / {formatKrValue(kr.valorAlvo, kr.unidade)}
-                                                  </div>
-                                                </div>
-
-                                                {/* Purple progress bar matching Mereo style */}
-                                                <div className="relative w-full pt-1 pb-4">
-                                                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                                    <div 
-                                                      className="h-full rounded-full bg-[#7C3AED] transition-all duration-300"
-                                                      style={{ width: `${limitedKrProgress}%` }}
-                                                    ></div>
-                                                  </div>
-                                                  <div className="flex justify-between text-[8px] font-black text-slate-400 mt-0.5">
-                                                    <span>0%</span>
-                                                    <span>100%</span>
-                                                  </div>
-                                                  <div 
-                                                    className="absolute text-[9px] font-black text-[#7C3AED] mt-0.5 -translate-x-1/2 transition-all duration-350"
-                                                    style={{ left: `${limitedKrProgress}%`, top: '6px' }}
-                                                  >
-                                                    {limitedKrProgress}%
-                                                  </div>
-                                                </div>
-
-                                                {/* Status, Avatar & Actions */}
-                                                <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100 flex-wrap">
-                                                  <div className="flex items-center gap-3">
-                                                    {/* Status Badge */}
-                                                    <span className={`text-[8.5px] font-black px-2.5 py-1 rounded-lg uppercase border tracking-wider ${
-                                                      kr.status === 'CONCLUIDO' ? 'bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]' :
-                                                      kr.status === 'QUASE_LA' ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FED7AA]' :
-                                                      kr.status === 'EM_ANDAMENTO' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
-                                                      'bg-slate-50 text-slate-650 border-slate-255'
-                                                    }`}>
-                                                      {kr.status === 'CONCLUIDO' ? 'Concluído' :
-                                                       kr.status === 'QUASE_LA' ? 'Quase Lá' :
-                                                       kr.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
+                                                    <span className="text-xs font-black text-slate-800 shrink-0">
+                                                      {formatKrValue(kr.valorAtual, kr.unidade)} / {formatKrValue(kr.valorAlvo, kr.unidade)}
                                                     </span>
+                                                  </div>
 
-                                                    {/* Avatar & Name */}
-                                                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-1 pr-3 py-0.5 shadow-3xs">
-                                                      {responsavelKr?.avatarUrl ? (
-                                                        <img 
-                                                          src={responsavelKr.avatarUrl} 
-                                                          alt={responsavelKr.nome} 
-                                                          className="w-5 h-5 rounded-full object-cover border border-slate-200 shrink-0" 
-                                                        />
-                                                      ) : (
-                                                        <div className="w-5 h-5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7.5px] font-bold uppercase shrink-0">
-                                                          {initialsKr}
-                                                        </div>
-                                                      )}
-                                                      <span className="text-[9px] font-black text-slate-600 truncate max-w-[150px]">
-                                                        {responsavelKr ? responsavelKr.nome : 'Sem responsável'}
-                                                      </span>
+                                                  {/* Purple progress bar matching Mereo style */}
+                                                  <div className="relative w-full pt-1 pb-4">
+                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                      <div 
+                                                        className="h-full rounded-full bg-[#7C3AED] transition-all duration-300"
+                                                        style={{ width: `${limitedKrProgress}%` }}
+                                                      ></div>
+                                                    </div>
+                                                    <div className="flex justify-between text-[8px] font-black text-slate-400 mt-0.5">
+                                                      <span>0%</span>
+                                                      <span>100%</span>
+                                                    </div>
+                                                    <div 
+                                                      className="absolute text-[9px] font-black text-[#7C3AED] mt-0.5 -translate-x-1/2 transition-all duration-350"
+                                                      style={{ left: `${limitedKrProgress}%`, top: '6px' }}
+                                                    >
+                                                      {limitedKrProgress}%
                                                     </div>
                                                   </div>
-
-                                                  <div className="flex items-center gap-2">
-                                                    <button
-                                                      type="button"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleOpenActionsModal(obj.id, kr);
-                                                      }}
-                                                      className="text-[9.5px] font-black text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 uppercase tracking-wider bg-transparent border-none cursor-pointer"
-                                                    >
-                                                      Ações ({kr.tarefas?.length || 0})
-                                                    </button>
-                                                    <button
-                                                      type="button"
-                                                      onClick={(e) => { e.stopPropagation(); handleOpenKrModal(obj.id, kr); }}
-                                                      className="p-1 text-slate-450 hover:text-slate-655 hover:bg-white rounded transition-colors cursor-pointer border-none bg-transparent"
-                                                      title="Editar KR"
-                                                    >
-                                                      <Edit size={13} />
-                                                    </button>
-                                                    <button
-                                                      type="button"
-                                                      onClick={(e) => { e.stopPropagation(); handleDeleteKr(obj.id, kr.id); }}
-                                                      className="p-1 text-slate-455 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer border-none bg-transparent"
-                                                      title="Excluir KR"
-                                                    >
-                                                      <Trash2 size={13} />
-                                                    </button>
-                                                  </div>
                                                 </div>
 
-                                                
+                                                {/* Right Column: Status, Owner & Actions Menu */}
+                                                <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end md:w-[35%] lg:w-[30%]">
+                                                  {/* Status Badge */}
+                                                  <span className={`text-[8.5px] font-black px-2.5 py-1 rounded-lg uppercase border tracking-wider shrink-0 ${
+                                                    kr.status === 'CONCLUIDO' ? 'bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]' :
+                                                    kr.status === 'QUASE_LA' ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FED7AA]' :
+                                                    kr.status === 'EM_ANDAMENTO' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+                                                    'bg-slate-50 text-slate-650 border-slate-255'
+                                                  }`}>
+                                                    {kr.status === 'CONCLUIDO' ? 'Concluído' :
+                                                     kr.status === 'QUASE_LA' ? 'Quase Lá' :
+                                                     kr.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
+                                                  </span>
+
+                                                  {/* Avatar & Name */}
+                                                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-1 pr-3 py-0.5 shadow-3xs shrink-0">
+                                                    {responsavelKr?.avatarUrl ? (
+                                                      <img 
+                                                        src={responsavelKr.avatarUrl} 
+                                                        alt={responsavelKr.nome} 
+                                                        className="w-5 h-5 rounded-full object-cover border border-slate-200 shrink-0" 
+                                                      />
+                                                    ) : (
+                                                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7.5px] font-bold uppercase shrink-0">
+                                                        {initialsKr}
+                                                      </div>
+                                                    )}
+                                                    <span className="text-[9px] font-black text-slate-600 truncate max-w-[100px]">
+                                                      {responsavelKr ? responsavelKr.nome : 'Sem responsável'}
+                                                    </span>
+                                                  </div>
+
+                                                  {/* Actions Dropdown Menu */}
+                                                  <div className="relative group/menu shrink-0">
+                                                    <button
+                                                      type="button"
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+                                                      title="Menu de Ações"
+                                                    >
+                                                      <MoreHorizontal size={16} />
+                                                    </button>
+                                                    <div className="absolute right-0 top-8 bg-white border border-slate-200 rounded-xl shadow-lg py-1 w-32 hidden group-hover/menu:block hover:block z-20">
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleOpenActionsModal(obj.id, kr);
+                                                        }}
+                                                        className="w-full text-left px-3 py-1.5 text-xs text-slate-750 hover:bg-slate-50 cursor-pointer border-none bg-transparent flex items-center gap-1.5 font-bold"
+                                                      >
+                                                        Ações ({kr.tarefas?.length || 0})
+                                                      </button>
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleOpenKrModal(obj.id, kr);
+                                                        }}
+                                                        className="w-full text-left px-3 py-1.5 text-xs text-slate-750 hover:bg-slate-50 cursor-pointer border-none bg-transparent flex items-center gap-1.5 font-bold"
+                                                      >
+                                                        <Edit size={12} /> Editar
+                                                      </button>
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleDeleteKr(obj.id, kr.id);
+                                                        }}
+                                                        className="w-full text-left px-3 py-1.5 text-xs text-red-650 hover:bg-red-50 cursor-pointer border-none bg-transparent flex items-center gap-1.5 font-bold"
+                                                      >
+                                                        <Trash2 size={12} /> Excluir
+                                                      </button>
+                                                    </div>
+                                                  </div>
+                                                </div>
                                               </div>
                                             );
                                           })
@@ -2758,7 +2772,7 @@ export default function PlanejamentoPage() {
                                         <span className="text-[8px] font-black bg-[#7C3AED] text-white rounded px-2 py-0.5 uppercase tracking-wider">
                                           {obj.fase || 'Objetivo'}
                                         </span>
-                                        <h5 className="text-xs font-black text-slate-800 mt-2 line-clamp-2 uppercase tracking-wide">
+                                        <h5 className="text-xs font-black text-slate-800 mt-2 line-clamp-2 tracking-wide">
                                           Objetivo {objIdx + 1}: {obj.titulo}
                                         </h5>
                                         <div className="mt-3 flex justify-between items-center text-[10px] font-bold text-slate-550">
@@ -2825,8 +2839,12 @@ export default function PlanejamentoPage() {
                                                     {responsavel && (
                                                       <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5 justify-end">
                                                         <span className="text-[8.5px] font-bold text-slate-550 truncate max-w-[120px]">{responsavel.nome}</span>
-                                                        <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7px] font-bold uppercase shrink-0">
-                                                          {initials}
+                                                        <div className="w-4 h-4 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0">
+                                                          {responsavel.avatarUrl ? (
+                                                            <img src={responsavel.avatarUrl} alt={responsavel.nome} className="w-full h-full object-cover" />
+                                                          ) : (
+                                                            <span className="text-[7px] font-bold uppercase text-[#7C3AED]">{initials}</span>
+                                                          )}
                                                         </div>
                                                       </div>
                                                     )}
