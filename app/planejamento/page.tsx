@@ -173,7 +173,7 @@ export default function PlanejamentoPage() {
 
   const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('kanban');
 
-  const [isPlanoModalOpen, setIsPlanoModalOpen] = useState(false);
+  const [isEditingPlano, setIsEditingPlano] = useState(false);
   const [currentPlano, setCurrentPlano] = useState<Partial<ActionPlan>>({
     titulo: '',
     causaRaizId: '',
@@ -187,117 +187,94 @@ export default function PlanejamentoPage() {
     acoes: []
   });
 
-  // State to add/edit a sub-action in the plan's 5W2H table
-  const [showSubActionForm, setShowSubActionForm] = useState(false);
-  const [currentSubAction, setCurrentSubAction] = useState<Partial<SubAction>>({
-    what: '',
-    why: '',
-    where: '',
-    when: '',
-    who: '',
-    how: '',
-    howMuch: 0,
-    status: 'PENDENTE',
-    percentualRealizado: 0
-  });
+  const updateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
+    setCurrentPlano(prev => {
+      const acoes = (prev.acoes || []).map(a => {
+        if (a.id === subId) {
+          const updated = { ...a, [field]: value };
+          if (field === 'status') {
+            updated.percentualRealizado = value === 'CONCLUIDO' ? 100 : 0;
+          }
+          return updated;
+        }
+        return a;
+      });
 
-  const handleAddOrUpdateSubAction = () => {
-    if (!currentSubAction.what) {
-      alert("O campo 'What (O que fará)' é obrigatório.");
-      return;
-    }
-    
-    const subActions = [...(currentPlano.acoes || [])];
-    const isNew = !currentSubAction.id;
-    
-    const cleanSub: SubAction = {
-      id: currentSubAction.id || 'sub-action-' + Date.now(),
-      what: currentSubAction.what || '',
-      why: currentSubAction.why || '',
-      where: currentSubAction.where || '',
-      when: currentSubAction.when || new Date().toISOString().split('T')[0],
-      who: currentSubAction.who || '',
-      how: currentSubAction.how || '',
-      howMuch: Number(currentSubAction.howMuch) || 0,
-      status: currentSubAction.status || 'PENDENTE',
-      percentualRealizado: currentSubAction.status === 'CONCLUIDO' ? 100 : 0
-    };
-
-    if (isNew) {
-      subActions.push(cleanSub);
-    } else {
-      const idx = subActions.findIndex(a => a.id === cleanSub.id);
-      if (idx !== -1) {
-        subActions[idx] = cleanSub;
+      // Recalcular progresso geral do plano com base nas sub-ações
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
       }
-    }
 
-    // Recalcular progresso geral
-    let percentualRealizado = 0;
-    if (subActions.length > 0) {
-      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
-      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
-    }
-
-    setCurrentPlano(prev => ({
-      ...prev,
-      acoes: subActions,
-      percentualRealizado
-    }));
-
-    // Reset sub-action form
-    setCurrentSubAction({
-      what: '',
-      why: '',
-      where: '',
-      when: '',
-      who: '',
-      how: '',
-      howMuch: 0,
-      status: 'PENDENTE',
-      percentualRealizado: 0
+      return {
+        ...prev,
+        acoes,
+        percentualRealizado
+      };
     });
-    setShowSubActionForm(false);
   };
 
   const handleDeleteSubAction = (subId: string) => {
-    const subActions = (currentPlano.acoes || []).filter(a => a.id !== subId);
-    let percentualRealizado = 0;
-    if (subActions.length > 0) {
-      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
-      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
-    }
-    setCurrentPlano(prev => ({
-      ...prev,
-      acoes: subActions,
-      percentualRealizado
-    }));
+    setCurrentPlano(prev => {
+      const acoes = (prev.acoes || []).filter(a => a.id !== subId);
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
+      }
+      return {
+        ...prev,
+        acoes,
+        percentualRealizado
+      };
+    });
   };
 
-  const handleToggleSubActionStatus = (subId: string, isChecked: boolean) => {
-    const subActions = (currentPlano.acoes || []).map(a => {
-      if (a.id === subId) {
-        const status = isChecked ? 'CONCLUIDO' : 'PENDENTE';
-        return {
-          ...a,
-          status,
-          percentualRealizado: isChecked ? 100 : 0
-        } as SubAction;
-      }
-      return a;
+  const handleAddSubActionInline = () => {
+    setCurrentPlano(prev => {
+      const newSub: SubAction = {
+        id: 'sub-' + Date.now(),
+        what: '',
+        why: '',
+        where: '',
+        when: new Date().toISOString().split('T')[0],
+        who: '',
+        how: '',
+        howMuch: 0,
+        status: 'PENDENTE',
+        percentualRealizado: 0
+      };
+      return {
+        ...prev,
+        acoes: [...(prev.acoes || []), newSub]
+      };
     });
+  };
 
-    let percentualRealizado = 0;
-    if (subActions.length > 0) {
-      const completedCount = subActions.filter(a => a.status === 'CONCLUIDO').length;
-      percentualRealizado = Math.round((completedCount / subActions.length) * 100);
-    }
-
-    setCurrentPlano(prev => ({
-      ...prev,
-      acoes: subActions,
-      percentualRealizado
-    }));
+  const handleUpdateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
+    setCurrentPlano(prev => {
+      const acoes = (prev.acoes || []).map(a => {
+        if (a.id === subId) {
+          const updated = { ...a, [field]: value };
+          if (field === 'status') {
+            updated.percentualRealizado = value === 'CONCLUIDO' ? 100 : 0;
+          }
+          return updated;
+        }
+        return a;
+      });
+      let percentualRealizado = 0;
+      if (acoes.length > 0) {
+        const completedCount = acoes.filter(acc => acc.status === 'CONCLUIDO').length;
+        percentualRealizado = Math.round((completedCount / acoes.length) * 100);
+      }
+      return {
+        ...prev,
+        acoes,
+        percentualRealizado
+      };
+    });
   };
 
   const renderKanbanCard = (pa: ActionPlan) => {
@@ -2166,121 +2143,30 @@ export default function PlanejamentoPage() {
               {currentPlano.id ? (
                 <div className="border-t border-slate-100 pt-4 space-y-4">
                   <div className="flex justify-between items-center select-none">
-                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Tabela de Ações 5W2H</span>
+                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block">Tabela de Ações 5W2H (Edição Direta)</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setCurrentSubAction({
-                          what: '',
-                          why: '',
-                          where: '',
-                          when: new Date().toISOString().split('T')[0],
-                          who: '',
-                          how: '',
-                          howMuch: 0,
-                          status: 'PENDENTE',
-                          percentualRealizado: 0
-                        });
-                        setShowSubActionForm(true);
-                      }}
+                      onClick={handleAddSubActionInline}
                       className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9.5px] font-black uppercase px-3 py-1.5 rounded-lg transition-colors cursor-pointer border-none flex items-center gap-1 shadow-sm"
                     >
                       <Plus size={12} /> Adicionar Ação (5W2H)
                     </button>
                   </div>
 
-                  {/* Form de Ação 5W2H individual */}
-                  {showSubActionForm && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-150 text-left">
-                      <div className="flex justify-between items-center select-none border-b border-slate-200 pb-1.5 mb-1.5">
-                        <span className="text-[9.5px] font-black text-[#1B4D3E] uppercase tracking-wider">
-                          {currentSubAction.id ? 'Editar Ação 5W2H' : 'Nova Ação 5W2H'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowSubActionForm(false)}
-                          className="text-slate-400 hover:text-slate-600 font-bold border-none bg-transparent cursor-pointer text-sm"
-                        >
-                          &times;
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">What (O que fará)</label>
-                          <input type="text" required value={currentSubAction.what || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, what: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="O que será feito?" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Why (Por que fará)</label>
-                          <input type="text" value={currentSubAction.why || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, why: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="Por que será feito?" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Where (Onde fará)</label>
-                          <input type="text" value={currentSubAction.where || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, where: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="Onde será feito?" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">When (Quando / Prazo)</label>
-                          <input type="date" value={currentSubAction.when || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, when: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Who (Quem fará)</label>
-                          <select value={currentSubAction.who || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, who: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]">
-                            <option value="">Selecione o Executor...</option>
-                            {users.map(u => (
-                              <option key={u.id} value={u.id}>{u.nome}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">How (Como fará)</label>
-                          <input type="text" value={currentSubAction.how || ''} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, how: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" placeholder="Como será feito?" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">How Much (Custo R$)</label>
-                          <input type="number" value={currentSubAction.howMuch || 0} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, howMuch: parseFloat(e.target.value) || 0 }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[8.5px] font-black text-slate-450 uppercase">Status</label>
-                          <select value={currentSubAction.status || 'PENDENTE'} onChange={(e) => setCurrentSubAction(prev => ({ ...prev, status: e.target.value as any }))} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]">
-                            <option value="PENDENTE">Pendente</option>
-                            <option value="CONCLUIDO">Concluído</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end gap-2 pt-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setShowSubActionForm(false)}
-                          className="px-4 py-1.5 border border-slate-200 rounded-lg text-[10px] font-black text-slate-550 uppercase tracking-wider hover:bg-slate-100 bg-white cursor-pointer"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleAddOrUpdateSubAction}
-                          className="px-4 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-lg text-[10px] font-black uppercase tracking-wider cursor-pointer border-none"
-                        >
-                          Confirmar Ação
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tabela de exibição 5W2H */}
-                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-3xs max-h-[300px] overflow-y-auto bg-slate-50/50">
-                    <table className="w-full text-left border-collapse">
+                  {/* Tabela de exibição 5W2H com inputs inline */}
+                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-3xs max-h-[300px] overflow-y-auto bg-slate-50/50 overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[950px]">
                       <thead>
                         <tr className="bg-slate-100 border-b border-slate-200 select-none text-[8.5px] font-black text-slate-450 uppercase tracking-wider">
-                          <th className="py-2.5 px-3 w-8 text-center">Status</th>
-                          <th className="py-2.5 px-3">What (O que)</th>
-                          <th className="py-2.5 px-3">Why (Por que)</th>
-                          <th className="py-2.5 px-3">Where (Onde)</th>
-                          <th className="py-2.5 px-3">When (Prazo)</th>
-                          <th className="py-2.5 px-3 text-center">Who (Quem)</th>
-                          <th className="py-2.5 px-3">How (Como)</th>
-                          <th className="py-2.5 px-3">Cost (Quanto)</th>
-                          <th className="py-2.5 px-3 text-right">Ações</th>
+                          <th className="py-2.5 px-3 w-[120px]">Status</th>
+                          <th className="py-2.5 px-3 min-w-[140px]">What (O que)</th>
+                          <th className="py-2.5 px-3 min-w-[140px]">Why (Por que)</th>
+                          <th className="py-2.5 px-3 min-w-[110px]">Where (Onde)</th>
+                          <th className="py-2.5 px-3 w-[130px]">When (Prazo)</th>
+                          <th className="py-2.5 px-3 w-[140px]">Who (Quem)</th>
+                          <th className="py-2.5 px-3 min-w-[140px]">How (Como)</th>
+                          <th className="py-2.5 px-3 w-[100px]">Cost (Quanto)</th>
+                          <th className="py-2.5 px-3 w-[50px] text-center">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-150 text-[10.5px] font-bold text-slate-650">
@@ -2291,66 +2177,93 @@ export default function PlanejamentoPage() {
                             </td>
                           </tr>
                         ) : (
-                          currentPlano.acoes.map(a => {
-                            const executor = users.find(u => u.id === a.who);
-                            return (
-                              <tr key={a.id} className="hover:bg-slate-100/30 transition-colors">
-                                <td className="py-2 px-3 text-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={a.status === 'CONCLUIDO'}
-                                    onChange={(e) => handleToggleSubActionStatus(a.id, e.target.checked)}
-                                    className="w-3.5 h-3.5 rounded text-[#1B4D3E] focus:ring-[#1B4D3E] border-slate-350 cursor-pointer"
-                                  />
-                                </td>
-                                <td className="py-2 px-3 break-words max-w-[120px]">{a.what}</td>
-                                <td className="py-2 px-3 break-words max-w-[120px]">{a.why}</td>
-                                <td className="py-2 px-3 truncate max-w-[80px]">{a.where}</td>
-                                <td className="py-2 px-3 font-mono text-[9.5px]">
-                                  {a.when ? new Date(a.when).toLocaleDateString('pt-BR') : '-'}
-                                </td>
-                                <td className="py-2 px-3 text-center">
-                                  <div className="relative group/user inline-flex items-center justify-center cursor-pointer">
-                                    {executor?.avatarUrl ? (
-                                      <img src={executor.avatarUrl} alt={executor.nome} className="w-5 h-5 rounded-full object-cover border border-slate-200" />
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-[#1B4D3E] text-white font-black text-[8px] flex items-center justify-center border border-slate-200 uppercase">
-                                        {executor?.nome ? executor.nome.substring(0, 2) : 'EX'}
-                                      </div>
-                                    )}
-                                    <div className="absolute left-1/2 bottom-6 -translate-x-1/2 bg-slate-900 text-white text-[8px] font-black uppercase py-0.5 px-1.5 rounded opacity-0 group-hover/user:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                                      {executor?.nome || 'Não definido'}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="py-2 px-3 break-words max-w-[100px]">{a.how}</td>
-                                <td className="py-2 px-3 text-slate-500 font-mono text-[9.5px]">
-                                  {a.howMuch > 0 ? `R$ ${a.howMuch}` : 'Sem custo'}
-                                </td>
-                                <td className="py-2 px-3 text-right">
-                                  <div className="flex justify-end gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCurrentSubAction(a);
-                                        setShowSubActionForm(true);
-                                      }}
-                                      className="p-1 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-255 rounded transition-colors cursor-pointer border-none bg-transparent"
-                                    >
-                                      <Edit size={11} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteSubAction(a.id)}
-                                      className="p-1 text-slate-400 hover:text-red-500 hover:bg-slate-255 rounded transition-colors cursor-pointer border-none bg-transparent"
-                                    >
-                                      <Trash2 size={11} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })
+                          currentPlano.acoes.map(a => (
+                            <tr key={a.id} className="hover:bg-slate-100/30 transition-colors">
+                              <td className="py-2 px-3">
+                                <select
+                                  value={a.status || 'PENDENTE'}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'status', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                >
+                                  <option value="PENDENTE">Pendente</option>
+                                  <option value="CONCLUIDO">Concluído</option>
+                                </select>
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="text"
+                                  value={a.what || ''}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'what', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                  placeholder="O que fará?"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="text"
+                                  value={a.why || ''}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'why', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                  placeholder="Por que fará?"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="text"
+                                  value={a.where || ''}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'where', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                  placeholder="Onde fará?"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="date"
+                                  value={a.when ? a.when.substring(0, 10) : ''}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <select
+                                  value={a.who || ''}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'who', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                >
+                                  <option value="">Selecione...</option>
+                                  {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="text"
+                                  value={a.how || ''}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'how', e.target.value)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                  placeholder="Como fará?"
+                                />
+                              </td>
+                              <td className="py-2 px-3">
+                                <input
+                                  type="number"
+                                  value={a.howMuch || 0}
+                                  onChange={(e) => handleUpdateSubActionField(a.id, 'howMuch', parseFloat(e.target.value) || 0)}
+                                  className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                />
+                              </td>
+                              <td className="py-2 px-3 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSubAction(a.id)}
+                                  className="p-1 text-slate-400 hover:text-red-500 hover:bg-slate-200 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
                         )}
                       </tbody>
                     </table>
