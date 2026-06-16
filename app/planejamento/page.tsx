@@ -2107,14 +2107,24 @@ export default function PlanejamentoPage() {
                       placeholder="Implementação de Novo CRM" />
                     
                     {/* Causa Vinculada abaixo do título */}
-                    <div className="mt-3 flex items-center gap-2 select-none">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Causa Vinculada:</span>
-                      <select value={currentPlano.causaRaizId || ''}
-                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
-                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none cursor-pointer p-0 max-w-[450px] truncate focus:bg-slate-50 focus:px-1 rounded-sm">
-                        <option value="">Entrada Direta</option>
-                        {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
-                      </select>
+                    <div className="mt-3 flex items-start gap-2 select-none">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap mt-0.5">Causa Vinculada:</span>
+                      <div className="relative flex-1 min-w-0">
+                        {/* Visible styled text that wraps naturally */}
+                        <div className="text-xs font-black text-slate-700 bg-transparent cursor-pointer p-0 rounded-sm hover:bg-slate-50 transition-colors flex items-center gap-1 leading-normal max-w-full">
+                          <span className="break-words flex-1 pr-4">
+                            {causas.find(c => c.id === currentPlano.causaRaizId)?.causaRaiz || 'Entrada Direta'}
+                          </span>
+                          <span className="text-[9px] text-slate-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
+                        </div>
+                        {/* Native select on top, completely transparent but clickable */}
+                        <select value={currentPlano.causaRaizId || ''}
+                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                          <option value="">Entrada Direta</option>
+                          {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
