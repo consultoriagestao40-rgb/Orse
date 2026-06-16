@@ -26,7 +26,9 @@ import {
   ChevronDown,
   ChevronUp,
   Network,
-  GitBranch
+  GitBranch,
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { 
@@ -920,6 +922,7 @@ export default function PlanejamentoPage() {
 
   // States for Mereo OKR views
   const [okrViewMode, setOkrViewMode] = useState<'resumo' | 'arvore'>('resumo');
+  const [okrUserFilter, setOkrUserFilter] = useState<string>('todos');
   const [expandedObjectives, setExpandedObjectives] = useState<Record<string, boolean>>({});
   const [expandedKrs, setExpandedKrs] = useState<Record<string, boolean>>({});
 
@@ -2305,95 +2308,89 @@ export default function PlanejamentoPage() {
               )}
 
               {/* ABA 3: METAS (OKRs POR CICLOS) */}
-              {/* ABA 3: METAS (OKRs POR CICLOS) */}
               {activeTab === 'metas' && (
                 <div className="space-y-6">
-                  {/* Selector de ciclos */}
+                  {/* Top Header Row styled like Mereo */}
+                  <div className="flex justify-between items-center select-none pt-2">
+                    <h1 className="text-xl font-extrabold uppercase text-slate-800 tracking-wider">Resumo</h1>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenObjectiveModal()}
+                      className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
+                    >
+                      <Plus size={14} /> Adicionar OKR
+                    </button>
+                  </div>
+
+                  {/* Selector de ciclos e filtros */}
                   <div className="flex items-center justify-between gap-4 flex-wrap bg-white border border-slate-200 rounded-3xl p-4 shadow-2xs select-none">
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Ciclo Ativo:</span>
-                      <div className="flex gap-2 flex-wrap">
+                      <select
+                        value={activeCicloId}
+                        onChange={(e) => setActiveCicloId(e.target.value)}
+                        className="bg-white border border-slate-250 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED] cursor-pointer"
+                      >
                         {okrCiclos.map(c => (
-                          <button
-                            key={c.id}
-                            onClick={() => setActiveCicloId(c.id)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                              activeCicloId === c.id 
-                                ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-xs' 
-                                : 'bg-white border-slate-250 text-slate-655 hover:bg-slate-50'
-                            }`}
-                          >
-                            {c.nome}
-                          </button>
+                          <option key={c.id} value={c.id}>{c.nome}</option>
                         ))}
+                      </select>
+
+                      <select
+                        value={okrUserFilter}
+                        onChange={(e) => setOkrUserFilter(e.target.value)}
+                        className="bg-white border border-slate-250 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED] cursor-pointer"
+                      >
+                        <option value="todos">Todos os Responsáveis</option>
+                        {users.map(u => (
+                          <option key={u.id} value={u.id}>{u.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200 flex gap-0.5">
+                        <button
+                          onClick={() => setOkrViewMode('resumo')}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer border-none ${
+                            okrViewMode === 'resumo'
+                              ? 'bg-white text-slate-800 shadow-2xs'
+                              : 'text-slate-450 hover:text-slate-700 bg-transparent'
+                          }`}
+                        >
+                          <LayoutList size={12} /> Ver Detalhes
+                        </button>
+                        <button
+                          onClick={() => setOkrViewMode('arvore')}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer border-none ${
+                            okrViewMode === 'arvore'
+                              ? 'bg-white text-slate-800 shadow-2xs'
+                              : 'text-slate-450 hover:text-slate-700 bg-transparent'
+                          }`}
+                        >
+                          <Network size={12} /> Árvore
+                        </button>
                       </div>
+                      
+                      {activeCiclo && (
+                        <button 
+                          onClick={() => handleDeleteOkrObj(activeCiclo.id)}
+                          className="text-[10px] font-black text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer border-none bg-transparent uppercase tracking-wider"
+                        >
+                          Excluir Ciclo
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   {activeCiclo ? (
                     <div className="space-y-6">
-                      {/* Header of Active Cycle */}
-                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black bg-slate-100 border border-slate-250 text-slate-600 rounded px-1.5 py-0.5 uppercase tracking-wider">OKR & Metas</span>
-                            <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wide">
-                              {formatLocalDate(activeCiclo.dataInicio)} - {formatLocalDate(activeCiclo.dataFim)}
-                            </span>
-                          </div>
-                          <h2 className="text-lg font-black text-slate-800 uppercase tracking-wide mt-1">{activeCiclo.nome}</h2>
-                        </div>
-                        
-                        {/* View mode toggle and cycle actions */}
-                        <div className="flex items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
-                          <div className="bg-slate-100 p-0.5 rounded-xl border border-slate-200 flex gap-0.5">
-                            <button
-                              onClick={() => setOkrViewMode('resumo')}
-                              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer border-none ${
-                                okrViewMode === 'resumo'
-                                  ? 'bg-white text-slate-800 shadow-2xs'
-                                  : 'text-slate-450 hover:text-slate-700 bg-transparent'
-                              }`}
-                            >
-                              <LayoutList size={12} /> Resumo
-                            </button>
-                            <button
-                              onClick={() => setOkrViewMode('arvore')}
-                              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer border-none ${
-                                okrViewMode === 'arvore'
-                                  ? 'bg-white text-slate-800 shadow-2xs'
-                                  : 'text-slate-450 hover:text-slate-700 bg-transparent'
-                              }`}
-                            >
-                              <Network size={12} /> Árvore
-                            </button>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenObjectiveModal()}
-                              className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
-                            >
-                              <PlusCircle size={13} /> Novo Objetivo
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteOkrObj(activeCiclo.id)}
-                              className="text-xs font-black text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer border-none bg-transparent"
-                            >
-                              Excluir Ciclo
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
                       {activeCiclo.objetivos.length === 0 ? (
                         <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-3 shadow-xs">
                           <span className="text-slate-400 italic text-sm">Nenhum objetivo cadastrado neste ciclo.</span>
                           <button
                             type="button"
                             onClick={() => handleOpenObjectiveModal()}
-                            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
+                            className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
                           >
                             <PlusCircle size={13} /> + Adicionar Objetivo
                           </button>
@@ -2401,392 +2398,448 @@ export default function PlanejamentoPage() {
                       ) : okrViewMode === 'resumo' ? (
                         /* VISÃO RESUMO (ACORDEÃO DE OBJETIVOS) */
                         <div className="space-y-4">
-                          {activeCiclo.objetivos.map(obj => {
-                            const isExpanded = expandedObjectives[obj.id] ?? true; // expand default
+                          {activeCiclo.objetivos
+                            .filter(obj => {
+                              if (okrUserFilter === 'todos') return true;
+                              return (obj.krs || []).some(kr => kr.responsavelId === okrUserFilter);
+                            })
+                            .map((obj, objIdx) => {
+                              const isExpanded = expandedObjectives[obj.id] ?? true; // expand default
+                              const uniqueResponsables = Array.from(new Set(
+                                (obj.krs || []).map(kr => kr.responsavelId).filter(Boolean)
+                              )).map(id => users.find(u => u.id === id)).filter(Boolean);
 
-                            return (
-                              <div key={obj.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-all duration-300 space-y-4">
-                                <div 
-                                  className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer select-none"
-                                  onClick={() => setExpandedObjectives(prev => ({ ...prev, [obj.id]: !isExpanded }))}
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                                      <span className="text-[9px] font-black bg-emerald-50 border border-emerald-200 text-[#1B4D3E] rounded px-2 py-0.5 uppercase tracking-wider">
-                                        {obj.fase || 'Objetivo'}
-                                      </span>
+                              return (
+                                <div key={obj.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-all duration-300 space-y-4">
+                                  <div 
+                                    className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer select-none"
+                                    onClick={() => setExpandedObjectives(prev => ({ ...prev, [obj.id]: !isExpanded }))}
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      {/* Violet target circle icon */}
+                                      <div className="w-8 h-8 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] flex items-center justify-center shrink-0">
+                                        <Target size={15} />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide leading-snug break-words">
+                                          Objetivo {objIdx + 1}: {obj.titulo}
+                                        </h3>
+                                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                          <span className="text-[9px] font-black bg-emerald-50 border border-emerald-200 text-[#1B4D3E] rounded px-1.5 py-0.5 uppercase tracking-wider">
+                                            {obj.fase || 'Geral'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-between md:justify-end" onClick={(e) => e.stopPropagation()}>
+                                      {/* Deadlines & Comments inline style */}
                                       {obj.dataFim && (
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">
-                                          Prazo: {formatLocalDate(obj.dataFim)}
-                                        </span>
+                                        <div className="flex items-center gap-1.5 text-[10.5px] font-extrabold text-slate-505 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                                          <Calendar size={13} className="text-slate-400" />
+                                          <span>{formatLocalDate(obj.dataFim)}</span>
+                                        </div>
                                       )}
+
+                                      <button
+                                        type="button"
+                                        className="flex items-center gap-1.5 text-[10.5px] font-extrabold text-slate-505 bg-white border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer"
+                                      >
+                                        <MessageSquare size={13} className="text-slate-400" />
+                                        <span>Comentários</span>
+                                      </button>
+
+                                      {/* Avatars roll-up list */}
+                                      {uniqueResponsables.length > 0 && (
+                                        <div className="flex -space-x-1.5 overflow-hidden" title="Responsáveis pelas Ações">
+                                          {uniqueResponsables.slice(0, 4).map((u: any) => {
+                                            const initials = u.nome ? u.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                                            return (
+                                              <div 
+                                                key={u.id} 
+                                                className="w-6 h-6 rounded-full bg-[#7C3AED]/20 border-2 border-white flex items-center justify-center text-[7.5px] font-black uppercase text-[#7C3AED]"
+                                                title={u.nome}
+                                              >
+                                                {initials}
+                                              </div>
+                                            );
+                                          })}
+                                          {uniqueResponsables.length > 4 && (
+                                            <div className="w-6 h-6 rounded-full bg-slate-250 border-2 border-white flex items-center justify-center text-[7.5px] font-black text-slate-600">
+                                              +{uniqueResponsables.length - 4}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Action buttons */}
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenKrModal(obj.id)}
+                                          className="p-1.5 text-[#7C3AED] hover:bg-[#7C3AED]/10 rounded-lg transition-all cursor-pointer border-none bg-transparent flex items-center gap-1 text-[10px] font-black uppercase tracking-wider"
+                                          title="Adicionar Resultado-Chave (KR)"
+                                        >
+                                          <PlusCircle size={14} /> <span className="hidden sm:inline">+ KR</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenObjectiveModal(obj)}
+                                          className="p-1.5 text-slate-450 hover:text-slate-655 hover:bg-slate-100 rounded-lg transition-all cursor-pointer border-none bg-transparent"
+                                          title="Editar Objetivo"
+                                        >
+                                          <Edit size={14} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteObjective(obj.id)}
+                                          className="p-1.5 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer border-none bg-transparent"
+                                          title="Excluir Objetivo"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setExpandedObjectives(prev => ({ ...prev, [obj.id]: !isExpanded }))}
+                                          className="p-1.5 text-slate-450 hover:text-slate-700 bg-transparent border-none cursor-pointer"
+                                        >
+                                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        </button>
+                                      </div>
                                     </div>
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide leading-snug break-words">
-                                      {obj.titulo}
-                                    </h3>
                                   </div>
-                                  
-                                  <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-between md:justify-end">
-                                    <div className="flex flex-col items-end gap-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase">Progresso Consolidado</span>
-                                        <span className="text-sm font-black text-[#1B4D3E]">{obj.progresso}%</span>
-                                      </div>
-                                      <div className="w-32 bg-slate-100 rounded-full h-1.5 relative overflow-hidden">
-                                        <div 
-                                          className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-[#1B4D3E] transition-all duration-300"
-                                          style={{ width: `${obj.progresso}%` }}
-                                        ></div>
-                                      </div>
-                                    </div>
 
-                                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleOpenKrModal(obj.id)}
-                                        className="p-1.5 text-[#1B4D3E] hover:bg-[#1B4D3E]/10 rounded-lg transition-all cursor-pointer border-none bg-transparent flex items-center gap-1 text-[10px] font-black uppercase tracking-wider"
-                                        title="Adicionar Resultado-Chave (KR)"
-                                      >
-                                        <PlusCircle size={14} /> <span className="hidden sm:inline">+ KR</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleOpenObjectiveModal(obj)}
-                                        className="p-1.5 text-slate-450 hover:text-slate-650 hover:bg-slate-100 rounded-lg transition-all cursor-pointer border-none bg-transparent"
-                                        title="Editar Objetivo"
-                                      >
-                                        <Edit size={14} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteObjective(obj.id)}
-                                        className="p-1.5 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer border-none bg-transparent"
-                                        title="Excluir Objetivo"
-                                      >
-                                        <Trash2 size={14} />
-                                      </button>
-                                      <span className="text-slate-400 ml-1">
-                                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
+                                  {isExpanded && (
+                                    <div className="pt-4 border-t border-slate-100 space-y-4 pl-2 sm:pl-4">
+                                      {(!obj.krs || obj.krs.length === 0) ? (
+                                        <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
+                                          <span className="text-slate-400 italic text-xs">Nenhum resultado-chave (KR) cadastrado para este objetivo.</span>
+                                        </div>
+                                      ) : (
+                                        obj.krs
+                                          .filter(kr => {
+                                            if (okrUserFilter === 'todos') return true;
+                                            return kr.responsavelId === okrUserFilter;
+                                          })
+                                          .map((kr, krIdx) => {
+                                            const totalDelta = kr.valorAlvo - kr.valorInicial;
+                                            const currentDelta = kr.valorAtual - kr.valorInicial;
+                                            const krProgress = totalDelta !== 0 ? Math.round((currentDelta / totalDelta) * 100) : 100;
+                                            const limitedKrProgress = Math.min(Math.max(krProgress, 0), 100);
+                                            const responsavelKr = users.find(u => u.id === kr.responsavelId);
+                                            const initialsKr = responsavelKr?.nome ? responsavelKr.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                                            const isKrExpanded = expandedKrs[kr.id] ?? false;
 
-                                {isExpanded && (
-                                  <div className="pt-4 border-t border-slate-100 space-y-4 pl-2 sm:pl-4">
-                                    {(!obj.krs || obj.krs.length === 0) ? (
-                                      <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
-                                        <span className="text-slate-400 italic text-xs">Nenhum resultado-chave (KR) cadastrado para este objetivo.</span>
-                                      </div>
-                                    ) : (
-                                      obj.krs.map(kr => {
-                                        const totalDelta = kr.valorAlvo - kr.valorInicial;
-                                        const currentDelta = kr.valorAtual - kr.valorInicial;
-                                        const krProgress = totalDelta !== 0 ? Math.round((currentDelta / totalDelta) * 100) : 100;
-                                        const limitedKrProgress = Math.min(Math.max(krProgress, 0), 100);
-                                        const responsavelKr = users.find(u => u.id === kr.responsavelId);
-                                        const initialsKr = responsavelKr?.nome ? responsavelKr.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '';
-                                        const isKrExpanded = expandedKrs[kr.id] ?? false;
+                                            const formatKrValue = (val: number, unit: string) => {
+                                              if (unit.trim().toLowerCase() === 'r$' || unit.trim().toUpperCase() === 'BRL') {
+                                                return `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                                              }
+                                              return `${val} ${unit}`;
+                                            };
 
-                                        return (
-                                          <div 
-                                            key={kr.id} 
-                                            className="bg-slate-50/60 border border-slate-200 hover:border-slate-350 rounded-2xl p-4 transition-all duration-200 space-y-3 relative"
-                                          >
-                                            <div className="flex justify-between items-start gap-4">
-                                              <div className="flex-1">
-                                                <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                                                  <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase border ${
-                                                    kr.status === 'CONCLUIDO' ? 'bg-emerald-50 text-emerald-600 border-emerald-250' :
-                                                    kr.status === 'QUASE_LA' ? 'bg-violet-50 text-violet-600 border-violet-250' :
-                                                    kr.status === 'EM_ANDAMENTO' ? 'bg-blue-50 text-blue-600 border-blue-250' :
-                                                    'bg-slate-50 text-slate-650 border-slate-250'
-                                                  }`}>
-                                                    {kr.status === 'CONCLUIDO' ? 'Concluído' :
-                                                     kr.status === 'QUASE_LA' ? 'Quase Lá' :
-                                                     kr.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
-                                                  </span>
-                                                  {responsavelKr && (
+                                            return (
+                                              <div 
+                                                key={kr.id} 
+                                                className="bg-slate-50/40 border border-slate-200 hover:border-slate-300 rounded-2xl p-4 transition-all duration-250 space-y-3 relative"
+                                              >
+                                                <div className="flex justify-between items-start gap-4">
+                                                  <div className="flex-1">
+                                                    <p className="text-xs font-black text-slate-750">
+                                                      KR {objIdx + 1}.{krIdx + 1}: {kr.descricao}
+                                                    </p>
+                                                  </div>
+                                                  <div className="text-right font-black text-xs text-slate-800 shrink-0">
+                                                    {formatKrValue(kr.valorAtual, kr.unidade)} / {formatKrValue(kr.valorAlvo, kr.unidade)}
+                                                  </div>
+                                                </div>
+
+                                                {/* Purple progress bar matching Mereo style */}
+                                                <div className="relative w-full pt-1 pb-4">
+                                                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                                     <div 
-                                                      className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full pl-1 pr-2.5 py-0.5"
-                                                      title={`Responsável: ${responsavelKr.nome}`}
-                                                    >
-                                                      <div className="w-4 h-4 rounded-full bg-[#1B4D3E] text-white flex items-center justify-center text-[7px] font-bold uppercase">
+                                                      className="h-full rounded-full bg-[#7C3AED] transition-all duration-300"
+                                                      style={{ width: `${limitedKrProgress}%` }}
+                                                    ></div>
+                                                  </div>
+                                                  <div className="flex justify-between text-[8px] font-black text-slate-400 mt-0.5">
+                                                    <span>0%</span>
+                                                    <span>100%</span>
+                                                  </div>
+                                                  <div 
+                                                    className="absolute text-[9px] font-black text-[#7C3AED] mt-0.5 -translate-x-1/2 transition-all duration-350"
+                                                    style={{ left: `${limitedKrProgress}%`, top: '6px' }}
+                                                  >
+                                                    {limitedKrProgress}%
+                                                  </div>
+                                                </div>
+
+                                                {/* Status, Avatar & Actions */}
+                                                <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100 flex-wrap">
+                                                  <div className="flex items-center gap-3">
+                                                    {/* Status Badge */}
+                                                    <span className={`text-[8.5px] font-black px-2.5 py-1 rounded-lg uppercase border tracking-wider ${
+                                                      kr.status === 'CONCLUIDO' ? 'bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]' :
+                                                      kr.status === 'QUASE_LA' ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FED7AA]' :
+                                                      kr.status === 'EM_ANDAMENTO' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+                                                      'bg-slate-50 text-slate-650 border-slate-255'
+                                                    }`}>
+                                                      {kr.status === 'CONCLUIDO' ? 'Concluído' :
+                                                       kr.status === 'QUASE_LA' ? 'Quase Lá' :
+                                                       kr.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
+                                                    </span>
+
+                                                    {/* Avatar & Name */}
+                                                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-1 pr-3 py-0.5 shadow-3xs">
+                                                      <div className="w-5 h-5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7.5px] font-bold uppercase">
                                                         {initialsKr}
                                                       </div>
-                                                      <span className="text-[8.5px] font-bold text-slate-550 max-w-[120px] truncate">{responsavelKr.nome}</span>
+                                                      <span className="text-[9px] font-black text-slate-600 truncate max-w-[150px]">
+                                                        {responsavelKr ? responsavelKr.nome : 'Sem responsável'}
+                                                      </span>
                                                     </div>
-                                                  )}
+                                                  </div>
+
+                                                  <div className="flex items-center gap-2">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => setExpandedKrs(prev => ({ ...prev, [kr.id]: !isKrExpanded }))}
+                                                      className="text-[9.5px] font-black text-slate-455 hover:text-slate-700 flex items-center gap-1 uppercase tracking-wider bg-transparent border-none cursor-pointer"
+                                                    >
+                                                      {isKrExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                      Ações ({kr.tarefas?.length || 0})
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleOpenKrModal(obj.id, kr)}
+                                                      className="p-1 text-slate-450 hover:text-slate-655 hover:bg-white rounded transition-colors cursor-pointer border-none bg-transparent"
+                                                      title="Editar KR"
+                                                    >
+                                                      <Edit size={13} />
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleDeleteKr(obj.id, kr.id)}
+                                                      className="p-1 text-slate-455 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                                      title="Excluir KR"
+                                                    >
+                                                      <Trash2 size={13} />
+                                                    </button>
+                                                  </div>
                                                 </div>
-                                                <p className="text-xs font-bold text-slate-700 leading-snug">{kr.descricao}</p>
-                                              </div>
 
-                                              <div className="flex items-center gap-1 shrink-0">
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleOpenKrModal(obj.id, kr)}
-                                                  className="p-1 text-slate-450 hover:text-slate-650 hover:bg-white rounded transition-colors cursor-pointer border-none bg-transparent"
-                                                  title="Editar KR"
-                                                >
-                                                  <Edit size={13} />
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleDeleteKr(obj.id, kr.id)}
-                                                  className="p-1 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer border-none bg-transparent"
-                                                  title="Excluir KR"
-                                                >
-                                                  <Trash2 size={13} />
-                                                </button>
-                                              </div>
-                                            </div>
+                                                {isKrExpanded && (
+                                                  <div className="mt-3 bg-white border border-slate-200/80 rounded-2xl p-4 space-y-4">
+                                                    {editingKrId === kr.id && editingKrObjectiveId === obj.id ? (
+                                                      /* EDIT MODE */
+                                                      <div className="space-y-4">
+                                                        <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Editar Tarefas do KR</span>
+                                                          <button
+                                                            type="button"
+                                                            onClick={handleAddTaskRow}
+                                                            className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs"
+                                                          >
+                                                            <Plus size={10} /> + Nova Tarefa
+                                                          </button>
+                                                        </div>
 
-                                            {/* Progress bar and values */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center pt-2 border-t border-slate-200/50">
-                                              <div className="flex items-center gap-3">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase w-16 shrink-0">Progresso</span>
-                                                <div className="flex-1 bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
-                                                  <div 
-                                                    className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                                                    style={{ width: `${limitedKrProgress}%` }}
-                                                  ></div>
-                                                </div>
-                                                <span className="text-xs font-black text-slate-700 w-10 text-right">{limitedKrProgress}%</span>
-                                              </div>
-                                              
-                                              <div className="flex justify-between items-center bg-white border border-slate-150 rounded-xl px-3 py-1 text-[10.5px]">
-                                                <span className="font-bold text-slate-400 uppercase">Valores</span>
-                                                <span className="font-black text-slate-700">
-                                                  Atual: <span className="text-slate-800">{kr.valorAtual}</span> / Alvo: <span className="text-[#1B4D3E]">{kr.valorAlvo}</span> {kr.unidade}
-                                                </span>
-                                              </div>
-                                            </div>
+                                                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                                                          {editingKrTasks.length === 0 ? (
+                                                            <p className="text-[11px] text-slate-400 italic py-2">Nenhuma tarefa adicionada. Clique em "+ Nova Tarefa" acima.</p>
+                                                          ) : (
+                                                            editingKrTasks.map((task, tIdx) => {
+                                                              return (
+                                                                <div key={task.id} className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-3 relative">
+                                                                  <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveTaskRow(task.id)}
+                                                                    className="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                                                    title="Remover Tarefa"
+                                                                  >
+                                                                    <Trash2 size={12} />
+                                                                  </button>
 
-                                            {/* Tasks Trigger and Section */}
-                                            <div className="pt-1">
-                                              <button
-                                                type="button"
-                                                onClick={() => setExpandedKrs(prev => ({ ...prev, [kr.id]: !isKrExpanded }))}
-                                                className="text-[9.5px] font-black text-slate-450 hover:text-slate-700 flex items-center gap-1 uppercase tracking-wider bg-transparent border-none cursor-pointer p-0 mt-1"
-                                              >
-                                                {isKrExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                                Iniciativas / Ações ({kr.tarefas?.length || 0})
-                                              </button>
+                                                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                    <div className="space-y-1">
+                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Descrição da Ação #{tIdx + 1}</label>
+                                                                      <input
+                                                                        type="text"
+                                                                        required
+                                                                        value={task.descricao || ''}
+                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'descricao', e.target.value)}
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                                                        placeholder="Ex: Definir plano de ação"
+                                                                      />
+                                                                    </div>
 
-                                              {isKrExpanded && (
-                                                <div className="mt-3 bg-white border border-slate-200/80 rounded-2xl p-4 space-y-4">
-                                                  {editingKrId === kr.id && editingKrObjectiveId === obj.id ? (
-                                                    /* EDIT MODE */
-                                                    <div className="space-y-4">
-                                                      <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Editar Tarefas do KR</span>
-                                                        <button
-                                                          type="button"
-                                                          onClick={handleAddTaskRow}
-                                                          className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs"
-                                                        >
-                                                          <Plus size={10} /> + Nova Tarefa
-                                                        </button>
+                                                                    <div className="space-y-1">
+                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Responsável</label>
+                                                                      <select
+                                                                        value={task.responsavelId || ''}
+                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'responsavelId', e.target.value)}
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                                                      >
+                                                                        <option value="">Selecione...</option>
+                                                                        {users.map(u => (
+                                                                          <option key={u.id} value={u.id}>{u.nome}</option>
+                                                                        ))}
+                                                                      </select>
+                                                                    </div>
+                                                                  </div>
+
+                                                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                                    <div className="space-y-1">
+                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso ({task.progresso}%)</label>
+                                                                      <input
+                                                                        type="range"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        step="5"
+                                                                        value={task.progresso}
+                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'progresso', parseInt(e.target.value))}
+                                                                        className="w-full h-1 bg-slate-255 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] mt-2.5"
+                                                                      />
+                                                                    </div>
+
+                                                                    <div className="space-y-1">
+                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Status</label>
+                                                                      <select
+                                                                        value={task.status}
+                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'status', e.target.value)}
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                                                      >
+                                                                        <option value="PENDENTE">Pendente</option>
+                                                                        <option value="EM_ANDAMENTO">Em Progresso</option>
+                                                                        <option value="CONCLUIDO">Concluído</option>
+                                                                      </select>
+                                                                    </div>
+
+                                                                    <div className="space-y-1">
+                                                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Comentário / Observação</label>
+                                                                      <input
+                                                                        type="text"
+                                                                        value={task.comentario || ''}
+                                                                        onChange={(e) => handleUpdateTaskField(task.id, 'comentario', e.target.value)}
+                                                                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                                                                        placeholder="Ex: Aguardando dados"
+                                                                      />
+                                                                    </div>
+                                                                  </div>
+                                                                </div>
+                                                              );
+                                                            })
+                                                          )}
+                                                        </div>
+
+                                                        <div className="flex gap-2 justify-end border-t border-slate-100 pt-3">
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                              setEditingKrId(null);
+                                                              setEditingKrObjectiveId(null);
+                                                            }}
+                                                            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                                                          >
+                                                            Cancelar
+                                                          </button>
+                                                          <button
+                                                            type="button"
+                                                            onClick={handleSaveTasks}
+                                                            className="px-5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                                                          >
+                                                            Salvar no KR
+                                                          </button>
+                                                        </div>
                                                       </div>
-
-                                                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                                                        {editingKrTasks.length === 0 ? (
-                                                          <p className="text-[11px] text-slate-400 italic py-2">Nenhuma tarefa adicionada. Clique em "+ Nova Tarefa" acima.</p>
+                                                    ) : (
+                                                      /* READ-ONLY MODE */
+                                                      <div className="space-y-3">
+                                                        {(!kr.tarefas || kr.tarefas.length === 0) ? (
+                                                          <div className="text-center py-4 text-[11px] text-slate-400 italic">
+                                                            Nenhuma ação/tarefa cadastrada para este KR.
+                                                          </div>
                                                         ) : (
-                                                          editingKrTasks.map((task, tIdx) => {
-                                                            return (
-                                                              <div key={task.id} className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-3 relative">
-                                                                <button
-                                                                  type="button"
-                                                                  onClick={() => handleRemoveTaskRow(task.id)}
-                                                                  className="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer border-none bg-transparent"
-                                                                  title="Remover Tarefa"
-                                                                >
-                                                                  <Trash2 size={12} />
-                                                                </button>
+                                                          <div className="space-y-2">
+                                                            {kr.tarefas.map(task => {
+                                                              const responsavelTask = users.find(u => u.id === task.responsavelId);
+                                                              const initialsTask = responsavelTask?.nome ? responsavelTask.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
 
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                                  <div className="space-y-1">
-                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Descrição da Tarefa #{tIdx + 1}</label>
+                                                              return (
+                                                                <div key={task.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-150 rounded-xl transition-all">
+                                                                  <div className="flex items-start gap-2.5 flex-1 min-w-0">
                                                                     <input
-                                                                      type="text"
-                                                                      required
-                                                                      value={task.descricao || ''}
-                                                                      onChange={(e) => handleUpdateTaskField(task.id, 'descricao', e.target.value)}
-                                                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                                                                      placeholder="Ex: Definir plano de ação"
+                                                                      type="checkbox"
+                                                                      checked={task.status === 'CONCLUIDO'}
+                                                                      disabled
+                                                                      className="mt-0.5 rounded text-[#7C3AED] focus:ring-[#7C3AED] cursor-not-allowed"
                                                                     />
+                                                                    <div className="min-w-0">
+                                                                      <p className="text-[11px] font-bold text-slate-750 break-words">{task.descricao}</p>
+                                                                      {task.comentario && (
+                                                                        <p className="text-[9.5px] font-bold text-slate-450 italic mt-0.5 break-words">
+                                                                          Obs: {task.comentario}
+                                                                        </p>
+                                                                      )}
+                                                                    </div>
                                                                   </div>
 
-                                                                  <div className="space-y-1">
-                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Responsável</label>
-                                                                    <select
-                                                                      value={task.responsavelId || ''}
-                                                                      onChange={(e) => handleUpdateTaskField(task.id, 'responsavelId', e.target.value)}
-                                                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                                                                    >
-                                                                      <option value="">Selecione...</option>
-                                                                      {users.map(u => (
-                                                                        <option key={u.id} value={u.id}>{u.nome}</option>
-                                                                      ))}
-                                                                    </select>
-                                                                  </div>
-                                                                </div>
-
-                                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                                  <div className="space-y-1">
-                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso ({task.progresso}%)</label>
-                                                                    <input
-                                                                      type="range"
-                                                                      min="0"
-                                                                      max="100"
-                                                                      step="5"
-                                                                      value={task.progresso}
-                                                                      onChange={(e) => handleUpdateTaskField(task.id, 'progresso', parseInt(e.target.value))}
-                                                                      className="w-full h-1 bg-slate-250 rounded-lg appearance-none cursor-pointer accent-[#1B4D3E] mt-2.5"
-                                                                    />
-                                                                  </div>
-
-                                                                  <div className="space-y-1">
-                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Status</label>
-                                                                    <select
-                                                                      value={task.status}
-                                                                      onChange={(e) => handleUpdateTaskField(task.id, 'status', e.target.value)}
-                                                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                                                                    >
-                                                                      <option value="PENDENTE">Pendente</option>
-                                                                      <option value="EM_ANDAMENTO">Em Progresso</option>
-                                                                      <option value="CONCLUIDO">Concluído</option>
-                                                                    </select>
-                                                                  </div>
-
-                                                                  <div className="space-y-1">
-                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Comentário / Observação</label>
-                                                                    <input
-                                                                      type="text"
-                                                                      value={task.comentario || ''}
-                                                                      onChange={(e) => handleUpdateTaskField(task.id, 'comentario', e.target.value)}
-                                                                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                                                                      placeholder="Ex: Aguardando dados"
-                                                                    />
-                                                                  </div>
-                                                                </div>
-                                                              </div>
-                                                            );
-                                                          })
-                                                        )}
-                                                      </div>
-
-                                                      <div className="flex gap-2 justify-end border-t border-slate-100 pt-3">
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => {
-                                                            setEditingKrId(null);
-                                                            setEditingKrObjectiveId(null);
-                                                          }}
-                                                          className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
-                                                        >
-                                                          Cancelar
-                                                        </button>
-                                                        <button
-                                                          type="button"
-                                                          onClick={handleSaveTasks}
-                                                          className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
-                                                        >
-                                                          Salvar no KR
-                                                        </button>
-                                                      </div>
-                                                    </div>
-                                                  ) : (
-                                                    /* READ-ONLY MODE */
-                                                    <div className="space-y-3">
-                                                      {(!kr.tarefas || kr.tarefas.length === 0) ? (
-                                                        <div className="text-center py-4 text-[11px] text-slate-400 italic">
-                                                          Nenhuma ação/tarefa cadastrada para este KR.
-                                                        </div>
-                                                      ) : (
-                                                        <div className="space-y-2">
-                                                          {kr.tarefas.map(task => {
-                                                            const responsavelTask = users.find(u => u.id === task.responsavelId);
-                                                            const initialsTask = responsavelTask?.nome ? responsavelTask.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '';
-
-                                                            return (
-                                                              <div key={task.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-150 rounded-xl transition-all">
-                                                                <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                                                                  <input
-                                                                    type="checkbox"
-                                                                    checked={task.status === 'CONCLUIDO'}
-                                                                    disabled
-                                                                    className="mt-0.5 rounded text-[#1B4D3E] focus:ring-[#1B4D3E] cursor-not-allowed"
-                                                                  />
-                                                                  <div className="min-w-0">
-                                                                    <p className="text-[11px] font-bold text-slate-750 break-words">{task.descricao}</p>
-                                                                    {task.comentario && (
-                                                                      <p className="text-[9.5px] font-bold text-slate-450 italic mt-0.5 break-words">
-                                                                        Obs: {task.comentario}
-                                                                      </p>
-                                                                    )}
-                                                                  </div>
-                                                                </div>
-
-                                                                <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-                                                                  {responsavelTask && (
-                                                                    <div 
-                                                                      className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-2 py-0.5"
-                                                                      title={`Responsável: ${responsavelTask.nome}`}
-                                                                    >
-                                                                      <div className="w-3.5 h-3.5 rounded-full bg-[#1B4D3E] text-white flex items-center justify-center text-[6.5px] font-bold uppercase">
-                                                                        {initialsTask}
+                                                                  <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                                                                    {responsavelTask && (
+                                                                      <div 
+                                                                        className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-2 py-0.5"
+                                                                        title={`Responsável: ${responsavelTask.nome}`}
+                                                                      >
+                                                                        <div className="w-3.5 h-3.5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[6.5px] font-bold uppercase">
+                                                                          {initialsTask}
+                                                                        </div>
+                                                                        <span className="text-[8.5px] font-bold text-slate-555 max-w-[80px] truncate">{responsavelTask.nome}</span>
                                                                       </div>
-                                                                      <span className="text-[8.5px] font-bold text-slate-550 max-w-[80px] truncate">{responsavelTask.nome}</span>
-                                                                    </div>
-                                                                  )}
+                                                                    )}
 
-                                                                  <div className="flex items-center gap-2">
-                                                                    <div className="w-16 bg-slate-200/85 rounded-full h-1.5 overflow-hidden">
-                                                                      <div className="h-full bg-emerald-500" style={{ width: `${task.progresso}%` }}></div>
+                                                                    <div className="flex items-center gap-2">
+                                                                      <div className="w-16 bg-slate-200/85 rounded-full h-1.5 overflow-hidden">
+                                                                        <div className="h-full bg-emerald-500" style={{ width: `${task.progresso}%` }}></div>
+                                                                      </div>
+                                                                      <span className="text-[9.5px] font-black text-slate-655 w-8 text-right">{task.progresso}%</span>
                                                                     </div>
-                                                                    <span className="text-[9.5px] font-black text-slate-655 w-8 text-right">{task.progresso}%</span>
+
+                                                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
+                                                                      task.status === 'CONCLUIDO' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                                                                      task.status === 'EM_ANDAMENTO' ? 'bg-blue-50 border-blue-250 text-blue-600' :
+                                                                      'bg-slate-50 border-slate-200 text-slate-600'
+                                                                    }`}>
+                                                                      {task.status === 'CONCLUIDO' ? 'Concluído' :
+                                                                       task.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
+                                                                    </span>
                                                                   </div>
-
-                                                                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
-                                                                    task.status === 'CONCLUIDO' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
-                                                                    task.status === 'EM_ANDAMENTO' ? 'bg-blue-50 border-blue-250 text-blue-600' :
-                                                                    'bg-slate-50 border-slate-200 text-slate-600'
-                                                                  }`}>
-                                                                    {task.status === 'CONCLUIDO' ? 'Concluído' :
-                                                                     task.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
-                                                                  </span>
                                                                 </div>
-                                                              </div>
-                                                            );
-                                                          })}
-                                                        </div>
-                                                      )}
+                                                              );
+                                                            })}
+                                                          </div>
+                                                        )}
 
-                                                      <div className="flex justify-end pt-1">
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => handleStartEditTasks(obj.id, kr)}
-                                                          className="text-[10px] font-black text-[#1B4D3E] hover:text-[#13382D] hover:bg-[#1B4D3E]/5 px-3 py-1.5 rounded-lg transition-all border-none bg-transparent cursor-pointer uppercase tracking-wider"
-                                                        >
-                                                          Gerenciar Ações/Tarefas
-                                                        </button>
+                                                        <div className="flex justify-end pt-1">
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => handleStartEditTasks(obj.id, kr)}
+                                                            className="text-[10px] font-black text-[#7C3AED] hover:text-[#6D28D9] hover:bg-[#7C3AED]/5 px-3 py-1.5 rounded-lg transition-all border-none bg-transparent cursor-pointer uppercase tracking-wider"
+                                                          >
+                                                            Gerenciar Ações
+                                                          </button>
+                                                        </div>
                                                       </div>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        );
-                                      })
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                         </div>
                       ) : (
                         /* VISÃO ÁRVORE (DIAGRAMA HIERÁRQUICO CONECTADO) */
@@ -2796,7 +2849,7 @@ export default function PlanejamentoPage() {
                             {/* Ciclo (Nó Raiz) */}
                             <div className="flex flex-col items-center mb-6 relative">
                               <div className="bg-slate-800 text-white rounded-2xl p-4 shadow-md text-center max-w-[300px] border border-slate-700">
-                                <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Ciclo Ativo</span>
+                                <span className="text-[9px] font-black text-[#7C3AED] uppercase tracking-widest">Ciclo Ativo</span>
                                 <h4 className="text-sm font-black mt-1 uppercase tracking-wide">{activeCiclo.nome}</h4>
                                 <div className="mt-3 flex justify-between items-center text-[10px] font-bold text-slate-400">
                                   <span>Progresso Geral</span>
@@ -2829,93 +2882,103 @@ export default function PlanejamentoPage() {
                                 <div className="absolute top-0 left-[16%] right-[16%] h-0.5 bg-slate-300"></div>
                               )}
 
-                              {activeCiclo.objetivos.map(obj => {
-                                return (
-                                  <div key={obj.id} className="flex flex-col items-center flex-1 min-w-[280px] relative">
-                                    {/* Vertical line to objective card */}
-                                    <div className="w-0.5 h-6 bg-slate-300"></div>
+                              {activeCiclo.objetivos
+                                .filter(obj => {
+                                  if (okrUserFilter === 'todos') return true;
+                                  return (obj.krs || []).some(kr => kr.responsavelId === okrUserFilter);
+                                })
+                                .map((obj, objIdx) => {
+                                  return (
+                                    <div key={obj.id} className="flex flex-col items-center flex-1 min-w-[280px] relative">
+                                      {/* Vertical line to objective card */}
+                                      <div className="w-0.5 h-6 bg-slate-300"></div>
 
-                                    {/* Card Objetivo */}
-                                    <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/20 rounded-2xl p-4 shadow-2xs text-center w-full max-w-[300px] z-10 hover:shadow-xs transition-all relative">
-                                      <span className="text-[8px] font-black bg-[#1B4D3E] text-white rounded px-2 py-0.5 uppercase tracking-wider">
-                                        {obj.fase || 'Objetivo'}
-                                      </span>
-                                      <h5 className="text-xs font-black text-slate-800 mt-2 line-clamp-2 uppercase tracking-wide">
-                                        {obj.titulo}
-                                      </h5>
-                                      <div className="mt-3 flex justify-between items-center text-[10px] font-bold text-slate-550">
-                                        <span>Progresso</span>
-                                        <span className="text-[#1B4D3E] font-black">{obj.progresso}%</span>
-                                      </div>
-                                      <div className="w-full bg-slate-200 rounded-full h-1 mt-1 overflow-hidden">
-                                        <div className="h-full bg-[#1B4D3E] rounded-full" style={{ width: `${obj.progresso}%` }}></div>
-                                      </div>
-                                    </div>
-
-                                    {/* Line to KRs */}
-                                    {obj.krs && obj.krs.length > 0 && (
-                                      <>
-                                        <div className="w-0.5 h-8 bg-slate-300 mt-2"></div>
-
-                                        {/* KRs Column (Vertically stacked for each objective, clean visual layout) */}
-                                        <div className="flex flex-col gap-4 w-full items-center relative pl-4 mt-2">
-                                          {/* Connecting vertical path line */}
-                                          <div className="absolute top-0 bottom-6 left-1/2 w-0.5 bg-slate-300 -translate-x-1/2 z-0"></div>
-
-                                          {obj.krs.map(kr => {
-                                            const totalDelta = kr.valorAlvo - kr.valorInicial;
-                                            const currentDelta = kr.valorAtual - kr.valorInicial;
-                                            const krProgress = totalDelta !== 0 ? Math.round((currentDelta / totalDelta) * 100) : 100;
-                                            const limitedKrProgress = Math.min(Math.max(krProgress, 0), 100);
-                                            const responsavel = users.find(u => u.id === kr.responsavelId);
-                                            const initials = responsavel?.nome ? responsavel.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '';
-
-                                            return (
-                                              <div 
-                                                key={kr.id} 
-                                                className="bg-white border border-slate-250 hover:border-slate-350 rounded-2xl p-3 shadow-2xs w-full max-w-[250px] z-10 transition-all hover:shadow-xs relative"
-                                              >
-                                                <div className="flex justify-between items-start gap-2">
-                                                  <p className="text-[10px] font-extrabold text-slate-700 leading-snug text-left line-clamp-2">
-                                                    {kr.descricao}
-                                                  </p>
-                                                  <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm shrink-0 uppercase border ${
-                                                    kr.status === 'CONCLUIDO' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                                    kr.status === 'QUASE_LA' ? 'bg-violet-50 text-violet-600 border-violet-200' :
-                                                    kr.status === 'EM_ANDAMENTO' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                                    'bg-slate-50 text-slate-600 border-slate-200'
-                                                  }`}>
-                                                    {kr.status === 'CONCLUIDO' ? 'Concluído' :
-                                                     kr.status === 'QUASE_LA' ? 'Quase' :
-                                                     kr.status === 'EM_ANDAMENTO' ? 'Foco' : 'Pend'}
-                                                  </span>
-                                                </div>
-
-                                                <div className="mt-2.5 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase">
-                                                  <span>Progresso: {limitedKrProgress}%</span>
-                                                  <span>{kr.valorAtual} / {kr.valorAlvo} {kr.unidade}</span>
-                                                </div>
-                                                <div className="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
-                                                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${limitedKrProgress}%` }}></div>
-                                                </div>
-
-                                                {responsavel && (
-                                                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5 justify-end">
-                                                    <span className="text-[8.5px] font-bold text-slate-550 truncate max-w-[120px]">{responsavel.nome}</span>
-                                                    <div className="w-4 h-4 rounded-full bg-[#1B4D3E] text-white flex items-center justify-center text-[7px] font-bold uppercase shrink-0">
-                                                      {initials}
-                                                    </div>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            );
-                                          })}
+                                      {/* Card Objetivo */}
+                                      <div className="bg-[#7C3AED]/5 border border-[#7C3AED]/20 rounded-2xl p-4 shadow-2xs text-center w-full max-w-[300px] z-10 hover:shadow-xs transition-all relative">
+                                        <span className="text-[8px] font-black bg-[#7C3AED] text-white rounded px-2 py-0.5 uppercase tracking-wider">
+                                          {obj.fase || 'Objetivo'}
+                                        </span>
+                                        <h5 className="text-xs font-black text-slate-800 mt-2 line-clamp-2 uppercase tracking-wide">
+                                          Objetivo {objIdx + 1}: {obj.titulo}
+                                        </h5>
+                                        <div className="mt-3 flex justify-between items-center text-[10px] font-bold text-slate-550">
+                                          <span>Progresso</span>
+                                          <span className="text-[#7C3AED] font-black">{obj.progresso}%</span>
                                         </div>
-                                      </>
-                                    )}
-                                  </div>
-                                );
-                              })}
+                                        <div className="w-full bg-slate-200 rounded-full h-1 mt-1 overflow-hidden">
+                                          <div className="h-full bg-[#7C3AED] rounded-full" style={{ width: `${obj.progresso}%` }}></div>
+                                        </div>
+                                      </div>
+
+                                      {/* Line to KRs */}
+                                      {obj.krs && obj.krs.length > 0 && (
+                                        <>
+                                          <div className="w-0.5 h-8 bg-slate-300 mt-2"></div>
+
+                                          {/* KRs Column (Vertically stacked for each objective, clean visual layout) */}
+                                          <div className="flex flex-col gap-4 w-full items-center relative pl-4 mt-2">
+                                            {/* Connecting vertical path line */}
+                                            <div className="absolute top-0 bottom-6 left-1/2 w-0.5 bg-slate-300 -translate-x-1/2 z-0"></div>
+
+                                            {obj.krs
+                                              .filter(kr => {
+                                                if (okrUserFilter === 'todos') return true;
+                                                return kr.responsavelId === okrUserFilter;
+                                              })
+                                              .map(kr => {
+                                                const totalDelta = kr.valorAlvo - kr.valorInicial;
+                                                const currentDelta = kr.valorAtual - kr.valorInicial;
+                                                const krProgress = totalDelta !== 0 ? Math.round((currentDelta / totalDelta) * 100) : 100;
+                                                const limitedKrProgress = Math.min(Math.max(krProgress, 0), 100);
+                                                const responsavel = users.find(u => u.id === kr.responsavelId);
+                                                const initials = responsavel?.nome ? responsavel.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+
+                                                return (
+                                                  <div 
+                                                    key={kr.id} 
+                                                    className="bg-white border border-slate-250 hover:border-slate-350 rounded-2xl p-3 shadow-2xs w-full max-w-[250px] z-10 transition-all hover:shadow-xs relative"
+                                                  >
+                                                    <div className="flex justify-between items-start gap-2">
+                                                      <p className="text-[10px] font-extrabold text-slate-700 leading-snug text-left line-clamp-2">
+                                                        {kr.descricao}
+                                                      </p>
+                                                      <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm shrink-0 uppercase border ${
+                                                        kr.status === 'CONCLUIDO' ? 'bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]' :
+                                                        kr.status === 'QUASE_LA' ? 'bg-[#FFEDD5] text-[#EA580C] border-[#FED7AA]' :
+                                                        kr.status === 'EM_ANDAMENTO' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
+                                                        'bg-slate-50 text-slate-650 border-slate-250'
+                                                      }`}>
+                                                        {kr.status === 'CONCLUIDO' ? 'Concluído' :
+                                                         kr.status === 'QUASE_LA' ? 'Quase' :
+                                                         kr.status === 'EM_ANDAMENTO' ? 'Foco' : 'Pend'}
+                                                      </span>
+                                                    </div>
+
+                                                    <div className="mt-2.5 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase">
+                                                      <span>Progresso: {limitedKrProgress}%</span>
+                                                      <span>{kr.valorAtual} / {kr.valorAlvo} {kr.unidade}</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
+                                                      <div className="h-full bg-[#7C3AED] rounded-full" style={{ width: `${limitedKrProgress}%` }}></div>
+                                                    </div>
+
+                                                    {responsavel && (
+                                                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5 justify-end">
+                                                        <span className="text-[8.5px] font-bold text-slate-550 truncate max-w-[120px]">{responsavel.nome}</span>
+                                                        <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 text-[#7C3AED] flex items-center justify-center text-[7px] font-bold uppercase shrink-0">
+                                                          {initials}
+                                                        </div>
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                );
+                                              })}
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                             </div>
 
                           </div>
