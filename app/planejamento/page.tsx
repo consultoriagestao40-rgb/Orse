@@ -2348,17 +2348,7 @@ export default function PlanejamentoPage() {
                   </div>
                   <span className="text-[10px] font-black text-[#1B4D3E] whitespace-nowrap">{currentPlano.percentualRealizado || 0}%</span>
                 </div>
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setIsEditingPlano(false)}
-                    className="px-6 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white transition-all">
-                    Cancelar
-                  </button>
-                  <button type="submit"
-                    className="px-8 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none transition-all"
-                    >
-                      Salvar
-                    </button>
-                </div>
+
               </div>
             </form>
           </div>
