@@ -469,6 +469,107 @@ export default function PlanejamentoPage() {
     setIsConclusaoPlanoModalOpen(false);
   };
 
+  // Objective & KR helper handlers
+  const handleOpenObjectiveModal = (obj?: OKRObjective) => {
+    if (obj) {
+      setCurrentObjective(obj);
+      setObjectiveIniciativasText(obj.iniciativas.join('\n'));
+    } else {
+      setCurrentObjective({
+        id: '',
+        titulo: '',
+        fase: '',
+        krs: [],
+        iniciativas: []
+      });
+      setObjectiveIniciativasText('');
+    }
+    setIsObjectiveModalOpen(true);
+  };
+
+  const handleDeleteObjective = async (objId: string) => {
+    if (!activeCiclo) return;
+    if (!confirm("Tem certeza que deseja excluir este objetivo? Todos os KRs associados serão apagados.")) return;
+    
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos: (activeCiclo.objetivos || []).filter(o => o.id !== objId)
+    };
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+  };
+
+  const handleSaveObjective = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCiclo) return;
+    if (!currentObjective.titulo?.trim()) {
+      alert("O título do objetivo é obrigatório.");
+      return;
+    }
+
+    const iniciativas = objectiveIniciativasText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    const updatedObjective: OKRObjective = {
+      ...currentObjective,
+      id: currentObjective.id || `obj-${Date.now()}`,
+      titulo: currentObjective.titulo || '',
+      fase: currentObjective.fase || '',
+      krs: currentObjective.krs || [],
+      iniciativas,
+      cicloId: activeCiclo.id,
+      progresso: currentObjective.progresso || 0
+    };
+
+    const objetivos = [...(activeCiclo.objetivos || [])];
+    const index = objetivos.findIndex(o => o.id === updatedObjective.id);
+    if (index !== -1) {
+      objetivos[index] = updatedObjective;
+    } else {
+      objetivos.push(updatedObjective);
+    }
+
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos
+    };
+
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+    setIsObjectiveModalOpen(false);
+  };
+
+  const handleAddOkrKR = () => {
+    const newKr: KR = {
+      id: `kr-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+      descricao: '',
+      valorInicial: 0,
+      valorAlvo: 100,
+      valorAtual: 0,
+      unidade: '%'
+    };
+    setCurrentObjective(prev => ({
+      ...prev,
+      krs: [...(prev.krs || []), newKr]
+    }));
+  };
+
+  const handleRemoveOkrKR = (krId: string) => {
+    setCurrentObjective(prev => ({
+      ...prev,
+      krs: (prev.krs || []).filter(kr => kr.id !== krId)
+    }));
+  };
+
+  const handleUpdateOkrKRField = (krId: string, field: keyof KR, value: any) => {
+    setCurrentObjective(prev => ({
+      ...prev,
+      krs: (prev.krs || []).map(kr => kr.id === krId ? { ...kr, [field]: value } : kr)
+    }));
+  };
+
   const handleUpdateSubActionField = (subId: string, field: keyof SubAction, value: any) => {
     setCurrentPlano(prev => {
       const acoes = (prev.acoes || []).map(a => {
@@ -667,6 +768,17 @@ export default function PlanejamentoPage() {
   });
 
   const [activeCicloId, setActiveCicloId] = useState<string>('');
+
+  // States for Objective management modal
+  const [isObjectiveModalOpen, setIsObjectiveModalOpen] = useState(false);
+  const [currentObjective, setCurrentObjective] = useState<Partial<OKRObjective>>({
+    id: '',
+    titulo: '',
+    fase: '',
+    krs: [],
+    iniciativas: []
+  });
+  const [objectiveIniciativasText, setObjectiveIniciativasText] = useState('');
 
   // Drag state for Post-its
   const [draggingPostitId, setDraggingPostitId] = useState<string | null>(null);
@@ -2061,30 +2173,64 @@ export default function PlanejamentoPage() {
                             Duração: {formatLocalDate(activeCiclo.dataInicio)} até {formatLocalDate(activeCiclo.dataFim)}
                           </span>
                         </div>
-                        <button 
-                          onClick={() => handleDeleteOkrObj(activeCiclo.id)}
-                          className="text-xs font-black text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer border-none bg-transparent"
-                        >
-                          Excluir Ciclo
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenObjectiveModal()}
+                            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
+                          >
+                            <PlusCircle size={13} /> Novo Objetivo
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteOkrObj(activeCiclo.id)}
+                            className="text-xs font-black text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer border-none bg-transparent"
+                          >
+                            Excluir Ciclo
+                          </button>
+                        </div>
                       </div>
 
                       {activeCiclo.objetivos.length === 0 ? (
-                        <div className="text-center py-10 text-slate-450 italic text-xs">
-                          Nenhum objetivo cadastrado neste ciclo.
+                        <div className="text-center py-12 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-3">
+                          <span className="text-slate-450 italic text-xs">Nenhum objetivo cadastrado neste ciclo.</span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenObjectiveModal()}
+                            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border-none"
+                          >
+                            <PlusCircle size={13} /> + Adicionar Objetivo
+                          </button>
                         </div>
                       ) : (
                         <div className="space-y-6">
                           {activeCiclo.objetivos.map(obj => (
                             <div key={obj.id} className="border border-slate-200/80 rounded-2xl p-5 space-y-4">
                               <div className="flex justify-between items-start">
-                                <div>
-                                  <span className="text-[9px] font-black bg-slate-100 border border-slate-250 text-slate-500 rounded px-1.5 py-0.5 uppercase tracking-wide">
-                                    {obj.fase || 'Geral'}
-                                  </span>
-                                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider mt-1.5 leading-snug">{obj.titulo}</h3>
+                                <div className="flex-1 min-w-0 pr-4">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[9px] font-black bg-slate-100 border border-slate-250 text-slate-500 rounded px-1.5 py-0.5 uppercase tracking-wide">
+                                      {obj.fase || 'Geral'}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenObjectiveModal(obj)}
+                                      className="p-1 text-slate-450 hover:text-[#1B4D3E] hover:bg-slate-50 rounded transition-all cursor-pointer border-none bg-transparent"
+                                      title="Editar Objetivo"
+                                    >
+                                      <Edit size={13} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteObjective(obj.id)}
+                                      className="p-1 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded transition-all cursor-pointer border-none bg-transparent"
+                                      title="Excluir Objetivo"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider mt-1.5 leading-snug break-words">{obj.titulo}</h3>
                                 </div>
-                                <div className="flex flex-col items-end gap-1">
+                                <div className="flex flex-col items-end gap-1 shrink-0">
                                   <span className="text-[10px] font-black text-slate-400 uppercase">Progresso</span>
                                   <span className="text-sm font-black text-[#1B4D3E]">{obj.progresso}%</span>
                                 </div>
@@ -3390,6 +3536,165 @@ export default function PlanejamentoPage() {
                   className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
                 >
                   Salvar Conclusão
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CADASTRAR/EDITAR OBJETIVO */}
+      {isObjectiveModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                {currentObjective.id ? 'Editar Objetivo' : 'Cadastrar Novo Objetivo'}
+              </h3>
+              <button type="button" onClick={() => setIsObjectiveModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
+                <X size={16} />
+              </button>
+            </header>
+
+            <form onSubmit={handleSaveObjective} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Título do Objetivo</label>
+                  <input
+                    type="text"
+                    required
+                    value={currentObjective.titulo || ''}
+                    onChange={(e) => setCurrentObjective(prev => ({ ...prev, titulo: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Ex: Alcançar a excelência operacional"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Fase / Classificação</label>
+                  <input
+                    type="text"
+                    value={currentObjective.fase || ''}
+                    onChange={(e) => setCurrentObjective(prev => ({ ...prev, fase: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Ex: Fase de Otimização"
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic KRs */}
+              <div className="space-y-3 pt-2">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Resultados-Chave (KRs)</h4>
+                  <button
+                    type="button"
+                    onClick={handleAddOkrKR}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs"
+                  >
+                    <Plus size={10} /> + KR
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {(currentObjective.krs || []).length === 0 ? (
+                    <p className="text-[11px] text-slate-400 italic">Nenhum KR adicionado. Clique no botão "+ KR" acima.</p>
+                  ) : (
+                    (currentObjective.krs || []).map((kr, idx) => (
+                      <div key={kr.id} className="bg-slate-50 border border-slate-150 rounded-2xl p-3 space-y-3 relative">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveOkrKR(kr.id)}
+                          className="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer border-none bg-transparent"
+                          title="Remover KR"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                        
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Descrição do KR #{idx + 1}</label>
+                          <input
+                            type="text"
+                            required
+                            value={kr.descricao || ''}
+                            onChange={(e) => handleUpdateOkrKRField(kr.id, 'descricao', e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            placeholder="Ex: Reduzir tempo de atendimento médio"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Inicial</label>
+                            <input
+                              type="number"
+                              required
+                              value={kr.valorInicial}
+                              onChange={(e) => handleUpdateOkrKRField(kr.id, 'valorInicial', parseFloat(e.target.value) || 0)}
+                              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Alvo</label>
+                            <input
+                              type="number"
+                              required
+                              value={kr.valorAlvo}
+                              onChange={(e) => handleUpdateOkrKRField(kr.id, 'valorAlvo', parseFloat(e.target.value) || 0)}
+                              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Atual</label>
+                            <input
+                              type="number"
+                              required
+                              value={kr.valorAtual}
+                              onChange={(e) => handleUpdateOkrKRField(kr.id, 'valorAtual', parseFloat(e.target.value) || 0)}
+                              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Unidade</label>
+                            <input
+                              type="text"
+                              required
+                              value={kr.unidade || ''}
+                              onChange={(e) => handleUpdateOkrKRField(kr.id, 'unidade', e.target.value)}
+                              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                              placeholder="%, minutos, R$"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Initiatives */}
+              <div className="space-y-1 pt-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Iniciativas / Ações (uma por linha)</label>
+                <textarea
+                  rows={4}
+                  value={objectiveIniciativasText}
+                  onChange={(e) => setObjectiveIniciativasText(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] resize-none"
+                  placeholder="Ex: Otimizar painel de atendimento&#10;Treinar novos operadores locais"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsObjectiveModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Salvar Objetivo
                 </button>
               </div>
             </form>
