@@ -781,7 +781,7 @@ export default function PlanejamentoPage() {
 
   const isKanbanMode = 
     (activeTab === 'causas' && causaViewMode === 'kanban' && !isEditingCausa) ||
-    (activeTab === 'planos' && planoViewMode === 'kanban');
+    (activeTab === 'planos' && planoViewMode === 'kanban' && !isEditingPlano);
 
   return (
     <div id="planejamento-layout-root" className="flex min-h-screen bg-[#F8FAFC]">
@@ -1015,7 +1015,7 @@ export default function PlanejamentoPage() {
           </div>
 
           {/* TAB CONTENTS */}
-          {loading ? (
+          {!isEditingPlano && (loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="w-10 h-10 border-4 border-slate-250 border-t-[#1B4D3E] rounded-full animate-spin"></div>
             </div>
@@ -2051,7 +2051,7 @@ export default function PlanejamentoPage() {
               )}
 
             </div>
-          )}
+          ))}
 
 
       {/* EDITOR PLANO DE AÇÃO 5W2H (inline, tela cheia) */}
