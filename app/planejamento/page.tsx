@@ -2625,12 +2625,14 @@ export default function PlanejamentoPage() {
                                                        <span>0%</span>
                                                        <span>100%</span>
                                                      </div>
-                                                     <div 
-                                                       className="absolute text-[9px] font-black text-[#7C3AED] mt-0.5 -translate-x-1/2 transition-all duration-350"
-                                                       style={{ left: `${limitedKrProgress}%`, top: '6px' }}
-                                                     >
-                                                       {limitedKrProgress}%
-                                                     </div>
+                                                     {limitedKrProgress > 5 && limitedKrProgress < 95 && (
+                                                       <div 
+                                                         className="absolute text-[9px] font-black text-[#7C3AED] mt-0.5 -translate-x-1/2 transition-all duration-350"
+                                                         style={{ left: `${limitedKrProgress}%`, top: '6px' }}
+                                                       >
+                                                         {limitedKrProgress}%
+                                                       </div>
+                                                     )}
                                                    </div>
                                                  </div>
 
