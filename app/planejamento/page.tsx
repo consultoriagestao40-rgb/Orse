@@ -2209,8 +2209,24 @@ export default function PlanejamentoPage() {
             {/* Tabela 5W2H */}
             <form onSubmit={handleSavePlano} className="space-y-4">
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h3 className="text-sm font-black text-slate-800">5W2H Action Plan Table</h3>
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-black text-slate-800">5W2H</h3>
+                    <button type="button" onClick={handleAddSubActionInline}
+                      className="py-1 px-3 bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none flex items-center justify-center gap-1.5 shadow-xs">
+                      <Plus size={12} /> + Ação
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <button type="button" onClick={() => setIsEditingPlano(false)}
+                      className="px-4 py-1.5 border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-wider hover:bg-slate-50 cursor-pointer bg-white transition-all">
+                      Cancelar
+                    </button>
+                    <button type="submit"
+                      className="px-5 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm cursor-pointer border-none transition-all">
+                      Salvar
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[1250px]">
@@ -2319,13 +2335,6 @@ export default function PlanejamentoPage() {
                       )}
                     </tbody>
                   </table>
-                </div>
-                {/* Botão Inserir Nova Ação */}
-                <div className="p-4 border-t border-slate-100">
-                  <button type="button" onClick={handleAddSubActionInline}
-                    className="w-full py-2.5 bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-2 shadow-xs">
-                    <Plus size={16} /> Inserir Nova Ação
-                  </button>
                 </div>
               </div>
 
