@@ -1851,7 +1851,7 @@ export default function PlanejamentoPage() {
                                   <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer" onClick={() => { setCurrentPlano(pa); setIsEditingPlano(true); }}>
                                     {pa.titulo}
                                   </td>
-                                  <td className="py-4 px-6 text-slate-500 max-w-[200px] truncate">
+                                  <td className="py-4 px-6 text-slate-500 max-w-[250px] break-words">
                                     {associatedCausa ? associatedCausa.causaRaiz : pa.problemaDireto || 'Entrada Direta'}
                                   </td>
                                   <td className="py-4 px-6">
