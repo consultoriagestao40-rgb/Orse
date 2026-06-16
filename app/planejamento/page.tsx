@@ -2571,7 +2571,7 @@ export default function PlanejamentoPage() {
                                   </div>
 
                                   {isExpanded && (
-                                    <div className="border-t border-slate-100 divide-y divide-slate-100 pl-2 sm:pl-4">
+                                    <div className="border-t border-slate-100 divide-y divide-slate-100 pl-6 sm:pl-12">
                                       {(!obj.krs || obj.krs.length === 0) ? (
                                         <div className="text-center py-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
                                           <span className="text-slate-400 italic text-xs">Nenhum resultado-chave (KR) cadastrado para este objetivo.</span>
