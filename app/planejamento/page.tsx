@@ -796,7 +796,7 @@ export default function PlanejamentoPage() {
             ? 'w-full flex flex-col' 
             : 'max-w-[1600px] mx-auto w-full px-2 sm:px-4'
         }`}>
-          <div className={isKanbanMode ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'}>
+          <div className={`${isKanbanMode ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'} ${isEditingPlano ? 'hidden' : ''}`}>
           
           {/* HEADER DO MÓDULO */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-5 gap-4">
@@ -2051,10 +2051,8 @@ export default function PlanejamentoPage() {
             </div>
           )}
 
-        </div>
-      </main>
 
-      {/* MODAL PLANO DE AÇÃO 5W2H */}
+      {/* EDITOR PLANO DE AÇÃO 5W2H (inline, tela cheia) */}
       {isEditingPlano && (() => {
         const completedActions = currentPlano.acoes?.filter(a => a.status === 'CONCLUIDO').length || 0;
         const totalActions = currentPlano.acoes?.length || 0;
@@ -2078,8 +2076,8 @@ export default function PlanejamentoPage() {
         const associatedCausa = causas.find(c => c.id === currentPlano.causaRaizId);
 
         return (
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-[32px] shadow-[0_24px_70px_rgba(27,77,62,0.15)] max-w-6xl w-full max-h-[95vh] flex flex-col overflow-hidden border border-slate-100/80 animate-in fade-in zoom-in-98 duration-300">
+          <div className="animate-in fade-in duration-200">
+            <div className="bg-white rounded-[32px] shadow-sm w-full flex flex-col overflow-hidden border border-slate-200">
               
               {/* Cabeçalho Premium */}
               <header className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50/50 via-white to-white select-none shrink-0">
@@ -2101,9 +2099,9 @@ export default function PlanejamentoPage() {
                 <button 
                   type="button"
                   onClick={() => setIsEditingPlano(false)} 
-                  className="text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-50 p-2 rounded-xl transition-all cursor-pointer border-none bg-transparent"
+                  className="flex items-center gap-2 text-xs font-black uppercase text-slate-500 hover:text-[#1B4D3E] cursor-pointer border-none bg-transparent transition-colors"
                 >
-                  <X size={18} />
+                  <ArrowLeft size={16} /> Voltar para Planos
                 </button>
               </header>
               
@@ -2558,6 +2556,9 @@ export default function PlanejamentoPage() {
           </div>
         );
       })()}
+
+      </div>
+      </main>
 
       {/* MODAL OKR CICLO */}
       {isOkrModalOpen && (
