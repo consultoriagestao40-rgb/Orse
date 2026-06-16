@@ -210,7 +210,7 @@ export default function PlanejamentoPage() {
     status: 'RASCUNHO'
   });
 
-  const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('list');
 
   const [isEditingPlano, setIsEditingPlano] = useState(false);
   const [currentPlano, setCurrentPlano] = useState<Partial<ActionPlan>>({
