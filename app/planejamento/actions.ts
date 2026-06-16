@@ -94,6 +94,7 @@ export interface KR {
   responsavelId?: string;
   status?: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'QUASE_LA';
   tarefas?: KRTask[];
+  dataFim?: string;
 }
 
 export interface OKRObjective {
