@@ -2306,10 +2306,19 @@ export default function PlanejamentoPage() {
                                   className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white" placeholder="Onde?" />
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
-                                <input type="date" value={a.when || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
-                                  onClick={(e) => (e.target as any).showPicker?.()}
-                                  onFocus={(e) => (e.target as any).showPicker?.()}
-                                  className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white cursor-pointer" />
+                                <div className="relative w-full h-8 flex items-center bg-slate-50/50 border border-slate-200 rounded-lg px-2 text-xs font-bold text-slate-700 focus-within:border-[#1B4D3E] focus-within:bg-white">
+                                  {/* Campo de texto visível formatado como DD/MM/AAAA */}
+                                  <input type="text" readOnly
+                                    value={a.when ? (formatLocalDate(a.when) !== '-' ? formatLocalDate(a.when) : a.when) : ''}
+                                    placeholder="dd/mm/aaaa"
+                                    className="w-full bg-transparent border-none outline-none text-xs font-bold text-slate-700 pointer-events-none" />
+                                  {/* Input de data invisível sobreposto que abre o calendário */}
+                                  <input type="date" value={a.when || ''}
+                                    onChange={(e) => handleUpdateSubActionField(a.id, 'when', e.target.value)}
+                                    onClick={(e) => (e.target as any).showPicker?.()}
+                                    onFocus={(e) => (e.target as any).showPicker?.()}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                </div>
                               </td>
                               <td className="py-2 px-2.5 border-r border-slate-100">
                                 <input type="text" value={a.how || ''} onChange={(e) => handleUpdateSubActionField(a.id, 'how', e.target.value)}
