@@ -579,6 +579,7 @@ export default function PlanejamentoPage() {
               {responsavel?.nome || 'Sem responsável'}
             </div>
           </div>
+        </div>
       </div>
     );
   };
