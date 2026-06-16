@@ -129,6 +129,26 @@ const PRESET_COLORS = [
   '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
 ];
 
+const formatLocalDate = (dateStr?: string | null): string => {
+  if (!dateStr) return '-';
+  try {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      return `${day}/${month}/${year}`;
+    }
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('pt-BR');
+  } catch {
+    return '-';
+  }
+};
+
 export default function PlanejamentoPage() {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<'causas' | 'planos' | 'metas' | 'brainstorm'>('causas');
@@ -318,7 +338,7 @@ export default function PlanejamentoPage() {
               {associatedCausa ? `Causa: ${associatedCausa.causaRaiz}` : pa.problemaDireto ? `Prob: ${pa.problemaDireto}` : 'Entrada Direta'}
             </span>
             <span className="text-[8.5px] font-black text-slate-400 font-mono shrink-0">
-              Prazo: {pa.dataFim ? new Date(pa.dataFim).toLocaleDateString('pt-BR') : '-'}
+              Prazo: {formatLocalDate(pa.dataFim)}
             </span>
           </div>
 
@@ -414,7 +434,7 @@ export default function PlanejamentoPage() {
               {c.tipo === '5_PORQUES' ? '5 Porquês' : 'Ishikawa'}
             </span>
             <span className="text-[8.5px] font-black text-slate-400 font-mono shrink-0">
-              {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+              {formatLocalDate(c.createdAt)}
             </span>
           </div>
 
@@ -726,13 +746,13 @@ export default function PlanejamentoPage() {
   const totalSubActions = allSubActions.length;
   
   const concluídasAcoesCount = allSubActions.filter(a => a.status === 'CONCLUIDO').length;
-  const pendentesAcoesList = allSubActions.filter(a => a.status === 'PENDENTE');
+  const pendentesAcoesList = allSubActions.filter(a => a.status !== 'CONCLUIDO');
   
   const todayDate = new Date();
   todayDate.setHours(0,0,0,0);
   
-  const atrasadasAcoesCount = pendentesAcoesList.filter(a => new Date(a.when) < todayDate).length;
-  const noPrazoAcoesCount = pendentesAcoesList.filter(a => new Date(a.when) >= todayDate).length;
+  const atrasadasAcoesCount = pendentesAcoesList.filter(a => a.status === 'EM_ATRASO' || (a.when && new Date(a.when) < todayDate)).length;
+  const noPrazoAcoesCount = pendentesAcoesList.length - atrasadasAcoesCount;
 
   const pctExecucao = totalSubActions > 0 ? Math.round((concluídasAcoesCount / totalSubActions) * 100) : 0;
   const pctAtrasadas = totalSubActions > 0 ? Math.round((atrasadasAcoesCount / totalSubActions) * 100) : 0;
@@ -744,9 +764,9 @@ export default function PlanejamentoPage() {
 
   // OKR calculations
   const activeCiclo = okrCiclos.find(c => c.id === activeCicloId);
-  const totalKRs = activeCiclo?.objetivos.reduce((acc, obj) => acc + obj.krs.length, 0) || 0;
-  const KRsBatinados = activeCiclo?.objetivos.reduce((acc, obj) => 
-    acc + krCountReached(obj.krs), 0) || 0;
+  const totalKRs = activeCiclo?.objetivos?.reduce((acc, obj) => acc + (obj.krs?.length || 0), 0) || 0;
+  const KRsBatinados = activeCiclo?.objetivos?.reduce((acc, obj) => 
+    acc + krCountReached(obj.krs || []), 0) || 0;
 
   function krCountReached(krs: KR[]): number {
     return krs.filter(kr => {
@@ -1435,7 +1455,7 @@ export default function PlanejamentoPage() {
                                       {c.causaRaiz || '-'}
                                     </td>
                                     <td className="py-4 px-6 text-slate-450 font-mono">
-                                      {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                                      {formatLocalDate(c.createdAt)}
                                     </td>
                                     <td className="py-4 px-6 text-right">
                                       <div className="flex justify-end gap-1.5">
@@ -1642,7 +1662,7 @@ export default function PlanejamentoPage() {
                                     </div>
                                   </td>
                                   <td className="py-4 px-6 text-slate-500 font-mono">
-                                    {pa.dataFim ? new Date(pa.dataFim).toLocaleDateString('pt-BR') : '-'}
+                                    {formatLocalDate(pa.dataFim)}
                                   </td>
                                   <td className="py-4 px-6">
                                     <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${statusBadge}`}>
@@ -1827,7 +1847,7 @@ export default function PlanejamentoPage() {
                         <div>
                           <h2 className="text-base font-black text-slate-800 uppercase tracking-wide">{activeCiclo.nome}</h2>
                           <span className="text-[10px] font-bold text-slate-400 block mt-0.5 uppercase tracking-wide">
-                            Duração: {new Date(activeCiclo.dataInicio).toLocaleDateString('pt-BR')} até {new Date(activeCiclo.dataFim).toLocaleDateString('pt-BR')}
+                            Duração: {formatLocalDate(activeCiclo.dataInicio)} até {formatLocalDate(activeCiclo.dataFim)}
                           </span>
                         </div>
                         <button 
@@ -2128,7 +2148,7 @@ export default function PlanejamentoPage() {
                         <div>
                           <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">Prazo Final</span>
                           <span className="text-[10px] font-black text-slate-700 font-mono block mt-2">
-                            {currentPlano.dataFim ? new Date(currentPlano.dataFim).toLocaleDateString('pt-BR') : '-'}
+                            {formatLocalDate(currentPlano.dataFim)}
                           </span>
                         </div>
                         
@@ -2169,7 +2189,7 @@ export default function PlanejamentoPage() {
                           </svg>
                           <span className="absolute text-[9px] font-black text-slate-700">{completedPct}%</span>
                         </div>
-                        <span className="text-[9px] font-bold text-slate-400">({completedCount})</span>
+                        <span className="text-[9px] font-bold text-slate-400">({completedActions})</span>
                       </div>
                       
                       <div className="flex flex-col items-center gap-1 text-center">
