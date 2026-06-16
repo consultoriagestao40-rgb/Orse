@@ -68,6 +68,10 @@ export interface ActionPlan {
   who?: string;
   how?: string;
   howMuch?: number;
+  // Novos campos do indicador
+  indicadorMelhorar?: string;
+  resultadoAtual?: string;
+  metaAtingir?: string;
 }
 
 export interface KR {

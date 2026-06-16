@@ -2145,8 +2145,25 @@ export default function PlanejamentoPage() {
                   {/* Row: Tipo, Causa, Data Início, Data Fim, Status */}
                   <div className="flex flex-wrap gap-x-6 gap-y-2 justify-between">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tipo:</span>
-                      <span className="text-xs font-black text-slate-800 mt-1.5 block">Estratégico</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador a Melhorar:</span>
+                      <input type="text" value={currentPlano.indicadorMelhorar || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, indicadorMelhorar: e.target.value }))}
+                        placeholder="Ex: NPS, Faturamento"
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[130px] focus:bg-slate-50 focus:px-1 rounded" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Resultado Atual:</span>
+                      <input type="text" value={currentPlano.resultadoAtual || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtual: e.target.value }))}
+                        placeholder="Ex: 70%, R$ 50k"
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Meta a Atingir:</span>
+                      <input type="text" value={currentPlano.metaAtingir || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, metaAtingir: e.target.value }))}
+                        placeholder="Ex: 90%, R$ 80k"
+                        className="text-xs font-black text-slate-700 bg-transparent border-none outline-none mt-1 w-[100px] focus:bg-slate-50 focus:px-1 rounded" />
                     </div>
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Causa Vinculada:</span>
