@@ -4263,7 +4263,6 @@ export default function PlanejamentoPage() {
                     groups[rId].push(t);
                   });
 
-                  # We will format this loop in JS code
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {Object.entries(groups).map(([rId, tasks]) => {
