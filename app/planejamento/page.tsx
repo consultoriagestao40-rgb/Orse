@@ -3603,42 +3603,51 @@ export default function PlanejamentoPage() {
                       placeholder="Implementação de Novo CRM" />
                     
                     {/* Causa Vinculada abaixo do título */}
-                    <div className="mt-3 flex items-start gap-2 select-none">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap mt-0.5">Causa Vinculada:</span>
-                      <div className="relative flex-1 min-w-0">
-                        {/* Visible styled text that wraps naturally */}
-                        <div className="text-xs font-black text-slate-700 bg-transparent cursor-pointer p-0 rounded-sm hover:bg-slate-50 transition-colors flex items-center gap-1 leading-normal max-w-full">
-                          <span className="break-words flex-1 pr-4">
-                            {causas.find(c => c.id === currentPlano.causaRaizId)?.causaRaiz || 'Entrada Direta'}
-                          </span>
-                          <span className="text-[9px] text-slate-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
-                        </div>
-                        {/* Native select on top, completely transparent but clickable */}
-                        <select value={currentPlano.causaRaizId || ''}
-                          onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                          <option value="">Entrada Direta</option>
-                          {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Contrato / Departamento vinculado se houver */}
-                    {(() => {
-                      const associatedCausa = causas.find(c => c.id === currentPlano.causaRaizId);
-                      if (associatedCausa && associatedCausa.vinculoTipo) {
-                        return (
-                          <div className="mt-2 flex items-center gap-2 pl-[100px] select-none">
-                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-250 text-emerald-800 shadow-3xs">
-                              {associatedCausa.vinculoTipo === 'CONTRATO' 
-                                ? `Contrato: ${associatedCausa.contratoCodigo || 'Sem número'}` 
-                                : `Depto: ${associatedCausa.departamentoNome || 'Sem depto'}`}
+                    <div className="mt-3 space-y-1.5 select-none">
+                      <div className="flex items-start gap-2">
+                        <span className="w-[110px] text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap mt-0.5 shrink-0">Causa Vinculada:</span>
+                        <div className="relative flex-1 min-w-0">
+                          {/* Visible styled text that wraps naturally */}
+                          <div className="text-xs font-black text-slate-700 bg-transparent cursor-pointer p-0 rounded-sm hover:bg-slate-50 transition-colors flex items-center gap-1 leading-normal max-w-full">
+                            <span className="break-words flex-1 pr-4">
+                              {causas.find(c => c.id === currentPlano.causaRaizId)?.causaRaiz || 'Entrada Direta'}
                             </span>
+                            <span className="text-[9px] text-slate-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
                           </div>
-                        );
-                      }
-                      return null;
-                    })()}
+                          {/* Native select on top, completely transparent but clickable */}
+                          <select value={currentPlano.causaRaizId || ''}
+                            onChange={(e) => setCurrentPlano(prev => ({ ...prev, causaRaizId: e.target.value, problemaDireto: '' }))}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <option value="">Entrada Direta</option>
+                            {causas.map(c => (<option key={c.id} value={c.id}>{c.causaRaiz}</option>))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Contrato / Departamento vinculado se houver */}
+                      {(() => {
+                        const associatedCausa = causas.find(c => c.id === currentPlano.causaRaizId);
+                        if (associatedCausa && associatedCausa.vinculoTipo) {
+                          const isContrato = associatedCausa.vinculoTipo === 'CONTRATO';
+                          const labelText = isContrato ? 'Contrato:' : 'Departamento:';
+                          const valText = isContrato 
+                            ? (associatedCausa.contratoCodigo || 'Sem número') 
+                            : (associatedCausa.departamentoNome || 'Sem depto');
+
+                          return (
+                            <div className="flex items-center gap-2">
+                              <span className="w-[110px] text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap shrink-0">
+                                {labelText}
+                              </span>
+                              <span className="text-xs font-black text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md shadow-3xs">
+                                {valText}
+                              </span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
