@@ -1906,13 +1906,38 @@ export default function PlanejamentoPage() {
                         {/* Criado Por */}
                         <div className="space-y-1">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Criado por</label>
-                          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-550">
+                          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-550 min-h-[38px] flex items-center gap-2">
                             {(() => {
+                              let creatorName = 'Usuário do sistema';
+                              let avatarUrl = '';
+                              let userObj = null;
+
                               if (currentCausa.id) {
-                                const creatorUser = users.find(u => u.id === currentCausa.userId);
-                                return creatorUser ? creatorUser.nome : (currentCausa.criadoPor || 'Usuário do sistema');
+                                userObj = users.find(u => u.id === currentCausa.userId);
+                                creatorName = userObj ? userObj.nome : (currentCausa.criadoPor || 'Usuário do sistema');
+                              } else {
+                                userObj = currentUser;
+                                creatorName = currentUser?.nome || 'Usuário do sistema';
                               }
-                              return currentUser?.nome || 'Usuário do sistema';
+
+                              if (userObj) {
+                                avatarUrl = userObj.avatarUrl || '';
+                              }
+
+                              const initials = creatorName ? creatorName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+
+                              return (
+                                <>
+                                  <div className="w-5 h-5 rounded-full border border-slate-250 overflow-hidden bg-[#E6F3EF] flex items-center justify-center shrink-0 shadow-3xs">
+                                    {avatarUrl ? (
+                                      <img src={avatarUrl} alt={creatorName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-[7.5px] font-black uppercase text-[#1B4D3E]">{initials}</span>
+                                    )}
+                                  </div>
+                                  <span className="truncate">{creatorName}</span>
+                                </>
+                              );
                             })()}
                           </div>
                         </div>
