@@ -1567,7 +1567,7 @@ export default function PlanejamentoPage() {
             ? 'w-full flex flex-col' 
             : 'max-w-[1600px] mx-auto w-full px-2 sm:px-4'
         }`}>
-          <div className={`${isKanbanMode ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'} ${isEditingPlano ? 'hidden' : ''}`}>
+          <div className={`${isKanbanMode ? 'px-8 pt-8 pb-3 space-y-4' : 'space-y-6'} ${(isEditingPlano || isEditingCausa) ? 'hidden' : ''}`}>
           
           {/* HEADER DO MÓDULO */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-5 gap-4">
