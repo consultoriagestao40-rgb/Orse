@@ -2390,11 +2390,14 @@ export default function PlanejamentoPage() {
                     /* VISÃO LISTA */
                     <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs">
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full min-w-[1500px] text-left border-collapse">
                           <thead>
                             <tr className="bg-slate-50/75 border-b border-slate-200 select-none text-[9.5px] font-black text-slate-400 uppercase tracking-wider">
                               <th className="py-3.5 px-6">Plano de Ação</th>
-                              <th className="py-3.5 px-6">Causa Vinculada / Problema</th>
+                              <th className="py-3.5 px-6 min-w-[350px]">Causa Vinculada / Problema</th>
+                              <th className="py-3.5 px-6">Indicador</th>
+                              <th className="py-3.5 px-6">Resultado Atual</th>
+                              <th className="py-3.5 px-6">Meta</th>
                               <th className="py-3.5 px-6">Responsável</th>
                               <th className="py-3.5 px-6">Prazo Final</th>
                               <th className="py-3.5 px-6">Custo Total</th>
@@ -2420,8 +2423,17 @@ export default function PlanejamentoPage() {
                                   <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer" onClick={() => { setCurrentPlano(pa); setIsEditingPlano(true); }}>
                                     {pa.titulo}
                                   </td>
-                                  <td className="py-4 px-6 text-slate-500 max-w-[250px] break-words">
+                                  <td className="py-4 px-6 text-slate-500 min-w-[350px] max-w-[500px] break-words">
                                     {associatedCausa ? associatedCausa.causaRaiz : pa.problemaDireto || 'Entrada Direta'}
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-500">
+                                    {pa.indicadorMelhorar || '-'}
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-500">
+                                    {pa.resultadoAtual || '-'}
+                                  </td>
+                                  <td className="py-4 px-6 text-slate-500">
+                                    {pa.metaAtingir || '-'}
                                   </td>
                                   <td className="py-4 px-6">
                                     <div className="flex items-center gap-2">
