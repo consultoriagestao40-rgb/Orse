@@ -4766,9 +4766,6 @@ export default function PlanejamentoPage() {
           </div>
         </div>
       )}
-          </div>
-        </div>
-      )}
 
       {/* MODAL DE COMENTÁRIOS DO OBJETIVO */}
       {isCommentsModalOpen && commentsModalObjective && (
