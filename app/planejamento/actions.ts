@@ -97,6 +97,15 @@ export interface KR {
   dataFim?: string;
 }
 
+export interface ObjectiveComment {
+  id: string;
+  userId: string;
+  userName: string;
+  avatarUrl?: string;
+  texto: string;
+  createdAt: string;
+}
+
 export interface OKRObjective {
   id: string;
   titulo: string;
@@ -106,6 +115,7 @@ export interface OKRObjective {
   iniciativas: string[];
   progresso: number;
   dataFim?: string;
+  comentarios?: ObjectiveComment[];
 }
 
 export interface OKRCiclo {

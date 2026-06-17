@@ -51,7 +51,8 @@ import {
   KR, 
   BrainstormPostit,
   CauseStage,
-  SubAction
+  SubAction,
+  ObjectiveComment
 } from './actions';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -171,6 +172,20 @@ const formatLocalDate = (dateStr?: string | null): string => {
   } catch {
     return '-';
   }
+};
+
+const formatKrValue = (val: number, unit: string) => {
+  const uTrim = (unit || '').trim();
+  if (uTrim === '') {
+    return val.toLocaleString('pt-BR');
+  }
+  if (uTrim === '%') {
+    return `${val.toLocaleString('pt-BR')}%`;
+  }
+  if (uTrim.toLowerCase() === 'r$' || uTrim.toUpperCase() === 'BRL') {
+    return `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return `${val.toLocaleString('pt-BR')} ${uTrim}`;
 };
 
 export default function PlanejamentoPage() {
@@ -558,6 +573,20 @@ export default function PlanejamentoPage() {
         ...kr,
         dataFim: kr.dataFim || ''
       });
+      const u = kr.unidade || '';
+      if (u === '%') {
+        setUnitType('%');
+        setCustomUnit('');
+      } else if (u === 'R$' || u === 'BRL') {
+        setUnitType('R$');
+        setCustomUnit('');
+      } else if (u.trim() === '') {
+        setUnitType('none');
+        setCustomUnit('');
+      } else {
+        setUnitType('custom');
+        setCustomUnit(u);
+      }
     } else {
       setCurrentKr({
         id: '',
@@ -571,6 +600,8 @@ export default function PlanejamentoPage() {
         tarefas: [],
         dataFim: ''
       });
+      setUnitType('%');
+      setCustomUnit('');
     }
     setIsKrModalOpen(true);
   };
@@ -590,7 +621,7 @@ export default function PlanejamentoPage() {
       valorInicial: Number(currentKr.valorInicial) || 0,
       valorAlvo: Number(currentKr.valorAlvo) || 0,
       valorAtual: Number(currentKr.valorAtual) || 0,
-      unidade: currentKr.unidade || '%',
+      unidade: typeof currentKr.unidade === 'string' ? currentKr.unidade : '%',
       responsavelId: currentKr.responsavelId || '',
       status: currentKr.status || 'EM_ANDAMENTO',
       tarefas: currentKr.tarefas || [],
@@ -642,6 +673,77 @@ export default function PlanejamentoPage() {
 
     await saveOkrCiclo(updatedCiclo);
     await loadData();
+  };
+
+  // Objective comments handlers
+  const handleOpenCommentsModal = (objective: OKRObjective) => {
+    setCommentsModalObjective(objective);
+    setIsCommentsModalOpen(true);
+    setNewCommentText('');
+  };
+
+  const handleAddObjectiveComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCiclo || !commentsModalObjective || !newCommentText.trim()) return;
+
+    const newComment: ObjectiveComment = {
+      id: `comment-${Date.now()}`,
+      userId: currentUser?.id || 'anonymous',
+      userName: currentUser?.nome || currentUser?.email || 'Usuário',
+      avatarUrl: currentUser?.avatarUrl || '',
+      texto: newCommentText.trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedObjective: OKRObjective = {
+      ...commentsModalObjective,
+      comentarios: [...(commentsModalObjective.comentarios || []), newComment]
+    };
+
+    const objetivos = (activeCiclo.objetivos || []).map(obj => {
+      if (obj.id === commentsModalObjective.id) {
+        return updatedObjective;
+      }
+      return obj;
+    });
+
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos
+    };
+
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+
+    setCommentsModalObjective(updatedObjective);
+    setNewCommentText('');
+  };
+
+  const handleDeleteObjectiveComment = async (commentId: string) => {
+    if (!activeCiclo || !commentsModalObjective) return;
+    if (!confirm("Tem certeza que deseja excluir este comentário?")) return;
+
+    const updatedObjective: OKRObjective = {
+      ...commentsModalObjective,
+      comentarios: (commentsModalObjective.comentarios || []).filter(c => c.id !== commentId)
+    };
+
+    const objetivos = (activeCiclo.objetivos || []).map(obj => {
+      if (obj.id === commentsModalObjective.id) {
+        return updatedObjective;
+      }
+      return obj;
+    });
+
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos
+    };
+
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+
+    setCommentsModalObjective(updatedObjective);
   };
 
   // KR tasks handlers
@@ -996,6 +1098,14 @@ export default function PlanejamentoPage() {
     tarefas: [],
     dataFim: ''
   });
+
+  const [unitType, setUnitType] = useState<'%' | 'R$' | 'none' | 'custom'>('%');
+  const [customUnit, setCustomUnit] = useState('');
+
+  // Objective comments modal states
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+  const [commentsModalObjective, setCommentsModalObjective] = useState<OKRObjective | null>(null);
+  const [newCommentText, setNewCommentText] = useState('');
 
   // KR tasks inline states
   const [editingKrId, setEditingKrId] = useState<string | null>(null);
@@ -2461,11 +2571,6 @@ export default function PlanejamentoPage() {
                             })
                             .map((obj, objIdx) => {
                               const isExpanded = expandedObjectives[obj.id] ?? true; // expand default
-                              const uniqueResponsables = Array.from(new Set([
-                                ...(obj.krs || []).map(kr => kr.responsavelId),
-                                ...(obj.krs || []).flatMap(kr => (kr.tarefas || []).map(t => t.responsavelId))
-                              ].filter(Boolean))).map(id => users.find(u => u.id === id)).filter(Boolean);
-
                               return (
                                 <div key={obj.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-2xs hover:shadow-xs transition-all duration-300 space-y-4">
                                   <div 
@@ -2500,38 +2605,12 @@ export default function PlanejamentoPage() {
 
                                       <button
                                         type="button"
+                                        onClick={() => handleOpenCommentsModal(obj)}
                                         className="flex items-center gap-1.5 text-[10.5px] font-extrabold text-slate-505 bg-white border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer"
                                       >
                                         <MessageSquare size={13} className="text-slate-400" />
                                         <span>Comentários</span>
                                       </button>
-
-                                      {/* Avatars roll-up list */}
-                                      {uniqueResponsables.length > 0 && (
-                                        <div className="flex -space-x-1.5 overflow-hidden" title="Responsáveis pelas Ações">
-                                          {uniqueResponsables.slice(0, 4).map((u: any) => {
-                                            const initials = u.nome ? u.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
-                                            return (
-                                              <div 
-                                                key={u.id} 
-                                                className="w-6 h-6 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0 border-2 border-white"
-                                                title={u.nome}
-                                              >
-                                                {u.avatarUrl ? (
-                                                  <img src={u.avatarUrl} alt={u.nome} className="w-full h-full object-cover" />
-                                                ) : (
-                                                  <span className="text-[7.5px] font-black uppercase text-[#7C3AED]">{initials}</span>
-                                                )}
-                                              </div>
-                                            );
-                                          })}
-                                          {uniqueResponsables.length > 4 && (
-                                            <div className="w-6 h-6 rounded-full bg-slate-250 border-2 border-white flex items-center justify-center text-[7.5px] font-black text-slate-600">
-                                              +{uniqueResponsables.length - 4}
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
 
                                       {/* Action buttons */}
                                       <div className="flex items-center gap-1">
@@ -2589,13 +2668,6 @@ export default function PlanejamentoPage() {
                                              const limitedKrProgress = Math.min(Math.max(krProgress, 0), 100);
                                              const responsavelKr = users.find(u => u.id === kr.responsavelId);
                                              const initialsKr = responsavelKr?.nome ? responsavelKr.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
-
-                                             const formatKrValue = (val: number, unit: string) => {
-                                               if (unit.trim().toLowerCase() === 'r$' || unit.trim().toUpperCase() === 'BRL') {
-                                                 return `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                                               }
-                                               return `${val} ${unit}`;
-                                             };
 
                                              return (
                                                <div 
@@ -2871,7 +2943,7 @@ export default function PlanejamentoPage() {
 
                                                     <div className="mt-2.5 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase">
                                                       <span>Progresso: {limitedKrProgress}%</span>
-                                                      <span>{kr.valorAtual} / {kr.valorAlvo} {kr.unidade}</span>
+                                                      <span>{formatKrValue(kr.valorAtual, kr.unidade)} / {formatKrValue(kr.valorAlvo, kr.unidade)}</span>
                                                     </div>
                                                     <div className="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
                                                       <div className="h-full bg-[#7C3AED] rounded-full" style={{ width: `${limitedKrProgress}%` }}></div>
@@ -4269,14 +4341,42 @@ export default function PlanejamentoPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Unidade</label>
-                  <input
-                    type="text"
-                    required
-                    value={currentKr.unidade || ''}
-                    onChange={(e) => setCurrentKr(prev => ({ ...prev, unidade: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                    placeholder="%, R$, min"
-                  />
+                  <select
+                    value={unitType}
+                    onChange={(e) => {
+                      const val = e.target.value as '%' | 'R$' | 'none' | 'custom';
+                      setUnitType(val);
+                      if (val === '%') {
+                        setCurrentKr(prev => ({ ...prev, unidade: '%' }));
+                      } else if (val === 'R$') {
+                        setCurrentKr(prev => ({ ...prev, unidade: 'R$' }));
+                      } else if (val === 'none') {
+                        setCurrentKr(prev => ({ ...prev, unidade: '' }));
+                      } else {
+                        setCurrentKr(prev => ({ ...prev, unidade: customUnit || '' }));
+                      }
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                  >
+                    <option value="%">Porcentagem (%)</option>
+                    <option value="R$">Moeda (R$)</option>
+                    <option value="none">Número simples</option>
+                    <option value="custom">Unidade personalizada...</option>
+                  </select>
+                  {unitType === 'custom' && (
+                    <input
+                      type="text"
+                      required
+                      value={customUnit}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomUnit(val);
+                        setCurrentKr(prev => ({ ...prev, unidade: val }));
+                      }}
+                      placeholder="Ex: min, clientes, etc."
+                      className="w-full mt-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -4636,6 +4736,110 @@ export default function PlanejamentoPage() {
                 </>
               )}
             </footer>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE COMENTÁRIOS DO OBJETIVO */}
+      {isCommentsModalOpen && commentsModalObjective && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
+              <div className="min-w-0">
+                <span className="text-[9px] font-black text-[#7C3AED] uppercase tracking-wider">Anotações & Comentários</span>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate mt-0.5">
+                  {commentsModalObjective.titulo}
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsCommentsModalOpen(false)} 
+                className="text-slate-400 hover:text-slate-655 cursor-pointer border-none bg-transparent"
+              >
+                <X size={16} />
+              </button>
+            </header>
+
+            {/* Scrollable list of comments */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[200px]">
+              {(!commentsModalObjective.comentarios || commentsModalObjective.comentarios.length === 0) ? (
+                <div className="text-center py-12 text-[11px] text-slate-400 italic bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 select-none">
+                  <MessageSquare size={24} className="text-slate-300" />
+                  <span>Nenhum comentário cadastrado para este objetivo.</span>
+                  <span>Deixe a primeira observação abaixo!</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {commentsModalObjective.comentarios.map((comment) => {
+                    const initials = comment.userName ? comment.userName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                    const isOwnComment = comment.userId === currentUser?.id;
+
+                    return (
+                      <div key={comment.id} className="p-3 bg-slate-50 hover:bg-slate-100/70 border border-slate-150 rounded-2xl transition-all space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0">
+                              {comment.avatarUrl ? (
+                                <img src={comment.avatarUrl} alt={comment.userName} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[7.5px] font-bold uppercase text-[#7C3AED]">{initials}</span>
+                              )}
+                            </div>
+                            <span className="text-[10px] font-black text-slate-700">{comment.userName}</span>
+                            <span className="text-[8px] font-bold text-slate-400">
+                              {new Date(comment.createdAt).toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                          {isOwnComment && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteObjectiveComment(comment.id)}
+                              className="text-[9px] font-bold text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none"
+                            >
+                              Excluir
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-655 leading-relaxed break-words whitespace-pre-wrap pl-7">
+                          {comment.texto}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom text input and submit form */}
+            <form onSubmit={handleAddObjectiveComment} className="p-6 border-t border-slate-100 bg-slate-50 shrink-0 space-y-3">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Novo Comentário</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={newCommentText}
+                  onChange={(e) => setNewCommentText(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED] resize-none"
+                  placeholder="Escreva uma observação, atualização ou comentário sobre este objetivo..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCommentsModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
+                >
+                  Fechar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Enviar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
