@@ -75,6 +75,15 @@ export interface ActionPlan {
   metaAtingir?: string;
 }
 
+export interface ActionAnnotation {
+  id: string;
+  userId: string;
+  userName: string;
+  avatarUrl?: string;
+  texto: string;
+  createdAt: string;
+}
+
 export interface KRTask {
   id: string;
   descricao: string;
@@ -82,6 +91,8 @@ export interface KRTask {
   status: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO';
   progresso: number;      // 0 a 100
   comentario?: string;
+  dataLimite?: string;
+  anotacoes?: ActionAnnotation[];
 }
 
 export interface KR {

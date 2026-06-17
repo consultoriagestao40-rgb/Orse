@@ -52,7 +52,8 @@ import {
   BrainstormPostit,
   CauseStage,
   SubAction,
-  ObjectiveComment
+  ObjectiveComment,
+  ActionAnnotation
 } from './actions';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -746,6 +747,125 @@ export default function PlanejamentoPage() {
     setCommentsModalObjective(updatedObjective);
   };
 
+  // Action/Task detailed modal handlers
+  const handleOpenActionDetailModal = (task: KRTask) => {
+    setActiveActionTask(task);
+    setIsActionDetailModalOpen(true);
+    setNewActionAnnotationText('');
+  };
+
+  const handleOpenNewActionModal = () => {
+    setActiveActionTask({
+      id: `task-${Date.now()}`,
+      descricao: '',
+      responsavelId: '',
+      status: 'PENDENTE',
+      progresso: 0,
+      comentario: '',
+      dataLimite: '',
+      anotacoes: []
+    });
+    setIsActionDetailModalOpen(true);
+    setNewActionAnnotationText('');
+  };
+
+  const handleSaveActionDetail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCiclo || !actionsModalKr || !actionsModalObjectiveId || !activeActionTask) return;
+
+    const updatedTask = {
+      ...activeActionTask
+    };
+
+    if (newActionAnnotationText.trim()) {
+      const newAnnotation: ActionAnnotation = {
+        id: `annotation-${Date.now()}`,
+        userId: currentUser?.id || 'anonymous',
+        userName: currentUser?.nome || currentUser?.email || 'Usuário',
+        avatarUrl: currentUser?.avatarUrl || '',
+        texto: newActionAnnotationText.trim(),
+        createdAt: new Date().toISOString()
+      };
+      updatedTask.anotacoes = [...(updatedTask.anotacoes || []), newAnnotation];
+    }
+
+    const objetivos = (activeCiclo.objetivos || []).map(obj => {
+      if (obj.id === actionsModalObjectiveId) {
+        const krs = (obj.krs || []).map(kr => {
+          if (kr.id === actionsModalKr.id) {
+            const tarefas = [...(kr.tarefas || [])];
+            const idx = tarefas.findIndex(t => t.id === updatedTask.id);
+            if (idx !== -1) {
+              tarefas[idx] = updatedTask;
+            } else {
+              tarefas.push(updatedTask);
+            }
+            return { ...kr, tarefas };
+          }
+          return kr;
+        });
+        return { ...obj, krs };
+      }
+      return obj;
+    });
+
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos
+    };
+
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+
+    const updatedKr = updatedCiclo.objetivos
+      .find(o => o.id === actionsModalObjectiveId)?.krs
+      .find(k => k.id === actionsModalKr.id);
+    if (updatedKr) {
+      setActionsModalKr(updatedKr);
+      setEditingKrTasks(updatedKr.tarefas || []);
+    }
+
+    setIsActionDetailModalOpen(false);
+    setNewActionAnnotationText('');
+  };
+
+  const handleDeleteAction = async (taskId: string) => {
+    if (!activeCiclo || !actionsModalKr || !actionsModalObjectiveId) return;
+    if (!confirm("Tem certeza que deseja excluir esta ação?")) return;
+
+    const objetivos = (activeCiclo.objetivos || []).map(obj => {
+      if (obj.id === actionsModalObjectiveId) {
+        const krs = (obj.krs || []).map(kr => {
+          if (kr.id === actionsModalKr.id) {
+            const tarefas = (kr.tarefas || []).filter(t => t.id !== taskId);
+            return { ...kr, tarefas };
+          }
+          return kr;
+        });
+        return { ...obj, krs };
+      }
+      return obj;
+    });
+
+    const updatedCiclo = {
+      ...activeCiclo,
+      objetivos
+    };
+
+    await saveOkrCiclo(updatedCiclo);
+    await loadData();
+
+    const updatedKr = updatedCiclo.objetivos
+      .find(o => o.id === actionsModalObjectiveId)?.krs
+      .find(k => k.id === actionsModalKr.id);
+    if (updatedKr) {
+      setActionsModalKr(updatedKr);
+      setEditingKrTasks(updatedKr.tarefas || []);
+    }
+
+    setIsActionDetailModalOpen(false);
+  };
+
   // KR tasks handlers
   const handleStartEditTasks = (objectiveId: string, kr: KR) => {
     setEditingKrId(kr.id);
@@ -1106,6 +1226,11 @@ export default function PlanejamentoPage() {
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [commentsModalObjective, setCommentsModalObjective] = useState<OKRObjective | null>(null);
   const [newCommentText, setNewCommentText] = useState('');
+
+  // Action details/edit modal states
+  const [isActionDetailModalOpen, setIsActionDetailModalOpen] = useState(false);
+  const [activeActionTask, setActiveActionTask] = useState<KRTask | null>(null);
+  const [newActionAnnotationText, setNewActionAnnotationText] = useState('');
 
   // KR tasks inline states
   const [editingKrId, setEditingKrId] = useState<string | null>(null);
@@ -4517,225 +4642,130 @@ export default function PlanejamentoPage() {
 
               {/* Tabela / Lista de Ações */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2 select-none">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tarefas da Ação</span>
-                  {isEditingActions && (
-                    <button
-                      type="button"
-                      onClick={handleAddTaskRow}
-                      className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs transition-all"
-                    >
-                      <Plus size={10} /> + Nova Tarefa
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleOpenNewActionModal}
+                    className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs transition-all"
+                  >
+                    <Plus size={10} /> + Nova Ação
+                  </button>
                 </div>
 
-                {isEditingActions ? (
-                  /* EDIT MODE */
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                    {editingKrTasks.length === 0 ? (
-                      <p className="text-[11px] text-slate-400 italic py-2">Nenhuma tarefa adicionada. Clique em "+ Nova Tarefa" acima.</p>
-                    ) : (
-                      editingKrTasks.map((task, tIdx) => {
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                  {(!editingKrTasks || editingKrTasks.length === 0) ? (
+                    <div className="text-center py-8 text-[11px] text-slate-400 italic bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl select-none">
+                      Nenhuma ação/tarefa cadastrada para este KR.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {editingKrTasks.map(task => {
+                        const responsavelTask = users.find(u => u.id === task.responsavelId);
+                        const initialsTask = responsavelTask?.nome ? responsavelTask.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+
                         return (
-                          <div key={task.id} className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-3 relative">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTaskRow(task.id)}
-                              className="absolute top-2 right-2 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer border-none bg-transparent"
-                              title="Remover Tarefa"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Descrição da Ação #{tIdx + 1}</label>
-                                <input
-                                  type="text"
-                                  required
-                                  value={task.descricao || ''}
-                                  onChange={(e) => handleUpdateTaskField(task.id, 'descricao', e.target.value)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                  placeholder="Ex: Anunciar veículo"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Responsável</label>
-                                <select
-                                  value={task.responsavelId || ''}
-                                  onChange={(e) => handleUpdateTaskField(task.id, 'responsavelId', e.target.value)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                >
-                                  <option value="">Selecione...</option>
-                                  {users.map(u => (
-                                    <option key={u.id} value={u.id}>{u.nome}</option>
-                                  ))}
-                                </select>
+                          <div 
+                            key={task.id} 
+                            onClick={() => handleOpenActionDetailModal(task)}
+                            className="cursor-pointer hover:bg-slate-50 border border-slate-200 rounded-xl transition-all flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:items-center p-3 select-none"
+                          >
+                            {/* Left column (Checkbox + Description + Comment): spans 6 columns */}
+                            <div className="col-span-6 flex items-start gap-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={task.status === 'CONCLUIDO'}
+                                readOnly
+                                className="mt-0.5 rounded text-[#7C3AED] focus:ring-[#7C3AED] cursor-pointer"
+                              />
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-slate-755 break-words">{task.descricao || 'Sem descrição'}</p>
+                                {task.comentario && (
+                                  <p className="text-[9.5px] font-bold text-slate-450 italic mt-0.5 break-words">
+                                    Obs: {task.comentario}
+                                  </p>
+                                )}
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Progresso ({task.progresso}%)</label>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="100"
-                                  step="5"
-                                  value={task.progresso}
-                                  onChange={(e) => handleUpdateTaskField(task.id, 'progresso', parseInt(e.target.value))}
-                                  className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] mt-2.5"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Status</label>
-                                <select
-                                  value={task.status}
-                                  onChange={(e) => handleUpdateTaskField(task.id, 'status', e.target.value)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                            {/* Responsável (Photo only): spans 1 column */}
+                            <div className="col-span-1 flex justify-start sm:justify-center">
+                              {responsavelTask ? (
+                                <div 
+                                  className="w-5 h-5 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0 shadow-3xs cursor-help"
+                                  title={`Responsável: ${responsavelTask.nome}`}
                                 >
-                                  <option value="PENDENTE">Pendente</option>
-                                  <option value="EM_ANDAMENTO">Em Progresso</option>
-                                  <option value="CONCLUIDO">Concluído</option>
-                                </select>
-                              </div>
+                                  {responsavelTask.avatarUrl ? (
+                                    <img src={responsavelTask.avatarUrl} alt={responsavelTask.nome} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-[8px] font-bold uppercase text-[#7C3AED]">{initialsTask}</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="w-5 h-5 rounded-full border border-dashed border-slate-250 flex items-center justify-center shrink-0 text-slate-300 text-[8px]" title="Sem responsável">
+                                  -
+                                </div>
+                              )}
+                            </div>
 
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Comentário / Observação</label>
-                                <input
-                                  type="text"
-                                  value={task.comentario || ''}
-                                  onChange={(e) => handleUpdateTaskField(task.id, 'comentario', e.target.value)}
-                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
-                                  placeholder="Ex: Aguardando dados"
-                                />
+                            {/* Prazo (Data): spans 2 columns */}
+                            <div className="col-span-2 flex justify-start sm:justify-center">
+                              <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-lg shrink-0">
+                                <Calendar size={11} className="text-slate-400" />
+                                <span>{task.dataLimite ? formatLocalDate(task.dataLimite) : 'Sem prazo'}</span>
                               </div>
+                            </div>
+
+                            {/* Progresso (Bar + %): spans 2 columns */}
+                            <div className="col-span-2 flex items-center gap-2 w-full justify-between sm:justify-end">
+                              <div className="w-16 bg-slate-250 rounded-full h-1.5 overflow-hidden shrink-0 hidden sm:block">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.progresso}%` }}></div>
+                              </div>
+                              <span className="text-[9.5px] font-black text-slate-600 w-8 text-right shrink-0">{task.progresso}%</span>
+                            </div>
+
+                            {/* Status (Badge): spans 1 column */}
+                            <div className="col-span-1 flex justify-start sm:justify-end">
+                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border shrink-0 ${
+                                task.status === 'CONCLUIDO' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                                task.status === 'EM_ANDAMENTO' ? 'bg-blue-50 border-blue-200 text-blue-600' :
+                                'bg-slate-50 border-slate-200 text-slate-600'
+                              }`}>
+                                {task.status === 'CONCLUIDO' ? 'Concluído' :
+                                 task.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
+                              </span>
                             </div>
                           </div>
                         );
-                      })
-                    )}
-                  </div>
-                ) : (
-                  /* READ-ONLY MODE */
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                    {(!editingKrTasks || editingKrTasks.length === 0) ? (
-                      <div className="text-center py-8 text-[11px] text-slate-400 italic bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl">
-                        Nenhuma ação/tarefa cadastrada para este KR.
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {editingKrTasks.map(task => {
-                          const responsavelTask = users.find(u => u.id === task.responsavelId);
-                          const initialsTask = responsavelTask?.nome ? responsavelTask.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
-
-                          return (
-                            <div key={task.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-150 rounded-xl transition-all">
-                              <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                                <input
-                                  type="checkbox"
-                                  checked={task.status === 'CONCLUIDO'}
-                                  disabled
-                                  className="mt-0.5 rounded text-[#7C3AED] focus:ring-[#7C3AED] cursor-not-allowed"
-                                />
-                                <div className="min-w-0">
-                                  <p className="text-[11px] font-bold text-slate-750 break-words">{task.descricao}</p>
-                                  {task.comentario && (
-                                    <p className="text-[9.5px] font-bold text-slate-450 italic mt-0.5 break-words">
-                                      Obs: {task.comentario}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-                                {responsavelTask && (
-                                  <div 
-                                    className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-2.5 py-0.5 shadow-3xs"
-                                    title={`Responsável: ${responsavelTask.nome}`}
-                                  >
-                                    <div className="w-4 h-4 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0">
-                                      {responsavelTask.avatarUrl ? (
-                                        <img src={responsavelTask.avatarUrl} alt={responsavelTask.nome} className="w-full h-full object-cover" />
-                                      ) : (
-                                        <span className="text-[7.5px] font-bold uppercase text-[#7C3AED]">{initialsTask}</span>
-                                      )}
-                                    </div>
-                                    <span className="text-[8.5px] font-bold text-slate-655 max-w-[100px] truncate">{responsavelTask.nome}</span>
-                                  </div>
-                                )}
-
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 bg-slate-200/85 rounded-full h-1.5 overflow-hidden">
-                                    <div className="h-full bg-emerald-500" style={{ width: `${task.progresso}%` }}></div>
-                                  </div>
-                                  <span className="text-[9.5px] font-black text-slate-655 w-8 text-right">{task.progresso}%</span>
-                                </div>
-
-                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
-                                  task.status === 'CONCLUIDO' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
-                                  task.status === 'EM_ANDAMENTO' ? 'bg-blue-50 border-blue-200 text-blue-600' :
-                                  'bg-slate-50 border-slate-200 text-slate-600'
-                                }`}>
-                                  {task.status === 'CONCLUIDO' ? 'Concluído' :
-                                   task.status === 'EM_ANDAMENTO' ? 'Em Progresso' : 'Pendente'}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             <footer className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end bg-slate-50 select-none shrink-0">
-              {isEditingActions ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingKrTasks(actionsModalKr.tarefas || []);
-                      setIsEditingActions(false);
-                    }}
-                    className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveActionsModal}
-                    className="px-6 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
-                  >
-                    Salvar no KR
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsActionsModalOpen(false);
-                    }}
-                    className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
-                  >
-                    Fechar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingActions(true)}
-                    className="px-6 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
-                  >
-                    Gerenciar Ações
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsActionsModalOpen(false);
+                  setIsEditingActions(false);
+                }}
+                className="px-5 py-2.5 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenNewActionModal}
+                className="px-6 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none flex items-center gap-1.5"
+              >
+                <Plus size={14} /> Nova Ação
+              </button>
             </footer>
+          </div>
+        </div>
+      )}
           </div>
         </div>
       )}
@@ -4838,6 +4868,184 @@ export default function PlanejamentoPage() {
                 >
                   Enviar
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      {/* MODAL DETALHE / EDICAO DE AÇÃO */}
+      {isActionDetailModalOpen && activeActionTask && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
+              <div className="min-w-0">
+                <span className="text-[9px] font-black text-[#7C3AED] uppercase tracking-wider">Gestão da Ação</span>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate mt-0.5">
+                  {activeActionTask.descricao || 'Nova Ação'}
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsActionDetailModalOpen(false)} 
+                className="text-slate-400 hover:text-slate-655 cursor-pointer border-none bg-transparent"
+              >
+                <X size={16} />
+              </button>
+            </header>
+
+            <form onSubmit={handleSaveActionDetail} className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Descrição da Ação</label>
+                <input
+                  type="text"
+                  required
+                  value={activeActionTask.descricao || ''}
+                  onChange={(e) => setActiveActionTask(prev => ({ ...prev!, descricao: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                  placeholder="Ex: Anunciar veículo no OLX"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Responsável</label>
+                  <select
+                    value={activeActionTask.responsavelId || ''}
+                    onChange={(e) => setActiveActionTask(prev => ({ ...prev!, responsavelId: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                  >
+                    <option value="">Selecione...</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.nome}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Prazo (Data)</label>
+                  <input
+                    type="date"
+                    value={activeActionTask.dataLimite || ''}
+                    onChange={(e) => setActiveActionTask(prev => ({ ...prev!, dataLimite: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Progresso ({activeActionTask.progresso || 0}%)</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={activeActionTask.progresso || 0}
+                    onChange={(e) => {
+                      const prog = parseInt(e.target.value) || 0;
+                      setActiveActionTask(prev => {
+                        const status = prog === 100 ? 'CONCLUIDO' : prog === 0 ? 'PENDENTE' : 'EM_ANDAMENTO';
+                        return { ...prev!, progresso: prog, status };
+                      });
+                    }}
+                    className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#7C3AED] mt-3"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Status</label>
+                  <select
+                    value={activeActionTask.status || 'PENDENTE'}
+                    onChange={(e) => {
+                      const status = e.target.value as any;
+                      setActiveActionTask(prev => {
+                        const progresso = status === 'CONCLUIDO' ? 100 : status === 'PENDENTE' ? 0 : prev!.progresso;
+                        return { ...prev!, status, progresso };
+                      });
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED]"
+                  >
+                    <option value="PENDENTE">Pendente</option>
+                    <option value="EM_ANDAMENTO">Em Progresso</option>
+                    <option value="CONCLUIDO">Concluído</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* ANOTAÇÕES / HISTÓRICO DE ANOTAÇÕES */}
+              <div className="border-t border-slate-100 pt-4 space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Histórico de Anotações</label>
+                
+                {/* Scrollable Notes List */}
+                <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1">
+                  {(!activeActionTask.anotacoes || activeActionTask.anotacoes.length === 0) ? (
+                    <p className="text-[10px] text-slate-400 italic text-center py-4 bg-slate-50 rounded-xl">
+                      Nenhuma anotação registrada ainda.
+                    </p>
+                  ) : (
+                    activeActionTask.anotacoes.map((note: any) => {
+                      const noteInitials = note.userName ? note.userName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                      return (
+                        <div key={note.id} className="p-2.5 bg-slate-50 border border-slate-150 rounded-xl text-[10.5px] leading-relaxed">
+                          <div className="flex justify-between items-center mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-4 h-4 rounded-full border border-slate-150 overflow-hidden bg-[#7C3AED]/20 flex items-center justify-center shrink-0">
+                                {note.avatarUrl ? (
+                                  <img src={note.avatarUrl} alt={note.userName} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-[6.5px] font-bold uppercase text-[#7C3AED]">{noteInitials}</span>
+                                )}
+                              </div>
+                              <span className="font-black text-slate-700">{note.userName}</span>
+                            </div>
+                            <span className="text-[8px] font-bold text-slate-400">{new Date(note.createdAt).toLocaleString('pt-BR')}</span>
+                          </div>
+                          <p className="text-slate-600 font-medium pl-5 break-words whitespace-pre-wrap">{note.texto}</p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* New Annotation Textarea */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Nova Anotação</label>
+                  <textarea
+                    rows={2}
+                    value={newActionAnnotationText}
+                    onChange={(e) => setNewActionAnnotationText(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#7C3AED] resize-none"
+                    placeholder="Adicione observações ou atualizações sobre o andamento desta ação..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100 shrink-0">
+                <div>
+                  {activeActionTask.id.startsWith('task-') && editingKrTasks.some(t => t.id === activeActionTask.id) && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAction(activeActionTask.id)}
+                      className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer border border-red-200"
+                    >
+                      Excluir Ação
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsActionDetailModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                  >
+                    Salvar
+                  </button>
+                </div>
               </div>
             </form>
           </div>
