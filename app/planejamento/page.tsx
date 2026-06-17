@@ -239,7 +239,8 @@ export default function PlanejamentoPage() {
     },
     causaRaiz: '',
     status: 'RASCUNHO',
-    criadoPor: ''
+    criadoPor: '',
+    participantesIds: []
   });
 
   const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('list');
@@ -1699,7 +1700,8 @@ export default function PlanejamentoPage() {
                         ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
                         causaRaiz: '',
                         status: 'RASCUNHO',
-                        criadoPor: currentUser?.nome || ''
+                        criadoPor: currentUser?.nome || '',
+                        participantesIds: []
                       });
                       setIsEditingCausa(true);
                     }}
@@ -1716,7 +1718,8 @@ export default function PlanejamentoPage() {
                         ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
                         causaRaiz: '',
                         status: 'RASCUNHO',
-                        criadoPor: currentUser?.nome || ''
+                        criadoPor: currentUser?.nome || '',
+                        participantesIds: []
                       });
                       setIsEditingCausa(true);
                     }}
@@ -2024,7 +2027,118 @@ export default function PlanejamentoPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Participantes e Problema Principal */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-slate-100 pb-6">
+                        {/* Participantes */}
+                        <div className="space-y-1 col-span-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Participantes (Equipe)</label>
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val) {
+                                  const currentIds = currentCausa.participantesIds || [];
+                                  if (!currentIds.includes(val)) {
+                                    setCurrentCausa(prev => ({
+                                      ...prev,
+                                      participantesIds: [...currentIds, val]
+                                    }));
+                                  }
+                                }
+                              }}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            >
+                              <option value="">Adicionar participante...</option>
+                              {users.map(u => (
+                                <option key={u.id} value={u.id}>{u.nome}</option>
+                              ))}
+                            </select>
+
+                            {/* Badges de Participantes Selecionados */}
+                            <div className="flex flex-wrap gap-1.5 min-h-[36px] items-center">
+                              {(!currentCausa.participantesIds || currentCausa.participantesIds.length === 0) ? (
+                                <span className="text-[10px] italic text-slate-400">Nenhum participante adicionado</span>
+                              ) : (
+                                currentCausa.participantesIds.map(pId => {
+                                  const member = users.find(u => u.id === pId);
+                                  if (!member) return null;
+                                  const initials = member.nome ? member.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                                  return (
+                                    <span key={pId} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 text-[10px] font-bold pl-1.5 pr-2 py-0.5 rounded-full shadow-3xs">
+                                      <div className="w-4 h-4 rounded-full border border-slate-150 overflow-hidden bg-emerald-100 flex items-center justify-center shrink-0">
+                                        {member.avatarUrl ? (
+                                          <img src={member.avatarUrl} alt={member.nome} className="w-full h-full object-cover" />
+                                        ) : (
+                                          <span className="text-[6.5px] font-bold uppercase text-emerald-600">{initials}</span>
+                                        )}
+                                      </div>
+                                      <span className="max-w-[100px] truncate">{member.nome}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setCurrentCausa(prev => ({
+                                            ...prev,
+                                            participantesIds: (prev.participantesIds || []).filter(id => id !== pId)
+                                          }));
+                                        }}
+                                        className="text-slate-400 hover:text-red-500 font-black cursor-pointer border-none bg-transparent text-xs"
+                                      >
+                                        &times;
+                                      </button>
+                                    </span>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Efeito / Problema Principal */}
+                        <div className="space-y-1 col-span-1 md:col-span-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Efeito / Problema Principal</label>
+                          <input 
+                            type="text" 
+                            required
+                            value={currentCausa.problema || ''}
+                            onChange={(e) => setCurrentCausa(prev => ({ ...prev, problema: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            placeholder="Ex: Queda na qualidade de entrega de ativos"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Status e Método de Análise */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Método de Análise */}
+                        <div className="space-y-1 col-span-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Método de Análise</label>
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setCurrentCausa(prev => ({ ...prev, tipo: '5_PORQUES' }))}
+                              className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                                currentCausa.tipo === '5_PORQUES'
+                                  ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
+                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                              }`}
+                            >
+                              5 Porquês
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCurrentCausa(prev => ({ ...prev, tipo: 'ISHIKAWA' }))}
+                              className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                                currentCausa.tipo === 'ISHIKAWA'
+                                  ? 'bg-slate-800 border-slate-800 text-white shadow-2xs'
+                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                              }`}
+                            >
+                              Ishikawa (6 Ms)
+                            </button>
+                          </div>
+                        </div>
+
                         {/* Status da Análise */}
                         <div className="space-y-1 col-span-1 md:col-span-2">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Status da Análise</label>
@@ -2056,48 +2170,6 @@ export default function PlanejamentoPage() {
                             })}
                           </div>
                         </div>
-
-                        {/* Método de Análise */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Método de Análise</label>
-                          <div className="flex gap-2 mt-1">
-                            <button
-                              type="button"
-                              onClick={() => setCurrentCausa(prev => ({ ...prev, tipo: '5_PORQUES' }))}
-                              className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                                currentCausa.tipo === '5_PORQUES'
-                                  ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
-                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                              }`}
-                            >
-                              5 Porquês
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setCurrentCausa(prev => ({ ...prev, tipo: 'ISHIKAWA' }))}
-                              className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
-                                currentCausa.tipo === 'ISHIKAWA'
-                                  ? 'bg-slate-800 border-slate-800 text-white shadow-2xs'
-                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                              }`}
-                            >
-                              Ishikawa (6 Ms)
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Efeito / Problema Principal */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Efeito / Problema Principal</label>
-                          <input 
-                            type="text" 
-                            required
-                            value={currentCausa.problema || ''}
-                            onChange={(e) => setCurrentCausa(prev => ({ ...prev, problema: e.target.value }))}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
-                            placeholder="Ex: Queda na qualidade de entrega de ativos"
-                          />
-                        </div>
                       </div>
 
                       {/* Condicional para 5 Porquês */}
@@ -2109,7 +2181,7 @@ export default function PlanejamentoPage() {
                               <span className="w-20 text-[9px] font-black text-slate-400 uppercase">Porquê {idx + 1}:</span>
                               <input 
                                 type="text"
-                                required={idx < 3} // Exige no mínimo 3
+                                required={currentCausa.status !== 'RASCUNHO' && idx < 3} // Exige no mínimo 3 se não for rascunho
                                 value={pq || ''}
                                 onChange={(e) => {
                                   const newPorques = [...(currentCausa.porques || [])];
@@ -2340,7 +2412,7 @@ export default function PlanejamentoPage() {
                         <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider block font-black">Causa Raiz Conclusiva</label>
                         <input 
                           type="text" 
-                          required
+                          required={currentCausa.status !== 'RASCUNHO'}
                           value={currentCausa.causaRaiz || ''}
                           onChange={(e) => setCurrentCausa(prev => ({ ...prev, causaRaiz: e.target.value }))}
                           className="w-full bg-emerald-50 border border-emerald-250 rounded-xl px-3.5 py-2.5 text-xs font-black text-slate-800 outline-none focus:border-[#1B4D3E]"
@@ -2408,10 +2480,37 @@ export default function PlanejamentoPage() {
                                  return (
                                    <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
                                      <td 
-                                       className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer max-w-[250px] truncate" 
+                                       className="py-4 px-6 cursor-pointer max-w-[250px]" 
                                        onClick={() => { setCurrentCausa(c); setIsEditingCausa(true); }}
                                      >
-                                       {c.problema}
+                                       <div className="flex flex-col gap-1.5">
+                                         <span className="font-black uppercase text-slate-800 break-words">{c.problema}</span>
+                                         {c.participantesIds && c.participantesIds.length > 0 && (
+                                           <div className="flex items-center gap-1.5 select-none">
+                                             <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider">Equipe:</span>
+                                             <div className="flex -space-x-1.5 overflow-hidden">
+                                               {c.participantesIds.map(pId => {
+                                                 const member = users.find(u => u.id === pId);
+                                                 if (!member) return null;
+                                                 const initials = member.nome ? member.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+                                                 return (
+                                                   <div 
+                                                     key={pId} 
+                                                     title={member.nome}
+                                                     className="inline-block h-4 w-4 rounded-full ring-1 ring-white bg-emerald-100 flex items-center justify-center shrink-0 overflow-hidden"
+                                                   >
+                                                     {member.avatarUrl ? (
+                                                       <img src={member.avatarUrl} alt={member.nome} className="h-full w-full object-cover" />
+                                                     ) : (
+                                                       <span className="text-[6.5px] font-bold text-emerald-600 uppercase">{initials}</span>
+                                                     )}
+                                                   </div>
+                                                 );
+                                               })}
+                                             </div>
+                                           </div>
+                                         )}
+                                       </div>
                                      </td>
                                      <td className="py-4 px-6">
                                        <span className={`text-[9px] font-black uppercase border rounded-md px-2 py-0.5 ${

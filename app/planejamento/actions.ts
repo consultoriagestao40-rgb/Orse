@@ -35,6 +35,7 @@ export interface RootCauseAnalysis {
   contratoCodigo?: string;
   departamentoNome?: string;
   criadoPor?: string;
+  participantesIds?: string[];
 }
 
 export interface SubAction {
