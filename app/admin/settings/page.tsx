@@ -692,6 +692,7 @@ export default function SettingsPage() {
   // Metas
   const [sellers, setSellers] = useState<string[]>([]);
   const [metas, setMetas] = useState<Record<string, number>>({});
+  const [localMetas, setLocalMetas] = useState<Record<string, string>>({});
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     return new Date().toISOString().substring(0, 7);
   });
@@ -766,12 +767,28 @@ export default function SettingsPage() {
   }, []);
 
   // ── Metas ────────────────────────────────────────────────────────────────────
+  const parseLocaleNumber = (str: string): number => {
+    if (!str) return 0;
+    // Remove todos os pontos (separadores de milhar) e troca vírgula por ponto (decimal)
+    const clean = str.replace(/\./g, '').replace(/,/g, '.');
+    const num = Number(clean);
+    return isNaN(num) ? 0 : num;
+  };
+
   const loadMetas = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sb_kpi_goals');
       if (saved) {
         try {
-          setMetas(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          setMetas(parsed);
+          
+          // Preenche localMetas com valores formatados em pt-BR
+          const localInit: Record<string, string> = {};
+          Object.entries(parsed).forEach(([key, val]) => {
+            localInit[key] = typeof val === 'number' ? val.toLocaleString('pt-BR') : String(val);
+          });
+          setLocalMetas(localInit);
         } catch (e) {
           console.error(e);
         }
@@ -1898,7 +1915,9 @@ export default function SettingsPage() {
                         ) : (
                           sellers.map((nome) => {
                             const goalKey = `${nome}_${selectedMonth}`;
-                            const goalVal = metas[goalKey] !== undefined ? metas[goalKey] : 100000;
+                            const displayVal = localMetas[goalKey] !== undefined 
+                              ? localMetas[goalKey] 
+                              : (metas[goalKey] !== undefined ? metas[goalKey].toLocaleString('pt-BR') : '100.000');
 
                             return (
                               <tr key={nome} className="hover:bg-slate-50 transition-colors">
@@ -1914,11 +1933,21 @@ export default function SettingsPage() {
                                   <div className="flex items-center justify-end gap-2">
                                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">R$</span>
                                     <input
-                                      type="number"
-                                      value={goalVal}
+                                      type="text"
+                                      value={displayVal}
                                       onChange={(e) => {
-                                        const newVal = Number(e.target.value);
-                                        handleSaveMeta(nome, newVal);
+                                        const rawVal = e.target.value;
+                                        setLocalMetas(prev => ({ ...prev, [goalKey]: rawVal }));
+                                      }}
+                                      onBlur={() => {
+                                        const parsedNum = parseLocaleNumber(displayVal);
+                                        handleSaveMeta(nome, parsedNum);
+                                        setLocalMetas(prev => ({ ...prev, [goalKey]: parsedNum.toLocaleString('pt-BR') }));
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          e.currentTarget.blur();
+                                        }
                                       }}
                                       className="w-40 px-3 py-2 border border-slate-300 rounded text-xs font-extrabold text-slate-800 text-right outline-none focus:border-[#1B4D3E] bg-slate-50 focus:bg-white transition-all"
                                     />
