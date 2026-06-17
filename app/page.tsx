@@ -256,7 +256,6 @@ function RadarComercialDashboard() {
         previsto += metas[key] !== undefined ? metas[key] : 100000;
       });
     }
-    if (previsto === 0) previsto = 100000;
 
     const atingidoPct = previsto > 0 ? (realizado / previsto) * 100 : 0;
     
