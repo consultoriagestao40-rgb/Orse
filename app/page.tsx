@@ -441,7 +441,7 @@ function RadarComercialDashboard() {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1B4D3E] mx-auto mb-4"></div>
               <p className="text-slate-400 font-medium">Processando indicadores comerciais...</p>
             </div>
-          ) : propostasList.length === 0 ? (
+          ) : (propostasList.length === 0 && totalSellers.length === 0) ? (
             <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
               <p className="text-slate-400 font-bold uppercase tracking-wider">Nenhuma proposta cadastrada no sistema.</p>
               <p className="text-slate-300 text-xs mt-1">Crie propostas para visualizar os KPIs comerciais.</p>
