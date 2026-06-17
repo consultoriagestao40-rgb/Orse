@@ -30,6 +30,11 @@ export interface RootCauseAnalysis {
   createdAt: string;
   userId: string;
   status: string;
+  vinculoTipo?: 'CONTRATO' | 'DEPARTAMENTO';
+  contratoId?: string;
+  contratoCodigo?: string;
+  departamentoNome?: string;
+  criadoPor?: string;
 }
 
 export interface SubAction {
@@ -347,6 +352,11 @@ export async function getPlanningData() {
         hasMigration = true;
       }
       
+      if (!data.departamentos) {
+        data.departamentos = ['Dep. Operação', 'Comercial', 'RH', 'Financeiro', 'Administrativo'];
+        hasMigration = true;
+      }
+
       if (data.planosAcao) {
         data.planosAcao = data.planosAcao.map(pa => {
           if (!pa.acoes) {
@@ -377,9 +387,141 @@ export async function getPlanningData() {
       }
     }
 
-    return { success: true, data, currentUser: user };
+    const contratos = await prisma.contrato.findMany({
+      where: {
+        tenantId: user.tenantId,
+        status: 'Vigente'
+      },
+      include: {
+        client: true,
+        proposta: {
+          include: {
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 1
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const clientes = await prisma.client.findMany({
+      where: {
+        tenantId: user.tenantId
+      },
+      orderBy: { nomeFantasia: 'asc' }
+    });
+
+    return { 
+      success: true, 
+      data, 
+      currentUser: user, 
+      contratos: JSON.parse(JSON.stringify(contratos)), 
+      clientes: JSON.parse(JSON.stringify(clientes))
+    };
   } catch (error: any) {
     return { success: false, error: error.message || 'Erro ao carregar dados de planejamento' };
+  }
+}
+
+// Action: Quick create Contract
+export async function quickCreateContrato(clientId: string, clientName?: string, docIdentificador?: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    let finalClientId = clientId;
+
+    if (!clientId && clientName) {
+      const newClient = await prisma.client.create({
+        data: {
+          nomeFantasia: clientName,
+          razaoSocial: clientName,
+          tenantId: user.tenantId
+        }
+      });
+      finalClientId = newClient.id;
+    }
+
+    if (!finalClientId) {
+      return { success: false, error: 'Cliente inválido' };
+    }
+
+    const empresa = await prisma.empresaEmissora.findFirst({
+      where: { tenantId: user.tenantId }
+    });
+    if (!empresa) {
+      return { success: false, error: 'É necessário cadastrar uma Empresa Emissora nas configurações antes de criar contratos.' };
+    }
+
+    const proposta = await prisma.proposta.create({
+      data: {
+        userId: user.id,
+        clientId: finalClientId,
+        status: 'ATIVO',
+        tenantId: user.tenantId
+      }
+    });
+
+    const contrato = await prisma.contrato.create({
+      data: {
+        propostaId: proposta.id,
+        clientId: finalClientId,
+        empresaEmissoraId: empresa.id,
+        status: 'Vigente',
+        valorMensal: 0,
+        valorTotal: 0,
+        tenantId: user.tenantId
+      }
+    });
+
+    const newContrato = await prisma.contrato.findUnique({
+      where: { id: contrato.id },
+      include: {
+        client: true,
+        proposta: {
+          include: {
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 1
+            }
+          }
+        }
+      }
+    });
+
+    revalidatePath('/planejamento');
+    return { success: true, contrato: JSON.parse(JSON.stringify(newContrato)) };
+  } catch (error: any) {
+    console.error('Error in quickCreateContrato:', error);
+    return { success: false, error: error.message || 'Erro ao cadastrar contrato rápido' };
+  }
+}
+
+// Action: Quick create Department
+export async function quickCreateDepartamento(nome: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    const ata = await getOrCreatePlanningAta(user.tenantId!);
+    const store = ata.pautas as unknown as PlanningDataStore;
+
+    if (!store.departamentos) {
+      store.departamentos = ['Dep. Operação', 'Comercial', 'RH', 'Financeiro', 'Administrativo'];
+    }
+
+    const trimmed = nome.trim();
+    if (trimmed && !store.departamentos.includes(trimmed)) {
+      store.departamentos.push(trimmed);
+      await saveStoreData(user.tenantId!, store);
+    }
+
+    revalidatePath('/planejamento');
+    return { success: true, departamentos: store.departamentos };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Erro ao cadastrar departamento' };
   }
 }
 

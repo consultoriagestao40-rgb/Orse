@@ -44,6 +44,8 @@ import {
   savePostit, 
   deletePostit, 
   saveCausaStages,
+  quickCreateContrato,
+  quickCreateDepartamento,
   RootCauseAnalysis, 
   ActionPlan, 
   OKRCiclo, 
@@ -202,6 +204,12 @@ export default function PlanejamentoPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [stagesCausa, setStagesCausa] = useState<CauseStage[]>([]);
+  const [contratos, setContratos] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [departamentos, setDepartamentos] = useState<string[]>([]);
+  const [showQuickContractModal, setShowQuickContractModal] = useState(false);
+  const [newContractClient, setNewContractClient] = useState('');
+  const [newContractClientName, setNewContractClientName] = useState('');
 
   // Editing column stages
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
@@ -230,7 +238,8 @@ export default function PlanejamentoPage() {
       meioAmbiente: []
     },
     causaRaiz: '',
-    status: 'RASCUNHO'
+    status: 'RASCUNHO',
+    criadoPor: 'Usuário automático do sistema'
   });
 
   const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('list');
@@ -1039,9 +1048,18 @@ export default function PlanejamentoPage() {
 
         <div className="space-y-2">
           <div className="flex justify-between items-start gap-2 pr-6">
-            <span className="text-[8.5px] font-black uppercase bg-slate-100 border border-slate-200 text-slate-500 rounded px-1.5 py-0.5 truncate max-w-[150px]">
-              {associatedCausa ? `Causa: ${associatedCausa.causaRaiz}` : pa.problemaDireto ? `Prob: ${pa.problemaDireto}` : 'Entrada Direta'}
-            </span>
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-[8.5px] font-black uppercase bg-slate-100 border border-slate-200 text-slate-500 rounded px-1.5 py-0.5 truncate max-w-[150px]">
+                {associatedCausa ? `Causa: ${associatedCausa.causaRaiz}` : pa.problemaDireto ? `Prob: ${pa.problemaDireto}` : 'Entrada Direta'}
+              </span>
+              {associatedCausa && associatedCausa.vinculoTipo && (
+                <span className="text-[8px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 truncate max-w-[150px] mt-0.5 self-start">
+                  {associatedCausa.vinculoTipo === 'CONTRATO' 
+                    ? `Contr: ${associatedCausa.contratoCodigo || 'S/N'}` 
+                    : `Dep: ${associatedCausa.departamentoNome || 'S/D'}`}
+                </span>
+              )}
+            </div>
             <span className="text-[8.5px] font-black text-slate-400 font-mono shrink-0">
               Prazo: {formatLocalDate(pa.dataFim)}
             </span>
@@ -1265,6 +1283,15 @@ export default function PlanejamentoPage() {
       if ((resPlanning as any).currentUser) {
         setCurrentUser((resPlanning as any).currentUser);
       }
+      if ((resPlanning as any).contratos) {
+        setContratos((resPlanning as any).contratos);
+      }
+      if ((resPlanning as any).clientes) {
+        setClientes((resPlanning as any).clientes);
+      }
+      if ((resPlanning as any).data.departamentos) {
+        setDepartamentos((resPlanning as any).data.departamentos);
+      }
     }
 
     if (resUsers.success && resUsers.users) {
@@ -1276,6 +1303,60 @@ export default function PlanejamentoPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const getContractNumberLabel = (c: any) => {
+    if (!c || !c.proposta) return 'S/N';
+    const numProp = c.proposta.numero?.toString().padStart(3, '0') || '000';
+    const numRev = (c.proposta.versoes?.[0]?.versao || 1).toString().padStart(2, '0');
+    const d = c.dataInicio ? new Date(c.dataInicio) : new Date(c.createdAt || Date.now());
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const y = d.getFullYear().toString();
+    return `${numProp}.${numRev}.${m}.${y}`;
+  };
+
+  const handleQuickAddDept = async (nome: string) => {
+    try {
+      const res = await quickCreateDepartamento(nome);
+      if (res.success && res.departamentos) {
+        setDepartamentos(res.departamentos);
+        setCurrentCausa(prev => ({ ...prev, departamentoNome: nome }));
+      } else {
+        alert(res.error || "Erro ao criar departamento");
+      }
+    } catch (e: any) {
+      alert(e.message || "Erro de conexão");
+    }
+  };
+
+  const handleQuickSaveContract = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const clientId = newContractClient === 'NEW' ? '' : newContractClient;
+      const res = await quickCreateContrato(clientId, newContractClientName);
+      if (res.success && res.contrato) {
+        setContratos(prev => [res.contrato, ...prev]);
+        const label = getContractNumberLabel(res.contrato);
+        setCurrentCausa(prev => ({
+          ...prev,
+          contratoId: res.contrato.id,
+          contratoCodigo: label
+        }));
+        if (!clientId) {
+          const resPlanning = await getPlanningData();
+          if (resPlanning.success && resPlanning.clientes) {
+            setClientes(resPlanning.clientes);
+          }
+        }
+        setShowQuickContractModal(false);
+        setNewContractClient('');
+        setNewContractClientName('');
+      } else {
+        alert(res.error || "Erro ao cadastrar contrato");
+      }
+    } catch (err: any) {
+      alert(err.message || "Erro de conexão");
+    }
+  };
 
   // Root Cause Handlers
   const handleSaveCausa = async (e: React.FormEvent) => {
@@ -1617,7 +1698,8 @@ export default function PlanejamentoPage() {
                         porques: ['', '', '', '', ''],
                         ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
                         causaRaiz: '',
-                        status: 'RASCUNHO'
+                        status: 'RASCUNHO',
+                        criadoPor: 'Usuário automático do sistema'
                       });
                       setIsEditingCausa(true);
                     }}
@@ -1633,7 +1715,8 @@ export default function PlanejamentoPage() {
                         porques: ['', '', '', '', ''],
                         ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
                         causaRaiz: '',
-                        status: 'RASCUNHO'
+                        status: 'RASCUNHO',
+                        criadoPor: 'Usuário automático do sistema'
                       });
                       setIsEditingCausa(true);
                     }}
@@ -1815,6 +1898,126 @@ export default function PlanejamentoPage() {
                     </div>
 
                     <form onSubmit={handleSaveCausa} className="space-y-6">
+                      {/* Informações Gerais (Criado por / Vínculo) */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-slate-100 pb-6">
+                        {/* Criado Por */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Criado por</label>
+                          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-500">
+                            {currentCausa.criadoPor || 'Usuário automático do sistema'}
+                          </div>
+                        </div>
+
+                        {/* Tipo de Vínculo */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Vincular a</label>
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setCurrentCausa(prev => ({ ...prev, vinculoTipo: 'CONTRATO', departamentoNome: '' }))}
+                              className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                                currentCausa.vinculoTipo === 'CONTRATO'
+                                  ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
+                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                              }`}
+                            >
+                              Contrato
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCurrentCausa(prev => ({ ...prev, vinculoTipo: 'DEPARTAMENTO', contratoId: '', contratoCodigo: '' }))}
+                              className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                                currentCausa.vinculoTipo === 'DEPARTAMENTO'
+                                  ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-2xs'
+                                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                              }`}
+                            >
+                              Departamento
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Seleção do Vínculo */}
+                        <div className="space-y-1">
+                          {currentCausa.vinculoTipo === 'CONTRATO' && (
+                            <>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Contrato Vigente</label>
+                              <div className="flex gap-2 items-center mt-1">
+                                <select
+                                  value={currentCausa.contratoId || ''}
+                                  onChange={(e) => {
+                                    const selectedId = e.target.value;
+                                    const c = contratos.find(x => x.id === selectedId);
+                                    setCurrentCausa(prev => ({
+                                      ...prev,
+                                      contratoId: selectedId,
+                                      contratoCodigo: c ? getContractNumberLabel(c) : ''
+                                    }));
+                                  }}
+                                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                >
+                                  <option value="">Selecione um contrato...</option>
+                                  {contratos.map(c => {
+                                    const lbl = getContractNumberLabel(c);
+                                    const clientName = c.client?.nomeFantasia || c.client?.razaoSocial || 'Cliente Sem Nome';
+                                    return (
+                                      <option key={c.id} value={c.id}>
+                                        {lbl} - {clientName}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowQuickContractModal(true)}
+                                  className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all cursor-pointer border-none flex items-center justify-center shrink-0"
+                                  title="Cadastrar Novo Contrato Rápido"
+                                >
+                                  <Plus size={16} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+
+                          {currentCausa.vinculoTipo === 'DEPARTAMENTO' && (
+                            <>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Departamento</label>
+                              <div className="flex gap-2 items-center mt-1">
+                                <select
+                                  value={currentCausa.departamentoNome || ''}
+                                  onChange={(e) => setCurrentCausa(prev => ({ ...prev, departamentoNome: e.target.value }))}
+                                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                                >
+                                  <option value="">Selecione um departamento...</option>
+                                  {departamentos.map(d => (
+                                    <option key={d} value={d}>{d}</option>
+                                  ))}
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const nome = prompt("Digite o nome do novo departamento:");
+                                    if (nome && nome.trim()) {
+                                      handleQuickAddDept(nome.trim());
+                                    }
+                                  }}
+                                  className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all cursor-pointer border-none flex items-center justify-center shrink-0"
+                                  title="Cadastrar Novo Departamento"
+                                >
+                                  <Plus size={16} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+
+                          {!currentCausa.vinculoTipo && (
+                            <div className="h-full flex items-center pt-5">
+                              <span className="text-[11px] italic text-slate-400">Selecione o tipo de vínculo ao lado</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Status da Análise */}
                         <div className="space-y-1 col-span-1 md:col-span-2">
@@ -2424,7 +2627,18 @@ export default function PlanejamentoPage() {
                                     {pa.titulo}
                                   </td>
                                   <td className="py-4 px-6 text-slate-500 min-w-[350px] max-w-[500px] break-words">
-                                    {associatedCausa ? associatedCausa.causaRaiz : pa.problemaDireto || 'Entrada Direta'}
+                                    <div className="flex flex-col gap-1">
+                                      <span>{associatedCausa ? associatedCausa.causaRaiz : pa.problemaDireto || 'Entrada Direta'}</span>
+                                      {associatedCausa && associatedCausa.vinculoTipo && (
+                                        <div className="flex mt-0.5">
+                                          <span className="text-[9.5px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-2xs">
+                                            {associatedCausa.vinculoTipo === 'CONTRATO' 
+                                              ? `Contrato: ${associatedCausa.contratoCodigo || 'Sem número'}` 
+                                              : `Depto: ${associatedCausa.departamentoNome || 'Sem depto'}`}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-4 px-6 text-slate-500">
                                     {pa.indicadorMelhorar || '-'}
@@ -3278,6 +3492,23 @@ export default function PlanejamentoPage() {
                         </select>
                       </div>
                     </div>
+
+                    {/* Contrato / Departamento vinculado se houver */}
+                    {(() => {
+                      const associatedCausa = causas.find(c => c.id === currentPlano.causaRaizId);
+                      if (associatedCausa && associatedCausa.vinculoTipo) {
+                        return (
+                          <div className="mt-2 flex items-center gap-2 pl-[100px] select-none">
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-250 text-emerald-800 shadow-3xs">
+                              {associatedCausa.vinculoTipo === 'CONTRATO' 
+                                ? `Contrato: ${associatedCausa.contratoCodigo || 'Sem número'}` 
+                                : `Depto: ${associatedCausa.departamentoNome || 'Sem depto'}`}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status:</span>
@@ -5051,6 +5282,86 @@ export default function PlanejamentoPage() {
                     Salvar
                   </button>
                 </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CADASTRAR CONTRATO RÁPIDO */}
+      {showQuickContractModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
+              <div>
+                <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider">Novo Contrato</span>
+                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider mt-0.5">
+                  Cadastrar Contrato Rápido
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowQuickContractModal(false)} 
+                className="text-slate-400 hover:text-slate-655 cursor-pointer border-none bg-transparent"
+              >
+                <X size={16} />
+              </button>
+            </header>
+
+            <form onSubmit={handleQuickSaveContract} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Cliente do Contrato</label>
+                <select
+                  value={newContractClient}
+                  onChange={(e) => {
+                    setNewContractClient(e.target.value);
+                    if (e.target.value !== 'NEW') {
+                      setNewContractClientName('');
+                    }
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                  required
+                >
+                  <option value="">Selecione um cliente...</option>
+                  <option value="NEW">+ Cadastrar Novo Cliente...</option>
+                  {clientes.map(cli => (
+                    <option key={cli.id} value={cli.id}>{cli.nomeFantasia || cli.razaoSocial}</option>
+                  ))}
+                </select>
+              </div>
+
+              {newContractClient === 'NEW' && (
+                <div className="space-y-1 animate-in slide-in-from-top-2 duration-150">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Nome do Cliente</label>
+                  <input
+                    type="text"
+                    required
+                    value={newContractClientName}
+                    onChange={(e) => setNewContractClientName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                    placeholder="Ex: Nome da Empresa ou Fantasia"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowQuickContractModal(false);
+                    setNewContractClient('');
+                    setNewContractClientName('');
+                  }}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-black text-slate-500 uppercase tracking-wider hover:bg-slate-100 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer border-none"
+                >
+                  Salvar
+                </button>
               </div>
             </form>
           </div>
