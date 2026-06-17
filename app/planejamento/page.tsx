@@ -3565,7 +3565,7 @@ export default function PlanejamentoPage() {
             </div>
 
             {/* Cards Superiores */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4">
               {/* Card Esquerda: Detalhes do Plano */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
                 {/* Primeira linha: Plano de Ação + Status */}
@@ -3637,7 +3637,7 @@ export default function PlanejamentoPage() {
                 </div>
 
                 {/* Segunda linha: Responsável + Indicadores + Datas */}
-                <div className="flex flex-wrap gap-x-5 gap-y-3 mt-6 pt-4 border-t border-slate-100 justify-start items-center">
+                <div className="flex flex-wrap gap-x-4 gap-y-3 mt-6 pt-4 border-t border-slate-100 justify-start items-center">
                   {/* Responsável */}
                   <div className="flex items-center gap-2.5">
                     {responsavelGeral?.avatarUrl ? (
@@ -3651,7 +3651,7 @@ export default function PlanejamentoPage() {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Responsável:</span>
                       <select required value={currentPlano.responsavelId || ''}
                         onChange={(e) => setCurrentPlano(prev => ({ ...prev, responsavelId: e.target.value }))}
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 cursor-pointer w-[140px] truncate">
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 cursor-pointer w-[120px] truncate">
                         <option value="">Selecione...</option>
                         {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
                       </select>
@@ -3659,46 +3659,46 @@ export default function PlanejamentoPage() {
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador a Melhorar:</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador:</span>
                     <input type="text" value={currentPlano.indicadorMelhorar || ''}
                       onChange={(e) => setCurrentPlano(prev => ({ ...prev, indicadorMelhorar: e.target.value }))}
                       placeholder="Ex: NPS"
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[130px]" />
+                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[100px]" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Resultado Atual:</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Res. Atual:</span>
                     <input type="text" value={currentPlano.resultadoAtual || ''}
                       onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtual: e.target.value }))}
                       placeholder="Ex: 45%"
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[90px]" />
+                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[70px]" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Meta a Atingir:</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Meta:</span>
                     <input type="text" value={currentPlano.metaAtingir || ''}
                       onChange={(e) => setCurrentPlano(prev => ({ ...prev, metaAtingir: e.target.value }))}
                       placeholder="Ex: 90%"
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[90px]" />
+                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[70px]" />
                   </div>
                   {currentPlano.status === 'CONCLUIDO' && (
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Resultado Atingido:</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-black">Atingido:</span>
                       <input type="text" value={currentPlano.resultadoAtingido || ''}
                         onChange={(e) => setCurrentPlano(prev => ({ ...prev, resultadoAtingido: e.target.value }))}
                         placeholder="Ex: 85%"
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[90px]" />
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[70px]" />
                     </div>
                   )}
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início:</span>
-                    <input type="date" value={currentPlano.dataInicio || ''}
-                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataInicio: e.target.value }))}
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[125px] cursor-pointer" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim:</span>
-                    <input type="date" required value={currentPlano.dataFim || ''}
-                      onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
-                      className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 w-[125px] cursor-pointer" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Período (Início a Fim):</span>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <input type="date" value={currentPlano.dataInicio || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataInicio: e.target.value }))}
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white w-[120px] cursor-pointer" />
+                      <span className="text-slate-450 text-xs font-bold">a</span>
+                      <input type="date" required value={currentPlano.dataFim || ''}
+                        onChange={(e) => setCurrentPlano(prev => ({ ...prev, dataFim: e.target.value }))}
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white w-[120px] cursor-pointer" />
+                    </div>
                   </div>
                 </div>
               </div>
