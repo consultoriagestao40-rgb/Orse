@@ -3637,7 +3637,7 @@ export default function PlanejamentoPage() {
                 </div>
 
                 {/* Segunda linha: Responsável + Indicadores + Datas */}
-                <div className="flex flex-wrap gap-x-5 gap-y-3 mt-6 pt-4 border-t border-slate-100 justify-between items-center">
+                <div className="flex flex-wrap gap-x-5 gap-y-3 mt-6 pt-4 border-t border-slate-100 justify-start items-center">
                   {/* Responsável */}
                   <div className="flex items-center gap-2.5">
                     {responsavelGeral?.avatarUrl ? (
