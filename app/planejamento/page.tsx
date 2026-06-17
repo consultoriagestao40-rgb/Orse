@@ -3630,16 +3630,27 @@ export default function PlanejamentoPage() {
                         if (associatedCausa && associatedCausa.vinculoTipo) {
                           const isContrato = associatedCausa.vinculoTipo === 'CONTRATO';
                           const labelText = isContrato ? 'Contrato:' : 'Departamento:';
-                          const valText = isContrato 
-                            ? (associatedCausa.contratoCodigo || 'Sem número') 
-                            : (associatedCausa.departamentoNome || 'Sem depto');
+                          let valText = '';
+
+                          if (isContrato) {
+                            const c = contratos.find(x => x.id === associatedCausa.contratoId);
+                            if (c) {
+                              const lbl = getContractNumberLabel(c);
+                              const clientName = c.client?.nomeFantasia || c.client?.razaoSocial || '';
+                              valText = clientName ? `${lbl} - ${clientName}` : lbl;
+                            } else {
+                              valText = associatedCausa.contratoCodigo || 'Sem número';
+                            }
+                          } else {
+                            valText = associatedCausa.departamentoNome || 'Sem depto';
+                          }
 
                           return (
                             <div className="flex items-center gap-2">
                               <span className="w-[110px] text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap shrink-0">
                                 {labelText}
                               </span>
-                              <span className="text-xs font-black text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md shadow-3xs">
+                              <span className="text-xs font-black text-slate-700 bg-transparent p-0 rounded-sm">
                                 {valText}
                               </span>
                             </div>
