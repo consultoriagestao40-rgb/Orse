@@ -4644,13 +4644,6 @@ export default function PlanejamentoPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2 select-none">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tarefas da Ação</span>
-                  <button
-                    type="button"
-                    onClick={handleOpenNewActionModal}
-                    className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black py-1 px-3 rounded-lg text-[10px] uppercase tracking-wider cursor-pointer border-none flex items-center gap-1 shadow-xs transition-all"
-                  >
-                    <Plus size={10} /> + Nova Ação
-                  </button>
                 </div>
 
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
