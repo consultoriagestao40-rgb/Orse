@@ -239,7 +239,7 @@ export default function PlanejamentoPage() {
     },
     causaRaiz: '',
     status: 'RASCUNHO',
-    criadoPor: 'Usuário automático do sistema'
+    criadoPor: ''
   });
 
   const [planoViewMode, setPlanoViewMode] = useState<'kanban' | 'list'>('list');
@@ -1699,7 +1699,7 @@ export default function PlanejamentoPage() {
                         ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
                         causaRaiz: '',
                         status: 'RASCUNHO',
-                        criadoPor: 'Usuário automático do sistema'
+                        criadoPor: currentUser?.nome || ''
                       });
                       setIsEditingCausa(true);
                     }}
@@ -1716,7 +1716,7 @@ export default function PlanejamentoPage() {
                         ishikawa: { metodo: [], materiaPrima: [], maoDeObra: [], maquina: [], medida: [], meioAmbiente: [] },
                         causaRaiz: '',
                         status: 'RASCUNHO',
-                        criadoPor: 'Usuário automático do sistema'
+                        criadoPor: currentUser?.nome || ''
                       });
                       setIsEditingCausa(true);
                     }}
@@ -1903,8 +1903,14 @@ export default function PlanejamentoPage() {
                         {/* Criado Por */}
                         <div className="space-y-1">
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Criado por</label>
-                          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-500">
-                            {currentCausa.criadoPor || 'Usuário automático do sistema'}
+                          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-550">
+                            {(() => {
+                              if (currentCausa.id) {
+                                const creatorUser = users.find(u => u.id === currentCausa.userId);
+                                return creatorUser ? creatorUser.nome : (currentCausa.criadoPor || 'Usuário do sistema');
+                              }
+                              return currentUser?.nome || 'Usuário do sistema';
+                            })()}
                           </div>
                         </div>
 

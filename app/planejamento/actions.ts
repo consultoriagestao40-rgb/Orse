@@ -574,7 +574,8 @@ export async function saveRootCause(causa: Omit<RootCauseAnalysis, 'id' | 'creat
         store.causas[index] = {
           ...store.causas[index],
           ...causa,
-          userId: user.id
+          userId: store.causas[index].userId || user.id,
+          criadoPor: store.causas[index].criadoPor || user.nome
         } as RootCauseAnalysis;
       }
     } else {
@@ -584,7 +585,8 @@ export async function saveRootCause(causa: Omit<RootCauseAnalysis, 'id' | 'creat
         id: 'causa-' + Date.now(),
         createdAt: new Date().toISOString(),
         userId: user.id,
-        status: causa.status || 'RASCUNHO'
+        status: causa.status || 'RASCUNHO',
+        criadoPor: user.nome
       };
       store.causas.push(newCausa);
     }
