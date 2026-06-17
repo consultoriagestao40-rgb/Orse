@@ -3639,22 +3639,38 @@ export default function PlanejamentoPage() {
                 {/* Segunda linha: Responsável + Indicadores + Datas */}
                 <div className="flex flex-wrap gap-x-4 gap-y-3 mt-6 pt-4 border-t border-slate-100 justify-start items-center">
                   {/* Responsável */}
-                  <div className="flex items-center gap-2.5">
-                    {responsavelGeral?.avatarUrl ? (
-                      <img src={responsavelGeral.avatarUrl} alt={responsavelGeral.nome} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-sm font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
-                        {responsavelGeral?.nome?.substring(0, 2) || 'RS'}
-                      </div>
-                    )}
-                     <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Responsável:</span>
-                      <select required value={currentPlano.responsavelId || ''}
+                  <div className="relative group/responsavel cursor-pointer flex flex-col items-center select-none">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Resp:</span>
+                    <div className="relative">
+                      {responsavelGeral?.avatarUrl ? (
+                        <img 
+                          src={responsavelGeral.avatarUrl} 
+                          alt={responsavelGeral.nome} 
+                          className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0" 
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-xs font-black text-[#1B4D3E] uppercase border border-slate-200 shadow-2xs shrink-0 font-bold">
+                          {responsavelGeral?.nome?.substring(0, 2) || 'RS'}
+                        </div>
+                      )}
+                      {/* Native select on top, completely transparent but clickable */}
+                      <select 
+                        required 
+                        value={currentPlano.responsavelId || ''}
                         onChange={(e) => setCurrentPlano(prev => ({ ...prev, responsavelId: e.target.value }))}
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:bg-white mt-1 cursor-pointer w-[120px] truncate">
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        title={responsavelGeral?.nome || "Selecionar responsável"}
+                      >
                         <option value="">Selecione...</option>
-                        {users.map(u => (<option key={u.id} value={u.id}>{u.nome}</option>))}
+                        {users.map(u => (
+                          <option key={u.id} value={u.id}>{u.nome}</option>
+                        ))}
                       </select>
+                    </div>
+                    
+                    {/* Hover name tooltip */}
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-12 bg-slate-900 text-white text-[9px] font-black uppercase tracking-wider py-1 px-2.5 rounded shadow-xl opacity-0 group-hover/responsavel:opacity-100 pointer-events-none transition-all duration-150 whitespace-nowrap z-30 border border-white/10">
+                      {responsavelGeral?.nome || 'Selecionar responsável'}
                     </div>
                   </div>
 
