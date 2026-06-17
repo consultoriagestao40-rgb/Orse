@@ -3577,8 +3577,9 @@ export default function PlanejamentoPage() {
                                       setEditingAcao(a);
                                       setEditingAcaoHowMuchStr((a.howMuch || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                                     }}
-                                    className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-none flex items-center gap-1">
-                                    Editar
+                                    className="p-1.5 text-slate-550 hover:text-[#1B4D3E] hover:bg-slate-100 rounded-lg transition-all cursor-pointer border-none bg-transparent flex items-center justify-center"
+                                    title="Editar Ação">
+                                    <Edit size={13} />
                                   </button>
 
                                   {(a.status === 'PENDENTE' || a.status === 'EM_ANDAMENTO' || a.status === 'EM_ATRASO') && (
