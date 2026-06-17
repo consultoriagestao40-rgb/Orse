@@ -4869,6 +4869,8 @@ export default function PlanejamentoPage() {
             </form>
           </div>
         </div>
+      )}
+
       {/* MODAL DETALHE / EDICAO DE AÇÃO */}
       {isActionDetailModalOpen && activeActionTask && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] p-4">
