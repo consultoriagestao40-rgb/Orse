@@ -4088,15 +4088,16 @@ export default function PlanejamentoPage() {
       {/* MODAL CADASTRAR NOVA AÇÃO (5W2H) */}
       {isAcaoModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Cadastrar Nova Ação (5W2H)</h3>
               <button type="button" onClick={() => setIsAcaoModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
             
-            <form onSubmit={handleSaveNewAcao} className="p-6 space-y-4">
+            <form onSubmit={handleSaveNewAcao} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto space-y-4 flex-1">
               {/* O Quê & Por Quê */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -4221,7 +4222,8 @@ export default function PlanejamentoPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              </div>
+              <div className="flex gap-3 justify-end p-6 border-t border-slate-100 shrink-0 flex-wrap">
                 <button 
                   type="button" 
                   onClick={() => setIsAcaoModalOpen(false)}
@@ -4244,15 +4246,16 @@ export default function PlanejamentoPage() {
       {/* MODAL EDITAR AÇÃO (5W2H) */}
       {editingAcao && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Editar Ação (5W2H)</h3>
               <button type="button" onClick={() => setEditingAcao(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
             
-            <form onSubmit={handleSaveEditedAcao} className="p-6 space-y-4">
+            <form onSubmit={handleSaveEditedAcao} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto space-y-4 flex-1">
               {/* O Quê & Por Quê */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -4460,7 +4463,8 @@ export default function PlanejamentoPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 flex-wrap">
+              </div>
+              <div className="flex gap-3 justify-end p-6 border-t border-slate-100 flex-wrap shrink-0">
                 <button 
                   type="button" 
                   onClick={() => setEditingAcao(null)}
@@ -4534,15 +4538,16 @@ export default function PlanejamentoPage() {
       {/* MODAL CONCLUIR AÇÃO */}
       {completingAcao && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Concluir Ação (5W2H)</h3>
               <button type="button" onClick={() => setCompletingAcao(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
             
-            <form onSubmit={handleSaveCompletionAcao} className="p-6 space-y-4">
+            <form onSubmit={handleSaveCompletionAcao} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto space-y-4 flex-1">
               <div>
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ação</span>
                 <p className="text-xs font-bold text-slate-800 mt-1 leading-normal break-words">{completingAcao.what}</p>
@@ -4588,7 +4593,8 @@ export default function PlanejamentoPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              </div>
+              <div className="flex gap-3 justify-end p-6 border-t border-slate-100 shrink-0 flex-wrap">
                 <button 
                   type="button" 
                   onClick={() => setCompletingAcao(null)}
@@ -4611,15 +4617,16 @@ export default function PlanejamentoPage() {
       {/* MODAL AVALIAR AÇÃO */}
       {reviewingAcao && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 select-none shrink-0">
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Avaliar Conclusão da Ação</h3>
               <button type="button" onClick={() => setReviewingAcao(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent">
                 <X size={16} />
               </button>
             </header>
             
-            <form className="p-6 space-y-4">
+            <form className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto space-y-4 flex-1">
               <div>
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ação</span>
                 <p className="text-xs font-bold text-slate-800 mt-1 leading-normal break-words">{reviewingAcao.what}</p>
@@ -4660,7 +4667,8 @@ export default function PlanejamentoPage() {
                 />
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+              </div>
+              <div className="flex gap-3 justify-end p-6 border-t border-slate-100 shrink-0 flex-wrap">
                 <button 
                   type="button" 
                   onClick={() => setReviewingAcao(null)}
