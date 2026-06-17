@@ -769,8 +769,8 @@ export default function SettingsPage() {
   // ── Metas ────────────────────────────────────────────────────────────────────
   const parseLocaleNumber = (str: string): number => {
     if (!str) return 0;
-    // Remove todos os pontos (separadores de milhar) e troca vírgula por ponto (decimal)
-    const clean = str.replace(/\./g, '').replace(/,/g, '.');
+    // Remove R$, espaços, pontos de milhar e substitui vírgula por ponto decimal
+    const clean = str.replace(/R\$/gi, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
     const num = Number(clean);
     return isNaN(num) ? 0 : num;
   };
@@ -783,10 +783,12 @@ export default function SettingsPage() {
           const parsed = JSON.parse(saved);
           setMetas(parsed);
           
-          // Preenche localMetas com valores formatados em pt-BR
+          // Preenche localMetas com valores formatados em pt-BR com 2 casas decimais
           const localInit: Record<string, string> = {};
           Object.entries(parsed).forEach(([key, val]) => {
-            localInit[key] = typeof val === 'number' ? val.toLocaleString('pt-BR') : String(val);
+            localInit[key] = typeof val === 'number' 
+              ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+              : String(val);
           });
           setLocalMetas(localInit);
         } catch (e) {
@@ -1917,7 +1919,7 @@ export default function SettingsPage() {
                             const goalKey = `${nome}_${selectedMonth}`;
                             const displayVal = localMetas[goalKey] !== undefined 
                               ? localMetas[goalKey] 
-                              : (metas[goalKey] !== undefined ? metas[goalKey].toLocaleString('pt-BR') : '100.000');
+                              : (metas[goalKey] !== undefined ? metas[goalKey].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '100.000,00');
 
                             return (
                               <tr key={nome} className="hover:bg-slate-50 transition-colors">
@@ -1942,7 +1944,10 @@ export default function SettingsPage() {
                                       onBlur={() => {
                                         const parsedNum = parseLocaleNumber(displayVal);
                                         handleSaveMeta(nome, parsedNum);
-                                        setLocalMetas(prev => ({ ...prev, [goalKey]: parsedNum.toLocaleString('pt-BR') }));
+                                        setLocalMetas(prev => ({ 
+                                          ...prev, 
+                                          [goalKey]: parsedNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                                        }));
                                       }}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
