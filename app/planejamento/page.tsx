@@ -2393,7 +2393,7 @@ export default function PlanejamentoPage() {
                         <table className="w-full min-w-[1500px] text-left border-collapse">
                           <thead>
                             <tr className="bg-slate-50/75 border-b border-slate-200 select-none text-[9.5px] font-black text-slate-400 uppercase tracking-wider">
-                              <th className="py-3.5 px-6">Plano de Ação</th>
+                              <th className="py-3.5 px-6 min-w-[320px]">Plano de Ação</th>
                               <th className="py-3.5 px-6 min-w-[350px]">Causa Vinculada / Problema</th>
                               <th className="py-3.5 px-6">Indicador</th>
                               <th className="py-3.5 px-6">Resultado Atual</th>
@@ -2420,7 +2420,7 @@ export default function PlanejamentoPage() {
 
                               return (
                                 <tr key={pa.id} className="hover:bg-slate-50/50 transition-colors group">
-                                  <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer" onClick={() => { setCurrentPlano(pa); setIsEditingPlano(true); }}>
+                                  <td className="py-4 px-6 font-black uppercase text-slate-800 cursor-pointer min-w-[320px] break-words" onClick={() => { setCurrentPlano(pa); setIsEditingPlano(true); }}>
                                     {pa.titulo}
                                   </td>
                                   <td className="py-4 px-6 text-slate-500 min-w-[350px] max-w-[500px] break-words">
