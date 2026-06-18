@@ -27,6 +27,53 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
   const [segmentos, setSegmentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cep, setCep] = useState('');
+  const [searchingCep, setSearchingCep] = useState(false);
+
+  const handleSearchCep = async (cepVal: string) => {
+    const cleanCep = cepVal.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+    
+    try {
+      setSearchingCep(true);
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await res.json();
+      if (data.erro) {
+        alert('CEP não localizado.');
+        return;
+      }
+      
+      const parts = [
+        data.logradouro,
+        data.bairro,
+        `${data.localidade} - ${data.uf}`
+      ].filter(Boolean);
+      const address = parts.join(', ');
+      
+      setFormData((prev: any) => ({
+        ...prev,
+        endereco: address
+      }));
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+    } finally {
+      setSearchingCep(false);
+    }
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 8) val = val.slice(0, 8);
+    
+    if (val.length === 8) {
+      handleSearchCep(val);
+    }
+    
+    if (val.length > 5) {
+      val = `${val.slice(0, 5)}-${val.slice(5)}`;
+    }
+    setCep(val);
+  };
 
   useEffect(() => {
     async function load() {
@@ -162,6 +209,23 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
                 className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all"
                 placeholder="00.000.000/0000-00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center select-none">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CEP (Busca Automática)</label>
+                {searchingCep && (
+                  <span className="text-[9px] font-extrabold text-[#1B4D3E] uppercase animate-pulse">Buscando...</span>
+                )}
+              </div>
+              <input 
+                type="text" 
+                value={cep}
+                onChange={handleCepChange}
+                disabled={searchingCep}
+                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all"
+                placeholder="00000-000"
               />
             </div>
             

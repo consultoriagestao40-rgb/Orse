@@ -136,7 +136,7 @@ model Client {
   codigo       Int        @unique @default(autoincrement())
   nomeFantasia String
   razaoSocial  String?
-  cnpj         String?    @unique
+  cnpj         String?
   email        String?
   whatsapp     String?
   endereco     String?
@@ -152,6 +152,8 @@ model Client {
   entregas            Entrega[]
   tenantId     String?
   tenant       Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([cnpj, tenantId])
 }
 
 model CCT {

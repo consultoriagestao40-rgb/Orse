@@ -42,6 +42,18 @@ export async function createCliente(data: any) {
   const user = await getLoggedUser();
   try {
     const { formatted } = cleanAndFormatDocument(data.cnpj);
+    if (formatted) {
+      const existing = await prisma.client.findFirst({
+        where: {
+          cnpj: formatted,
+          tenantId: user?.tenantId || null
+        }
+      });
+      if (existing) {
+        return { error: 'Este CNPJ já está cadastrado no seu ambiente.' };
+      }
+    }
+
     const novoCliente = await prisma.client.create({
       data: {
         nomeFantasia: data.nomeFantasia || 'Novo Cliente',
@@ -66,12 +78,25 @@ export async function createCliente(data: any) {
 }
 
 export async function updateCliente(id: string, data: any) {
+  const user = await getLoggedUser();
   try {
     const updateData: any = {};
     if (data.nomeFantasia !== undefined) updateData.nomeFantasia = data.nomeFantasia;
     if (data.razaoSocial !== undefined) updateData.razaoSocial = data.razaoSocial;
     if (data.cnpj !== undefined) {
       const { formatted } = cleanAndFormatDocument(data.cnpj);
+      if (formatted) {
+        const existing = await prisma.client.findFirst({
+          where: {
+            cnpj: formatted,
+            tenantId: user?.tenantId || null,
+            id: { not: id }
+          }
+        });
+        if (existing) {
+          return { error: 'Este CNPJ já está cadastrado no seu ambiente.' };
+        }
+      }
       updateData.cnpj = formatted;
     }
     if (data.email !== undefined) updateData.email = data.email;

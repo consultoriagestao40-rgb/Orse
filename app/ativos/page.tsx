@@ -201,6 +201,9 @@ export default function AtivosPage() {
     selectedAtivos: []
   });
 
+  const [isClienteDropdownOpen, setIsClienteDropdownOpen] = useState(false);
+  const [clienteSearch, setClienteSearch] = useState('');
+
   const [osForm, setOsForm] = useState({
     id: '',
     tipo: 'INSTALACAO',
@@ -3719,15 +3722,67 @@ export default function AtivosPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente Comodatário *</label>
-                      <select
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
-                        value={contratoForm.clientId}
-                        onChange={(e) => setContratoForm({...contratoForm, clientId: e.target.value})}
-                      >
-                        {clientes.map(c => (
-                          <option key={c.id} value={c.id}>{c.nomeFantasia} ({c.cnpj || 'Sem CNPJ'})</option>
-                        ))}
-                      </select>
+                      {(() => {
+                        const selectedC = clientes.find(c => c.id === contratoForm.clientId);
+                        const filteredC = clientes.filter(c => 
+                          c.nomeFantasia.toLowerCase().includes(clienteSearch.toLowerCase()) ||
+                          (c.cnpj && c.cnpj.replace(/\D/g, '').includes(clienteSearch.replace(/\D/g, '')))
+                        );
+                        return (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setIsClienteDropdownOpen(!isClienteDropdownOpen)}
+                              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] flex justify-between items-center cursor-pointer uppercase select-none"
+                            >
+                              <span>{selectedC ? `${selectedC.nomeFantasia} ${selectedC.cnpj ? `(${selectedC.cnpj})` : ''}` : 'Selecione o Cliente...'}</span>
+                              <ChevronDown size={14} className="text-slate-400" />
+                            </button>
+                            
+                            {isClienteDropdownOpen && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => {
+                                  setIsClienteDropdownOpen(false);
+                                  setClienteSearch('');
+                                }} />
+                                <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 p-2 space-y-2 max-h-60 flex flex-col animate-fade-in text-left">
+                                  <div className="relative flex items-center shrink-0">
+                                    <Search size={12} className="absolute left-2.5 text-slate-400" />
+                                    <input
+                                      type="text"
+                                      placeholder="DIGITE PARA BUSCAR..."
+                                      value={clienteSearch}
+                                      onChange={(e) => setClienteSearch(e.target.value)}
+                                      className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-855 outline-none focus:border-[#1B4D3E] uppercase"
+                                      autoFocus
+                                    />
+                                  </div>
+                                  <div className="overflow-y-auto flex-1 space-y-0.5 select-none">
+                                    {filteredC.length === 0 ? (
+                                      <div className="p-2 text-xs text-slate-400 italic text-center uppercase">Nenhum cliente localizado</div>
+                                    ) : (
+                                      filteredC.map(c => (
+                                        <button
+                                          key={c.id}
+                                          type="button"
+                                          onClick={() => {
+                                            setContratoForm({...contratoForm, clientId: c.id});
+                                            setIsClienteDropdownOpen(false);
+                                            setClienteSearch('');
+                                          }}
+                                          className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-slate-100 cursor-pointer ${c.id === contratoForm.clientId ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700'}`}
+                                        >
+                                          {c.nomeFantasia} {c.cnpj ? `(${c.cnpj})` : ''}
+                                        </button>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Empresa Emissora (Grupo) *</label>
