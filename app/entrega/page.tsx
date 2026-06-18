@@ -2571,10 +2571,13 @@ export default function GestaoEntregasPage() {
                       </div>
                       {(() => {
                         const selectedC = clientes.find(c => c.id === entregaForm.clientId);
-                        const filteredC = clientes.filter(c => 
-                          c.nomeFantasia.toLowerCase().includes(clienteSearch.toLowerCase()) ||
-                          (c.cnpj && c.cnpj.replace(/\D/g, '').includes(clienteSearch.replace(/\D/g, '')))
-                        );
+                        const searchLower = clienteSearch.toLowerCase();
+                        const searchClean = clienteSearch.replace(/\D/g, '');
+                        const filteredC = clientes.filter(c => {
+                          const matchesNome = c.nomeFantasia.toLowerCase().includes(searchLower);
+                          const matchesCnpj = searchClean ? (c.cnpj && c.cnpj.replace(/\D/g, '').includes(searchClean)) : false;
+                          return matchesNome || matchesCnpj;
+                        });
                         return (
                           <div className="relative">
                             <button

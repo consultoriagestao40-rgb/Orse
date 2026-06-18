@@ -3724,10 +3724,13 @@ export default function AtivosPage() {
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente Comodatário *</label>
                       {(() => {
                         const selectedC = clientes.find(c => c.id === contratoForm.clientId);
-                        const filteredC = clientes.filter(c => 
-                          c.nomeFantasia.toLowerCase().includes(clienteSearch.toLowerCase()) ||
-                          (c.cnpj && c.cnpj.replace(/\D/g, '').includes(clienteSearch.replace(/\D/g, '')))
-                        );
+                        const searchLower = clienteSearch.toLowerCase();
+                        const searchClean = clienteSearch.replace(/\D/g, '');
+                        const filteredC = clientes.filter(c => {
+                          const matchesNome = c.nomeFantasia.toLowerCase().includes(searchLower);
+                          const matchesCnpj = searchClean ? (c.cnpj && c.cnpj.replace(/\D/g, '').includes(searchClean)) : false;
+                          return matchesNome || matchesCnpj;
+                        });
                         return (
                           <div className="relative">
                             <button
