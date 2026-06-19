@@ -5,7 +5,8 @@ import {
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
   Calendar, Check, LogOut, Loader2, Car, Navigation, Volume2,
-  Building, Target, PlusCircle, MessageSquare, ShieldAlert, Truck
+  Building, Target, PlusCircle, MessageSquare, ShieldAlert, Truck,
+  Menu
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo 
@@ -24,6 +25,7 @@ export default function TecnicoPage() {
   const [tenant, setTenant] = useState<any>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; title: string; text: string } | null>(null);
   const [totalUnreadChat, setTotalUnreadChat] = useState(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Finalization Modal State
   const [activeOsForFinalize, setActiveOsForFinalize] = useState<any>(null);
@@ -733,58 +735,145 @@ export default function TecnicoPage() {
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans select-none pb-24">
       {/* HEADER PREMIUM */}
       <header className="sticky top-0 bg-[#1B4D3E] text-white z-40 px-4 py-3 flex flex-col gap-3 shadow-md select-none">
-        {isGestor && (
-          <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1">
-            <button
-              onClick={() => router.push('/leads/mobile')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+        {!isSomenteTecnico ? (
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center gap-3 min-w-0">
+              {currentUser?.avatarUrl ? (
+                <img 
+                  src={currentUser.avatarUrl} 
+                  alt={currentUser.nome} 
+                  className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                  {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'V'}
+                </div>
+              )}
+              <div className="min-w-0 text-left">
+                <span className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-widest block leading-none mb-1">
+                  {tenant?.nome || 'Slimpe'}
+                </span>
+                <span className="text-xs font-bold text-slate-200 block leading-none">Olá, {currentUser?.nome?.split(' ')[0] || 'Vendedor'}!</span>
+                <span className="text-xs font-black uppercase text-white block leading-tight mt-0.5">Área do Técnico</span>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setIsMenuOpen(true)}
+              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white border-none"
+              title="Menu Principal"
             >
-              <Building size={11} /> CRM
-            </button>
-            <button
-              onClick={() => router.push('/ativos/tecnico')}
-              className="flex-1 flex items-center justify-center gap-1 bg-[#1A3D33] text-white border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
-            >
-              <Wrench size={11} /> Técnico
-            </button>
-            <button
-              onClick={() => router.push('/entrega/entregador')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
-            >
-              <Truck size={11} /> Entrega
+              <Menu size={18} />
             </button>
           </div>
-        )}
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3 min-w-0">
-            {currentUser?.avatarUrl ? (
-              <img 
-                src={currentUser.avatarUrl} 
-                alt={currentUser.nome} 
-                className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
-                {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'T'}
+        ) : (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3 min-w-0">
+              {currentUser?.avatarUrl ? (
+                <img 
+                  src={currentUser.avatarUrl} 
+                  alt={currentUser.nome} 
+                  className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                  {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'T'}
+                </div>
+              )}
+              <div className="min-w-0">
+                <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
+                <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Técnico'}</span>
               </div>
-            )}
-            <div className="min-w-0">
-              <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
-              <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Técnico'}</span>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <a 
+                href="/api/auth/logout"
+                className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+                title="Sair da Conta (Logout)"
+              >
+                <LogOut size={16} />
+              </a>
             </div>
           </div>
+        )}
+      </header>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <a 
+      {/* HAMBURGER MENU DRAWER OVERLAY */}
+      {isMenuOpen && (
+        <>
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 transition-opacity duration-300"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="fixed top-0 right-0 bottom-0 w-[270px] bg-slate-900 text-white z-55 shadow-2xl p-5 flex flex-col justify-between animate-in slide-in-from-right duration-300">
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Menu Principal</span>
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border-none cursor-pointer flex items-center justify-center"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    router.push('/leads/mobile?tab=crm');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-slate-800/40 text-slate-300 hover:bg-slate-800"
+                >
+                  <Building size={16} />
+                  CRM
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-[#1B4D3E] text-white shadow-md"
+                >
+                  <Wrench size={16} />
+                  Área do Técnico
+                </button>
+                
+                <button
+                  onClick={() => {
+                    router.push('/entrega/entregador');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-slate-800/40 text-slate-300 hover:bg-slate-800"
+                >
+                  <Truck size={16} />
+                  Entregas
+                </button>
+                
+                <button
+                  onClick={() => {
+                    router.push('/chat');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-slate-800/40 text-slate-300 hover:bg-slate-800"
+                >
+                  <MessageSquare size={16} />
+                  Chat
+                </button>
+              </div>
+            </div>
+            
+            <a
               href="/api/auth/logout"
-              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
-              title="Sair da Conta (Logout)"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-red-650 hover:bg-red-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider text-center no-underline border-none cursor-pointer shadow-md"
             >
               <LogOut size={16} />
+              Sair da Conta
             </a>
           </div>
-        </div>
-      </header>
+        </>
+      )}
 
       {/* ALERT BOX */}
       {alert && (
@@ -1303,59 +1392,61 @@ export default function TecnicoPage() {
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)] no-print">
         
-        {!isSomenteTecnico && (
+        {!isSomenteTecnico ? (
           <>
-            {/* Tab CRM */}
+            {/* Tab Área do Técnico (Active) */}
             <a
-              href="/leads?tab=crm"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+              href="/ativos/tecnico"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
             >
-              <Building size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
+              <Wrench size={18} className="text-[#1B4D3E]" />
+              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
             </a>
 
-            {/* Tab Prospecção */}
+            {/* Tab Nova Ordem de Serviços */}
             <a
-              href="/leads?tab=prospeccao"
+              href="/leads/mobile?tab=os"
               className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
             >
-              <Target size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+              <ClipboardList size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Nova OS</span>
             </a>
 
-            {/* Tab Novo Lead */}
+            {/* Tab Nova Entrega */}
             <a
-              href="/leads?openCreate=true"
+              href="/entrega/entregador"
               className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
             >
-              <PlusCircle size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
+              <Truck size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Nova Entrega</span>
+            </a>
+          </>
+        ) : (
+          <>
+            {/* Tab Área do Técnico (Active) */}
+            <a
+              href="/ativos/tecnico"
+              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
+            >
+              <Wrench size={18} className="text-[#1B4D3E]" />
+              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+            </a>
+
+            {/* Tab Chat Interno */}
+            <a
+              href="/chat"
+              className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
+            >
+              <MessageSquare size={18} className="text-slate-400" />
+              <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+              {totalUnreadChat > 0 && (
+                <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+                  {totalUnreadChat}
+                </span>
+              )}
             </a>
           </>
         )}
-
-        {/* Tab Área do Técnico (Active) */}
-        <a
-          href="/ativos/tecnico"
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
-        >
-          <Wrench size={18} className="text-[#1B4D3E]" />
-          <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-        </a>
-
-        {/* Tab Chat Interno */}
-        <a
-          href="/chat"
-          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
-        >
-          <MessageSquare size={18} className="text-slate-400" />
-          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-          {totalUnreadChat > 0 && (
-            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
-              {totalUnreadChat}
-            </span>
-          )}
-        </a>
       </nav>
     </div>
   );

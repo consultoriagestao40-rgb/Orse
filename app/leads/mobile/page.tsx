@@ -254,7 +254,7 @@ export default function MobileCRM() {
         router.replace('/chat');
         return;
       }
-      if (tab === 'crm' || tab === 'prospeccao') {
+      if (tab === 'crm' || tab === 'prospeccao' || tab === 'os' || tab === 'agenda') {
         setActiveTab(tab as any);
       }
       const openCreate = params.get('openCreate');
@@ -263,6 +263,14 @@ export default function MobileCRM() {
       }
     }
   }, [router]);
+
+  useEffect(() => {
+    if (activeTab === 'os') {
+      setCurrentModule('tecnico');
+    } else if (activeTab === 'crm' || activeTab === 'prospeccao' || activeTab === 'agenda') {
+      setCurrentModule('crm');
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -1024,8 +1032,7 @@ export default function MobileCRM() {
                 
                 <button
                   onClick={() => {
-                    setCurrentModule('tecnico');
-                    setActiveTab('os');
+                    router.push('/ativos/tecnico');
                     setIsMenuOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer transition-colors ${
@@ -1079,43 +1086,51 @@ export default function MobileCRM() {
           <div className="space-y-4">
             
             {/* Meta Progress Bar Card */}
-            {currentUser?.meta > 0 && (
+            {currentUser && (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 select-none">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <Target size={15} className="text-[#1B4D3E]" />
-                    <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">Meta Mensal de Vendas</span>
-                  </div>
-                  <span className="text-[10px] font-extrabold text-[#1B4D3E] font-mono">
-                    Meta: {formatCurrency(currentUser.meta)}
-                  </span>
-                </div>
-                
-                {/* Progress Bar Container */}
-                <div className="w-full bg-slate-100 rounded-full h-8 relative overflow-hidden border border-slate-200/50 shadow-inner flex items-center justify-center">
-                  {/* Filled Bar */}
-                  <div 
-                    className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-emerald-600 to-teal-500 transition-all duration-1000 ease-out"
-                    style={{ width: `${Math.min(currentUser.meta > 0 ? (valorVendido / currentUser.meta) * 100 : 0, 100)}%` }}
-                  />
-                  
-                  {/* Sold Value text centered on the bar */}
-                  <span className="relative z-10 font-black text-xs text-slate-800 drop-shadow-[0_1px_1px_rgba(255,255,255,0.85)] font-mono">
-                    {formatCurrency(valorVendido)}
-                  </span>
-                </div>
-                
-                {/* Percentage details below progress bar */}
-                <div className="flex justify-between items-center mt-1.5 text-[9px] font-bold text-slate-500">
-                  <span className="text-emerald-700 font-black">
-                    {currentUser.meta > 0 ? Math.round((valorVendido / currentUser.meta) * 100) : 0}% Atingido
-                  </span>
-                  {currentUser.meta > valorVendido ? (
-                    <span className="text-slate-450">Faltam: {formatCurrency(currentUser.meta - valorVendido)}</span>
-                  ) : (
-                    <span className="text-emerald-600 font-black">Meta Superada! 🎉</span>
-                  )}
-                </div>
+                {(() => {
+                  const metaValue = currentUser.meta > 0 ? currentUser.meta : 100000;
+                  const percentage = metaValue > 0 ? Math.round((valorVendido / metaValue) * 100) : 0;
+                  return (
+                    <>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Target size={15} className="text-[#1B4D3E]" />
+                          <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">Meta Mensal de Vendas</span>
+                        </div>
+                        <span className="text-[10px] font-extrabold text-[#1B4D3E] font-mono">
+                          Meta: {formatCurrency(metaValue)}
+                        </span>
+                      </div>
+                      
+                      {/* Progress Bar Container */}
+                      <div className="w-full bg-slate-100 rounded-full h-8 relative overflow-hidden border border-slate-200/50 shadow-inner flex items-center justify-center">
+                        {/* Filled Bar */}
+                        <div 
+                          className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-emerald-600 to-teal-500 transition-all duration-1000 ease-out"
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                        
+                        {/* Sold Value text centered on the bar */}
+                        <span className="relative z-10 font-black text-xs text-slate-800 drop-shadow-[0_1px_1px_rgba(255,255,255,0.85)] font-mono">
+                          {formatCurrency(valorVendido)}
+                        </span>
+                      </div>
+                      
+                      {/* Percentage details below progress bar */}
+                      <div className="flex justify-between items-center mt-1.5 text-[9px] font-bold text-slate-500">
+                        <span className="text-emerald-700 font-black">
+                          {percentage}% Atingido
+                        </span>
+                        {metaValue > valorVendido ? (
+                          <span className="text-slate-450">Faltam: {formatCurrency(metaValue - valorVendido)}</span>
+                        ) : (
+                          <span className="text-emerald-600 font-black">Meta Superada! 🎉</span>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
 
@@ -1482,8 +1497,7 @@ export default function MobileCRM() {
                   <p className="text-xs font-bold uppercase tracking-wider">Nenhum contrato de comodato encontrado!</p>
                   <p className="text-[10px] text-slate-400 font-semibold mt-1">Para abrir uma OS, o cliente precisa ter um contrato de comodato ativo.</p>
                 </div>
-              ) : (
-                <div className="space-y-3.5 max-h-[65vh] overflow-y-auto pr-1">
+                <div className="space-y-3.5 pr-1">
                   
                   {/* Contrato / Cliente Selector */}
                   <div className="space-y-1">

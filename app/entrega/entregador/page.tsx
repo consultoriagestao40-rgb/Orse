@@ -736,13 +736,17 @@ export default function EntregadorPage() {
   };
 
   const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
+  const isPureEntregador = (currentUser?.cargo?.toLowerCase().includes('entregador') || 
+                            currentUser?.cargo?.toLowerCase().includes('motoboy') || 
+                            currentUser?.cargo?.toLowerCase().includes('motorista') ||
+                            currentUser?.role === 'LOGISTICA') && !isGestor;
 
   return (
     <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col relative select-none pb-24">
       
       {/* Header Fixo Mobile */}
       <header className="sticky top-0 bg-slate-950/90 backdrop-blur-md px-5 py-3 flex flex-col gap-3 border-b border-white/5 z-40">
-        {isGestor && (
+        {!isPureEntregador && (
           <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1">
             <button
               onClick={() => router.push('/leads/mobile')}
@@ -1180,7 +1184,7 @@ export default function EntregadorPage() {
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#0B1528]/95 backdrop-blur-md border-t border-white/5 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.2)] no-print">
         
-        {isGestor && (
+        {!isPureEntregador && (
           <>
             {/* Tab CRM */}
             <a
