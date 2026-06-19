@@ -861,202 +861,261 @@ export default function EntregadorPage() {
     const isSalesRole = !isPureEntregador;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-[#1B4D3E] text-white flex flex-col justify-between p-6 font-sans select-none overflow-y-auto">
-        {/* Top Header */}
-        <div className="flex flex-col items-center text-center mt-6 w-full">
-          <span className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-widest bg-white/10 px-4 py-1.5 rounded-full border border-white/10 shadow-xs mb-4">
-            {currentUser?.tenant?.nome || 'Slimpe'}
-          </span>
-          {currentUser?.avatarUrl ? (
-            <img 
-              src={currentUser.avatarUrl} 
-              alt={currentUser.nome} 
-              className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-md mb-3"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-300 border-2 border-emerald-500/30 flex items-center justify-center font-black text-xl shadow-md mb-3">
-              {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'E'}
-            </div>
-          )}
-          <h1 className="text-xl font-black tracking-tight leading-tight">Olá, {currentUser?.nome?.split(' ')[0] || 'Entregador'}!</h1>
-          <p className="text-xs text-slate-400 font-medium mt-1">Seja muito bem-vindo de volta.</p>
-        </div>
-
-        {/* Middle Stats Dashboard */}
-        <div className="flex-1 flex flex-col items-center justify-center my-6 w-full">
-          
-          {isSalesRole ? (
-            <>
-              {/* Speedometer Gauge (Velocímetro) */}
-              <div className="relative flex flex-col items-center bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl shadow-lg w-full max-w-[280px] mx-auto mb-5">
-                <span className="text-[9px] font-extrabold text-emerald-450 uppercase tracking-widest mb-3">Desempenho Comercial</span>
-                <div className="relative w-full h-[110px] flex items-center justify-center">
-                  <svg viewBox="0 0 100 55" className="w-full max-w-[190px]">
-                    <defs>
-                      <linearGradient id="welcomeGaugeGradDeliv" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#10B981" />
-                        <stop offset="50%" stopColor="#059669" />
-                        <stop offset="100%" stopColor="#047857" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" strokeLinecap="round" />
-                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="url(#welcomeGaugeGradDeliv)" strokeWidth="6" strokeLinecap="round" strokeDasharray="125.6" strokeDashoffset={125.6 - (125.6 * percent) / 100} className="transition-all duration-1000 ease-out" />
-                    <g transform="translate(50, 50)">
-                      <line x1="0" y1="0" x2="0" y2="-32" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" transform={`rotate(${needleRotation})`} className="transition-transform duration-1000 ease-out" />
-                      <circle cx="0" cy="0" r="4" fill="#FFFFFF" />
-                    </g>
-                  </svg>
-                  <div className="absolute bottom-1 text-center">
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Vendido</span>
-                    <span className="text-base font-black text-white leading-none">R$ {valorVendido.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                  </div>
-                </div>
-                <div className="text-center mt-2">
-                  <span className="text-lg font-black text-emerald-400 leading-none block">{percent.toFixed(1)}%</span>
-                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">da meta de R$ {metaValue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                </div>
+      <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-[#1B4D3E] text-white flex flex-col font-sans select-none">
+        <div className="flex-1 flex flex-col justify-between items-center p-3.5 max-w-md mx-auto w-full h-full max-h-[100dvh]">
+          {/* Top Header */}
+          <div className="flex flex-col items-center text-center pt-1.5 pb-2 w-full">
+            <span className="text-[8px] font-extrabold text-emerald-355 uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/10 shadow-xs mb-2">
+              {currentUser?.tenant?.nome || 'Slimpe'}
+            </span>
+            {currentUser?.avatarUrl ? (
+              <img 
+                src={currentUser.avatarUrl} 
+                alt={currentUser.nome} 
+                className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-md mb-2"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-300 border-2 border-emerald-500/30 flex items-center justify-center font-black text-base shadow-md mb-2">
+                {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'E'}
               </div>
+            )}
+            <h1 className="text-base sm:text-lg font-black tracking-tight leading-tight">Olá, {currentUser?.nome?.split(' ')[0] || 'Entregador'}!</h1>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Seja muito bem-vindo de volta.</p>
+          </div>
 
-              {/* CRM Stats Grid */}
-              {loadingWelcomeStats ? (
-                <div className="flex items-center gap-2 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                  <Loader2 className="animate-spin text-emerald-400" size={14} />
-                  <span>Carregando Indicadores...</span>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-2.5 w-full max-w-sm">
-                  <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-                    <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl mb-1.5">
-                      <DollarSign size={16} />
-                    </div>
-                    <span className="text-base font-black text-white leading-none">{welcomeStats?.vendasCount || 0}</span>
-                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mt-1.5 block">Vendas</span>
+          {/* Middle Stats Dashboard */}
+          <div className="flex-1 flex flex-col items-center justify-center py-1 w-full gap-2.5 overflow-hidden">
+            
+            {isSalesRole ? (
+              <>
+                {/* Speedometer Gauge (Velocímetro) */}
+                <div className="relative flex flex-col items-center bg-white/5 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-lg w-full max-w-[230px] mx-auto">
+                  <span className="text-[7.5px] font-extrabold text-emerald-450 uppercase tracking-widest mb-1.5">Desempenho Comercial</span>
+                  <div className="relative w-full aspect-[100/68] max-w-[130px] flex items-center justify-center">
+                    <svg viewBox="0 0 100 68" className="w-full h-auto">
+                      <defs>
+                        <linearGradient id="welcomeGaugeGradDeliv" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#EF4444" />   {/* Vermelho */}
+                          <stop offset="25%" stopColor="#F97316" />  {/* Laranja */}
+                          <stop offset="50%" stopColor="#EAB308" />  {/* Amarelo */}
+                          <stop offset="75%" stopColor="#84CC16" />  {/* Verde Claro */}
+                          <stop offset="100%" stopColor="#10B981" /> {/* Verde */}
+                        </linearGradient>
+                        <clipPath id="welcomeGaugeClipDeliv">
+                          <path 
+                            d="M 10 50 A 40 40 0 0 1 90 50" 
+                            fill="none" 
+                            stroke="#000" 
+                            strokeWidth="8" 
+                            strokeLinecap="butt"
+                            strokeDasharray="125.66"
+                            strokeDashoffset={125.66 - (125.66 * percent) / 100}
+                            style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                          />
+                        </clipPath>
+                      </defs>
+                      {/* Background Arc - Gray segments */}
+                      <path 
+                        d="M 10 50 A 40 40 0 0 1 90 50" 
+                        fill="none" 
+                        stroke="rgba(255,255,255,0.08)" 
+                        strokeWidth="6" 
+                        strokeLinecap="butt" 
+                        strokeDasharray="11.216 1.5" 
+                      />
+                      {/* Progress Arc - Colored segments */}
+                      <path 
+                        d="M 10 50 A 40 40 0 0 1 90 50" 
+                        fill="none" 
+                        stroke="url(#welcomeGaugeGradDeliv)" 
+                        strokeWidth="6" 
+                        strokeLinecap="butt" 
+                        strokeDasharray="11.216 1.5"
+                        clipPath="url(#welcomeGaugeClipDeliv)" 
+                      />
+                      {/* Needle */}
+                      <g transform="translate(50, 50)">
+                        <line 
+                          x1="0" 
+                          y1="0" 
+                          x2="0" 
+                          y2="-32" 
+                          stroke="#FFFFFF" 
+                          strokeWidth="2.5" 
+                          strokeLinecap="round" 
+                          transform={`rotate(${needleRotation})`} 
+                          style={{ transition: 'transform 1s ease-out' }} 
+                        />
+                      </g>
+                      {/* Needle Pivot (Small dot in the center) */}
+                      <circle cx="50" cy="50" r="2.5" fill="#FFFFFF" />
+                      {/* Percentage Value inside the center */}
+                      <text 
+                        x="50" 
+                        y="55" 
+                        textAnchor="middle" 
+                        fill="#FFFFFF" 
+                        fontSize="11" 
+                        fontWeight="900" 
+                        className="font-sans"
+                      >
+                        {percent.toFixed(0)}%
+                      </text>
+                    </svg>
                   </div>
+                  {/* Real value and meta below */}
+                  <div className="text-center mt-1.5 w-full">
+                    <span className="text-[7.5px] text-slate-400 font-bold uppercase tracking-wider block leading-none mb-0.5">Vendido</span>
+                    <span className="text-sm font-black text-white leading-none block">R$ {valorVendido.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="text-[7.5px] text-slate-400 font-bold uppercase tracking-widest block mt-0.5 leading-none">da meta de R$ {metaValue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  </div>
+                </div>
 
-                  <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-                    <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl mb-1.5">
-                      <Phone size={16} />
-                    </div>
-                    <span className="text-base font-black text-white leading-none">{welcomeStats?.contatosCount || 0}</span>
-                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mt-1.5 block">Contatos</span>
+                {/* CRM Stats Grid */}
+                {loadingWelcomeStats ? (
+                  <div className="flex items-center gap-1.5 py-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <Loader2 className="animate-spin text-emerald-450" size={12} />
+                    <span>Carregando Indicadores...</span>
                   </div>
-
-                  <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-                    <div className="p-2 bg-purple-500/10 text-purple-400 rounded-xl mb-1.5">
-                      <Calendar size={16} />
-                    </div>
-                    <span className="text-base font-black text-white leading-none">{welcomeStats?.reunioesCount || 0}</span>
-                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mt-1.5 block">Reuniões</span>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {/* Technical / Logistical Stats */}
-              {loadingWelcomeStats ? (
-                <div className="flex items-center gap-2 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                  <Loader2 className="animate-spin text-emerald-400" size={14} />
-                  <span>Carregando Indicadores...</span>
-                </div>
-              ) : (
-                <div className="space-y-3.5 w-full max-w-sm">
-                  {/* Card OS */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-emerald-500/15 text-emerald-400 rounded-xl flex items-center justify-center">
-                        <Wrench size={20} />
+                ) : (
+                  <div className="grid grid-cols-3 gap-1.5 w-full max-w-xs">
+                    <div className="bg-white/5 border border-white/5 rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-center">
+                      <div className="p-1 bg-emerald-500/10 text-emerald-450 rounded-lg mb-0.5">
+                        <DollarSign size={12} />
                       </div>
-                      <div className="text-left">
-                        <span className="text-xs font-bold text-slate-400 block">Serviços do Mês</span>
-                        <span className="text-base font-black text-white leading-none">
-                          {welcomeStats?.osConcluidas || 0} de {(welcomeStats?.osConcluidas || 0) + (welcomeStats?.osProgramadas || 0)} OSs
+                      <span className="text-xs font-black text-white leading-none">{welcomeStats?.vendasCount || 0}</span>
+                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5 block">Vendas</span>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/5 rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-center">
+                      <div className="p-1 bg-blue-500/10 text-blue-400 rounded-lg mb-0.5">
+                        <Phone size={12} />
+                      </div>
+                      <span className="text-xs font-black text-white leading-none">{welcomeStats?.contatosCount || 0}</span>
+                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5 block">Contatos</span>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/5 rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-center">
+                      <div className="p-1 bg-purple-500/10 text-purple-400 rounded-lg mb-0.5">
+                        <Calendar size={12} />
+                      </div>
+                      <span className="text-xs font-black text-white leading-none">{welcomeStats?.reunioesCount || 0}</span>
+                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5 block">Reuniões</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Technical / Logistical Stats */}
+                {loadingWelcomeStats ? (
+                  <div className="flex items-center gap-1.5 py-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <Loader2 className="animate-spin text-emerald-450" size={12} />
+                    <span>Carregando Indicadores...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 w-full max-w-xs">
+                    {/* Card OS */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-2 sm:p-2.5 flex items-center justify-between shadow-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg flex items-center justify-center">
+                          <Wrench size={14} />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-[9px] font-bold text-slate-455 block leading-none mb-0.5">Serviços do Mês</span>
+                          <span className="text-xs font-black text-white leading-none">
+                            {welcomeStats?.osConcluidas || 0} de {(welcomeStats?.osConcluidas || 0) + (welcomeStats?.osProgramadas || 0)} OSs
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right flex flex-col justify-center">
+                        <span className="text-[7.5px] font-black text-emerald-400 uppercase block leading-none">Efetuadas</span>
+                        <span className="text-[9px] font-bold text-slate-350 mt-0.5">
+                          {((welcomeStats?.osConcluidas || 0) / Math.max(1, (welcomeStats?.osConcluidas || 0) + (welcomeStats?.osProgramadas || 0)) * 100).toFixed(0)}%
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[10px] font-black text-emerald-400 uppercase block">Efetuadas</span>
-                      <span className="text-xs font-bold text-slate-350">
-                        {((welcomeStats?.osConcluidas || 0) / Math.max(1, (welcomeStats?.osConcluidas || 0) + (welcomeStats?.osProgramadas || 0)) * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Card Entregas */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-blue-500/15 text-blue-400 rounded-xl flex items-center justify-center">
-                        <Truck size={20} />
+                    {/* Card Entregas */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-2 sm:p-2.5 flex items-center justify-between shadow-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-500/15 text-blue-400 rounded-lg flex items-center justify-center">
+                          <Truck size={14} />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-[9px] font-bold text-slate-455 block leading-none mb-0.5">Entregas do Mês</span>
+                          <span className="text-xs font-black text-white leading-none">
+                            {welcomeStats?.entregasConcluidas || 0} de {(welcomeStats?.entregasConcluidas || 0) + (welcomeStats?.entregasProgramadas || 0)} Entregas
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <span className="text-xs font-bold text-slate-400 block">Entregas do Mês</span>
-                        <span className="text-base font-black text-white leading-none">
-                          {welcomeStats?.entregasConcluidas || 0} de {(welcomeStats?.entregasConcluidas || 0) + (welcomeStats?.entregasProgramadas || 0)} Entregas
+                      <div className="text-right flex flex-col justify-center">
+                        <span className="text-[7.5px] font-black text-blue-400 uppercase block leading-none">Entregues</span>
+                        <span className="text-[9px] font-bold text-slate-350 mt-0.5">
+                          {((welcomeStats?.entregasConcluidas || 0) / Math.max(1, (welcomeStats?.entregasConcluidas || 0) + (welcomeStats?.entregasProgramadas || 0)) * 100).toFixed(0)}%
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[10px] font-black text-blue-450 uppercase block">Entregues</span>
-                      <span className="text-xs font-bold text-slate-350">
-                        {((welcomeStats?.entregasConcluidas || 0) / Math.max(1, (welcomeStats?.entregasConcluidas || 0) + (welcomeStats?.entregasProgramadas || 0)) * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Card Valor Acumulado */}
-                  <div className="bg-gradient-to-r from-emerald-600/20 to-teal-500/20 border border-emerald-500/10 rounded-2xl p-4 flex items-center justify-between shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-emerald-500/10 text-emerald-300 rounded-xl flex items-center justify-center">
-                        <DollarSign size={20} />
-                      </div>
-                      <div className="text-left">
-                        <span className="text-xs font-bold text-slate-400 block">Valores Acumulados</span>
-                        <span className="text-lg font-black text-emerald-400 leading-none">
-                          R$ {(welcomeStats?.entregasValorAcumulado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
+                    {/* Card Valor Acumulado */}
+                    <div className="bg-gradient-to-r from-emerald-600/20 to-teal-500/20 border border-emerald-500/10 rounded-xl p-2 sm:p-2.5 flex items-center justify-between shadow-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-emerald-500/10 text-emerald-300 rounded-lg flex items-center justify-center">
+                          <DollarSign size={14} />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-[9px] font-bold text-slate-455 block leading-none mb-0.5">Valores Acumulados</span>
+                          <span className="text-xs sm:text-sm font-black text-emerald-450 leading-none">
+                            R$ {(welcomeStats?.entregasValorAcumulado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
 
+          </div>
+
+          {/* Bottom CTA Button */}
+          <div className="w-full max-w-xs mx-auto pb-1.5 pt-1.5 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                sessionStorage.setItem('orse_welcome_dismissed', 'true');
+                setShowWelcome(false);
+              }}
+              className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl font-extrabold text-[10px] uppercase tracking-widest border-none cursor-pointer active:scale-[0.98] transition-all shadow-lg hover:shadow-emerald-500/20"
+            >
+              {isSalesRole ? 'Acessar CRM (Comercial)' : 'Acessar Entregas'}
+            </button>
+
+            {isSalesRole && (
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem('orse_welcome_dismissed', 'true');
+                    setShowWelcome(false);
+                    router.push('/ativos/tecnico');
+                  }}
+                  className="py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-350 hover:text-white rounded-lg font-bold text-[8.5px] uppercase tracking-wider active:scale-[0.98] transition-all"
+                >
+                  Trabalho Técnico
+                </button>
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem('orse_welcome_dismissed', 'true');
+                    setShowWelcome(false);
+                  }}
+                  className="py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-350 hover:text-white rounded-lg font-bold text-[8.5px] uppercase tracking-wider active:scale-[0.98] transition-all"
+                >
+                  Ver Entregas
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Bottom CTA Button */}
-        <div className="w-full max-w-sm mx-auto mb-6 flex flex-col gap-3">
-          <button
-            onClick={() => {
-              sessionStorage.setItem('orse_welcome_dismissed', 'true');
-              setShowWelcome(false);
-            }}
-            className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-2xl font-extrabold text-xs uppercase tracking-widest border-none cursor-pointer active:scale-[0.98] transition-all shadow-lg hover:shadow-emerald-500/20"
-          >
-            {isSalesRole ? 'Acessar CRM (Comercial)' : 'Acessar Entregas'}
-          </button>
-
-          {isSalesRole && (
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  sessionStorage.setItem('orse_welcome_dismissed', 'true');
-                  setShowWelcome(false);
-                  router.push('/ativos/tecnico');
-                }}
-                className="py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-wider active:scale-[0.98] transition-all"
-              >
-                Trabalho Técnico
-              </button>
-              <button
-                onClick={() => {
-                  sessionStorage.setItem('orse_welcome_dismissed', 'true');
-                  setShowWelcome(false);
-                }}
-                className="py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-wider active:scale-[0.98] transition-all"
-              >
-                Ver Entregas
-              </button>
+      </div>on>
             </div>
           )}
         </div>
