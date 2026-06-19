@@ -20,7 +20,8 @@ import {
   createActivity,
   deleteActivity
 } from '../actions';
-import { getContratosComodato, createOrdemServicoAtivo } from '@/app/ativos/actions';
+import { getContratosComodato, createOrdemServicoAtivo, getOrdensServicoAtivo } from '@/app/ativos/actions';
+import { getEntregas } from '@/app/entrega/actions';
 import { 
   getChatList, 
   getInternalMessages, 
@@ -149,6 +150,25 @@ export default function MobileCRM() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [valorVendido, setValorVendido] = useState<number>(0);
   const [loadingSales, setLoadingSales] = useState(false);
+
+  // Welcome Screen states
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('orse_welcome_dismissed') !== 'true';
+    }
+    return true;
+  });
+  const [welcomeStats, setWelcomeStats] = useState<{
+    vendasCount: number;
+    contatosCount: number;
+    reunioesCount: number;
+    osProgramadas: number;
+    osConcluidas: number;
+    entregasProgramadas: number;
+    entregasConcluidas: number;
+    entregasValorAcumulado: number;
+  } | null>(null);
+  const [loadingWelcomeStats, setLoadingWelcomeStats] = useState<boolean>(false);
 
   // Agenda / Atividades States
   const [activities, setActivities] = useState<any[]>([]);
@@ -464,10 +484,96 @@ export default function MobileCRM() {
     }
   };
 
+  const loadWelcomeStats = async (user: any) => {
+    if (!user) return;
+    setLoadingWelcomeStats(true);
+    try {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      const [propsRes, actRes, osRes, delivRes] = await Promise.all([
+        getPropostas(user).catch(() => []),
+        getActivities().catch(() => ({ success: false, activities: [] })),
+        getOrdensServicoAtivo().catch(() => ({ success: false, ordens: [] })),
+        getEntregas().catch(() => ({ success: false, entregas: [] })),
+      ]);
+
+      // Sales metrics (monthly won proposals)
+      const propostas = Array.isArray(propsRes) ? propsRes : [];
+      const wonProps = propostas.filter((p: any) => {
+        const isOwner = p.userId === user.id;
+        const statusUpper = p.status?.toUpperCase() || '';
+        const isWon = statusUpper.includes('APROVAD') || 
+                      statusUpper.includes('ACEIT') || 
+                      statusUpper.includes('FECHAD') || 
+                      statusUpper.includes('GANH') || 
+                      statusUpper.includes('CONCLU');
+        
+        const pDate = new Date(p.updatedAt || p.createdAt);
+        const isThisMonth = pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
+        return isOwner && isWon && isThisMonth;
+      });
+
+      // Activities metrics (monthly for this user)
+      const activitiesList = actRes.success && Array.isArray(actRes.activities) ? actRes.activities : [];
+      const userActs = activitiesList.filter((a: any) => {
+        const isUser = a.userId === user.id;
+        const aDate = new Date(a.dataInicio);
+        const isThisMonth = aDate.getMonth() === currentMonth && aDate.getFullYear() === currentYear;
+        return isUser && isThisMonth;
+      });
+
+      const contatos = userActs.filter((a: any) => a.tipo === 'LIGACAO' || a.tipo === 'EMAIL');
+      const reunioes = userActs.filter((a: any) => a.tipo === 'REUNIAO');
+
+      // Technician OS metrics (monthly)
+      const ordens = osRes.success && Array.isArray(osRes.ordens) ? osRes.ordens : [];
+      const userOs = ordens.filter((os: any) => {
+        const isUser = os.tecnicoEmail === user.email || os.tecnicoResponsavel === user.nome;
+        const osDate = new Date(os.createdAt);
+        const isThisMonth = osDate.getMonth() === currentMonth && osDate.getFullYear() === currentYear;
+        return isUser && isThisMonth;
+      });
+      const osProgramadas = userOs.filter((os: any) => os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA').length;
+      const osConcluidas = userOs.filter((os: any) => os.status === 'CONCLUIDA').length;
+
+      // Delivery metrics (monthly)
+      const deliveries = delivRes.success && Array.isArray(delivRes.entregas) ? delivRes.entregas : [];
+      const userDeliv = deliveries.filter((d: any) => {
+        const isUser = d.entregadorEmail === user.email || d.entregadorResponsavel === user.nome;
+        const dDate = new Date(d.dataProgramada || d.createdAt);
+        const isThisMonth = dDate.getMonth() === currentMonth && dDate.getFullYear() === currentYear;
+        return isUser && isThisMonth;
+      });
+      const entregasProgramadas = userDeliv.filter((d: any) => d.status !== 'ENTREGUE' && d.status !== 'CANCELADA').length;
+      const entregasConcluidas = userDeliv.filter((d: any) => d.status === 'ENTREGUE').length;
+      const entregasValorAcumulado = userDeliv
+        .filter((d: any) => d.status === 'ENTREGUE')
+        .reduce((sum: number, d: any) => sum + (d.valor || 0), 0);
+
+      setWelcomeStats({
+        vendasCount: wonProps.length,
+        contatosCount: contatos.length,
+        reunioesCount: reunioes.length,
+        osProgramadas,
+        osConcluidas,
+        entregasProgramadas,
+        entregasConcluidas,
+        entregasValorAcumulado
+      });
+    } catch (error) {
+      console.error("Error loading welcome stats:", error);
+    } finally {
+      setLoadingWelcomeStats(false);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       loadCRMData(activePipelineId);
       loadSalesData(currentUser);
+      loadWelcomeStats(currentUser);
     }
   }, [currentUser, activePipelineId]);
 
@@ -876,6 +982,148 @@ export default function MobileCRM() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-sans">
         <RefreshCw className="animate-spin text-emerald-500 mb-3" size={32} />
         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Iniciando SmartBid Mobile...</p>
+      </div>
+    );
+  }
+
+  if (showWelcome) {
+    const metaValue = currentUser?.meta || 100000;
+    const percent = Math.min(100, Math.max(0, (valorVendido / metaValue) * 100));
+    const needleRotation = -90 + (percent * 180 / 100);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-[#1B4D3E] text-white flex flex-col justify-between p-6 font-sans select-none overflow-y-auto">
+        {/* Top Header */}
+        <div className="flex flex-col items-center text-center mt-6 w-full">
+          <span className="text-[10px] font-extrabold text-emerald-350 uppercase tracking-widest bg-white/10 px-4 py-1.5 rounded-full border border-white/10 shadow-xs mb-4">
+            {currentUser?.tenant?.nome || 'Slimpe'}
+          </span>
+          {currentUser?.avatarUrl ? (
+            <img 
+              src={currentUser.avatarUrl} 
+              alt={currentUser.nome} 
+              className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-md mb-3"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-300 border-2 border-emerald-500/30 flex items-center justify-center font-black text-xl shadow-md mb-3">
+              {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'V'}
+            </div>
+          )}
+          <h1 className="text-xl font-black tracking-tight leading-tight">Olá, {currentUser?.nome?.split(' ')[0] || 'Vendedor'}!</h1>
+          <p className="text-xs text-slate-400 font-medium mt-1">Seja muito bem-vindo de volta.</p>
+        </div>
+
+        {/* Middle Stats Dashboard */}
+        <div className="flex-1 flex flex-col items-center justify-center my-6 w-full">
+          
+          {/* Speedometer Gauge (Velocímetro) */}
+          <div className="relative flex flex-col items-center bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl shadow-lg w-full max-w-[280px] mx-auto mb-5">
+            <span className="text-[9px] font-extrabold text-emerald-400 uppercase tracking-widest mb-3">Desempenho Comercial</span>
+            <div className="relative w-full h-[110px] flex items-center justify-center">
+              <svg viewBox="0 0 100 55" className="w-full max-w-[190px]">
+                <defs>
+                  <linearGradient id="welcomeGaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#10B981" />
+                    <stop offset="50%" stopColor="#059669" />
+                    <stop offset="100%" stopColor="#047857" />
+                  </linearGradient>
+                </defs>
+                {/* Background Arc */}
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" strokeLinecap="round" />
+                {/* Progress Arc */}
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="url(#welcomeGaugeGrad)" strokeWidth="6" strokeLinecap="round" strokeDasharray="125.6" strokeDashoffset={125.6 - (125.6 * percent) / 100} className="transition-all duration-1000 ease-out" />
+                {/* Needle */}
+                <g transform="translate(50, 50)">
+                  <line x1="0" y1="0" x2="0" y2="-32" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" transform={`rotate(${needleRotation})`} className="transition-transform duration-1000 ease-out" />
+                  <circle cx="0" cy="0" r="4" fill="#FFFFFF" />
+                </g>
+              </svg>
+              {/* Inside Centered Real Value */}
+              <div className="absolute bottom-1 text-center">
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Vendido</span>
+                <span className="text-base font-black text-white leading-none">R$ {valorVendido.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+              </div>
+            </div>
+            {/* Percentage below */}
+            <div className="text-center mt-2">
+              <span className="text-lg font-black text-emerald-400 leading-none block">{percent.toFixed(1)}%</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">da meta de R$ {metaValue.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+            </div>
+          </div>
+
+          {/* CRM Stats Grid */}
+          {loadingWelcomeStats ? (
+            <div className="flex items-center gap-2 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">
+              <RefreshCw className="animate-spin text-emerald-400" size={14} />
+              <span>Carregando Indicadores...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2.5 w-full max-w-sm">
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl mb-1.5">
+                  <DollarSign size={16} />
+                </div>
+                <span className="text-base font-black text-white leading-none">{welcomeStats?.vendasCount || 0}</span>
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mt-1.5 block">Vendas</span>
+              </div>
+
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+                <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl mb-1.5">
+                  <Phone size={16} />
+                </div>
+                <span className="text-base font-black text-white leading-none">{welcomeStats?.contatosCount || 0}</span>
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mt-1.5 block">Contatos</span>
+              </div>
+
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+                <div className="p-2 bg-purple-500/10 text-purple-400 rounded-xl mb-1.5">
+                  <Calendar size={16} />
+                </div>
+                <span className="text-base font-black text-white leading-none">{welcomeStats?.reunioesCount || 0}</span>
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mt-1.5 block">Reuniões</span>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Bottom CTA Button */}
+        <div className="w-full max-w-sm mx-auto mb-6 flex flex-col gap-3">
+          <button
+            onClick={() => {
+              sessionStorage.setItem('orse_welcome_dismissed', 'true');
+              setShowWelcome(false);
+            }}
+            className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-2xl font-extrabold text-xs uppercase tracking-widest border-none cursor-pointer active:scale-[0.98] transition-all shadow-lg hover:shadow-emerald-500/20"
+          >
+            Acessar CRM (Comercial)
+          </button>
+
+          {!isSomenteTecnico && !isSomenteEntregador && (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('orse_welcome_dismissed', 'true');
+                  setShowWelcome(false);
+                  router.push('/ativos/tecnico');
+                }}
+                className="py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-wider active:scale-[0.98] transition-all"
+              >
+                Painel Técnico
+              </button>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('orse_welcome_dismissed', 'true');
+                  setShowWelcome(false);
+                  router.push('/entrega/entregador');
+                }}
+                className="py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-wider active:scale-[0.98] transition-all"
+              >
+                Painel Entregas
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
