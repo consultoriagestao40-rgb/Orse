@@ -1497,6 +1497,7 @@ export default function MobileCRM() {
                   <p className="text-xs font-bold uppercase tracking-wider">Nenhum contrato de comodato encontrado!</p>
                   <p className="text-[10px] text-slate-400 font-semibold mt-1">Para abrir uma OS, o cliente precisa ter um contrato de comodato ativo.</p>
                 </div>
+              ) : (
                 <div className="space-y-3.5 pr-1">
                   
                   {/* Contrato / Cliente Selector */}
