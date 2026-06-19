@@ -1148,7 +1148,10 @@ export default function Page() {
               const isTecnico = cargo.includes('tecnico') || cargo.includes('técnico');
               const isEntregador = cargo.includes('entregador') || cargo.includes('entrega') || cargo.includes('motoboy') || cargo.includes('motorista');
 
-              if (isGestor) {
+              if (role === 'LOGISTICA') {
+                router.push('/entrega/entregador');
+                return;
+              } else if (isGestor) {
                 setShowMobileHub(true);
                 setIsLoggedIn(true);
                 return;
@@ -1169,8 +1172,12 @@ export default function Page() {
             }
           }
 
-          // Checa se o usuário logado é técnico e redireciona no desktop
+          // Checa se o usuário logado é técnico ou logística e redireciona no desktop
           if (user) {
+            if (user.role === 'LOGISTICA') {
+              router.push('/entrega');
+              return;
+            }
             const cargoLower = user.cargo?.toLowerCase() || '';
             if (cargoLower.includes('tecnico') || cargoLower.includes('técnico')) {
               router.push('/ativos/tecnico');

@@ -71,6 +71,7 @@ export async function createUsuario(data: any) {
         managerId: data.managerId || null,
         tenantId: user?.tenantId || null,
         avatarUrl: data.avatarUrl || null,
+        meta: data.meta !== undefined ? parseFloat(data.meta) || 0 : 0,
       },
     });
     revalidatePath('/admin/usuarios');
@@ -104,6 +105,7 @@ export async function updateUsuario(id: string, data: any) {
         celular: data.celular || null,
         managerId: data.managerId || null,
         avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : undefined,
+        meta: data.meta !== undefined ? parseFloat(data.meta) || 0 : undefined,
       },
     });
     revalidatePath('/admin/usuarios');

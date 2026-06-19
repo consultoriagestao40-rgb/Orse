@@ -69,7 +69,8 @@ export default function UsuariosPage() {
     cargo: '',
     celular: '',
     managerId: '',
-    avatarUrl: ''
+    avatarUrl: '',
+    meta: ''
   });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,7 +158,8 @@ export default function UsuariosPage() {
       cargo: '',
       celular: '',
       managerId: '',
-      avatarUrl: ''
+      avatarUrl: '',
+      meta: ''
     });
     setShowModal(true);
   }
@@ -172,7 +174,8 @@ export default function UsuariosPage() {
       cargo: user.cargo || '',
       celular: user.celular || '',
       managerId: user.managerId || '',
-      avatarUrl: user.avatarUrl || ''
+      avatarUrl: user.avatarUrl || '',
+      meta: user.meta !== undefined && user.meta !== null ? String(user.meta) : ''
     });
     setShowModal(true);
   }
@@ -204,7 +207,8 @@ export default function UsuariosPage() {
         cargo: '', 
         celular: '', 
         managerId: '',
-        avatarUrl: ''
+        avatarUrl: '',
+        meta: ''
       });
       loadUsuarios();
     } else {
@@ -351,6 +355,7 @@ export default function UsuariosPage() {
                     <span className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${
                       u.role === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
                       u.role === 'MANAGER' ? 'bg-sky-50 text-sky-700 border border-sky-100' :
+                      u.role === 'LOGISTICA' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
                       'bg-emerald-50 text-emerald-700 border border-emerald-100'
                     }`}>
                       {u.role}
@@ -360,6 +365,11 @@ export default function UsuariosPage() {
                     <p className="text-xs font-bold text-slate-600">
                       {u.manager?.nome || '--'}
                     </p>
+                    {u.meta > 0 && (
+                      <p className="text-[10px] font-black text-emerald-700 mt-1 uppercase">
+                        Meta: {u.meta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+                    )}
                   </td>
                   <td className="px-8 py-6 text-right">
                     <div className="flex justify-end gap-1">
@@ -510,25 +520,40 @@ export default function UsuariosPage() {
                       <option value="USER">Vendedor (Dados próprios)</option>
                       <option value="MANAGER">Gestor (Dados de equipe)</option>
                       <option value="ADMIN">Administrador (Tudo)</option>
+                      <option value="LOGISTICA">Logística (Apenas Entrega e Técnico)</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Gestor Direto (Opcional)</label>
-                  <select 
-                    className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-bold text-slate-700 appearance-none"
-                    value={formData.managerId}
-                    onChange={(e) => setFormData({...formData, managerId: e.target.value})}
-                  >
-                    <option value="">Sem gestor direto</option>
-                    {usuarios
-                      .filter(u => (u.role === 'MANAGER' || u.role === 'ADMIN') && u.id !== editingUserId)
-                      .map(u => (
-                        <option key={u.id} value={u.id}>{u.nome} ({u.role})</option>
-                      ))
-                    }
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Gestor Direto (Opcional)</label>
+                    <select 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-bold text-slate-700 appearance-none"
+                      value={formData.managerId}
+                      onChange={(e) => setFormData({...formData, managerId: e.target.value})}
+                    >
+                      <option value="">Sem gestor direto</option>
+                      {usuarios
+                        .filter(u => (u.role === 'MANAGER' || u.role === 'ADMIN') && u.id !== editingUserId)
+                        .map(u => (
+                          <option key={u.id} value={u.id}>{u.nome} ({u.role})</option>
+                        ))
+                      }
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Meta de Vendas Mensal (R$)</label>
+                    <input 
+                      type="number"
+                      step="any"
+                      placeholder="Ex: 50000"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
+                      value={formData.meta}
+                      onChange={(e) => setFormData({...formData, meta: e.target.value})}
+                    />
+                  </div>
                 </div>
 
                 <div className="pt-6 flex gap-4">

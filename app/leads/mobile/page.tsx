@@ -15,8 +15,12 @@ import {
   getPipelines,
   createPipeline,
   renamePipeline,
-  deletePipeline
+  deletePipeline,
+  getActivities,
+  createActivity,
+  deleteActivity
 } from '../actions';
+import { getContratosComodato, createOrdemServicoAtivo } from '@/app/ativos/actions';
 import { 
   getChatList, 
   getInternalMessages, 
@@ -49,7 +53,13 @@ import {
   Target,
   ChevronDown,
   Wrench,
-  Truck
+  Truck,
+  Calendar,
+  Trash2,
+  Image as ImageIcon,
+  Camera,
+  FileText,
+  Clock
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -133,7 +143,37 @@ export default function MobileCRM() {
   const [loadingUser, setLoadingUser] = useState(true);
   
   // Navigation
-  const [activeTab, setActiveTab] = useState<'crm' | 'new-lead' | 'chat' | 'prospeccao'>('crm');
+  const [activeTab, setActiveTab] = useState<'crm' | 'new-lead' | 'chat' | 'prospeccao' | 'agenda' | 'os'>('crm');
+
+  // Agenda / Atividades States
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [activityForm, setActivityForm] = useState({
+    titulo: '',
+    descricao: '',
+    tipo: 'REUNIAO',
+    dataInicio: '',
+    dataFim: ''
+  });
+  const [savingActivity, setSavingActivity] = useState(false);
+
+  // OS (Ordem de Serviço) States
+  const [contratos, setContratos] = useState<any[]>([]);
+  const [loadingContratos, setLoadingContratos] = useState(false);
+  const [osForm, setOsForm] = useState({
+    tipo: 'MANUTENCAO', // INSTALACAO, RETIRADA, TROCA, MANUTENCAO
+    contratoComodatoId: '',
+    clientId: '',
+    ativoId: '',
+    ativoDestinoId: '',
+    observacao: '',
+    instrucoes: '',
+    tecnicoResponsavel: '',
+    tecnicoEmail: '',
+    dataPrevista: ''
+  });
+  const [osFotos, setOsFotos] = useState<string[]>([]);
+  const [savingOs, setSavingOs] = useState(false);
 
   // Prospecção States
   const [prospTermo, setProspTermo] = useState('');
@@ -262,6 +302,72 @@ export default function MobileCRM() {
   const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
   const isSomenteTecnico = isTecnico && !isGestor;
   const isSomenteEntregador = isEntregador && !isGestor;
+
+  const directTechnicians = systemUsers.filter((u: any) => {
+    const cargoLower = u.cargo?.toLowerCase() || '';
+    const roleLower = u.role?.toLowerCase() || '';
+    return cargoLower.includes('tecnico') || cargoLower.includes('técnico') || roleLower === 'admin' || roleLower === 'manager';
+  });
+
+  // Load activities list
+  const loadActivities = async () => {
+    setLoadingActivities(true);
+    try {
+      const res = await getActivities();
+      if (res.success && res.activities) {
+        setActivities(res.activities);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar atividades:", e);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  // Load OS Data (Comodato Contracts, and system users for direct techs list)
+  const loadOSData = async () => {
+    setLoadingContratos(true);
+    try {
+      const res = await getContratosComodato();
+      if (res.success && res.contratos) {
+        setContratos(res.contratos);
+        
+        // Se houver contratos, preenche automaticamente os ids iniciais no form
+        if (res.contratos.length > 0 && !osForm.contratoComodatoId) {
+          const first = res.contratos[0];
+          setOsForm(prev => ({
+            ...prev,
+            contratoComodatoId: first.id,
+            clientId: first.clientId,
+            ativoId: first.itens?.[0]?.ativoId || ''
+          }));
+        }
+      }
+      
+      // Carrega usuários do sistema se ainda não estiverem carregados
+      if (systemUsers.length === 0) {
+        const usersRes = await getUsersForFilter();
+        if (usersRes.success && usersRes.users) {
+          setSystemUsers(usersRes.users);
+        }
+      }
+    } catch (e) {
+      console.error("Erro ao carregar dados de OS:", e);
+    } finally {
+      setLoadingContratos(false);
+    }
+  };
+
+  // Trigger loads based on tab
+  useEffect(() => {
+    if (activeTab === 'agenda') {
+      loadActivities();
+    } else if (activeTab === 'os') {
+      loadOSData();
+    } else if (activeTab === 'crm') {
+      loadCRMData();
+    }
+  }, [activeTab]);
 
   // Load CRM Data (Leads, Stages, Segments)
   const loadCRMData = async (pipeId?: string) => {
@@ -485,6 +591,42 @@ export default function MobileCRM() {
       console.error(err);
     } finally {
       setSavingComment(false);
+    }
+  };
+
+  const handleCreateLeadActivity = async (leadId: string) => {
+    if (!activityForm.titulo.trim() || !activityForm.dataInicio) {
+      alert("Por favor, preencha o título e a data de início!");
+      return;
+    }
+    setSavingActivity(true);
+    try {
+      const res = await createActivity({
+        leadId,
+        titulo: activityForm.titulo,
+        descricao: activityForm.descricao,
+        tipo: activityForm.tipo,
+        dataInicio: activityForm.dataInicio,
+        dataFim: activityForm.dataFim || activityForm.dataInicio,
+        userId: currentUser?.id
+      });
+      if (res.success) {
+        alert("Atividade agendada com sucesso!");
+        setActivityForm({
+          titulo: '',
+          descricao: '',
+          tipo: 'REUNIAO',
+          dataInicio: '',
+          dataFim: ''
+        });
+        loadActivities();
+      } else {
+        alert("Erro ao agendar atividade: " + res.error);
+      }
+    } catch (e: any) {
+      alert("Erro ao agendar: " + e.message);
+    } finally {
+      setSavingActivity(false);
     }
   };
 
@@ -741,6 +883,11 @@ export default function MobileCRM() {
             <div className="min-w-0 text-left">
               <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
               <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Vendedor'}</span>
+              {currentUser?.meta > 0 && (
+                <span className="text-[9px] font-black text-white/85 uppercase block leading-none mt-1 bg-white/10 px-1.5 py-0.5 rounded-md font-mono inline-block">
+                  Meta: {currentUser.meta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                </span>
+              )}
             </div>
           </div>
 
@@ -1119,6 +1266,330 @@ export default function MobileCRM() {
           </div>
         )}
 
+        {/* ================= TAB 5: AGENDA GERAL ================= */}
+        {activeTab === 'agenda' && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div className="text-center select-none pb-1 border-b border-slate-100">
+                <Calendar className="text-[#1B4D3E] mx-auto mb-1 animate-bounce" size={24} />
+                <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Minha Agenda Geral</h3>
+                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Veja todas as suas atividades programadas</p>
+              </div>
+
+              {loadingActivities ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                  <RefreshCw className="animate-spin text-emerald-500 mb-3" size={24} />
+                  <p className="text-xs font-bold uppercase tracking-wider">Buscando atividades...</p>
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-16 text-slate-400 select-none">
+                  <p className="text-xs font-bold uppercase tracking-wider">Nenhuma atividade agendada!</p>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-1">Programe uma atividade entrando nos detalhes de qualquer lead.</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                  {activities.map((act) => {
+                    const startStr = new Date(act.dataInicio).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                    const leadName = act.lead ? act.lead.nomeFantasia : 'Lead não informado';
+                    
+                    let badgeColor = 'bg-slate-55 text-slate-700 border-slate-200';
+                    if (act.tipo === 'REUNIAO') badgeColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                    else if (act.tipo === 'LIGACAO') badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    else if (act.tipo === 'EMAIL') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    else if (act.tipo === 'TAREFA') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+
+                    return (
+                      <div key={act.id} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 shadow-2xs space-y-2">
+                        <div className="flex justify-between items-start">
+                          <span className={`px-2 py-0.5 text-[8px] font-black uppercase rounded-lg border ${badgeColor}`}>
+                            {act.tipo}
+                          </span>
+                          <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
+                            <Clock size={10} /> {startStr}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-800">{act.titulo}</h4>
+                          {act.descricao && (
+                            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">{act.descricao}</p>
+                          )}
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px]">
+                          <span className="text-slate-500 font-bold flex items-center gap-1">
+                            <Building size={10} className="text-slate-400" /> {leadName}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              if (confirm("Deseja realmente remover esta atividade?")) {
+                                const delRes = await deleteActivity(act.id);
+                                if (delRes.success) {
+                                  alert("Atividade excluída!");
+                                  loadActivities();
+                                } else {
+                                  alert("Erro ao excluir: " + delRes.error);
+                                }
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-650 font-black uppercase text-[8px] tracking-wider active:scale-95 bg-transparent border-none cursor-pointer"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB 6: NOVA ORDEM DE SERVIÇO ================= */}
+        {activeTab === 'os' && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div className="text-center select-none pb-1 border-b border-slate-100">
+                <Wrench className="text-[#1B4D3E] mx-auto mb-1 animate-bounce" size={24} />
+                <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Abertura de OS</h3>
+                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Abra ordens de serviço e anexe fotos</p>
+              </div>
+
+              {loadingContratos ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                  <RefreshCw className="animate-spin text-emerald-500 mb-3" size={24} />
+                  <p className="text-xs font-bold uppercase tracking-wider">Carregando dados de comodato...</p>
+                </div>
+              ) : contratos.length === 0 ? (
+                <div className="text-center py-16 text-slate-400 select-none">
+                  <p className="text-xs font-bold uppercase tracking-wider">Nenhum contrato de comodato encontrado!</p>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-1">Para abrir uma OS, o cliente precisa ter um contrato de comodato ativo.</p>
+                </div>
+              ) : (
+                <div className="space-y-3.5 max-h-[65vh] overflow-y-auto pr-1">
+                  
+                  {/* Contrato / Cliente Selector */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cliente / Contrato de Comodato *</label>
+                    <select
+                      value={osForm.contratoComodatoId}
+                      onChange={e => {
+                        const contratoId = e.target.value;
+                        const target = contratos.find(c => c.id === contratoId);
+                        if (target) {
+                          setOsForm(prev => ({
+                            ...prev,
+                            contratoComodatoId: contratoId,
+                            clientId: target.clientId,
+                            ativoId: target.itens?.[0]?.ativoId || ''
+                          }));
+                        }
+                      }}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    >
+                      {contratos.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.client?.nomeFantasia || 'Cliente s/ nome'} (Comodato #{c.id.substring(0, 5)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Ativo/Equipamento Selector */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Equipamento Associado *</label>
+                    <select
+                      value={osForm.ativoId}
+                      onChange={e => setOsForm({ ...osForm, ativoId: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    >
+                      {(() => {
+                        const targetContrato = contratos.find(c => c.id === osForm.contratoComodatoId);
+                        if (!targetContrato || !targetContrato.itens || targetContrato.itens.length === 0) {
+                          return <option value="">Sem equipamentos neste contrato</option>;
+                        }
+                        return targetContrato.itens.map((it: any) => (
+                          <option key={it.ativo?.id} value={it.ativo?.id}>
+                            {it.ativo?.descricao} ({it.ativo?.modelo || 'Sem modelo'}) - Nº {it.ativo?.numeroSerie || 'S/N'}
+                          </option>
+                        ));
+                      })()}
+                    </select>
+                  </div>
+
+                  {/* Tipo de OS & Data Prevista */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Tipo de OS</label>
+                      <select
+                        value={osForm.tipo}
+                        onChange={e => setOsForm({ ...osForm, tipo: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      >
+                        <option value="MANUTENCAO">Manutenção</option>
+                        <option value="INSTALACAO">Instalação</option>
+                        <option value="RETIRADA">Retirada</option>
+                        <option value="TROCA">Troca</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Data Programada</label>
+                      <input
+                        type="datetime-local"
+                        value={osForm.dataPrevista}
+                        onChange={e => setOsForm({ ...osForm, dataPrevista: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white text-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Técnico Designado */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Designar Técnico</label>
+                    <select
+                      value={osForm.tecnicoEmail}
+                      onChange={e => {
+                        const email = e.target.value;
+                        const tech = directTechnicians.find(u => u.email === email);
+                        setOsForm(prev => ({
+                          ...prev,
+                          tecnicoEmail: email,
+                          tecnicoResponsavel: tech ? tech.nome : ''
+                        }));
+                      }}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    >
+                      <option value="">Selecione um técnico...</option>
+                      {directTechnicians.map(t => (
+                        <option key={t.id} value={t.email}>{t.nome} ({t.cargo || 'Técnico'})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Instruções / Notas */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Observações / Instruções</label>
+                    <textarea
+                      placeholder="Instruções para o técnico..."
+                      value={osForm.instrucoes}
+                      onChange={e => setOsForm({ ...osForm, instrucoes: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white text-slate-700 h-16 resize-none"
+                    />
+                  </div>
+
+                  {/* Fotos Attachment Selector */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1">
+                      <Camera size={12} /> Anexar Fotos do Local / Equipamento ({osFotos.length})
+                    </label>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95">
+                        <Plus size={16} className="text-slate-400" />
+                        <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">Add Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={e => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach(file => {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                if (event.target?.result) {
+                                  setOsFotos(prev => [...prev, event.target!.result as string]);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            });
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {osFotos.map((pic, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                          <img src={pic} alt="anexo" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setOsFotos(prev => prev.filter((_, i) => i !== idx))}
+                            className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-red-650 active:scale-90 border-none cursor-pointer flex items-center justify-center"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    onClick={async () => {
+                      if (!osForm.contratoComodatoId || !osForm.ativoId) {
+                        alert("Selecione o Contrato e o Equipamento!");
+                        return;
+                      }
+                      setSavingOs(true);
+                      try {
+                        const payload = {
+                          tipo: osForm.tipo,
+                          contratoComodatoId: osForm.contratoComodatoId,
+                          clientId: osForm.clientId,
+                          ativoId: osForm.ativoId,
+                          observacao: osForm.observacao,
+                          instrucoes: osForm.instrucoes,
+                          tecnicoResponsavel: osForm.tecnicoResponsavel,
+                          tecnicoEmail: osForm.tecnicoEmail,
+                          dataPrevista: osForm.dataPrevista ? new Date(osForm.dataPrevista).toISOString() : undefined,
+                        };
+                        
+                        const res = await createOrdemServicoAtivo(payload);
+                        if (res.success && res.os) {
+                          // Se houver fotos, atualiza a OS com as fotos
+                          if (osFotos.length > 0) {
+                            const { updateOrdemServicoAtivo } = await import('@/app/ativos/actions');
+                            await updateOrdemServicoAtivo(res.os.id, {
+                              fotosAtendimento: JSON.stringify(osFotos)
+                            });
+                          }
+                          alert("Ordem de Serviço criada com sucesso!");
+                          setOsForm({
+                            tipo: 'MANUTENCAO',
+                            contratoComodatoId: '',
+                            clientId: '',
+                            ativoId: '',
+                            ativoDestinoId: '',
+                            observacao: '',
+                            instrucoes: '',
+                            tecnicoResponsavel: '',
+                            tecnicoEmail: '',
+                            dataPrevista: ''
+                          });
+                          setOsFotos([]);
+                          setActiveTab('crm');
+                        } else {
+                          alert("Erro ao criar OS: " + res.error);
+                        }
+                      } catch (e: any) {
+                        alert("Erro ao salvar: " + e.message);
+                      } finally {
+                        setSavingOs(false);
+                      }
+                    }}
+                    disabled={savingOs || !osForm.contratoComodatoId || !osForm.ativoId}
+                    className="w-full bg-[#1B4D3E] hover:bg-[#13382d] text-white border-none py-3.5 rounded-2xl font-black uppercase text-xs tracking-wider transition-all active:scale-95 disabled:opacity-55 mt-4 cursor-pointer"
+                  >
+                    {savingOs ? 'Enviando OS...' : 'Abrir Ordem de Serviço'}
+                  </button>
+
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
 
       </main>
 
@@ -1154,6 +1625,34 @@ export default function MobileCRM() {
             >
               <Target size={18} className={activeTab === 'prospeccao' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
               <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+            </button>
+
+            {/* Tab Agenda */}
+            <button
+              onClick={() => {
+                setActiveTab('agenda');
+                setActiveChatUser(null);
+              }}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                activeTab === 'agenda' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+              }`}
+            >
+              <Calendar size={18} className={activeTab === 'agenda' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+              <span className="text-[8px] uppercase tracking-wider">Agenda</span>
+            </button>
+
+            {/* Tab Nova OS */}
+            <button
+              onClick={() => {
+                setActiveTab('os');
+                setActiveChatUser(null);
+              }}
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                activeTab === 'os' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+              }`}
+            >
+              <Wrench size={18} className={activeTab === 'os' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+              <span className="text-[8px] uppercase tracking-wider">Nova OS</span>
             </button>
 
             {/* Tab Novo Lead */}
@@ -1619,6 +2118,87 @@ export default function MobileCRM() {
                         </div>
                       ))
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* Programador de Atividades */}
+              {!isEditingLead && (
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+                  <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2.5">
+                    <Calendar size={16} className="text-[#1B4D3E]" />
+                    <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Programar Atividade</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Título da Atividade *</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Reunião de alinhamento"
+                        value={activityForm.titulo}
+                        onChange={e => setActivityForm({ ...activityForm, titulo: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-slate-700"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Descrição / Notas</label>
+                      <textarea 
+                        placeholder="Detalhes sobre a atividade..."
+                        value={activityForm.descricao}
+                        onChange={e => setActivityForm({ ...activityForm, descricao: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-slate-700 h-16 resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Tipo</label>
+                        <select 
+                          value={activityForm.tipo}
+                          onChange={e => setActivityForm({ ...activityForm, tipo: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
+                        >
+                          <option value="REUNIAO">Reunião</option>
+                          <option value="LIGACAO">Ligação</option>
+                          <option value="EMAIL">E-mail</option>
+                          <option value="TAREFA">Tarefa</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Data Início *</label>
+                        <input 
+                          type="datetime-local"
+                          value={activityForm.dataInicio}
+                          onChange={e => setActivityForm({ ...activityForm, dataInicio: e.target.value })}
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Data Fim (Opcional)</label>
+                        <input 
+                          type="datetime-local"
+                          value={activityForm.dataFim}
+                          onChange={e => setActivityForm({ ...activityForm, dataFim: e.target.value })}
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="flex items-end">
+                        <button
+                          onClick={() => handleCreateLeadActivity(lead.id)}
+                          disabled={savingActivity}
+                          className="w-full bg-[#1B4D3E] hover:bg-[#1B4D3E]/95 text-white border-none py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider transition-all active:scale-95 cursor-pointer disabled:opacity-55"
+                        >
+                          {savingActivity ? 'Salvando...' : 'Agendar'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

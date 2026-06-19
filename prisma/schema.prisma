@@ -110,6 +110,7 @@ model User {
   avatarUrl      String?
   color          String?         @default("slate")
   timezone       String          @default("America/Sao_Paulo")
+  meta           Float           @default(0)
   tenantId                 String?
   tenant                   Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sentInternalMessages     InternalMessage[] @relation("SentInternalMessages")
@@ -320,6 +321,7 @@ enum UserRole {
   ADMIN
   MANAGER
   USER
+  LOGISTICA
 }
 
 model TipoServico {
