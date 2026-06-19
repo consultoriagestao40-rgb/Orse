@@ -1052,11 +1052,6 @@ export default function TecnicoPage() {
                   </div>
                 )}
               </>
-            ) : (n>
-                    </div>
-                  </div>
-                )}
-              </>
             ) : (
               <>
                 {/* Technical / Logistical Stats */}
