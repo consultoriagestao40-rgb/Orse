@@ -1155,6 +1155,7 @@ export default function LeadsKanban() {
       contatoNome: editLeadForm.contatoNome,
       telefone: editLeadForm.telefone,
       email: editLeadForm.email,
+      segmento: editLeadForm.segmento || '',
       valorEst: editLeadForm.valorEst !== undefined && editLeadForm.valorEst !== '' ? parseFloat(editLeadForm.valorEst) || 0 : 0
     });
     if (res.success) {
@@ -3130,9 +3131,27 @@ export default function LeadsKanban() {
               <div className="w-full md:w-[35%] lg:w-[30%] bg-white border-r border-slate-100 flex flex-col">
                 <div className="p-6 border-b border-slate-100 flex justify-between items-start group relative">
                   {isEditingLead ? (
-                    <div className="w-full">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
-                      <input value={editLeadForm.nomeFantasia || ''} onChange={e => setEditLeadForm({...editLeadForm, nomeFantasia: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 mb-2" />
+                    <div className="w-full space-y-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
+                        <input value={editLeadForm.nomeFantasia || ''} onChange={e => setEditLeadForm({...editLeadForm, nomeFantasia: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-800" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Segmento</label>
+                        <select 
+                          value={editLeadForm.segmento || ''} 
+                          onChange={e => setEditLeadForm({...editLeadForm, segmento: e.target.value})} 
+                          className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white"
+                        >
+                          <option value="">Selecione um segmento...</option>
+                          {segmentos.map(seg => {
+                            const val = seg.nome || seg;
+                            return (
+                              <option key={seg.id || seg} value={val}>{val}</option>
+                            );
+                          })}
+                        </select>
+                      </div>
                     </div>
                   ) : (
                     <div>
@@ -3149,6 +3168,7 @@ export default function LeadsKanban() {
                       setIsEditingLead(true); 
                       setEditLeadForm({
                         ...selectedLead,
+                        segmento: selectedLead.segmento || '',
                         valorEst: selectedLead.valorEst !== undefined && selectedLead.valorEst !== null ? String(selectedLead.valorEst) : ''
                       });
                     }} className="absolute right-6 top-6 text-slate-300 hover:text-emerald-600 transition-colors hidden md:block group-hover:block"><Edit2 size={14}/></button>
