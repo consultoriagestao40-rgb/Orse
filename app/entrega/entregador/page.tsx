@@ -1115,10 +1115,6 @@ export default function EntregadorPage() {
             )}
           </div>
         </div>
-      </div>on>
-            </div>
-          )}
-        </div>
       </div>
     );
   }

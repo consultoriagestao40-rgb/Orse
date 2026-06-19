@@ -1174,7 +1174,6 @@ export default function MobileCRM() {
             )}
           </div>
         </div>
-      </div>  </div>
       </div>
     );
   }
