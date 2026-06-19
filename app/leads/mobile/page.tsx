@@ -27,7 +27,7 @@ import {
   sendInternalMessage, 
   markInternalMessagesAsRead 
 } from '../chat-actions';
-import { getLoggedUser } from '@/app/propostas/actions';
+import { getLoggedUser, getPropostas } from '@/app/propostas/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import UserSelectPopover from '@/components/UserSelectPopover';
 import { formatTimeBrasilia } from '@/lib/timezone';
@@ -59,7 +59,8 @@ import {
   Image as ImageIcon,
   Camera,
   FileText,
-  Clock
+  Clock,
+  Menu
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -144,6 +145,10 @@ export default function MobileCRM() {
   
   // Navigation
   const [activeTab, setActiveTab] = useState<'crm' | 'new-lead' | 'chat' | 'prospeccao' | 'agenda' | 'os'>('crm');
+  const [currentModule, setCurrentModule] = useState<'crm' | 'tecnico'>('crm');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [valorVendido, setValorVendido] = useState<number>(0);
+  const [loadingSales, setLoadingSales] = useState(false);
 
   // Agenda / Atividades States
   const [activities, setActivities] = useState<any[]>([]);
@@ -425,9 +430,36 @@ export default function MobileCRM() {
     }
   };
 
+  const loadSalesData = async (user: any) => {
+    if (!user) return;
+    setLoadingSales(true);
+    try {
+      const propostas = await getPropostas(user);
+      if (Array.isArray(propostas)) {
+        const wonProps = propostas.filter((p: any) => {
+          const isOwner = p.userId === user.id;
+          const statusUpper = p.status?.toUpperCase() || '';
+          const isWon = statusUpper.includes('APROVAD') || 
+                        statusUpper.includes('ACEIT') || 
+                        statusUpper.includes('FECHAD') || 
+                        statusUpper.includes('GANH') || 
+                        statusUpper.includes('CONCLU');
+          return isOwner && isWon;
+        });
+        const total = wonProps.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
+        setValorVendido(total);
+      }
+    } catch (err) {
+      console.error("Erro ao calcular valor vendido:", err);
+    } finally {
+      setLoadingSales(false);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       loadCRMData(activePipelineId);
+      loadSalesData(currentUser);
     }
   }, [currentUser, activePipelineId]);
 
@@ -845,29 +877,7 @@ export default function MobileCRM() {
       
       {/* HEADER PREMIUM STICKY */}
       <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-40 shadow-md p-4 shrink-0 select-none">
-        {isGestor && (
-          <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1 mb-3">
-            <button
-              onClick={() => router.push('/leads/mobile')}
-              className="flex-1 flex items-center justify-center gap-1 bg-[#1B4D3E] text-white border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
-            >
-              <Building size={11} /> CRM
-            </button>
-            <button
-              onClick={() => router.push('/ativos/tecnico')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
-            >
-              <Wrench size={11} /> Técnico
-            </button>
-            <button
-              onClick={() => router.push('/entrega/entregador')}
-              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
-            >
-              <Truck size={11} /> Entrega
-            </button>
-          </div>
-        )}
-        <div className="flex justify-between items-center mb-3.5 w-full">
+        <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-3 min-w-0">
             {currentUser?.avatarUrl ? (
               <img 
@@ -881,27 +891,25 @@ export default function MobileCRM() {
               </div>
             )}
             <div className="min-w-0 text-left">
-              <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
-              <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Vendedor'}</span>
-              {currentUser?.meta > 0 && (
-                <span className="text-[9px] font-black text-white/85 uppercase block leading-none mt-1 bg-white/10 px-1.5 py-0.5 rounded-md font-mono inline-block">
-                  Meta: {currentUser.meta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-                </span>
-              )}
+              <span className="text-[10px] font-extrabold text-emerald-450 uppercase tracking-widest block leading-none mb-1">
+                {currentUser?.tenant?.nome || 'Slimpe'}
+              </span>
+              <span className="text-xs font-bold text-slate-350 block leading-none">Olá, {currentUser?.nome?.split(' ')[0] || 'Vendedor'}!</span>
+              <span className="text-xs font-black uppercase text-white block leading-tight mt-0.5">Bem-vindo de volta</span>
             </div>
           </div>
 
-          <a 
-            href="/api/auth/logout"
-            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
-            title="Sair da Conta (Logout)"
+          <button 
+            onClick={() => setIsMenuOpen(true)}
+            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white border-none"
+            title="Menu Principal"
           >
-            <LogOut size={16} />
-          </a>
+            <Menu size={18} />
+          </button>
         </div>
 
-        {/* Pipeline Selector Line */}
-        {activeTab !== 'chat' ? (
+        {/* Pipeline Selector Line (Only when CRM active view) */}
+        {currentModule === 'crm' && activeTab === 'crm' && (
           <div className="flex items-center justify-between gap-3 mt-3.5">
             <div className="flex items-center gap-2">
               <button 
@@ -955,24 +963,10 @@ export default function MobileCRM() {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="flex items-center gap-2 mt-3.5">
-            <button 
-              onClick={() => {
-                if (isSomenteTecnico) router.push('/ativos/tecnico');
-                else if (isSomenteEntregador) router.push('/entrega/entregador');
-                else setActiveTab('crm');
-              }}
-              className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <h1 className="text-xs font-black uppercase tracking-wider text-white">Chat da Equipe</h1>
-          </div>
         )}
 
-        {/* Dynamic Search Bar (Only shown on CRM tab) */}
-        {activeTab === 'crm' && (
+        {/* Dynamic Search Bar (Only shown on CRM tab in CRM mode) */}
+        {currentModule === 'crm' && activeTab === 'crm' && (
           <div className="relative mt-2.5">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input
@@ -994,6 +988,89 @@ export default function MobileCRM() {
         )}
       </header>
 
+      {/* HAMBURGER MENU DRAWER OVERLAY */}
+      {isMenuOpen && (
+        <>
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 transition-opacity duration-300"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="fixed top-0 right-0 bottom-0 w-[270px] bg-slate-900 text-white z-55 shadow-2xl p-5 flex flex-col justify-between animate-in slide-in-from-right duration-300">
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Menu Principal</span>
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border-none cursor-pointer flex items-center justify-center"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setCurrentModule('crm');
+                    setActiveTab('crm');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer transition-colors ${
+                    currentModule === 'crm' ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-800/40 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Building size={16} />
+                  CRM
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setCurrentModule('tecnico');
+                    setActiveTab('os');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer transition-colors ${
+                    currentModule === 'tecnico' ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-800/40 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Wrench size={16} />
+                  Área do Técnico
+                </button>
+                
+                <button
+                  onClick={() => {
+                    router.push('/entrega/entregador');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-slate-800/40 text-slate-300 hover:bg-slate-800"
+                >
+                  <Truck size={16} />
+                  Entregas
+                </button>
+                
+                <button
+                  onClick={() => {
+                    router.push('/chat');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-slate-800/40 text-slate-300 hover:bg-slate-800"
+                >
+                  <MessageSquare size={16} />
+                  Chat
+                </button>
+              </div>
+            </div>
+            
+            <a
+              href="/api/auth/logout"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-red-650 hover:bg-red-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider text-center no-underline border-none cursor-pointer shadow-md"
+            >
+              <LogOut size={16} />
+              Sair da Conta
+            </a>
+          </div>
+        </>
+      )}
+
       {/* CORE VIEW */}
       <main className="flex-1 px-3 py-4 max-w-lg mx-auto w-full">
         
@@ -1001,7 +1078,46 @@ export default function MobileCRM() {
         {activeTab === 'crm' && (
           <div className="space-y-4">
             
-
+            {/* Meta Progress Bar Card */}
+            {currentUser?.meta > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 select-none">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Target size={15} className="text-[#1B4D3E]" />
+                    <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">Meta Mensal de Vendas</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-[#1B4D3E] font-mono">
+                    Meta: {formatCurrency(currentUser.meta)}
+                  </span>
+                </div>
+                
+                {/* Progress Bar Container */}
+                <div className="w-full bg-slate-100 rounded-full h-8 relative overflow-hidden border border-slate-200/50 shadow-inner flex items-center justify-center">
+                  {/* Filled Bar */}
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-emerald-600 to-teal-500 transition-all duration-1000 ease-out"
+                    style={{ width: `${Math.min(currentUser.meta > 0 ? (valorVendido / currentUser.meta) * 100 : 0, 100)}%` }}
+                  />
+                  
+                  {/* Sold Value text centered on the bar */}
+                  <span className="relative z-10 font-black text-xs text-slate-800 drop-shadow-[0_1px_1px_rgba(255,255,255,0.85)] font-mono">
+                    {formatCurrency(valorVendido)}
+                  </span>
+                </div>
+                
+                {/* Percentage details below progress bar */}
+                <div className="flex justify-between items-center mt-1.5 text-[9px] font-bold text-slate-500">
+                  <span className="text-emerald-700 font-black">
+                    {currentUser.meta > 0 ? Math.round((valorVendido / currentUser.meta) * 100) : 0}% Atingido
+                  </span>
+                  {currentUser.meta > valorVendido ? (
+                    <span className="text-slate-450">Faltam: {formatCurrency(currentUser.meta - valorVendido)}</span>
+                  ) : (
+                    <span className="text-emerald-600 font-black">Meta Superada! 🎉</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Leads List */}
             {loadingLeads ? (
@@ -1596,117 +1712,101 @@ export default function MobileCRM() {
       {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         
-        {!isSomenteTecnico && !isSomenteEntregador && (
+        {!isSomenteTecnico && !isSomenteEntregador ? (
+          currentModule === 'crm' ? (
+            <>
+              {/* Tab Prospecção */}
+              <button
+                onClick={() => {
+                  setActiveTab('prospeccao');
+                  setActiveChatUser(null);
+                }}
+                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                  activeTab === 'prospeccao' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+                }`}
+              >
+                <Target size={18} className={activeTab === 'prospeccao' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+              </button>
+
+              {/* Tab Agenda */}
+              <button
+                onClick={() => {
+                  setActiveTab('agenda');
+                  setActiveChatUser(null);
+                }}
+                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                  activeTab === 'agenda' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+                }`}
+              >
+                <Calendar size={18} className={activeTab === 'agenda' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                <span className="text-[8px] uppercase tracking-wider">Agenda</span>
+              </button>
+
+              {/* Tab Novo Lead */}
+              <button
+                onClick={() => {
+                  setIsCreateModalOpen(true);
+                }}
+                className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold cursor-pointer"
+              >
+                <PlusCircle size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Tab Nova Ordem de Serviços */}
+              <button
+                onClick={() => {
+                  setActiveTab('os');
+                  setActiveChatUser(null);
+                }}
+                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+                  activeTab === 'os' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+                }`}
+              >
+                <Wrench size={18} className={activeTab === 'os' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                <span className="text-[8px] uppercase tracking-wider">Nova OS</span>
+              </button>
+
+              {/* Tab Nova Entrega */}
+              <button
+                onClick={() => {
+                  router.push('/entrega/entregador');
+                }}
+                className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold cursor-pointer"
+              >
+                <Truck size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Nova Entrega</span>
+              </button>
+            </>
+          )
+        ) : (
           <>
-            {/* Tab CRM */}
-            <button
-              onClick={() => {
-                setActiveTab('crm');
-                setActiveChatUser(null);
-                loadCRMData();
-              }}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-                activeTab === 'crm' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-              }`}
-            >
-              <Building size={18} className={activeTab === 'crm' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
-            </button>
+            {isSomenteTecnico && (
+              /* Tab Técnico return link */
+              <a
+                href="/ativos/tecnico"
+                className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+              >
+                <Wrench size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+              </a>
+            )}
 
-            {/* Tab Prospecção */}
-            <button
-              onClick={() => {
-                setActiveTab('prospeccao');
-                setActiveChatUser(null);
-              }}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-                activeTab === 'prospeccao' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-              }`}
-            >
-              <Target size={18} className={activeTab === 'prospeccao' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-              <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
-            </button>
-
-            {/* Tab Agenda */}
-            <button
-              onClick={() => {
-                setActiveTab('agenda');
-                setActiveChatUser(null);
-              }}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-                activeTab === 'agenda' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-              }`}
-            >
-              <Calendar size={18} className={activeTab === 'agenda' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-              <span className="text-[8px] uppercase tracking-wider">Agenda</span>
-            </button>
-
-            {/* Tab Nova OS */}
-            <button
-              onClick={() => {
-                setActiveTab('os');
-                setActiveChatUser(null);
-              }}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-                activeTab === 'os' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-              }`}
-            >
-              <Wrench size={18} className={activeTab === 'os' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-              <span className="text-[8px] uppercase tracking-wider">Nova OS</span>
-            </button>
-
-            {/* Tab Novo Lead */}
-            <button
-              onClick={() => {
-                setIsCreateModalOpen(true);
-              }}
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
-            >
-              <PlusCircle size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
-            </button>
+            {isSomenteEntregador && (
+              /* Tab Entregador return link */
+              <a
+                href="/entrega/entregador"
+                className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+              >
+                <Truck size={18} className="text-slate-400" />
+                <span className="text-[8px] uppercase tracking-wider">Entrega</span>
+              </a>
+            )}
           </>
         )}
-
-        {isSomenteTecnico && (
-          /* Tab Técnico return link */
-          <a
-            href="/ativos/tecnico"
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-          >
-            <Wrench size={18} className="text-slate-400" />
-            <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-          </a>
-        )}
-
-        {isSomenteEntregador && (
-          /* Tab Entregador return link */
-          <a
-            href="/entrega/entregador"
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-          >
-            <Truck size={18} className="text-slate-400" />
-            <span className="text-[8px] uppercase tracking-wider">Entrega</span>
-          </a>
-        )}
-
-        {/* Tab Chat Interno (Globally Available) */}
-        <button
-          onClick={() => {
-            router.push('/chat');
-          }}
-          className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none relative ${
-            activeTab === 'chat' ? 'text-blue-600 font-black' : 'text-slate-400 font-bold'
-          }`}
-        >
-          <MessageSquare size={18} className={activeTab === 'chat' ? 'text-blue-600' : 'text-slate-400'} />
-          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-          {totalUnreadChat > 0 && (
-            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
-              {totalUnreadChat}
-            </span>
-          )}
-        </button>
       </nav>
 
       {/* FULL-SCREEN LEAD DETAIL & EDIT OVERLAY */}
