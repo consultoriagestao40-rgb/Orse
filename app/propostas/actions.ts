@@ -992,7 +992,7 @@ export async function getKPIs() {
 
     return {
       propostas: mappedPropostas,
-      usuarios: users.map(u => u.nome)
+      usuarios: users.map(u => ({ id: u.id, nome: u.nome, meta: u.meta }))
     };
   } catch (error) {
     console.error('Error fetching raw KPIs data:', error);

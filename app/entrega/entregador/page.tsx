@@ -12,7 +12,7 @@ import {
   getEntregadorEntregas, updateEntrega, getEntregas
 } from '../actions';
 import { getLoggedUser, getPropostas } from '@/app/propostas/actions';
-import { getActivities } from '@/app/leads/actions';
+import { getActivities, getLeads } from '@/app/leads/actions';
 import { getOrdensServicoAtivo } from '@/app/ativos/actions';
 import { useRouter } from 'next/navigation';
 import { getChatList } from '@/app/leads/chat-actions';
@@ -346,11 +346,12 @@ export default function EntregadorPage() {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      const [propsRes, actRes, osRes, delivRes] = await Promise.all([
+      const [propsRes, actRes, osRes, delivRes, leadsRes] = await Promise.all([
         getPropostas(user).catch(() => []),
         getActivities().catch(() => ({ success: false, activities: [] })),
         getOrdensServicoAtivo().catch(() => ({ success: false, ordens: [] })),
         getEntregas().catch(() => ({ success: false, entregas: [] })),
+        getLeads().catch(() => ({ success: false, leads: [] })),
       ]);
 
       // Sales metrics (monthly won proposals)
@@ -381,8 +382,35 @@ export default function EntregadorPage() {
         return isUser && isThisMonth;
       });
 
-      const contatos = userActs.filter((a: any) => a.tipo === 'LIGACAO' || a.tipo === 'EMAIL');
-      const reunioes = userActs.filter((a: any) => a.tipo === 'REUNIAO');
+      const contatosActs = userActs.filter((a: any) => a.tipo === 'LIGACAO' || a.tipo === 'EMAIL');
+      const reunioesActs = userActs.filter((a: any) => a.tipo === 'REUNIAO');
+
+      // Leads metrics (monthly for this user, by pipeline stages)
+      const leadsList = leadsRes.success && Array.isArray(leadsRes.leads) ? leadsRes.leads : [];
+      const userLeads = leadsList.filter((l: any) => {
+        const isOwner = l.assignedToId === user.id;
+        const lDate = new Date(l.updatedAt || l.createdAt);
+        const isThisMonth = lDate.getMonth() === currentMonth && lDate.getFullYear() === currentYear;
+        return isOwner && isThisMonth;
+      });
+
+      const activeLeads = userLeads.filter((l: any) => {
+        const stageName = l.stage?.nome?.toLowerCase() || '';
+        return !stageName.includes('desqualificado') && !stageName.includes('perdido');
+      });
+
+      const contatosLeads = activeLeads.filter((l: any) => {
+        const stageName = l.stage?.nome?.toLowerCase() || '';
+        return stageName.includes('contato') || stageName.includes('reuni') || stageName.includes('agendada') || stageName.includes('ganh') || stageName.includes('aprov') || stageName.includes('aceit') || stageName.includes('fechad');
+      });
+
+      const reunioesLeads = activeLeads.filter((l: any) => {
+        const stageName = l.stage?.nome?.toLowerCase() || '';
+        return stageName.includes('reuni') || stageName.includes('agendada') || stageName.includes('ganh') || stageName.includes('aprov') || stageName.includes('aceit') || stageName.includes('fechad');
+      });
+
+      const contatosCount = Math.max(contatosActs.length, contatosLeads.length);
+      const reunioesCount = Math.max(reunioesActs.length, reunioesLeads.length);
 
       // Technician OS metrics (monthly)
       const ordens = osRes.success && Array.isArray(osRes.ordens) ? osRes.ordens : [];
@@ -411,8 +439,8 @@ export default function EntregadorPage() {
 
       setWelcomeStats({
         vendasCount: wonProps.length,
-        contatosCount: contatos.length,
-        reunioesCount: reunioes.length,
+        contatosCount,
+        reunioesCount,
         osProgramadas,
         osConcluidas,
         entregasProgramadas,
@@ -889,9 +917,9 @@ export default function EntregadorPage() {
             {isSalesRole ? (
               <>
                 {/* Speedometer Gauge (Velocímetro) */}
-                <div className="relative flex flex-col items-center bg-white/5 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-lg w-full max-w-[230px] mx-auto">
-                  <span className="text-[7.5px] font-extrabold text-emerald-450 uppercase tracking-widest mb-1.5">Desempenho Comercial</span>
-                  <div className="relative w-full aspect-[100/68] max-w-[130px] flex items-center justify-center">
+                <div className="relative flex flex-col items-center bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-lg w-full max-w-xs mx-auto">
+                  <span className="text-[8px] font-extrabold text-emerald-450 uppercase tracking-widest mb-1.5">Desempenho Comercial</span>
+                  <div className="relative w-full aspect-[100/68] max-w-[170px] flex items-center justify-center">
                     <svg viewBox="0 0 100 68" className="w-full h-auto">
                       <defs>
                         <linearGradient id="welcomeGaugeGradDeliv" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -971,36 +999,45 @@ export default function EntregadorPage() {
                   </div>
                 </div>
 
-                {/* CRM Stats Grid */}
+                {/* CRM Stats Grid - Vertical and Full Width */}
                 {loadingWelcomeStats ? (
                   <div className="flex items-center gap-1.5 py-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                     <Loader2 className="animate-spin text-emerald-450" size={12} />
                     <span>Carregando Indicadores...</span>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-1.5 w-full max-w-xs">
-                    <div className="bg-white/5 border border-white/5 rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-center">
-                      <div className="p-1 bg-emerald-500/10 text-emerald-450 rounded-lg mb-0.5">
-                        <DollarSign size={12} />
+                  <div className="flex flex-col gap-1.5 w-full max-w-xs">
+                    {/* Contatos */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-2 sm:p-2.5 flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg">
+                          <Phone size={12} />
+                        </div>
+                        <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Contatos Realizados</span>
                       </div>
-                      <span className="text-xs font-black text-white leading-none">{welcomeStats?.vendasCount || 0}</span>
-                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5 block">Vendas</span>
+                      <span className="text-xs font-black text-white">{welcomeStats?.contatosCount || 0}</span>
                     </div>
 
-                    <div className="bg-white/5 border border-white/5 rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-center">
-                      <div className="p-1 bg-blue-500/10 text-blue-400 rounded-lg mb-0.5">
-                        <Phone size={12} />
+                    {/* Reuniões */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-2 sm:p-2.5 flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-purple-500/10 text-purple-400 rounded-lg">
+                          <Calendar size={12} />
+                        </div>
+                        <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Reuniões Agendadas</span>
                       </div>
-                      <span className="text-xs font-black text-white leading-none">{welcomeStats?.contatosCount || 0}</span>
-                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5 block">Contatos</span>
+                      <span className="text-xs font-black text-white">{welcomeStats?.reunioesCount || 0}</span>
                     </div>
 
-                    <div className="bg-white/5 border border-white/5 rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center text-center">
-                      <div className="p-1 bg-purple-500/10 text-purple-400 rounded-lg mb-0.5">
-                        <Calendar size={12} />
+                    {/* Vendas */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-2 sm:p-2.5 flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                          <DollarSign size={12} />
+                        </div>
+                        <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Vendas Ganhas</span>
                       </div>
-                      <span className="text-xs font-black text-white leading-none">{welcomeStats?.reunioesCount || 0}</span>
-                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5 block">Reuniões</span>
+                      <span className="text-xs font-black text-white">{welcomeStats?.vendasCount || 0}</span>
                     </div>
                   </div>
                 )}

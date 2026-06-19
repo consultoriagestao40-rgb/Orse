@@ -21,7 +21,7 @@ import {
   getCategorias, createCategoria, deleteCategoria,
   getTiposServico, createTipoServico, deleteTipoServico,
   getSegmentos, createSegmento, deleteSegmento,
-  getSellers,
+  getSellers, updateSellerMeta,
   updateUnidadeMedida, toggleUnidadeMedida,
   updateCategoria, toggleCategoria,
   updateTipoServico, toggleTipoServico,
@@ -690,7 +690,7 @@ export default function SettingsPage() {
 
 
   // Metas
-  const [sellers, setSellers] = useState<string[]>([]);
+  const [sellers, setSellers] = useState<any[]>([]);
   const [metas, setMetas] = useState<Record<string, number>>({});
   const [localMetas, setLocalMetas] = useState<Record<string, string>>({});
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
@@ -776,38 +776,53 @@ export default function SettingsPage() {
   };
 
   const loadMetas = () => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sb_kpi_goals');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setMetas(parsed);
-          
-          // Preenche localMetas com valores formatados em pt-BR com 2 casas decimais
-          const localInit: Record<string, string> = {};
-          Object.entries(parsed).forEach(([key, val]) => {
-            localInit[key] = typeof val === 'number' 
-              ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-              : String(val);
-          });
-          setLocalMetas(localInit);
-        } catch (e) {
-          console.error(e);
+    const dbMetas: Record<string, number> = {};
+    const localInit: Record<string, string> = {};
+
+    sellers.forEach(seller => {
+      const goalKey = `${seller.nome}_${selectedMonth}`;
+      let val = seller.meta || 0;
+
+      // check localstorage for user/month specific goals as fallback/override
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('sb_kpi_goals');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed[goalKey] !== undefined) {
+              val = parsed[goalKey];
+            }
+          } catch (e) {
+            console.error(e);
+          }
         }
       }
-    }
+
+      dbMetas[goalKey] = val;
+      localInit[goalKey] = val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+
+    setMetas(prev => ({ ...prev, ...dbMetas }));
+    setLocalMetas(prev => ({ ...prev, ...localInit }));
   };
 
   useEffect(() => {
     loadMetas();
-  }, [selectedMonth]);
+  }, [selectedMonth, sellers]);
 
-  const handleSaveMeta = (sellerName: string, val: number) => {
+  const handleSaveMeta = async (sellerId: string, sellerName: string, val: number) => {
     const goalKey = `${sellerName}_${selectedMonth}`;
     const updated = { ...metas, [goalKey]: val };
     setMetas(updated);
     if (typeof window !== 'undefined') {
       localStorage.setItem('sb_kpi_goals', JSON.stringify(updated));
+    }
+    try {
+      await updateSellerMeta(sellerId, val);
+      // Update local state
+      setSellers(prev => prev.map(s => s.id === sellerId ? { ...s, meta: val } : s));
+    } catch (e) {
+      console.error("Erro ao salvar meta no banco:", e);
     }
   };
 
@@ -1915,18 +1930,25 @@ export default function SettingsPage() {
                             </td>
                           </tr>
                         ) : (
-                          sellers.map((nome) => {
+                          sellers.map((seller) => {
+                            const nome = seller.nome;
                             const goalKey = `${nome}_${selectedMonth}`;
                             const displayVal = localMetas[goalKey] !== undefined 
                               ? localMetas[goalKey] 
-                              : (metas[goalKey] !== undefined ? metas[goalKey].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '100.000,00');
+                              : (metas[goalKey] !== undefined 
+                                  ? metas[goalKey].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                                  : (seller.meta > 0 
+                                      ? seller.meta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                                      : '100.000,00'
+                                    )
+                                );
 
                             return (
-                              <tr key={nome} className="hover:bg-slate-50 transition-colors">
+                              <tr key={seller.id} className="hover:bg-slate-50 transition-colors">
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 bg-[#1B4D3E]/10 text-[#1B4D3E] font-black rounded-xl flex items-center justify-center text-xs">
-                                      {nome.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}
+                                      {nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                                     </div>
                                     <span className="text-xs font-bold text-slate-700">{nome}</span>
                                   </div>
@@ -1943,7 +1965,7 @@ export default function SettingsPage() {
                                       }}
                                       onBlur={() => {
                                         const parsedNum = parseLocaleNumber(displayVal);
-                                        handleSaveMeta(nome, parsedNum);
+                                        handleSaveMeta(seller.id, nome, parsedNum);
                                         setLocalMetas(prev => ({ 
                                           ...prev, 
                                           [goalKey]: parsedNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 

@@ -144,12 +144,33 @@ export async function getSellers() {
     const users = await prisma.user.findMany({
       where: { tenantId: user.tenantId },
       orderBy: { nome: 'asc' },
-      select: { nome: true }
+      select: { id: true, nome: true, meta: true }
     });
-    return users.map(u => u.nome);
+    return users;
   } catch (error) {
     console.error('Erro ao buscar vendedores:', error);
     return [];
+  }
+}
+
+export async function updateSellerMeta(userId: string, meta: number) {
+  try {
+    const { getLoggedUser } = await import('@/app/propostas/actions');
+    const user = await getLoggedUser();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'MANAGER')) {
+      return { success: false, error: 'Não autorizado' };
+    }
+
+    await prisma.user.update({
+      where: { id: userId, tenantId: user.tenantId },
+      data: { meta }
+    });
+    revalidatePath('/admin/settings');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao atualizar meta do vendedor:', error);
+    return { success: false, error: error.message };
   }
 }
 

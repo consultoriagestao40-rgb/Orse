@@ -40,6 +40,16 @@ function RadarComercialDashboard() {
         new Promise(resolve => setTimeout(resolve, 2000))
       ]);
       setKpis(data);
+
+      if (data?.usuarios) {
+        const dbMetas: Record<string, number> = {};
+        const activeMonthKey = new Date().toISOString().substring(0, 7);
+        data.usuarios.forEach((seller: any) => {
+          const goalKey = `${seller.nome}_${activeMonthKey}`;
+          dbMetas[goalKey] = seller.meta || 0;
+        });
+        setMetas(prev => ({ ...prev, ...dbMetas }));
+      }
     } catch (e) {
       console.error('Erro ao buscar KPIs:', e);
     } finally {
@@ -92,6 +102,7 @@ function RadarComercialDashboard() {
   }, [period, selectedMonth]);
 
   // Carrega metas do localStorage
+  // Carrega metas do localStorage e sincroniza com o banco de dados
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sb_kpi_goals');
@@ -105,14 +116,47 @@ function RadarComercialDashboard() {
     }
   }, []);
 
-  const saveGoal = (userName: string, val: number) => {
-    const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-    const updated = { ...metas, [`${userName}_${activeMonthKey}`]: val };
-    setMetas(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sb_kpi_goals', JSON.stringify(updated));
+  useEffect(() => {
+    if (kpis?.usuarios) {
+      const dbMetas: Record<string, number> = {};
+      const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+      kpis.usuarios.forEach((seller: any) => {
+        const goalKey = `${seller.nome}_${activeMonthKey}`;
+        dbMetas[goalKey] = seller.meta || 0;
+      });
+      setMetas(prev => ({ ...prev, ...dbMetas }));
     }
+  }, [kpis, startDate]);
+
+  const handleSaveInlineGoal = async (userId: string, userName: string) => {
+    const clean = editGoalValue.replace(/R\$/gi, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
+    const parsedNum = Number(clean);
+    const val = isNaN(parsedNum) ? 0 : parsedNum;
+
+    const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+    const updatedMetas = { ...metas, [`${userName}_${activeMonthKey}`]: val };
+    setMetas(updatedMetas);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sb_kpi_goals', JSON.stringify(updatedMetas));
+    }
+    
     setEditingUserId(null);
+
+    try {
+      const { updateSellerMeta } = await import('@/app/admin/settings/actions');
+      await updateSellerMeta(userId, val);
+      
+      setKpis((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          usuarios: prev.usuarios.map((u: any) => u.id === userId ? { ...u, meta: val } : u)
+        };
+      });
+    } catch (e) {
+      console.error("Erro ao salvar meta no banco:", e);
+    }
   };
 
   const formatCurrency = (val: number) => {
@@ -249,11 +293,15 @@ function RadarComercialDashboard() {
     let previsto = 0;
     if (userFilter !== 'ALL') {
       const key = `${userFilter}_${mKey}`;
-      previsto = metas[key] !== undefined ? metas[key] : 100000;
+      const seller = totalSellers.find((u: any) => u.nome === userFilter);
+      const dbMeta = seller?.meta > 0 ? seller.meta : 100000;
+      previsto = metas[key] !== undefined ? metas[key] : dbMeta;
     } else {
-      totalSellers.forEach((nome: string) => {
+      totalSellers.forEach((seller: any) => {
+        const nome = seller.nome;
         const key = `${nome}_${mKey}`;
-        previsto += metas[key] !== undefined ? metas[key] : 100000;
+        const dbMeta = seller.meta > 0 ? seller.meta : 100000;
+        previsto += metas[key] !== undefined ? metas[key] : dbMeta;
       });
     }
 
@@ -309,10 +357,12 @@ function RadarComercialDashboard() {
     }
   };
 
-  const totalMetasEmpresa = totalSellers.reduce((acc: number, nome: string) => {
+  const totalMetasEmpresa = totalSellers.reduce((acc: number, seller: any) => {
+    const nome = seller.nome;
     if (userFilter !== 'ALL' && nome !== userFilter) return acc;
     const key = `${nome}_${activeMonthKey}`;
-    const m = metas[key] !== undefined ? metas[key] : 100000;
+    const dbMeta = seller.meta > 0 ? seller.meta : 100000;
+    const m = metas[key] !== undefined ? metas[key] : dbMeta;
     return acc + m;
   }, 0);
 
@@ -367,8 +417,8 @@ function RadarComercialDashboard() {
                 onChange={e => setUserFilter(e.target.value)}
               >
                 <option value="ALL">👥 Todos os Vendedores</option>
-                {totalSellers.map((nome: string) => (
-                  <option key={nome} value={nome}>👤 {nome}</option>
+                {totalSellers.map((seller: any) => (
+                  <option key={seller.id} value={seller.nome}>👤 {seller.nome}</option>
                 ))}
               </select>
             </div>
@@ -743,17 +793,19 @@ function RadarComercialDashboard() {
                           </tr>
                         ) : (
                           totalSellers
-                            .filter((nome: string) => userFilter === 'ALL' || nome === userFilter)
-                            .map((nome: string) => {
+                            .filter((seller: any) => userFilter === 'ALL' || seller.nome === userFilter)
+                            .map((seller: any) => {
+                              const nome = seller.nome;
                               const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
                               const goalKey = `${nome}_${activeMonthKey}`;
-                              const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : 100000;
+                              const dbMeta = seller.meta > 0 ? seller.meta : 100000;
+                              const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : dbMeta;
                               const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
                               const isFiltered = userFilter === nome;
 
                               return (
                                 <tr 
-                                  key={nome} 
+                                  key={seller.id} 
                                   className={`transition-all ${
                                     isFiltered 
                                       ? 'bg-emerald-50/40 border-l-4 border-emerald-600 font-semibold' 
@@ -788,7 +840,38 @@ function RadarComercialDashboard() {
                                   </td>
                                   
                                   <td className="px-5 py-4.5 text-right font-extrabold text-slate-600">
-                                    {formatCurrency(metaVal)}
+                                    {editingUserId === seller.id ? (
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">R$</span>
+                                        <input
+                                          type="text"
+                                          className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none focus:border-[#1B4D3E]"
+                                          value={editGoalValue}
+                                          onChange={(e) => setEditGoalValue(e.target.value)}
+                                          onBlur={() => handleSaveInlineGoal(seller.id, nome)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              handleSaveInlineGoal(seller.id, nome);
+                                            } else if (e.key === 'Escape') {
+                                              setEditingUserId(null);
+                                            }
+                                          }}
+                                          autoFocus
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div 
+                                        className="flex items-center justify-end gap-1.5 group cursor-pointer" 
+                                        onClick={() => {
+                                          setEditingUserId(seller.id);
+                                          setEditGoalValue(metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
+                                        }}
+                                        title="Clique para editar a meta"
+                                      >
+                                        <span>{formatCurrency(metaVal)}</span>
+                                        <Edit2 size={12} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+                                      </div>
+                                    )}
                                   </td>
                                   
                                   <td className="px-5 py-4.5">
