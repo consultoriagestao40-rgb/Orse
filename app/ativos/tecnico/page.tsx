@@ -6,7 +6,7 @@ import {
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
   Calendar, Check, LogOut, Loader2, Car, Navigation, Volume2,
   Building, Target, PlusCircle, MessageSquare, ShieldAlert, Truck,
-  Menu
+  Menu, RefreshCw, Home
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo, getOrdensServicoAtivo
@@ -878,12 +878,26 @@ export default function TecnicoPage() {
 
     const isSalesRole = !isSomenteTecnico;
 
+    const txReuniao = (welcomeStats?.contatosCount && welcomeStats.contatosCount > 0)
+      ? Math.round((welcomeStats.reunioesCount / welcomeStats.contatosCount) * 100)
+      : 0;
+    const txVenda = (welcomeStats?.reunioesCount && welcomeStats.reunioesCount > 0)
+      ? Math.round((welcomeStats.vendasCount / welcomeStats.reunioesCount) * 100)
+      : 0;
+
     return (
       <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-[#1B4D3E] text-white flex flex-col font-sans select-none">
         <div className="flex-1 flex flex-col justify-between items-center p-3.5 max-w-md mx-auto w-full h-full max-h-[100dvh]">
           {/* Top Header */}
-          <div className="flex flex-col items-center text-center pt-1.5 pb-2 w-full">
-            <span className="text-[8px] font-extrabold text-emerald-350 uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/10 shadow-xs mb-2">
+          <div className="flex flex-col items-center text-center pt-1.5 pb-2 w-full relative">
+            <button 
+              onClick={() => loadWelcomeStats(currentUser)}
+              className="absolute top-1.5 right-1.5 p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-emerald-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+              title="Atualizar Dados"
+            >
+              <RefreshCw size={12} className={loadingWelcomeStats ? "animate-spin" : ""} />
+            </button>
+            <span className="text-[8px] font-extrabold text-emerald-355 uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/10 shadow-xs mb-2">
               {tenant?.nome || 'Slimpe'}
             </span>
             {currentUser?.avatarUrl ? (
@@ -924,7 +938,7 @@ export default function TecnicoPage() {
                             d="M 10 50 A 40 40 0 0 1 90 50" 
                             fill="none" 
                             stroke="#000" 
-                            strokeWidth="8" 
+                            strokeWidth="16" 
                             strokeLinecap="butt"
                             strokeDasharray="125.66"
                             strokeDashoffset={125.66 - (125.66 * percent) / 100}
@@ -937,7 +951,7 @@ export default function TecnicoPage() {
                         d="M 10 50 A 40 40 0 0 1 90 50" 
                         fill="none" 
                         stroke="rgba(255,255,255,0.08)" 
-                        strokeWidth="6" 
+                        strokeWidth="14" 
                         strokeLinecap="butt" 
                         strokeDasharray="11.216 1.5" 
                       />
@@ -946,7 +960,7 @@ export default function TecnicoPage() {
                         d="M 10 50 A 40 40 0 0 1 90 50" 
                         fill="none" 
                         stroke="url(#welcomeGaugeGradTech)" 
-                        strokeWidth="6" 
+                        strokeWidth="14" 
                         strokeLinecap="butt" 
                         strokeDasharray="11.216 1.5"
                         clipPath="url(#welcomeGaugeClipTech)" 
@@ -992,7 +1006,7 @@ export default function TecnicoPage() {
                 {/* CRM Stats Grid - Vertical and Full Width */}
                 {loadingWelcomeStats ? (
                   <div className="flex items-center gap-1.5 py-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                    <Loader2 className="animate-spin text-emerald-450" size={12} />
+                    <RefreshCw className="animate-spin text-emerald-450" size={12} />
                     <span>Carregando Indicadores...</span>
                   </div>
                 ) : (
@@ -1014,7 +1028,10 @@ export default function TecnicoPage() {
                         <div className="p-1.5 bg-purple-500/10 text-purple-400 rounded-lg">
                           <Calendar size={12} />
                         </div>
-                        <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Reuniões Agendadas</span>
+                        <div className="flex flex-col text-left">
+                          <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Reuniões Agendadas</span>
+                          <span className="text-[7.5px] text-slate-400 font-bold">Conversão: {txReuniao}%</span>
+                        </div>
                       </div>
                       <span className="text-xs font-black text-white">{welcomeStats?.reunioesCount || 0}</span>
                     </div>
@@ -1025,9 +1042,17 @@ export default function TecnicoPage() {
                         <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
                           <DollarSign size={12} />
                         </div>
-                        <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Vendas Ganhas</span>
+                        <div className="flex flex-col text-left">
+                          <span className="text-[9px] font-black text-slate-355 uppercase tracking-wider">Vendas Ganhas</span>
+                          <span className="text-[7.5px] text-slate-400 font-bold">Conversão: {txVenda}%</span>
+                        </div>
                       </div>
                       <span className="text-xs font-black text-white">{welcomeStats?.vendasCount || 0}</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (n>
                     </div>
                   </div>
                 )}
@@ -1275,6 +1300,17 @@ export default function TecnicoPage() {
                 >
                   <MessageSquare size={16} />
                   Chat
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowWelcome(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-none text-left font-bold text-xs uppercase tracking-wider cursor-pointer bg-slate-800/40 text-slate-300 hover:bg-slate-800"
+                >
+                  <Home size={16} />
+                  Tela Inicial (Boas-vindas)
                 </button>
               </div>
             </div>
