@@ -168,6 +168,9 @@ export async function createSegmento(nome: string) {
   try {
     const res = await prisma.segmento.create({ data: { nome: nome.toUpperCase() } });
     revalidatePath('/admin/settings');
+    revalidatePath('/clientes');
+    revalidatePath('/clientes/[id]/edit', 'page');
+    revalidatePath('/propostas/nova');
     return { success: true, data: res };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -178,6 +181,9 @@ export async function deleteSegmento(id: string) {
   try {
     await prisma.segmento.delete({ where: { id } });
     revalidatePath('/admin/settings');
+    revalidatePath('/clientes');
+    revalidatePath('/clientes/[id]/edit', 'page');
+    revalidatePath('/propostas/nova');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -272,6 +278,9 @@ export async function updateSegmento(id: string, nome: string) {
       data: { nome: nome.toUpperCase().trim() }
     });
     revalidatePath('/admin/settings');
+    revalidatePath('/clientes');
+    revalidatePath('/clientes/[id]/edit', 'page');
+    revalidatePath('/propostas/nova');
     return { success: true, data: res };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -285,6 +294,9 @@ export async function toggleSegmento(id: string, ativo: boolean) {
       data: { ativo }
     });
     revalidatePath('/admin/settings');
+    revalidatePath('/clientes');
+    revalidatePath('/clientes/[id]/edit', 'page');
+    revalidatePath('/propostas/nova');
     return { success: true, data: res };
   } catch (error: any) {
     return { success: false, error: error.message };

@@ -388,8 +388,8 @@ export default function UsuariosPage() {
         {/* Modal de Criação / Edição */}
         {showModal && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-            <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-in fade-in zoom-in duration-300">
-              <div className="bg-[#1B4D3E] p-8 text-white relative">
+            <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col">
+              <div className="bg-[#1B4D3E] p-8 text-white relative shrink-0">
                 <h3 className="text-2xl font-black tracking-tighter uppercase">
                   {editingUserId ? 'Editar' : 'Novo'} <span className="text-[#10B981]">Colaborador</span>
                 </h3>
@@ -401,7 +401,7 @@ export default function UsuariosPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-10 space-y-6">
+              <form onSubmit={handleSubmit} className="p-10 space-y-6 overflow-y-auto flex-1">
                 {/* Upload de Avatar Premium */}
                 <div className="flex flex-col items-center justify-center pb-4">
                   <div className="relative group cursor-pointer">
