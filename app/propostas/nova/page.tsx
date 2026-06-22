@@ -141,7 +141,7 @@ function PropostaEditor() {
             condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
             condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
             condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-            condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+            condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2027.'
           },
           dreTaxPercent: (fullData as any).dreTaxPercent,
           dreEncargos: (fullData as any).dreEncargos,
@@ -227,7 +227,7 @@ function PropostaEditor() {
       condicoesCliente: [
          'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
          'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-         'Próximo reajuste Fevereiro/2026.'
+         'Próximo reajuste Fevereiro/2027.'
       ],
       razaoSocial: '',
       cnpj: '',
@@ -239,7 +239,7 @@ function PropostaEditor() {
       condicaoColaboradores3: '2 Vales transporte por dia.',
       condicaoCliente1: 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
       condicaoCliente2: 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-      condicaoCliente3: 'Próximo reajuste Fevereiro/2026.'
+      condicaoCliente3: 'Próximo reajuste Fevereiro/2027.'
     },
     premissas: { 
       taxaAdm: 5, 
@@ -486,7 +486,7 @@ function PropostaEditor() {
                   condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
                   condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
                   condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao disssídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                  condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
+                  condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2027.',
                   razaoSocial: fullData.cliente.razaoSocial || '',
                   cnpj: fullData.cliente.cnpj || '',
                   dataInicio: fullData.cliente.dataInicio || '',
@@ -4546,7 +4546,7 @@ function PropostaEditor() {
                                 const condsCli = [
                                    proposta.cliente?.condicaoCliente1 || "Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;",
                                    proposta.cliente?.condicaoCliente2 || "Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;",
-                                   proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2026."
+                                   proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2027."
                                 ].filter(Boolean);
 
                                 return (
@@ -5213,7 +5213,7 @@ function PropostaEditor() {
                         const condsCli = proposta.cliente.condicoesCliente || [
                            proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
                            proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2027.'
                         ];
 
                         return (

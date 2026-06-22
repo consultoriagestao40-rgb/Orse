@@ -306,7 +306,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
         condicoesCliente: fpv.client?.condicoesCliente || [
           'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
           'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-          'Próximo reajuste Fevereiro/2026.'
+          'Próximo reajuste Fevereiro/2027.'
         ],
         condicoesColaboradores: fpv.client?.condicoesColaboradores || [
           'Vale alimentação de R$900,00;',
