@@ -1329,11 +1329,17 @@ export default function PropostasComerciaisDashboard() {
                            >
                              <Share2 size={16} />
                            </button>
-                          <button onClick={async () => {
-                            if(confirm('Excluir proposta comercial?')) {
-                              await deleteDocumentoProposta(doc.id);
-                              loadData();
-                            }
+                          <button onClick={() => {
+                            setCustomModal({
+                              isOpen: true,
+                              title: 'Excluir Proposta',
+                              message: 'Tem certeza que deseja excluir esta proposta comercial?',
+                              type: 'confirm',
+                              onConfirm: async () => {
+                                await deleteDocumentoProposta(doc.id);
+                                loadData();
+                              }
+                            });
                           }}
                           title="Excluir proposta"
                           className="text-red-400 hover:text-red-600 p-1 transition-colors">

@@ -255,6 +255,7 @@ export default function DocumentoPropostaDetail() {
   const [status, setStatus] = useState('');
   const [secoes, setSecoes] = useState<{id?: string; titulo: string; texto: string; ordem?: number}[]>([]);
   const [clausulasA4, setClausulasA4] = useState<{id?: string; titulo: string; texto: string; ordem?: number}[]>([]);
+  const [contractTemplates, setContractTemplates] = useState<any[]>([]);
   const [configApresentacao, setConfigApresentacao] = useState<any>({
     condicoesCliente: [],
     condicoesColaboradores: [],
@@ -285,6 +286,22 @@ export default function DocumentoPropostaDetail() {
   const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
   const [showShareModal, setShowShareModal] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [customModal, setCustomModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'alert' | 'confirm' | 'prompt';
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (val: string) => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'alert',
+    onConfirm: () => {}
+  });
   
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const copyToClipboard = (text: string, fieldId: string) => {
@@ -555,25 +572,49 @@ export default function DocumentoPropostaDetail() {
       };
       await updateConfigApresentacao(id, updatedConfig);
       
-      alert('Proposta Comercial atualizada com sucesso!');
+      setCustomModal({
+        isOpen: true,
+        title: 'Sucesso',
+        message: 'Proposta Comercial atualizada com sucesso!',
+        type: 'alert',
+        onConfirm: () => {}
+      });
     } catch (err: any) {
       console.error(err);
-      alert('Erro ao salvar proposta: ' + err.message);
+      setCustomModal({
+        isOpen: true,
+        title: 'Erro ao Salvar',
+        message: 'Erro ao salvar proposta: ' + err.message,
+        type: 'alert',
+        onConfirm: () => {}
+      });
     }
     setSaving(false);
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Tem certeza que deseja excluir esta proposta comercial?')) {
-      setSaving(true);
-      const res = await deleteDocumentoProposta(id);
-      if (res.success) {
-        router.push('/propostas-comerciais');
-      } else {
-        alert('Erro ao excluir: ' + res.error);
-        setSaving(false);
+    setCustomModal({
+      isOpen: true,
+      title: 'Excluir Proposta',
+      message: 'Tem certeza que deseja excluir esta proposta comercial?',
+      type: 'confirm',
+      onConfirm: async () => {
+        setSaving(true);
+        const res = await deleteDocumentoProposta(id);
+        if (res.success) {
+          router.push('/propostas-comerciais');
+        } else {
+          setCustomModal({
+            isOpen: true,
+            title: 'Erro ao Excluir',
+            message: 'Erro ao excluir: ' + res.error,
+            type: 'alert',
+            onConfirm: () => {}
+          });
+          setSaving(false);
+        }
       }
-    }
+    });
   };
 
   const moveClausulaA4 = (idx: number, dir: 'up' | 'down') => {
@@ -3251,6 +3292,118 @@ export default function DocumentoPropostaDetail() {
                       </div>
                     )}
                   </div>
+
+                  {/* Card de Condições Gerais (Comerciais e Colaboradores) */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                      ⚙️ Condições Gerais
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {/* Condições do Cliente */}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-[9.5px] font-black text-[#1B4D3E] uppercase tracking-wider">
+                            Condições Comerciais (Cliente)
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(configApresentacao.condicoesCliente || [])];
+                              list.push('Nova condição comercial...');
+                              setConfigApresentacao({ ...configApresentacao, condicoesCliente: list });
+                            }}
+                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-0.5 rounded-lg text-[8.5px] font-black uppercase border border-emerald-250 transition-all active:scale-95 cursor-pointer"
+                          >
+                            + Adicionar
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {(configApresentacao.condicoesCliente || []).map((cond: string, idx: number) => (
+                            <div key={idx} className="flex gap-1.5 items-center">
+                              <span className="text-[9px] text-slate-400 font-bold shrink-0">{idx + 1}.</span>
+                              <input
+                                type="text"
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 font-semibold focus:outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                                value={cond}
+                                onChange={(e) => {
+                                  const list = [...(configApresentacao.condicoesCliente || [])];
+                                  list[idx] = e.target.value;
+                                  setConfigApresentacao({ ...configApresentacao, condicoesCliente: list });
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = (configApresentacao.condicoesCliente || []).filter((_: any, i: number) => i !== idx);
+                                  setConfigApresentacao({ ...configApresentacao, condicoesCliente: list });
+                                }}
+                                className="bg-red-50 text-red-600 hover:bg-red-100 p-1.5 rounded-xl border border-red-200 transition-colors shrink-0 cursor-pointer"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                          {(!configApresentacao.condicoesCliente || configApresentacao.condicoesCliente.length === 0) && (
+                            <p className="text-slate-400 text-[10px] font-medium italic">Nenhuma condição comercial definida.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Condições dos Colaboradores */}
+                      <div className="border-t border-slate-150 pt-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-[9.5px] font-black text-[#1B4D3E] uppercase tracking-wider">
+                            Condições dos Colaboradores
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = [...(configApresentacao.condicoesColaboradores || [])];
+                              list.push('Nova condição de colaborador...');
+                              setConfigApresentacao({ ...configApresentacao, condicoesColaboradores: list });
+                            }}
+                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2 py-0.5 rounded-lg text-[8.5px] font-black uppercase border border-emerald-250 transition-all active:scale-95 cursor-pointer"
+                          >
+                            + Adicionar
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {(configApresentacao.condicoesColaboradores || []).map((cond: string, idx: number) => (
+                            <div key={idx} className="flex gap-1.5 items-center">
+                              <span className="text-[9px] text-slate-400 font-bold shrink-0">{idx + 1}.</span>
+                              <input
+                                type="text"
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 font-semibold focus:outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                                value={cond}
+                                onChange={(e) => {
+                                  const list = [...(configApresentacao.condicoesColaboradores || [])];
+                                  list[idx] = e.target.value;
+                                  setConfigApresentacao({ ...configApresentacao, condicoesColaboradores: list });
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = (configApresentacao.condicoesColaboradores || []).filter((_: any, i: number) => i !== idx);
+                                  setConfigApresentacao({ ...configApresentacao, condicoesColaboradores: list });
+                                }}
+                                className="bg-red-50 text-red-600 hover:bg-red-100 p-1.5 rounded-xl border border-red-200 transition-colors shrink-0 cursor-pointer"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                          {(!configApresentacao.condicoesColaboradores || configApresentacao.condicoesColaboradores.length === 0) && (
+                            <p className="text-slate-400 text-[10px] font-medium italic">Nenhuma condição de colaborador definida.</p>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
                 </div>
 
                 {/* LADO DIREITO: EDITOR CLÁUSULAS CONTRATO */}
@@ -3296,11 +3449,17 @@ export default function DocumentoPropostaDetail() {
                         </button>
                         <button
                           onClick={() => {
-                            if (confirm('Deseja remover esta cláusula do contrato?')) {
-                              const list = [...secoes];
-                              list.splice(idx, 1);
-                              updateSecoesWithHistory(list);
-                            }
+                            setCustomModal({
+                              isOpen: true,
+                              title: 'Remover Cláusula',
+                              message: 'Deseja remover esta cláusula do contrato?',
+                              type: 'confirm',
+                              onConfirm: () => {
+                                const list = [...secoes];
+                                list.splice(idx, 1);
+                                updateSecoesWithHistory(list);
+                              }
+                            });
                           }}
                           className="p-1 text-slate-400 hover:text-red-500 transition-colors ml-1 cursor-pointer"
                           title="Remover cláusula"
@@ -3318,7 +3477,7 @@ export default function DocumentoPropostaDetail() {
                           value={s.titulo}
                           onChange={(e) => {
                             const list = [...secoes];
-                            list[idx].titulo = e.target.value;
+                            list[idx] = { ...list[idx], titulo: e.target.value };
                             updateSecoesWithHistory(list);
                           }}
                         />
@@ -3333,7 +3492,7 @@ export default function DocumentoPropostaDetail() {
                           value={s.texto}
                           onChange={(e) => {
                             const list = [...secoes];
-                            list[idx].texto = e.target.value;
+                            list[idx] = { ...list[idx], texto: e.target.value };
                             updateSecoesWithHistory(list);
                           }}
                         />
@@ -3370,6 +3529,74 @@ export default function DocumentoPropostaDetail() {
             }
           }}
         />
+      )}
+      {customModal.isOpen && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 p-6 flex flex-col gap-4 font-sans">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                {customModal.title}
+              </h3>
+              <button
+                onClick={() => {
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  if (customModal.onCancel) customModal.onCancel();
+                }}
+                className="text-slate-400 hover:text-slate-650 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {customModal.type === 'prompt' && (
+              <input
+                type="text"
+                id="custom-modal-input"
+                defaultValue={customModal.defaultValue || ''}
+                placeholder={customModal.placeholder || ''}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const input = document.getElementById('custom-modal-input') as HTMLInputElement;
+                    customModal.onConfirm(input?.value || '');
+                    setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            )}
+            
+            {customModal.type !== 'prompt' && (
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                {customModal.message}
+              </p>
+            )}
+            
+            <div className="flex justify-end gap-3 pt-2">
+              {customModal.type !== 'alert' && (
+                <button
+                  onClick={() => {
+                    setCustomModal(prev => ({ ...prev, isOpen: false }));
+                    if (customModal.onCancel) customModal.onCancel();
+                  }}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  const input = document.getElementById('custom-modal-input') as HTMLInputElement;
+                  customModal.onConfirm(customModal.type === 'prompt' ? (input?.value || '') : '');
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                }}
+                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all"
+              >
+                {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
