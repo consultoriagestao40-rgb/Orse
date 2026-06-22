@@ -1420,7 +1420,7 @@ export default function DocumentoPropostaDetail() {
                                 value={s.titulo}
                                 onChange={(e) => {
                                   const list = [...clausulasA4];
-                                  list[idx].titulo = e.target.value;
+                                  list[idx] = { ...list[idx], titulo: e.target.value };
                                   setClausulasA4(list);
                                 }}
                               />
@@ -1435,7 +1435,7 @@ export default function DocumentoPropostaDetail() {
                                 value={s.texto}
                                 onChange={(e) => {
                                   const list = [...clausulasA4];
-                                  list[idx].texto = e.target.value;
+                                  list[idx] = { ...list[idx], texto: e.target.value };
                                   setClausulasA4(list);
                                 }}
                               />

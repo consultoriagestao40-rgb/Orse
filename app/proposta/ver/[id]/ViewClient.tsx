@@ -566,8 +566,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       cliente: doc.client?.nomeFantasia || fullProposta?.cliente?.cliente || '',
       clienteNome: doc.client?.nomeFantasia || fullProposta?.cliente?.clienteNome || '',
       nomeFantasia: doc.client?.nomeFantasia || fullProposta?.cliente?.nomeFantasia || '',
-      clausulasA4: doc.tipo === 'SLIDE_DECK' 
-        ? (doc.configApresentacao?.clausulasA4 || [])
+      clausulasA4: (doc.configApresentacao?.clausulasA4 && doc.configApresentacao.clausulasA4.length > 0)
+        ? doc.configApresentacao.clausulasA4
         : (doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || []),
       ...(doc.configApresentacao ? {
         condicoesCliente: doc.configApresentacao.condicoesCliente,

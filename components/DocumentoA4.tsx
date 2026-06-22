@@ -834,22 +834,22 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             rawTitulo = rawTitulo.replace(/^[\d.\s-]*\s*/, '').trim();
                             const tituloFinal = `${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
                             const txt = clausula.texto || '';
-                            const hasTabela = txt.includes('[TABELA]');
-                            const hasItens = txt.includes('[ITENS]');
-                            const hasAceite = txt.includes('[TERMO_ACEITE]');
+                            const hasTabela = txt.toUpperCase().includes('[TABELA]');
+                            const hasItens = txt.toUpperCase().includes('[ITENS]');
+                            const hasAceite = txt.toUpperCase().includes('[TERMO_ACEITE]');
 
                             const nomeCliente = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || '';
                             const textoLimpo = txt
-                              .replace(/\[CLIENTE_NOME\]/g, nomeCliente)
-                              .replace(/\[NUMERO_PROPOSTA\]/g, proposta.numero || '')
-                              .replace(/\[REVISAO\]/g, proposta.cliente?.revisao || `R${String(proposta.versao || 1).padStart(2, '0')}`)
-                              .replace(/\[TABELA\]/g, '')
-                              .replace(/\[ITENS\]/g, '')
-                              .replace(/\[TERMO_ACEITE\]/g, '')
-                              .replace(/\[OBJETO_PROPOSTA\]/g, proposta.cliente?.objetoProposta || '')
-                              .replace(/\[ESCOPO_TECNICO\]/g, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
-                              .replace(/\[CONDICOES_COMERCIAIS\]/g, (proposta.cliente?.condicoesCliente || []).join('\n'))
-                              .replace(/\[VALOR_TOTAL\]/g, fmt(totalGeral))
+                              .replace(/\[CLIENTE_NOME\]/gi, nomeCliente)
+                              .replace(/\[NUMERO_PROPOSTA\]/gi, proposta.numero || '')
+                              .replace(/\[REVISAO\]/gi, proposta.cliente?.revisao || `R${String(proposta.versao || 1).padStart(2, '0')}`)
+                              .replace(/\[TABELA\]/gi, '')
+                              .replace(/\[ITENS\]/gi, '')
+                              .replace(/\[TERMO_ACEITE\]/gi, '')
+                              .replace(/\[OBJETO_PROPOSTA\]/gi, proposta.cliente?.objetoProposta || '')
+                              .replace(/\[ESCOPO_TECNICO\]/gi, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
+                              .replace(/\[CONDICOES_COMERCIAIS\]/gi, (proposta.cliente?.condicoesCliente || []).join('\n'))
+                              .replace(/\[VALOR_TOTAL\]/gi, fmt(totalGeral))
                               .trim();
 
                             let paragrafos = textoLimpo
@@ -933,15 +933,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                     {(() => {
                       if (!proposta.cliente?.clausulasA4 || proposta.cliente.clausulasA4.length === 0) return null;
                       const textStr = JSON.stringify(proposta.cliente?.clausulasA4 || []);
+                      const textStrUpper = textStr.toUpperCase();
                       const temObjeto = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('OBJETO') || c.titulo.toUpperCase().includes('ESCOPO'));
                       const temCondicoes = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('CONDI'));
                       const temAceite = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('ACEITE'));
                       
-                      const missObjeto = !textStr.includes('[OBJETO_PROPOSTA]') && !textStr.includes('[ESCOPO_TECNICO]') && !temObjeto;
-                      const missCondicoes = !textStr.includes('[CONDICOES_COMERCIAIS]') && !temCondicoes;
-                      const missTabela = !textStr.includes('[TABELA]');
-                      const missItens = !textStr.includes('[ITENS]');
-                      const missAceite = !textStr.includes('[TERMO_ACEITE]') && !temAceite;
+                      const missObjeto = !textStrUpper.includes('[OBJETO_PROPOSTA]') && !textStrUpper.includes('[ESCOPO_TECNICO]') && !temObjeto;
+                      const missCondicoes = !textStrUpper.includes('[CONDICOES_COMERCIAIS]') && !temCondicoes;
+                      const missTabela = !textStrUpper.includes('[TABELA]');
+                      const missItens = !textStrUpper.includes('[ITENS]');
+                      const missAceite = !textStrUpper.includes('[TERMO_ACEITE]') && !temAceite;
                       
                       const clauseOffset = proposta.cliente.clausulasA4.length + 1;
                       let currentFallbackClause = clauseOffset;
@@ -1222,24 +1223,24 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   const tituloFinal = `${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
                   
                   const txt = clausula.texto || '';
-                  const hasTabela = txt.includes('[TABELA]');
-                  const hasItens = txt.includes('[ITENS]');
-                  const hasAceite = txt.includes('[TERMO_ACEITE]');
+                  const hasTabela = txt.toUpperCase().includes('[TABELA]');
+                  const hasItens = txt.toUpperCase().includes('[ITENS]');
+                  const hasAceite = txt.toUpperCase().includes('[TERMO_ACEITE]');
 
                   // Substituir todas as tags dinâmicas
                   const nomeCliente = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || '';
                   
                   const textoLimpo = txt
-                    .replace(/\[CLIENTE_NOME\]/g, nomeCliente)
-                    .replace(/\[NUMERO_PROPOSTA\]/g, proposta.numero || '')
-                    .replace(/\[REVISAO\]/g, proposta.cliente?.revisao || `R${String(proposta.versao || 1).padStart(2, '0')}`)
-                    .replace(/\[TABELA\]/g, '')
-                    .replace(/\[ITENS\]/g, '')
-                    .replace(/\[TERMO_ACEITE\]/g, '')
-                    .replace(/\[OBJETO_PROPOSTA\]/g, proposta.cliente?.objetoProposta || '')
-                    .replace(/\[ESCOPO_TECNICO\]/g, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
-                    .replace(/\[CONDICOES_COMERCIAIS\]/g, (proposta.cliente?.condicoesCliente || []).join('\n'))
-                    .replace(/\[VALOR_TOTAL\]/g, fmt(totalGeral))
+                    .replace(/\[CLIENTE_NOME\]/gi, nomeCliente)
+                    .replace(/\[NUMERO_PROPOSTA\]/gi, proposta.numero || '')
+                    .replace(/\[REVISAO\]/gi, proposta.cliente?.revisao || `R${String(proposta.versao || 1).padStart(2, '0')}`)
+                    .replace(/\[TABELA\]/gi, '')
+                    .replace(/\[ITENS\]/gi, '')
+                    .replace(/\[TERMO_ACEITE\]/gi, '')
+                    .replace(/\[OBJETO_PROPOSTA\]/gi, proposta.cliente?.objetoProposta || '')
+                    .replace(/\[ESCOPO_TECNICO\]/gi, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
+                    .replace(/\[CONDICOES_COMERCIAIS\]/gi, (proposta.cliente?.condicoesCliente || []).join('\n'))
+                    .replace(/\[VALOR_TOTAL\]/gi, fmt(totalGeral))
                     .trim();
 
                   let paragrafos = textoLimpo
@@ -1323,15 +1324,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             if (!proposta.cliente?.clausulasA4 || proposta.cliente.clausulasA4.length === 0) return null;
             
             const textStr = JSON.stringify(proposta.cliente?.clausulasA4 || []);
+            const textStrUpper = textStr.toUpperCase();
             const temObjeto = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('OBJETO') || c.titulo.toUpperCase().includes('ESCOPO'));
             const temCondicoes = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('CONDI'));
             const temAceite = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('ACEITE'));
             
-            const missObjeto = !textStr.includes('[OBJETO_PROPOSTA]') && !textStr.includes('[ESCOPO_TECNICO]') && !temObjeto;
-            const missCondicoes = !textStr.includes('[CONDICOES_COMERCIAIS]') && !temCondicoes;
-            const missTabela = !textStr.includes('[TABELA]');
-            const missItens = !textStr.includes('[ITENS]');
-            const missAceite = !textStr.includes('[TERMO_ACEITE]') && !temAceite;
+            const missObjeto = !textStrUpper.includes('[OBJETO_PROPOSTA]') && !textStrUpper.includes('[ESCOPO_TECNICO]') && !temObjeto;
+            const missCondicoes = !textStrUpper.includes('[CONDICOES_COMERCIAIS]') && !temCondicoes;
+            const missTabela = !textStrUpper.includes('[TABELA]');
+            const missItens = !textStrUpper.includes('[ITENS]');
+            const missAceite = !textStrUpper.includes('[TERMO_ACEITE]') && !temAceite;
             
             const clauseOffset = proposta.cliente.clausulasA4.length + 1;
             let currentFallbackClause = clauseOffset;
@@ -1444,22 +1446,35 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                         if(confirm('Isso vai substituir suas cláusulas atuais. Continuar?')) {
                           const base = t.clausulas.map((c:any) => ({ titulo: c.titulo, texto: c.texto }));
                           if (base.length > 0) {
-                            base[0] = { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: proposta.cliente.objetoProposta || '' };
-                            if (base.length > 1) {
-                              base[1] = { titulo: 'CLÁUSULA 02 - DO ESCOPO TÉCNICO', texto: proposta.cliente.escopoTecnico || '' };
+                            // Preserva ou adiciona as tags especiais apenas se não existirem no template
+                            if (!base.some((c:any) => c.texto.toUpperCase().includes('[TABELA]'))) {
+                              base.push({ titulo: 'RESUMO FINANCEIRO', texto: '[TABELA]' });
                             }
-                            if (base.length > 2 && !base.some((c:any) => c.texto.includes('[TABELA]'))) {
-                              base[2] = { titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' };
+                            if (!base.some((c:any) => c.texto.toUpperCase().includes('[ITENS]'))) {
+                              base.push({ titulo: 'ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' });
                             }
-                            // Preserva ou adiciona as tags especiais
-                            if (!base.some((c:any) => c.texto.includes('[ITENS]'))) {
-                              base.push({ titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' });
-                            }
-                            if (!base.some((c:any) => c.texto.includes('[TERMO_ACEITE]'))) {
-                              base.push({ titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' });
+                            if (!base.some((c:any) => c.texto.toUpperCase().includes('[TERMO_ACEITE]'))) {
+                              base.push({ titulo: 'TERMO DE ACEITE', texto: '[TERMO_ACEITE]' });
                             }
                           }
-                          onUpdateClausulas(base);
+                          
+                          // Renumera e formata as cláusulas de forma limpa
+                          const renumbered = base.map((c: any, newIdx: number) => {
+                            const clauseNum = newIdx + 1;
+                            let rawTitulo = c.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[\.\-–]?\s*/i, '').trim();
+                            rawTitulo = rawTitulo.replace(/^[\d.\s-]*\s*/, '').trim();
+                            const novoTitulo = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
+                            
+                            const novoTexto = c.texto.split('\n').map((linha: string) => {
+                              return linha.replace(/^(\s*)\d+\.(\d+)\.?(\s*)/, (m: any, p1: any, minor: any, p3: any) => {
+                                return `${p1}${clauseNum}.${minor}.${p3}`;
+                              });
+                            }).join('\n');
+                            
+                            return { titulo: novoTitulo, texto: novoTexto };
+                          });
+                          
+                          onUpdateClausulas(renumbered);
                         }
                       }
                       e.target.value = "";
@@ -1546,7 +1561,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                           onChange={(e) => {
                             if (onUpdateClausulas) {
                               const list = [...proposta.cliente.clausulasA4];
-                              list[idx].texto = e.target.value;
+                              list[idx] = { ...list[idx], texto: e.target.value };
                               onUpdateClausulas(list);
                             }
                           }}
