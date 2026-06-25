@@ -1406,7 +1406,7 @@ export default function DocumentoPropostaDetail() {
                         </h2>
                         <div className="text-[9px] font-bold text-slate-400 max-w-lg text-right leading-tight select-none">
                           Tags: <strong className="text-[#1e4480]">[CLIENTE_NOME]</strong>, <strong className="text-[#1e4480]">[VALOR_TOTAL]</strong>, <strong className="text-[#1e4480]">[NUMERO_PROPOSTA]</strong><br/>
-                          Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>
+                          Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>, <strong className="text-emerald-600">[MATERIAIS]</strong>, <strong className="text-emerald-600">[EQUIPAMENTOS]</strong>
                         </div>
                       </div>
 
@@ -3420,7 +3420,7 @@ export default function DocumentoPropostaDetail() {
                     </h2>
                     <div className="text-[9px] font-bold text-slate-400 max-w-lg text-right leading-tight">
                       Tags: <strong className="text-[#1e4480]">[CLIENTE_NOME]</strong>, <strong className="text-[#1e4480]">[NUMERO_PROPOSTA]</strong>, <strong className="text-[#1e4480]">[REVISAO]</strong>, <strong className="text-[#1e4480]">[OBJETO_PROPOSTA]</strong>, <strong className="text-[#1e4480]">[ESCOPO_TECNICO]</strong><br/>
-                      Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>
+                      Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>, <strong className="text-emerald-600">[MATERIAIS]</strong>, <strong className="text-emerald-600">[EQUIPAMENTOS]</strong>
                     </div>
                   </div>
 

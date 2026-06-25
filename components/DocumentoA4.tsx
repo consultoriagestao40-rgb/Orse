@@ -516,6 +516,72 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     );
   };
 
+  const renderTabelaMateriaisSemValores = () => {
+    const detalheMateriais = proposta.insumos?.detalheMateriais || [];
+    return (
+      <div className="w-full mt-4 break-inside-avoid print:break-inside-avoid mb-6">
+        <div className="overflow-x-auto w-full border border-slate-300 rounded-lg no-print-border">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                <th className="p-2 border-r border-b border-slate-300 w-24">Código</th>
+                <th className="p-2 border-r border-b border-slate-300">Descrição do Material</th>
+                <th className="p-2 border-b border-slate-300 text-center w-24">Qtd.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detalheMateriais.map((item: any, idx: number) => (
+                <tr key={item.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                  <td className="p-2 border-r border-b border-slate-200 font-mono text-[10px] text-slate-500">{item.codigo || '-'}</td>
+                  <td className="p-2 border-r border-b border-slate-200 font-bold text-slate-800">{item.descricao}</td>
+                  <td className="p-2 border-b border-slate-200 text-center text-slate-700 font-bold">{item.quantidade || 0}</td>
+                </tr>
+              ))}
+              {detalheMateriais.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="p-4 text-center text-slate-400 italic">Nenhum material cadastrado nesta proposta.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderTabelaEquipamentosSemValores = () => {
+    const detalheMaquinas = proposta.insumos?.detalheMaquinas || [];
+    return (
+      <div className="w-full mt-4 break-inside-avoid print:break-inside-avoid mb-6">
+        <div className="overflow-x-auto w-full border border-slate-300 rounded-lg no-print-border">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                <th className="p-2 border-r border-b border-slate-300 w-24">Código</th>
+                <th className="p-2 border-r border-b border-slate-300">Descrição do Equipamento</th>
+                <th className="p-2 border-b border-slate-300 text-center w-24">Qtd.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detalheMaquinas.map((item: any, idx: number) => (
+                <tr key={item.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                  <td className="p-2 border-r border-b border-slate-200 font-mono text-[10px] text-slate-500">{item.codigo || '-'}</td>
+                  <td className="p-2 border-r border-b border-slate-200 font-bold text-slate-800">{item.descricao}</td>
+                  <td className="p-2 border-b border-slate-200 text-center text-slate-700 font-bold">{item.quantidade || 0}</td>
+                </tr>
+              ))}
+              {detalheMaquinas.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="p-4 text-center text-slate-400 italic">Nenhum equipamento cadastrado nesta proposta.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const renderTermoDeAceite = (clauseNum: number, startIdx: number) => (
     <div className="mt-4">
       <div className="text-[13px] text-justify space-y-4 mb-6 text-slate-800 leading-relaxed pl-4">
@@ -837,6 +903,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             const hasTabela = txt.toUpperCase().includes('[TABELA]');
                             const hasItens = txt.toUpperCase().includes('[ITENS]');
                             const hasAceite = txt.toUpperCase().includes('[TERMO_ACEITE]');
+                            const hasMateriais = txt.toUpperCase().includes('[MATERIAIS]');
+                            const hasEquipamentos = txt.toUpperCase().includes('[EQUIPAMENTOS]');
 
                             const nomeCliente = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || '';
                             const textoLimpo = txt
@@ -846,6 +914,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                               .replace(/\[TABELA\]/gi, '')
                               .replace(/\[ITENS\]/gi, '')
                               .replace(/\[TERMO_ACEITE\]/gi, '')
+                              .replace(/\[MATERIAIS\]/gi, '')
+                              .replace(/\[EQUIPAMENTOS\]/gi, '')
                               .replace(/\[OBJETO_PROPOSTA\]/gi, proposta.cliente?.objetoProposta || '')
                               .replace(/\[ESCOPO_TECNICO\]/gi, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
                               .replace(/\[CONDICOES_COMERCIAIS\]/gi, (proposta.cliente?.condicoesCliente || []).join('\n'))
@@ -872,6 +942,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                                 {hasTabela && renderTabelaComercial()}
                                 {hasItens && renderTabelaItensInclusosExcluidos()}
                                 {hasAceite && renderTermoDeAceite(clauseNum, paragrafos.length)}
+                                {hasMateriais && renderTabelaMateriaisSemValores()}
+                                {hasEquipamentos && renderTabelaEquipamentosSemValores()}
                               </div>
                             );
                           })}
@@ -1226,6 +1298,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   const hasTabela = txt.toUpperCase().includes('[TABELA]');
                   const hasItens = txt.toUpperCase().includes('[ITENS]');
                   const hasAceite = txt.toUpperCase().includes('[TERMO_ACEITE]');
+                  const hasMateriais = txt.toUpperCase().includes('[MATERIAIS]');
+                  const hasEquipamentos = txt.toUpperCase().includes('[EQUIPAMENTOS]');
 
                   // Substituir todas as tags dinâmicas
                   const nomeCliente = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || '';
@@ -1237,6 +1311,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                     .replace(/\[TABELA\]/gi, '')
                     .replace(/\[ITENS\]/gi, '')
                     .replace(/\[TERMO_ACEITE\]/gi, '')
+                    .replace(/\[MATERIAIS\]/gi, '')
+                    .replace(/\[EQUIPAMENTOS\]/gi, '')
                     .replace(/\[OBJETO_PROPOSTA\]/gi, proposta.cliente?.objetoProposta || '')
                     .replace(/\[ESCOPO_TECNICO\]/gi, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
                     .replace(/\[CONDICOES_COMERCIAIS\]/gi, (proposta.cliente?.condicoesCliente || []).join('\n'))
@@ -1263,6 +1339,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       {hasTabela && renderTabelaComercial()}
                       {hasItens && renderTabelaItensInclusosExcluidos()}
                       {hasAceite && renderTermoDeAceite(clauseNum, paragrafos.length)}
+                      {hasMateriais && renderTabelaMateriaisSemValores()}
+                      {hasEquipamentos && renderTabelaEquipamentosSemValores()}
                     </div>
                   );
                 })}
@@ -1557,7 +1635,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                         <textarea 
                           className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-3 min-h-[120px] resize-y focus:outline-none focus:border-[#1e4480]"
                           value={clausula.texto}
-                          placeholder="Digite o texto da cláusula... Ou use as tags: [TABELA], [ITENS], [TERMO_ACEITE]"
+                          placeholder="Digite o texto da cláusula... Ou use as tags: [TABELA], [ITENS], [TERMO_ACEITE], [MATERIAIS], [EQUIPAMENTOS]"
                           onChange={(e) => {
                             if (onUpdateClausulas) {
                               const list = [...proposta.cliente.clausulasA4];

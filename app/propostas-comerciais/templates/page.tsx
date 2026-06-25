@@ -259,6 +259,8 @@ const FVP_INTEGRATION_TAGS = [
   { tag: '[VALOR_TOTAL]', label: 'Valor Total', desc: 'Valor total global da proposta' },
   { tag: '[TABELA]', label: 'Tabela Financeira', desc: 'Quadro Completo de Preços e Insumos' },
   { tag: '[ITENS]', label: 'Itens Inc/Exc', desc: 'Listagem de Itens Inclusos e Exclusos' },
+  { tag: '[MATERIAIS]', label: 'Materiais (sem valores)', desc: 'Tabela de Materiais sem unitário ou total' },
+  { tag: '[EQUIPAMENTOS]', label: 'Equipamentos (sem val)', desc: 'Tabela de Equipamentos sem unitário ou total' },
   { tag: '[CONDICOES_COMERCIAIS]', label: 'Condições Com.', desc: 'Condições de Faturamento e Pagamento' },
   { tag: '[PRAZO_CONTRATO]', label: 'Prazo Contrato', desc: 'Vigência do Contrato Proposto' },
   { tag: '[LOGO_EMPRESA]', label: 'Logo Empresa', desc: 'Imagem da Logo da sua Empresa/Tenant' },
