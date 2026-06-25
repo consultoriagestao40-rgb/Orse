@@ -125,6 +125,10 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     .border-emerald-400 { border-color: var(--primary-color) !important; }
     .border-emerald-500 { border-color: var(--primary-color) !important; }
     .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
+    h4 {
+      break-after: avoid !important;
+      page-break-after: avoid !important;
+    }
   `;
 
   const [companyLogo, setCompanyLogo] = useState<string>(
@@ -279,6 +283,10 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       .border-emerald-400 { border-color: var(--primary-color) !important; }
       .border-emerald-500 { border-color: var(--primary-color) !important; }
       .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
+      h4 {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+      }
     `;
     document.head.appendChild(style);
   }, [proposta.tenant?.primaryColor]);
@@ -927,7 +935,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                               : [];
                               
                             return (
-                              <div key={idx} className={idx > 0 ? "mt-6 break-inside-avoid print:break-inside-avoid" : ""}>
+                              <div key={idx} className={idx > 0 ? "mt-6" : ""}>
                                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
                                 {paragrafos.length > 0 && (
                                   <div className="pl-4 mt-2 mb-4">
@@ -989,7 +997,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                           {renderTabelaComercial()}
                         </div>
 
-                        <div className="mt-6 break-inside-avoid print:break-inside-avoid">
+                        <div className="mt-6">
                           <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">04 - ITENS INCLUSOS E EXCLUSOS</h4>
                           {renderTabelaItensInclusosExcluidos()}
                         </div>
@@ -1022,7 +1030,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       return (
                         <div className="mt-8 space-y-8">
                           {missObjeto && (
-                            <div className="break-inside-avoid print:break-inside-avoid">
+                            <div>
                               <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                                 {String(currentFallbackClause++).padStart(2,'0')} - DO OBJETO E ESCOPO
                               </h4>
@@ -1041,7 +1049,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             </div>
                           )}
                           {missCondicoes && (
-                            <div className="break-inside-avoid print:break-inside-avoid">
+                            <div>
                               <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                                 {String(currentFallbackClause++).padStart(2,'0')} - DAS CONDIÇÕES COMERCIAIS
                               </h4>
@@ -1058,7 +1066,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             </div>
                           )}
                           {missTabela && (
-                            <div className="break-inside-avoid print:break-inside-avoid">
+                            <div>
                               <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                                 {String(currentFallbackClause++).padStart(2,'0')} - RESUMO FINANCEIRO
                               </h4>
@@ -1066,7 +1074,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             </div>
                           )}
                           {missItens && (
-                            <div className="break-inside-avoid print:break-inside-avoid">
+                            <div>
                               <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                                 {String(currentFallbackClause++).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS
                               </h4>
@@ -1074,7 +1082,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             </div>
                           )}
                           {missAceite && (
-                            <div className="break-inside-avoid print:break-inside-avoid">
+                            <div>
                               <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                                 {String(currentFallbackClause++).padStart(2,'0')} - TERMO DE ACEITE
                               </h4>
@@ -1324,7 +1332,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                     : [];
                     
                   return (
-                    <div key={idx} className={idx > 0 ? "mt-6 break-inside-avoid print:break-inside-avoid" : ""}>
+                    <div key={idx} className={idx > 0 ? "mt-6" : ""}>
                       <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
                       {paragrafos.length > 0 && (
                         <div className="pl-4 mt-2 mb-4">
@@ -1385,7 +1393,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {renderTabelaComercial()}
               </div>
 
-              <div className="mt-6 break-inside-avoid print:break-inside-avoid">
+              <div className="mt-6">
                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">04 - ITENS INCLUSOS E EXCLUSOS</h4>
                 {renderTabelaItensInclusosExcluidos()}
               </div>
@@ -1419,7 +1427,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             return (
               <div className="mt-8 space-y-8">
                 {missObjeto && (
-                  <div className="break-inside-avoid print:break-inside-avoid">
+                  <div>
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                       {String(currentFallbackClause++).padStart(2,'0')} - DO OBJETO E ESCOPO
                     </h4>
@@ -1438,7 +1446,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   </div>
                 )}
                 {missCondicoes && (
-                  <div className="break-inside-avoid print:break-inside-avoid">
+                  <div>
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                       {String(currentFallbackClause++).padStart(2,'0')} - DAS CONDIÇÕES COMERCIAIS
                     </h4>
@@ -1455,7 +1463,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   </div>
                 )}
                 {missTabela && (
-                  <div className="break-inside-avoid print:break-inside-avoid">
+                  <div>
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                       {String(currentFallbackClause++).padStart(2,'0')} - RESUMO FINANCEIRO
                     </h4>
@@ -1463,7 +1471,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   </div>
                 )}
                 {missItens && (
-                  <div className="break-inside-avoid print:break-inside-avoid">
+                  <div>
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                       {String(currentFallbackClause++).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS
                     </h4>
@@ -1471,7 +1479,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   </div>
                 )}
                 {missAceite && (
-                  <div className="break-inside-avoid print:break-inside-avoid">
+                  <div>
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
                       {String(currentFallbackClause++).padStart(2,'0')} - TERMO DE ACEITE
                     </h4>
