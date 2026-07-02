@@ -657,7 +657,7 @@ function stripHtml(html: string) {
   return text;
 }
 
-// 11. Notifica todos os participantes no chat interno quando a ata é publicada
+// 11. Notifica todos os participantes no chat interno e via WhatsApp quando a ata é publicada
 export async function notifyAtaPublish(ataId: string) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Não autorizado' };
@@ -698,7 +698,26 @@ export async function notifyAtaPublish(ataId: string) {
       return { success: true, count: 0 };
     }
 
-    // Formata o resumo do relatório
+    // 1. Participantes (Quem participou)
+    let participantesSummary = '';
+    if (participantesList.length > 0) {
+      participantesSummary = '\n👥 *PARTICIPANTES:*\n';
+      participantesList.forEach((p: any) => {
+        participantesSummary += `- ${p.nome}${p.presente ? ' (Presente)' : ' (Ausente)'}\n`;
+      });
+    }
+
+    // 2. Pautas Principais (Pautas)
+    let pautasSummary = '';
+    const pautasArray = Array.isArray(ata.pautas) ? (ata.pautas as any[]) : [];
+    if (pautasArray.length > 0) {
+      pautasSummary = '\n📌 *PAUTAS DA REUNIÃO:*\n';
+      pautasArray.forEach((p: any) => {
+        pautasSummary += `- ${p}\n`;
+      });
+    }
+
+    // 3. Formata o resumo do relatório
     let relatorioSummary = '';
     if (ata.relatorio) {
       const plainRelatorio = stripHtml(ata.relatorio);
@@ -707,7 +726,7 @@ export async function notifyAtaPublish(ataId: string) {
       }
     }
 
-    // Formata o resumo de pautas deliberativas
+    // 4. Formata o resumo de pautas deliberativas
     let delibSummary = '';
     if (pautasDelib.length > 0) {
       delibSummary = '\n📝 *PAUTAS DELIBERADAS:*\n';
@@ -721,18 +740,70 @@ export async function notifyAtaPublish(ataId: string) {
       });
     }
 
+    // 5. Todas as ações da ata
+    let acoesSummary = '';
+    if (ata.acoes.length > 0) {
+      acoesSummary = '\n✅ *AÇÕES DEFINIDAS:*\n';
+      ata.acoes.forEach(a => {
+        const limitDate = new Date(a.dataLimite).toLocaleDateString('pt-BR');
+        const respNome = a.responsavel?.nome || 'Não especificado';
+        acoesSummary += `- [${respNome}] Ação: ${a.descricao} (Prazo: ${limitDate})\n`;
+      });
+    }
+
+    // 6. Próxima Reunião
+    let proximaSummary = '';
+    if (ata.proximaReuniaoData) {
+      const dateNext = new Date(ata.proximaReuniaoData).toLocaleDateString('pt-BR');
+      proximaSummary = `\n📆 *PRÓXIMA REUNIÃO:*\n- Data: ${dateNext}${ata.proximaReuniaoHora ? ` às ${ata.proximaReuniaoHora}` : ''}\n- Local: ${ata.proximaReuniaoLocal || 'Não especificado'}\n`;
+    }
+
+    // Busca os celulares de todos os targetUsers no banco de dados em uma única consulta
+    const userIds = targetUsers.map(u => u.userId).filter((id): id is string => !!id);
+    const dbUsers = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: {
+        id: true,
+        celular: true
+      }
+    });
+    const userCelularMap = new Map(dbUsers.map(u => [u.id, u.celular]));
+
+    // Prepara chaves do Z-API do tenant
+    let instanceId = process.env.ZAPI_INSTANCE_ID;
+    let token = process.env.ZAPI_TOKEN;
+    let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+    if (user.tenantId) {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: user.tenantId },
+        select: {
+          whatsappInstanceId: true,
+          whatsappToken: true,
+          whatsappClientToken: true
+        }
+      });
+      if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+        instanceId = tenant.whatsappInstanceId;
+        token = tenant.whatsappToken;
+        clientToken = tenant.whatsappClientToken;
+      }
+    }
+
     for (const part of targetUsers) {
-      // Filtra as ações sob responsabilidade deste participante
+      if (!part.userId) continue;
+
+      // Filtra as ações sob responsabilidade deste participante para destaque
       const partAcoes = ata.acoes.filter(a => a.responsavelId === part.userId);
-      let acoesSummary = '';
+      let suasAcoes = '';
       if (partAcoes.length > 0) {
-        acoesSummary = '\n✅ *SUAS AÇÕES E PRAZOS:*\n';
+        suasAcoes = '\n👉 *SUAS AÇÕES E PRAZOS (DESTAQUE):*\n';
         partAcoes.forEach(a => {
           const limitDate = new Date(a.dataLimite).toLocaleDateString('pt-BR');
-          acoesSummary += `- Ação: ${a.descricao} (Prazo: ${limitDate})\n`;
+          suasAcoes += `- Ação: ${a.descricao} (Prazo: ${limitDate})\n`;
         });
       } else {
-        acoesSummary = '\nℹ️ Você não possui ações pendentes atribuídas nesta ata.\n';
+        suasAcoes = '\nℹ️ Você não possui ações pendentes atribuídas nesta ata.\n';
       }
 
       // Monta a mensagem final para este participante
@@ -741,11 +812,38 @@ export async function notifyAtaPublish(ataId: string) {
 📅 Data: ${new Date(ata.dataReuniou).toLocaleDateString('pt-BR')} ${ata.horaReuniou ? `às ${ata.horaReuniou}` : ''}
 📍 Local: ${ata.local || 'Não especificado'}
 👤 Criada por: ${ata.criadorNome || user.nome}
-${relatorioSummary}${delibSummary}${acoesSummary}
+${participantesSummary}${pautasSummary}${relatorioSummary}${delibSummary}${acoesSummary}${suasAcoes}${proximaSummary}
 🔗 Visualize a ata completa no menu *Atas de Reunião*.`;
 
       // Envia a mensagem direta via chat interno
       await sendInternalMessage(part.userId, msg);
+
+      // Envia via WhatsApp se o participante tiver celular cadastrado e o Z-API estiver configurado
+      const rawPhone = userCelularMap.get(part.userId);
+      if (rawPhone && instanceId && token && clientToken) {
+        let cleanPhone = rawPhone.replace(/\D/g, '');
+        if (cleanPhone.length >= 10 && cleanPhone.length <= 11 && !cleanPhone.startsWith('55')) {
+          cleanPhone = `55${cleanPhone}`;
+        }
+        if (cleanPhone) {
+          try {
+            const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
+            await fetch(url, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Client-Token': clientToken
+              },
+              body: JSON.stringify({
+                phone: cleanPhone,
+                message: msg
+              })
+            });
+          } catch (zapiErr) {
+            console.error(`Erro ao disparar WhatsApp de ata para participante ${part.nome}:`, zapiErr);
+          }
+        }
+      }
     }
 
     return { success: true, count: targetUsers.length };
