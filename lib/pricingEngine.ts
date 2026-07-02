@@ -117,6 +117,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   // 2. Encargos e Provisões (Bloco A)
   // Se houver estrutura de grupos de encargos detalhada nas premissas, utiliza ela. Senão, usa o fallback da CCT.
   let percentualEncargosGerais = 0;
+  let hasEncargosValues = false;
   const pEnc = premissas.encargos;
 
   if (pEnc && typeof pEnc === 'object') {
@@ -125,13 +126,15 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       if (grupo && typeof grupo === 'object') {
         Object.values(grupo).forEach((val: any) => {
           percentualEncargosGerais += Number(val) || 0;
+          hasEncargosValues = true;
         });
       }
     });
   }
 
-  // Se a soma for zero (ou não houver objeto), usa os campos individuais da CCT/Default como fallback
-  if (percentualEncargosGerais === 0) {
+  // Se não houver nenhum valor definido no objeto encargos (ou seja, o objeto está ausente ou vazio),
+  // usa os campos individuais da CCT/Default como fallback.
+  if (!hasEncargosValues) {
     percentualEncargosGerais = 
       (cctEfetiva.encargoInss || 20) + 
       (cctEfetiva.encargoFgts || 8) + 
