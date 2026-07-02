@@ -63,7 +63,14 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const param = colab.parametrosPosto || {};
   
   // A CCT efetiva é a do colab se tiver valores próprios, senão tenta a global da proposta, ou o que estiver no cargo
-  const cctEfetiva = (cctColab.vaValor || cctColab.vtValor) ? cctColab : (cctGlobal.vaValor ? cctGlobal : (cargo.cct || cctColab || cctGlobal));
+  const hasKeys = (obj: any) => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
+  const cctEfetiva = (hasKeys(cctColab) && (cctColab.vaValor !== undefined || cctColab.vtValor !== undefined))
+    ? cctColab
+    : (hasKeys(cctGlobal)
+        ? cctGlobal
+        : (hasKeys(cargo.cct)
+            ? cargo.cct
+            : (hasKeys(cctColab) ? cctColab : {})));
   
   // Base de Remuneração
   const salarioBase = Number(cargo.pisoSalarial || 0) || 0;
