@@ -691,8 +691,8 @@ export async function notifyAtaPublish(ataId: string) {
       ? (ata.pautasDeliberativas as any[])
       : [];
 
-    // Filtra participantes que possuem conta no sistema (userId) e não são o próprio remetente
-    const targetUsers = participantesList.filter(p => p.userId && p.userId !== user.id);
+    // Filtra participantes que possuem conta no sistema (userId)
+    const targetUsers = participantesList.filter(p => p.userId);
 
     if (targetUsers.length === 0) {
       return { success: true, count: 0 };
@@ -815,8 +815,10 @@ export async function notifyAtaPublish(ataId: string) {
 ${participantesSummary}${pautasSummary}${relatorioSummary}${delibSummary}${acoesSummary}${suasAcoes}${proximaSummary}
 🔗 Visualize a ata completa no menu *Atas de Reunião*.`;
 
-      // Envia a mensagem direta via chat interno
-      await sendInternalMessage(part.userId, msg);
+      // Envia a mensagem direta via chat interno (somente se não for o próprio remetente)
+      if (part.userId !== user.id) {
+        await sendInternalMessage(part.userId, msg);
+      }
 
       // Envia via WhatsApp se o participante tiver celular cadastrado e o Z-API estiver configurado
       const rawPhone = userCelularMap.get(part.userId);
