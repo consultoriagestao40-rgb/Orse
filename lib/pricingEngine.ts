@@ -176,7 +176,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const descontoVA = ((custoVABruto + vaSobreFerias) * vaDescPct) / 100;
   
   // 9) Desconto de VT(-) - Geralmente 6%
-  const vtDescPct = Number(cctEfetiva.vtDescPercent || 6) || 0;
+  const vtDescPct = (cctEfetiva.vtDescPercent !== undefined && cctEfetiva.vtDescPercent !== null && cctEfetiva.vtDescPercent !== '')
+    ? Number(cctEfetiva.vtDescPercent)
+    : 6;
   const descontoVT = (salarioBase * vtDescPct) / 100;
   
   // 10) Exames Médicos

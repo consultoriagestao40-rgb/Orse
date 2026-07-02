@@ -224,7 +224,10 @@ export default function AdminEquipesTecnicasPage() {
 
     // 4. Vale Transporte (VT) Líquido
     const vtBruto = (Number(cct.vtValor) || 0) * diasEscala;
-    const descontoVT = (salarioBase * (Number(cct.vtDescPercent) || 6)) / 100;
+    const vtDescPct = (cct.vtDescPercent !== undefined && cct.vtDescPercent !== null && cct.vtDescPercent !== '')
+      ? Number(cct.vtDescPercent)
+      : 6;
+    const descontoVT = (salarioBase * vtDescPct) / 100;
     const vtLiquido = Math.max(0, vtBruto - descontoVT);
 
     // 5. Outros Benefícios (Cesta, Seguro, Exames, Sindicato...)
@@ -374,7 +377,10 @@ export default function AdminEquipesTecnicasPage() {
 
           // 4. Benefícios: Vale Transporte (VT) Líquido
           const vtBruto = (Number(cct.vtValor) || 0) * diasEscala;
-          const descontoVT = (salarioBase * (Number(cct.vtDescPercent) || 6)) / 100;
+          const vtDescPct = (cct.vtDescPercent !== undefined && cct.vtDescPercent !== null && cct.vtDescPercent !== '')
+            ? Number(cct.vtDescPercent)
+            : 6;
+          const descontoVT = (salarioBase * vtDescPct) / 100;
           const vtLiquido = Math.max(0, vtBruto - descontoVT);
 
           // 5. Benefícios: Outros (Cesta, Seguro, Exames, Sindicato...)
