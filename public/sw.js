@@ -42,3 +42,14 @@ self.addEventListener('notificationclick', function (event) {
     })
   );
 });
+
+// A fetch handler is required for PWA installability.
+// We use a simple pass-through fetch handler that falls back to cache if offline.
+self.addEventListener('fetch', function (event) {
+  event.respondWith(
+    fetch(event.request).catch(function () {
+      return caches.match(event.request);
+    })
+  );
+});
+

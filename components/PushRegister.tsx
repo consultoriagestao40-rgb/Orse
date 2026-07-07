@@ -43,9 +43,7 @@ export default function PushRegister() {
       return;
     }
     try {
-      const register = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
+      const register = await navigator.serviceWorker.ready;
 
       const subscription = await register.pushManager.subscribe({
         userVisibleOnly: true,
@@ -68,12 +66,24 @@ export default function PushRegister() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Registra o Service Worker incondicionalmente para suporte a PWA (instalação, offline, etc.)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then((reg) => {
+          console.log('Service Worker registrado com sucesso:', reg.scope);
+          // Se as notificações já foram concedidas, inscreve o usuário no push
+          if ('Notification' in window && Notification.permission === 'granted') {
+            subscribeUser();
+          }
+        })
+        .catch((err) => {
+          console.error('Erro ao registrar Service Worker:', err);
+        });
+    }
+
     // Check permissions
     if ('Notification' in window) {
       setPermissionState(Notification.permission);
-      if (Notification.permission === 'granted') {
-        subscribeUser();
-      }
     }
 
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
@@ -104,10 +114,8 @@ export default function PushRegister() {
         return;
       }
 
-      // Register Sw
-      const register = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
+      // Obtém o registro ativo do Service Worker
+      const register = await navigator.serviceWorker.ready;
 
       // Subscribe
       const subscription = await register.pushManager.subscribe({
