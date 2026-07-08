@@ -588,8 +588,8 @@ export async function saveProposta(data: any) {
     revalidatePath('/propostas-comerciais');
     revalidatePath('/propostas-comerciais/templates');
     const propostaCompleta = await prisma.proposta.findUnique({ where: { id: propostaId }, select: { numero: true } });
-    const numeroProposta = propostaCompleta ? `FPV-${propostaCompleta.numero.toString().padStart(3, '0')}` : '';
-    return { success: true, propostaId, versaoId: newVersao.id, versao: nextVersion, numeroProposta };
+    const finalNumeroProposta = propostaCompleta ? `FPV-${propostaCompleta.numero.toString().padStart(3, '0')}` : '';
+    return { success: true, propostaId, versaoId: newVersao.id, versao: nextVersion, numeroProposta: finalNumeroProposta };
   } catch (error: any) {
     console.error('Error saving proposta:', error);
     return { success: false, error: error.message };
