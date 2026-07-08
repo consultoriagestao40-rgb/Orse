@@ -878,7 +878,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   {/* TÍTULO */}
                   <div className="text-center mb-8">
                     <h2 className="text-base font-black uppercase tracking-tight">PROPOSTA COMERCIAL DE PRESTAÇÃO DE SERVIÇOS</h2>
-                    <p className="font-bold mt-2 text-[10px]">Proposta nº {(proposta.cliente?.numeroProposta || "0000").toString().padStart(4, '0')} - Rev. {String(proposta.cliente?.revisao || "01").padStart(2, '0')}</p>
+                    <p className="font-bold mt-2 text-[10px]">Proposta nº {proposta.cliente?.numeroProposta && proposta.cliente.numeroProposta !== "0000" && proposta.cliente.numeroProposta !== "" ? proposta.cliente.numeroProposta : (proposta.numero ? (proposta.numero.toString().includes('FPV') ? proposta.numero : `FPV-${proposta.numero.toString().padStart(3, '0')}`) : "FPV-XXXX")} - Rev. {String(proposta.cliente?.revisao || "01").padStart(2, '0')}</p>
                     <p className="text-[10px]">Data: {proposta.cliente?.dataElaboracao ? proposta.cliente.dataElaboracao.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR')}</p>
                   </div>
 
@@ -1270,7 +1270,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         {/* TÍTULO */}
         <div className="text-center mb-8">
           <h2 className="text-lg font-black uppercase tracking-tight">PROPOSTA COMERCIAL DE PRESTAÇÃO DE SERVIÇOS</h2>
-          <p className="font-bold mt-2">Proposta nº {(proposta.cliente?.numeroProposta || "0000").toString().padStart(4, '0')} - Rev. {String(proposta.cliente?.revisao || "01").padStart(2, '0')}</p>
+          <p className="font-bold mt-2">Proposta nº {proposta.cliente?.numeroProposta && proposta.cliente.numeroProposta !== "0000" && proposta.cliente.numeroProposta !== "" ? proposta.cliente.numeroProposta : (proposta.numero ? (proposta.numero.toString().includes('FPV') ? proposta.numero : `FPV-${proposta.numero.toString().padStart(3, '0')}`) : "FPV-XXXX")} - Rev. {String(proposta.cliente?.revisao || "01").padStart(2, '0')}</p>
           <p>Data: {proposta.cliente?.dataElaboracao ? proposta.cliente.dataElaboracao.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR')}</p>
         </div>
 

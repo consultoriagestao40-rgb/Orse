@@ -439,6 +439,19 @@ export async function saveProposta(data: any) {
       ? (lastVersion ? lastVersion.versao + 1 : 1)
       : (lastVersion ? lastVersion.versao : 1);
 
+    // Busca o número autoincrementado real da proposta do banco de dados para os metadados
+    const dbProposta = await prisma.proposta.findUnique({
+      where: { id: propostaId },
+      select: { numero: true }
+    });
+    const dbPropostaNumero = dbProposta?.numero || 0;
+    const formattedNumero = `FPV-${dbPropostaNumero.toString().padStart(3, '0')}`;
+
+    let numeroProposta = cliente.numeroProposta;
+    if (!numeroProposta || numeroProposta === 'Gerado ao salvar' || numeroProposta.includes('XXXX') || numeroProposta === '') {
+      numeroProposta = formattedNumero;
+    }
+
     const metadados = {
       clienteNome: cliente.cliente,
       segmento: cliente.segmento || '',
@@ -450,7 +463,7 @@ export async function saveProposta(data: any) {
       escopoTecnico: cliente.escopoTecnico || '',
       cidade: cliente.cidade,
       dataElaboracao: cliente.dataElaboracao,
-      numeroProposta: cliente.numeroProposta,
+      numeroProposta: numeroProposta,
       revisao: 'R' + String(nextVersion).padStart(2, '0'),
       tipoServicos: cliente.tipoServicos,
       tipoProposta: cliente.tipoProposta || 'RECORRENTE',
