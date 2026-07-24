@@ -837,8 +837,8 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         detalheDescartaveis: meta.insumos?.detalheDescartaveis || []
       },
       premissas: {
-        taxaAdm: margens?.adm || 5,
-        margemLucro: margens?.lucro || 10,
+        taxaAdm: margens?.adm ?? 5,
+        margemLucro: margens?.lucro ?? 10,
         comissaoVendedor: margens?.comissaoVendedor || 0,
         reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
         manutencaoPct: margens?.manutencaoPct || 0,
@@ -911,8 +911,8 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       items: returnObj.equipe,
       impostos: { total: Number(totalTributos) },
       margens: { 
-        adm: margens?.adm || 5, 
-        lucro: margens?.lucro || 10,
+        adm: margens?.adm ?? 5, 
+        lucro: margens?.lucro ?? 10,
         comissaoVendedor: margens?.comissaoVendedor || 0
       },
       reservaTecnicaPct: margens?.reservaTecnicaPct || 0,

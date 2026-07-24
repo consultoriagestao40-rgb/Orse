@@ -83,6 +83,7 @@ export default function AtivosPage() {
   const [modalListTemplatesOpen, setModalListTemplatesOpen] = useState(false);
   const [modalContratoOpen, setModalContratoOpen] = useState(false);
   const [modalOsOpen, setModalOsOpen] = useState(false);
+  const [selectedAtivos, setSelectedAtivos] = useState<string[]>([]);
   
   // PDF Preview Modals
   const [modalContratoPdfOpen, setModalContratoPdfOpen] = useState(false);
@@ -663,6 +664,7 @@ export default function AtivosPage() {
         dataPrevista: os.dataPrevista ? new Date(os.dataPrevista).toISOString().substring(0, 10) : '',
         status: os.status || 'PENDENTE'
       });
+      setSelectedAtivos([os.ativoId]);
     } else {
       const targetContrato = contratos[0];
       setOsForm({
@@ -679,6 +681,7 @@ export default function AtivosPage() {
         dataPrevista: new Date().toISOString().substring(0, 10),
         status: 'PENDENTE'
       });
+      setSelectedAtivos(targetContrato.itens[0]?.ativoId ? [targetContrato.itens[0]?.ativoId] : []);
     }
     setActiveOsTab('details');
     setModalOsOpen(true);
@@ -693,12 +696,14 @@ export default function AtivosPage() {
         clientId: target.clientId,
         ativoId: target.itens[0]?.ativoId || ''
       }));
+      setSelectedAtivos(target.itens[0]?.ativoId ? [target.itens[0]?.ativoId] : []);
     }
   };
 
   const handleSaveOs = async () => {
-    if (!osForm.contratoComodatoId || !osForm.ativoId) {
-      return showAlert('Seleção Necessária', 'Selecione o Contrato e o Equipamento associado.', 'warning');
+    const isNew = !osForm.id;
+    if (!osForm.contratoComodatoId || (isNew && selectedAtivos.length === 0) || (!isNew && !osForm.ativoId)) {
+      return showAlert('Seleção Necessária', 'Selecione o Contrato e pelo menos um Equipamento associado.', 'warning');
     }
     setSaving(true);
     let res;
@@ -717,7 +722,18 @@ export default function AtivosPage() {
         status: osForm.status
       });
     } else {
-      res = await createOrdemServicoAtivo(osForm);
+      res = await createOrdemServicoAtivo({
+        tipo: osForm.tipo,
+        contratoComodatoId: osForm.contratoComodatoId,
+        clientId: osForm.clientId,
+        ativoIds: selectedAtivos,
+        ativoDestinoId: osForm.ativoDestinoId || undefined,
+        observacao: osForm.observacao,
+        instrucoes: osForm.instrucoes,
+        tecnicoResponsavel: osForm.tecnicoResponsavel,
+        tecnicoEmail: osForm.tecnicoEmail,
+        dataPrevista: osForm.dataPrevista ? new Date(osForm.dataPrevista).toISOString().substring(0, 10) : undefined
+      });
     }
     
     if (res.success) {
@@ -4136,20 +4152,51 @@ export default function AtivosPage() {
 
                     {/* Seleção do Equipamento Associado */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo/Equipamento Alvo *</label>
-                        <select
-                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
-                          value={osForm.ativoId}
-                          onChange={(e) => setOsForm({...osForm, ativoId: e.target.value})}
-                        >
-                          <option value="" disabled hidden>Selecione</option>
-                          {/* Mostra equipamentos que pertencem a esse contrato de comodato */}
-                          {contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.map((it: any) => (
-                            <option key={it.ativo.id} value={it.ativo.id}>{it.ativo.codigo} - {it.ativo.descricao}</option>
-                          ))}
-                        </select>
-                      </div>
+                      {!osForm.id && osForm.tipo !== 'TROCA' ? (
+                        <div className="space-y-1.5 col-span-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativos/Equipamentos Alvo *</label>
+                          <div className="border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto bg-slate-50 space-y-1.5">
+                            {contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.map((it: any) => {
+                              const isSelected = selectedAtivos.includes(it.ativo.id);
+                              return (
+                                <label key={it.ativo.id} className="flex items-center gap-3 text-xs text-slate-700 font-bold cursor-pointer hover:bg-slate-100 p-1.5 rounded transition-colors select-none">
+                                  <input 
+                                    type="checkbox"
+                                    className="w-4 h-4 text-[#1B4D3E] border-slate-350 rounded focus:ring-[#1B4D3E] cursor-pointer"
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      if (isSelected) {
+                                        setSelectedAtivos(selectedAtivos.filter(id => id !== it.ativo.id));
+                                      } else {
+                                        setSelectedAtivos([...selectedAtivos, it.ativo.id]);
+                                      }
+                                    }}
+                                  />
+                                  <span>{it.ativo.codigo} - {it.ativo.descricao}</span>
+                                </label>
+                              );
+                            })}
+                            {(!osForm.contratoComodatoId || (contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.length || 0) === 0) && (
+                              <p className="text-[10px] text-slate-400 italic">Selecione um contrato para listar os ativos.</p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo/Equipamento Alvo *</label>
+                          <select
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                            value={osForm.ativoId}
+                            onChange={(e) => setOsForm({...osForm, ativoId: e.target.value})}
+                          >
+                            <option value="" disabled hidden>Selecione</option>
+                            {/* Mostra equipamentos que pertencem a esse contrato de comodato */}
+                            {contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.map((it: any) => (
+                              <option key={it.ativo.id} value={it.ativo.id}>{it.ativo.codigo} - {it.ativo.descricao}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                       
                       {osForm.tipo === 'TROCA' && (
                         <div className="space-y-1">

@@ -254,6 +254,19 @@ export async function deleteAtivo(id: string) {
       return { success: false, error: 'Não é possível excluir o ativo pois ele possui contratos de comodato vinculados.' };
     }
 
+    // Check if asset has associated service orders (as origin or destination)
+    const osCount = await prisma.ordemServicoAtivo.count({
+      where: {
+        OR: [
+          { ativoId: id },
+          { ativoDestinoId: id }
+        ]
+      }
+    });
+    if (osCount > 0) {
+      return { success: false, error: 'Não é possível excluir o ativo pois ele possui ordens de serviço (histórico de instalação ou manutenção) vinculadas.' };
+    }
+
     await prisma.ativo.delete({
       where: { id, tenantId: user.tenantId }
     });
@@ -661,7 +674,8 @@ export async function createOrdemServicoAtivo(data: {
   tipo: string;
   contratoComodatoId: string;
   clientId: string;
-  ativoId: string;
+  ativoId?: string;
+  ativoIds?: string[];
   ativoDestinoId?: string;
   observacao?: string;
   instrucoes?: string;
@@ -672,29 +686,35 @@ export async function createOrdemServicoAtivo(data: {
   try {
     const user = await checkAuth();
 
-    const os = await prisma.ordemServicoAtivo.create({
-      data: {
-        tipo: data.tipo,
-        contratoComodatoId: data.contratoComodatoId,
-        clientId: data.clientId,
-        ativoId: data.ativoId,
-        ativoDestinoId: data.ativoDestinoId || null,
-        observacao: data.observacao || '',
-        instrucoes: data.instrucoes || '',
-        tecnicoResponsavel: data.tecnicoResponsavel || '',
-        tecnicoEmail: data.tecnicoEmail || '',
-        status: 'PENDENTE',
-        dataPrevista: data.dataPrevista ? new Date(data.dataPrevista) : null,
-        tenantId: user.tenantId,
-        criadorId: user.id
-      },
-      include: {
-        client: true,
-        contratoComodato: true,
-        ativo: true,
-        criador: true
-      }
-    });
+    const ids = data.ativoIds && data.ativoIds.length > 0 ? data.ativoIds : [data.ativoId!];
+    const created = [];
+
+    for (const aId of ids) {
+      const os = await prisma.ordemServicoAtivo.create({
+        data: {
+          tipo: data.tipo,
+          contratoComodatoId: data.contratoComodatoId,
+          clientId: data.clientId,
+          ativoId: aId,
+          ativoDestinoId: data.ativoDestinoId || null,
+          observacao: data.observacao || '',
+          instrucoes: data.instrucoes || '',
+          tecnicoResponsavel: data.tecnicoResponsavel || '',
+          tecnicoEmail: data.tecnicoEmail || '',
+          status: 'PENDENTE',
+          dataPrevista: data.dataPrevista ? new Date(data.dataPrevista) : null,
+          tenantId: user.tenantId,
+          criadorId: user.id
+        },
+        include: {
+          client: true,
+          contratoComodato: true,
+          ativo: true,
+          criador: true
+        }
+      });
+      created.push(os);
+    }
 
     revalidatePath('/ativos');
 

@@ -288,6 +288,11 @@ function PropostaEditor() {
   const [activeAdicionaisPostoId, setActiveAdicionaisPostoId] = useState<string | null>(null);
   const [activeEpisPostoId, setActiveEpisPostoId] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(1);
+  const [productSearch, setProductSearch] = useState<{ [key: string]: string }>({
+    detalheMateriais: '',
+    detalheMaquinas: '',
+    detalheDescartaveis: ''
+  });
 
   // =========================================================================
   // ESTADOS DA DRE PARAMETRIZADA E EDITÁVEL
@@ -1178,7 +1183,17 @@ function PropostaEditor() {
     const total = proposta.insumos[tipo.replace('detalhe', '').toLowerCase()] || 0;
     
     const normalizedCats = categorias.map(c => normalizeText(c));
-    const produtosFiltrados = produtosDb.filter(p => normalizedCats.includes(normalizeText(p.categoria)));
+    const query = productSearch[tipo] || '';
+    const produtosFiltrados = produtosDb.filter(p => {
+      const matchesCategory = normalizedCats.includes(normalizeText(p.categoria));
+      if (!matchesCategory) return false;
+      if (!query) return true;
+      
+      const normalizedQuery = normalizeText(query);
+      const matchesDesc = normalizeText(p.descricao).includes(normalizedQuery);
+      const matchesCodigo = p.codigo.toString().includes(normalizedQuery);
+      return matchesDesc || matchesCodigo;
+    });
 
     return (
       <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
@@ -1207,19 +1222,45 @@ function PropostaEditor() {
               </button>
             </div>
 
-            <select 
-              className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
-              value=""
-              onChange={(e) => {
-                const prod = produtosDb.find(p => p.id === e.target.value);
-                if (prod) addInsumoItem(tipo, prod);
-              }}
-            >
-              <option value="" className="text-slate-800 bg-white">Selecione um produto para adicionar...</option>
-              {produtosFiltrados.map(p => (
-                <option key={p.id} value={p.id}>[{p.codigo}] {p.descricao} - {formatCurrency(p.precoUnitario)}</option>
-              ))}
-            </select>
+            <div className="flex flex-col sm:flex-row gap-2 mb-3">
+              <div className="flex-1">
+                <input 
+                  type="text" 
+                  placeholder="🔍 Digite para filtrar..." 
+                  className="w-full bg-white border border-slate-350 rounded px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#1B4D3E] placeholder-slate-400 font-medium"
+                  value={productSearch[tipo] || ''}
+                  onChange={(e) => {
+                    setProductSearch(prev => ({
+                      ...prev,
+                      [tipo]: e.target.value
+                    }));
+                  }}
+                />
+              </div>
+              <div className="flex-[2]">
+                <select 
+                  className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                  value=""
+                  onChange={(e) => {
+                    const prod = produtosDb.find(p => p.id === e.target.value);
+                    if (prod) {
+                      addInsumoItem(tipo, prod);
+                      setProductSearch(prev => ({
+                        ...prev,
+                        [tipo]: ''
+                      }));
+                    }
+                  }}
+                >
+                  <option value="" className="text-slate-800 bg-white">
+                    {produtosFiltrados.length === 0 ? "Nenhum produto correspondente..." : `Selecione um produto (${produtosFiltrados.length} encontrados)...`}
+                  </option>
+                  {produtosFiltrados.map(p => (
+                    <option key={p.id} value={p.id}>[{p.codigo}] {p.descricao} - {formatCurrency(p.precoUnitario)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <table className="w-full text-left text-sm border-collapse">
