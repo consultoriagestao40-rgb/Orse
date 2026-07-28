@@ -1257,15 +1257,22 @@ export async function getLoggedTenantInfo() {
 export async function getTecnicoOrdens() {
   try {
     const user = await checkAuth();
+    const isManagerial = user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'LOGISTICA';
+    
+    const whereClause: any = {
+      tenantId: user.tenantId,
+      status: { in: ['PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO'] }
+    };
+
+    if (!isManagerial) {
+      whereClause.OR = [
+        { tecnicoEmail: user.email },
+        { tecnicoResponsavel: user.nome }
+      ];
+    }
+
     const ordens = await prisma.ordemServicoAtivo.findMany({
-      where: {
-        tenantId: user.tenantId,
-        OR: [
-          { tecnicoEmail: user.email },
-          { tecnicoResponsavel: user.nome }
-        ],
-        status: { in: ['PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO'] }
-      },
+      where: whereClause,
       include: {
         client: true,
         contratoComodato: {

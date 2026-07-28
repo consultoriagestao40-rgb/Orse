@@ -317,12 +317,9 @@ export default function TecnicoPage() {
                         loggedUser.cargo?.toLowerCase().includes('entrega') || 
                         loggedUser.cargo?.toLowerCase().includes('motoboy') || 
                         loggedUser.cargo?.toLowerCase().includes('motorista');
-        const isGest = loggedUser.role === 'ADMIN' || loggedUser.role === 'MANAGER';
+        const isGest = loggedUser.role === 'ADMIN' || loggedUser.role === 'MANAGER' || loggedUser.role === 'LOGISTICA';
         if (!isGest) {
-          if (isDeliv) {
-            router.push('/entrega/entregador');
-            return;
-          } else if (!isTech) {
+          if (!isTech && !isDeliv) {
             router.push('/leads/mobile');
             return;
           }

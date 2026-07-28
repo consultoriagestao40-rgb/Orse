@@ -533,15 +533,22 @@ export async function deleteEntrega(id: string) {
 export async function getEntregadorEntregas() {
   try {
     const user = await checkAuth();
+    const isManagerial = user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'LOGISTICA';
+    
+    const whereClause: any = {
+      tenantId: user.tenantId,
+      status: { in: ['PROGRAMADO', 'EM_DESLOCAMENTO', 'ENTREGA'] }
+    };
+
+    if (!isManagerial) {
+      whereClause.OR = [
+        { entregadorEmail: user.email },
+        { entregadorResponsavel: user.nome }
+      ];
+    }
+
     const entregas = await prisma.entrega.findMany({
-      where: {
-        tenantId: user.tenantId,
-        OR: [
-          { entregadorEmail: user.email },
-          { entregadorResponsavel: user.nome }
-        ],
-        status: { in: ['PROGRAMADO', 'EM_DESLOCAMENTO', 'ENTREGA'] }
-      },
+      where: whereClause,
       include: { client: true }
     });
 

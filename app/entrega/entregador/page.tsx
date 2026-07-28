@@ -320,12 +320,9 @@ export default function EntregadorPage() {
                         loggedUser.cargo?.toLowerCase().includes('entrega') || 
                         loggedUser.cargo?.toLowerCase().includes('motoboy') || 
                         loggedUser.cargo?.toLowerCase().includes('motorista');
-        const isGest = loggedUser.role === 'ADMIN' || loggedUser.role === 'MANAGER';
+        const isGest = loggedUser.role === 'ADMIN' || loggedUser.role === 'MANAGER' || loggedUser.role === 'LOGISTICA';
         if (!isGest) {
-          if (isTech) {
-            router.push('/ativos/tecnico');
-            return;
-          } else if (!isDeliv) {
+          if (!isTech && !isDeliv) {
             router.push('/leads/mobile');
             return;
           }
