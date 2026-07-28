@@ -1229,6 +1229,7 @@ model Entrega {
   clientId                      String
   client                        Client            @relation(fields: [clientId], references: [id])
   observacao                    String?           @db.Text
+  enderecoEntrega               String?           @db.Text
   entregadorResponsavel         String?
   entregadorEmail               String?
   dataProgramada                DateTime?

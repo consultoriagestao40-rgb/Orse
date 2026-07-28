@@ -439,6 +439,7 @@ const Sidebar = () => {
               nome: freshUser.nome,
               role: freshUser.role,
               email: freshUser.email,
+              cargo: freshUser.cargo,
               tenantId: freshUser.tenantId,
               avatarUrl: freshUser.avatarUrl ? `/api/user/avatar?email=${encodeURIComponent(freshUser.email)}&v=${freshUser.avatarUrl.length > 30 ? encodeURIComponent(freshUser.avatarUrl.substring(freshUser.avatarUrl.length - 10)) : encodeURIComponent(freshUser.avatarUrl.substring(0, 10))}` : undefined,
               tenantLogoUrl: (freshUser as any).tenant?.logoUrl ? `/api/tenant/logo?tenantId=${freshUser.tenantId}&v=${(freshUser as any).tenant.logoUrl.length > 30 ? encodeURIComponent((freshUser as any).tenant.logoUrl.substring((freshUser as any).tenant.logoUrl.length - 10)) : encodeURIComponent((freshUser as any).tenant.logoUrl.substring(0, 10))}` : undefined,

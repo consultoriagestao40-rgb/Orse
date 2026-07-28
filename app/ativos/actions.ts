@@ -718,26 +718,28 @@ export async function createOrdemServicoAtivo(data: {
 
     revalidatePath('/ativos');
 
-    // Notificar técnico designado via chat
-    if (data.tecnicoEmail) {
+    // Notificar técnico designado via chat para cada OS criada
+    if (data.tecnicoEmail && created.length > 0) {
       try {
         const techId = await getUserIdByEmail(data.tecnicoEmail, user.tenantId);
         if (techId) {
-          const clientName = os.client ? os.client.nomeFantasia : 'Cliente';
-          const msg = `🛠️ *Nova Ordem de Serviço Programada!*\n` +
-                      `• Código: OS #${String(os.codigo).padStart(4, '0')}\n` +
-                      `• Cliente: ${clientName}\n` +
-                      `• Tipo: ${os.tipo}\n` +
-                      `• Data Prevista: ${formatLocalDate(os.dataPrevista)}\n` +
-                      `• Instruções: ${os.instrucoes || 'Nenhuma'}`;
-          await safeSendChatNotification(techId, msg);
+          for (const os of created) {
+            const clientName = os.client ? os.client.nomeFantasia : 'Cliente';
+            const msg = `🛠️ *Nova Ordem de Serviço Programada!*\n` +
+                        `• Código: OS #${String(os.codigo).padStart(4, '0')}\n` +
+                        `• Cliente: ${clientName}\n` +
+                        `• Tipo: ${os.tipo}\n` +
+                        `• Data Prevista: ${formatLocalDate(os.dataPrevista)}\n` +
+                        `• Instruções: ${os.instrucoes || 'Nenhuma'}`;
+            await safeSendChatNotification(techId, msg);
+          }
         }
       } catch (err) {
         console.error("Erro ao enviar notificação de nova OS por chat:", err);
       }
     }
 
-    return { success: true, os };
+    return { success: true, os: created[0], created };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

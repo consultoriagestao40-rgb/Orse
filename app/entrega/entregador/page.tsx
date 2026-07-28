@@ -520,7 +520,7 @@ export default function EntregadorPage() {
   const handleOpenRouteAgain = (ent: any) => {
     const lat = ent.latitudePartida;
     const lng = ent.longitudePartida;
-    const dest = ent.client?.endereco || '';
+    const dest = ent.enderecoEntrega || ent.client?.endereco || '';
     
     let mapsUrl = '';
     if (lat && lng) {
@@ -875,11 +875,10 @@ export default function EntregadorPage() {
     return true; // não é a primeira de hoje
   };
 
-  const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
   const isPureEntregador = (currentUser?.cargo?.toLowerCase().includes('entregador') || 
                             currentUser?.cargo?.toLowerCase().includes('motoboy') || 
-                            currentUser?.cargo?.toLowerCase().includes('motorista') ||
-                            currentUser?.role === 'LOGISTICA') && !isGestor;
+                            currentUser?.cargo?.toLowerCase().includes('motorista')) && 
+                           currentUser?.role !== 'LOGISTICA' && !isGestor;
 
   if (showWelcome) {
     const metaValue = currentUser?.meta || 100000;
@@ -923,6 +922,14 @@ export default function EntregadorPage() {
             )}
             <h1 className="text-base sm:text-lg font-black tracking-tight leading-tight">Olá, {currentUser?.nome?.split(' ')[0] || 'Entregador'}!</h1>
             <p className="text-[10px] text-slate-400 font-medium mt-0.5">Seja muito bem-vindo de volta.</p>
+            {(currentUser?.role === 'LOGISTICA' || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
+              <button 
+                onClick={() => window.location.href = '/entrega'}
+                className="mt-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/25 rounded-xl text-[9px] font-black uppercase tracking-wider text-emerald-300 hover:text-emerald-250 transition-all cursor-pointer"
+              >
+                Painel Administrativo
+              </button>
+            )}
           </div>
 
           {/* Middle Stats Dashboard */}
@@ -1344,7 +1351,7 @@ export default function EntregadorPage() {
                     <h3 className="text-sm font-black uppercase tracking-tight text-white">{ent.client.nomeFantasia}</h3>
                     <p className="text-[10.5px] text-slate-400 font-semibold leading-relaxed flex items-start gap-1">
                       <MapPin size={11} className="stroke-[2.5] text-slate-500 shrink-0 mt-0.5" />
-                      {ent.client.endereco || 'Sem endereço'}
+                      {ent.enderecoEntrega || ent.client.endereco || 'Sem endereço'}
                     </p>
                   </div>
 
@@ -1374,7 +1381,7 @@ export default function EntregadorPage() {
                       <div className="flex flex-col gap-2">
                         {ent.status === 'PROGRAMADO' && (
                           <button
-                            onClick={() => handleStartRoute(ent.id, ent.client.endereco)}
+                            onClick={() => handleStartRoute(ent.id, ent.enderecoEntrega || ent.client.endereco)}
                             className="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-[10.5px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-600/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
                             disabled={saving}
                           >
@@ -1625,30 +1632,15 @@ export default function EntregadorPage() {
         );
       })()}
 
-      {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#0B1528]/95 backdrop-blur-md border-t border-white/5 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.2)] no-print">
-        
-        {!isPureEntregador && (
-          <>
-            {/* Tab CRM */}
-            <a
-              href="/leads/mobile?tab=crm"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-            >
-              <Building size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
-            </a>
-
-            {/* Tab Técnico */}
-            <a
-              href="/ativos/tecnico"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-            >
-              <Wrench size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-            </a>
-          </>
-        )}
+        {/* Tab Técnico */}
+        <a
+          href="/ativos/tecnico"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+        >
+          <Wrench size={18} className="text-slate-400" />
+          <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+        </a>
 
         {/* Tab Área do Entregador (Active) */}
         <a
@@ -1658,6 +1650,17 @@ export default function EntregadorPage() {
           <Truck size={18} className="text-[#10B981]" />
           <span className="text-[8px] uppercase tracking-wider">Entrega</span>
         </a>
+
+        {!isPureEntregador && (
+          /* Tab CRM */
+          <a
+            href="/leads/mobile?tab=crm"
+            className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+          >
+            <Building size={18} className="text-slate-400" />
+            <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
+          </a>
+        )}
 
         {/* Tab Chat Interno */}
         <a

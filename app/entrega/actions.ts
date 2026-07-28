@@ -152,6 +152,7 @@ export async function createEntrega(data: {
   valor: number;
   clientId: string;
   observacao?: string;
+  enderecoEntrega?: string;
 }) {
   try {
     const user = await checkAuth();
@@ -161,6 +162,7 @@ export async function createEntrega(data: {
         valor: Number(data.valor),
         clientId: data.clientId,
         observacao: data.observacao || '',
+        enderecoEntrega: data.enderecoEntrega || null,
         status: 'BACKLOG',
         tenantId: user.tenantId,
         criadorId: user.id
@@ -206,6 +208,7 @@ export async function updateEntrega(id: string, data: {
   desvioRota?: boolean | null;
   caminhoGps?: string | null;
   historico?: string;
+  enderecoEntrega?: string | null;
 }) {
   try {
     const user = await checkAuth();
@@ -223,6 +226,7 @@ export async function updateEntrega(id: string, data: {
     if (data.status !== undefined) updateData.status = data.status;
     if (data.dataExecucao !== undefined) updateData.dataExecucao = data.dataExecucao ? new Date(data.dataExecucao) : null;
     if (data.observacao !== undefined) updateData.observacao = data.observacao;
+    if (data.enderecoEntrega !== undefined) updateData.enderecoEntrega = data.enderecoEntrega || null;
     if (data.entregadorResponsavel !== undefined) updateData.entregadorResponsavel = data.entregadorResponsavel;
     if (data.entregadorEmail !== undefined) updateData.entregadorEmail = data.entregadorEmail;
     if (data.observacaoEntrega !== undefined) updateData.observacaoEntrega = data.observacaoEntrega;
@@ -272,7 +276,7 @@ export async function updateEntrega(id: string, data: {
     if (data.status === 'EM_DESLOCAMENTO' && currentEntrega.status !== 'EM_DESLOCAMENTO') {
       const latPartida = data.latitudePartida ?? currentEntrega.latitudePartida;
       const lonPartida = data.longitudePartida ?? currentEntrega.longitudePartida;
-      const endereco = currentEntrega.client?.endereco;
+      const endereco = currentEntrega.enderecoEntrega || currentEntrega.client?.endereco;
 
       updateData.deslocamentoIniciadoEm = new Date();
 
@@ -610,7 +614,7 @@ export async function otimizarRotaEntregador(entregadorEmail: string) {
 
     const locations = await Promise.all(
       entregas.map(async (ent) => {
-        const address = ent.client?.endereco;
+        const address = ent.enderecoEntrega || ent.client?.endereco;
         if (!address) return null;
         const geo = await geocodeAddress(address);
         if (geo) {

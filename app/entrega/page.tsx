@@ -109,7 +109,8 @@ export default function GestaoEntregasPage() {
     status: 'BACKLOG',
     entregadorResponsavel: '',
     entregadorEmail: '',
-    dataProgramada: ''
+    dataProgramada: '',
+    enderecoEntrega: ''
   });
 
   const [quickClienteForm, setQuickClienteForm] = useState({
@@ -218,7 +219,8 @@ export default function GestaoEntregasPage() {
           numeroNf: entregaForm.numeroNf,
           valor: Number(entregaForm.valor),
           observacao: entregaForm.observacao,
-          status: entregaForm.status
+          status: entregaForm.status,
+          enderecoEntrega: entregaForm.enderecoEntrega || null
         };
 
         if (entregaForm.status === 'PROGRAMADO') {
@@ -241,7 +243,8 @@ export default function GestaoEntregasPage() {
           clientId: entregaForm.clientId,
           numeroNf: entregaForm.numeroNf,
           valor: Number(entregaForm.valor),
-          observacao: entregaForm.observacao
+          observacao: entregaForm.observacao,
+          enderecoEntrega: entregaForm.enderecoEntrega || ''
         });
         if (res.success) {
           setModalEntregaOpen(false);
@@ -554,7 +557,8 @@ export default function GestaoEntregasPage() {
         status: ent.status,
         entregadorResponsavel: ent.entregadorResponsavel || '',
         entregadorEmail: ent.entregadorEmail || '',
-        dataProgramada: ent.dataProgramada ? new Date(ent.dataProgramada).toISOString().substring(0, 16) : ''
+        dataProgramada: ent.dataProgramada ? new Date(ent.dataProgramada).toISOString().substring(0, 16) : '',
+        enderecoEntrega: ent.enderecoEntrega || ''
       });
     } else {
       setEntregaForm({
@@ -566,24 +570,25 @@ export default function GestaoEntregasPage() {
         status: 'BACKLOG',
         entregadorResponsavel: '',
         entregadorEmail: '',
-        dataProgramada: ''
+        dataProgramada: '',
+        enderecoEntrega: ''
       });
     }
     setModalEntregaOpen(true);
   };
 
   const handleOpenRouteMap = (list: any[]) => {
-    const activeItems = list.filter(e => e.client && e.client.endereco);
+    const activeItems = list.filter(e => e.client && (e.enderecoEntrega || e.client.endereco));
     if (activeItems.length === 0) return;
     
     let url = "";
     if (activeItems.length === 1) {
-      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeItems[0].client.endereco)}`;
+      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeItems[0].enderecoEntrega || activeItems[0].client.endereco)}`;
     } else {
-      const origin = encodeURIComponent(activeItems[0].client.endereco);
-      const destination = encodeURIComponent(activeItems[activeItems.length - 1].client.endereco);
+      const origin = encodeURIComponent(activeItems[0].enderecoEntrega || activeItems[0].client.endereco);
+      const destination = encodeURIComponent(activeItems[activeItems.length - 1].enderecoEntrega || activeItems[activeItems.length - 1].client.endereco);
       const waypoints = activeItems.slice(1, activeItems.length - 1)
-        .map(e => encodeURIComponent(e.client.endereco))
+        .map(e => encodeURIComponent(e.enderecoEntrega || e.client.endereco))
         .join('|');
       
       url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
@@ -884,8 +889,9 @@ export default function GestaoEntregasPage() {
     
     const cidadesVolume: Record<string, number> = {};
     activeDeliveries.forEach(e => {
-      if (e.client && e.client.endereco) {
-        const city = getCityFromAddress(e.client.endereco);
+      const address = e.enderecoEntrega || e.client?.endereco;
+      if (address) {
+        const city = getCityFromAddress(address);
         cidadesVolume[city] = (cidadesVolume[city] || 0) + 1;
       }
     });
@@ -1550,7 +1556,7 @@ export default function GestaoEntregasPage() {
                               </div>
                               <div className="space-y-0.5">
                                 <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={ent.client.nomeFantasia}>{ent.client.nomeFantasia}</h4>
-                                <p className="text-[9.5px] text-slate-500 truncate font-semibold uppercase" title={ent.client.endereco}>{ent.client.endereco || 'Sem endereço'}</p>
+                                <p className="text-[9.5px] text-slate-500 truncate font-semibold uppercase" title={ent.enderecoEntrega || ent.client.endereco}>{ent.enderecoEntrega || ent.client.endereco || 'Sem endereço'}</p>
                               </div>
                               
                               <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-2">
@@ -2702,6 +2708,22 @@ export default function GestaoEntregasPage() {
                       </div>
                     )}
 
+                    {/* Endereço de Entrega Customizado */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center ml-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Endereço de Entrega Personalizado</label>
+                        <span className="text-[9px] font-bold text-slate-400 italic">(Deixe em branco para usar o endereço do cliente)</span>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Rua, número, bairro, cidade - UF"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                        value={entregaForm.enderecoEntrega || ''}
+                        onChange={(e) => setEntregaForm(prev => ({ ...prev, enderecoEntrega: e.target.value }))}
+                        disabled={saving}
+                      />
+                    </div>
+
                     {/* Observações */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Observações do Gestor</label>
@@ -3150,7 +3172,7 @@ export default function GestaoEntregasPage() {
                                 {ent.client.nomeFantasia}
                               </p>
                               <p className="text-[9.5px] text-slate-450 truncate mt-1 leading-none">
-                                NF: {ent.numeroNf} • {ent.client.endereco || 'Sem endereço'}
+                                NF: {ent.numeroNf} • {ent.enderecoEntrega || ent.client.endereco || 'Sem endereço'}
                               </p>
                             </div>
                           </div>
@@ -3295,7 +3317,7 @@ export default function GestaoEntregasPage() {
                   </button>
                   {hasPosition && (
                     <a 
-                      href={`https://www.google.com/maps/dir/?api=1&origin=${ent.latitudePartida},${ent.longitudePartida}&destination=${encodeURIComponent(ent.client.endereco || '')}`}
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${ent.latitudePartida},${ent.longitudePartida}&destination=${encodeURIComponent(ent.enderecoEntrega || ent.client.endereco || '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center shadow-xs"
@@ -3637,8 +3659,8 @@ export default function GestaoEntregasPage() {
                                 <p className="font-extrabold text-slate-800 uppercase truncate" title={ent.client.nomeFantasia}>
                                   {ent.client.nomeFantasia}
                                 </p>
-                                <p className="text-[9.5px] text-slate-455 leading-tight font-semibold uppercase truncate" title={ent.client.endereco}>
-                                  {ent.client.endereco || 'Sem endereço'}
+                                <p className="text-[9.5px] text-slate-455 leading-tight font-semibold uppercase truncate" title={ent.enderecoEntrega || ent.client.endereco}>
+                                  {ent.enderecoEntrega || ent.client.endereco || 'Sem endereço'}
                                 </p>
                               </div>
                             </td>

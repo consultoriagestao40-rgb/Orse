@@ -869,7 +869,7 @@ export default function TecnicoPage() {
 
   const isTecnico = currentUser?.cargo?.toLowerCase().includes('tecnico') || currentUser?.cargo?.toLowerCase().includes('técnico');
   const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
-  const isSomenteTecnico = isTecnico && !isGestor;
+  const isSomenteTecnico = isTecnico && !isGestor && currentUser?.role !== 'LOGISTICA';
 
   if (showWelcome) {
     const metaValue = currentUser?.meta || 100000;
@@ -1835,64 +1835,49 @@ export default function TecnicoPage() {
           </div>
         </div>
       )}
-      {/* MOBILE TAB NAVIGATION BAR FIXED AT BOTTOM */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 py-2 select-none border-x-0 border-b-0 border-solid flex justify-around items-center shadow-[0_-2px_10px_rgba(0,0,0,0.03)] no-print">
-        
-        {!isSomenteTecnico ? (
-          <>
-            {/* Tab Área do Técnico (Active) */}
-            <a
-              href="/ativos/tecnico"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
-            >
-              <Wrench size={18} className="text-[#1B4D3E]" />
-              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-            </a>
+        {/* Tab Área do Técnico (Active) */}
+        <a
+          href="/ativos/tecnico"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
+        >
+          <Wrench size={18} className="text-[#1B4D3E]" />
+          <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+        </a>
 
-            {/* Tab Nova Ordem de Serviços */}
-            <a
-              href="/leads/mobile?tab=os"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-            >
-              <ClipboardList size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Nova OS</span>
-            </a>
+        {/* Tab Entrega */}
+        <a
+          href="/entrega/entregador"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+        >
+          <Truck size={18} className="text-slate-400" />
+          <span className="text-[8px] uppercase tracking-wider">Entregas</span>
+        </a>
 
-            {/* Tab Nova Entrega */}
-            <a
-              href="/entrega/entregador"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
-            >
-              <Truck size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Nova Entrega</span>
-            </a>
-          </>
-        ) : (
-          <>
-            {/* Tab Área do Técnico (Active) */}
-            <a
-              href="/ativos/tecnico"
-              className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-[#1B4D3E] font-black no-underline"
-            >
-              <Wrench size={18} className="text-[#1B4D3E]" />
-              <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-            </a>
-
-            {/* Tab Chat Interno */}
-            <a
-              href="/chat"
-              className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
-            >
-              <MessageSquare size={18} className="text-slate-400" />
-              <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
-              {totalUnreadChat > 0 && (
-                <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
-                  {totalUnreadChat}
-                </span>
-              )}
-            </a>
-          </>
+        {!isSomenteTecnico && (
+          /* Tab Nova Ordem de Serviços */
+          <a
+            href="/leads/mobile?tab=os"
+            className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+          >
+            <ClipboardList size={18} className="text-slate-400" />
+            <span className="text-[8px] uppercase tracking-wider">Nova OS</span>
+          </a>
         )}
+
+        {/* Tab Chat Interno */}
+        <a
+          href="/chat"
+          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline relative"
+        >
+          <MessageSquare size={18} className="text-slate-400" />
+          <span className="text-[8px] uppercase tracking-wider">Chat Time</span>
+          {totalUnreadChat > 0 && (
+            <span className="absolute top-1 right-3 bg-blue-500 text-white text-[7px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+              {totalUnreadChat}
+            </span>
+          )}
+        </a>
       </nav>
     </div>
   );
