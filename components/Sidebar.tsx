@@ -3174,64 +3174,6 @@ const Sidebar = () => {
                               </div>
                             );
                           })}
-
-                          {/* Botão + Nova Etapa */}
-                          <div className="w-[280px] shrink-0 flex flex-col bg-slate-50/60 border-2 border-dashed border-slate-300 rounded-2xl p-4 items-center justify-center min-h-[180px]">
-                            {showNewWidgetStageForm ? (
-                              <div className="w-full space-y-2.5">
-                                <h4 className="text-xs font-black text-slate-700 uppercase">Nova Etapa do Funil</h4>
-                                <input
-                                  type="text"
-                                  placeholder="Nome da etapa..."
-                                  value={newWidgetStageName}
-                                  onChange={e => setNewWidgetStageName(e.target.value)}
-                                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-600 outline-none font-bold"
-                                  autoFocus
-                                />
-                                <div className="flex gap-2 pt-1">
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      if (!newWidgetStageName.trim()) return;
-                                      const res = await createLeadStage(newWidgetStageName.trim());
-                                      if (res.success) {
-                                        setNewWidgetStageName('');
-                                        setShowNewWidgetStageForm(false);
-                                        const stagesRes = await getLeadStages();
-                                        if (stagesRes.success && stagesRes.stages) setWidgetStages(stagesRes.stages);
-                                      } else {
-                                        alert('Erro ao criar etapa: ' + res.error);
-                                      }
-                                    }}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-xl shadow-2xs cursor-pointer"
-                                  >
-                                    Criar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setShowNewWidgetStageForm(false);
-                                      setNewWidgetStageName('');
-                                    }}
-                                    className="px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold py-2 rounded-xl cursor-pointer"
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setShowNewWidgetStageForm(true)}
-                                className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-emerald-700 transition-all font-extrabold text-xs cursor-pointer"
-                              >
-                                <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-emerald-600">
-                                  <Plus size={20} />
-                                </div>
-                                <span>+ Nova Etapa</span>
-                              </button>
-                            )}
-                          </div>
                         </>
                       );
                     })()}
