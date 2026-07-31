@@ -2804,11 +2804,16 @@ const Sidebar = () => {
                                 <h4 className={`text-xs md:text-sm font-bold text-slate-800 truncate`} title={lead.nomeFantasia}>
                                   {lead.nomeFantasia}
                                 </h4>
-                                {dateText && (
-                                  <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
-                                    {dateText}
+                                <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                    R$ {(lead.valorEst || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                   </span>
-                                )}
+                                  {dateText && (
+                                    <span className="text-[10px] text-slate-400 font-medium">
+                                      {dateText}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               
                               <div className="text-[10px] text-slate-500 flex items-center gap-1.5 font-medium">
