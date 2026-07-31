@@ -517,6 +517,7 @@ model Lead {
   chatStatus     String?       @default("OPEN")
   chatClosedAt   DateTime?
   chatClosedById String?
+  tags           String?
 
   stage        LeadStage     @relation(fields: [stageId], references: [id])
   pipeline     Pipeline?     @relation(fields: [pipelineId], references: [id], onDelete: Cascade)

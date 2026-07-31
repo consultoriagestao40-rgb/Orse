@@ -2760,6 +2760,27 @@ const Sidebar = () => {
                                 </span>
                               </div>
 
+                              {(() => {
+                                let parsedTags: string[] = [];
+                                if (lead.tags) {
+                                  try {
+                                    parsedTags = typeof lead.tags === 'string' ? JSON.parse(lead.tags) : lead.tags;
+                                  } catch (e) {
+                                    parsedTags = lead.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+                                  }
+                                }
+                                if (!Array.isArray(parsedTags) || parsedTags.length === 0) return null;
+                                return (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {parsedTags.map((t: string) => (
+                                      <span key={t} className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#1a365d]/10 text-[#1a365d] border border-[#1a365d]/20">
+                                        🏷️ {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+
                               {lead.latestMsg && (
                                 <p className="text-xs text-slate-500 truncate mt-1.5 bg-[#f1f3f5] p-2 rounded-xl border border-slate-200/60 italic font-medium">
                                   {lead.latestMsg.direction === 'OUTBOUND' ? (

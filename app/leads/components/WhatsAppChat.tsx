@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead } from '../whatsapp-actions';
-import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText, Mic, Trash, RefreshCw } from 'lucide-react';
+import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead, getLeadNotes, addLeadNote, getLeadReminders, addLeadReminder, updateLeadTags, updateLeadQuickDetails } from '../whatsapp-actions';
+import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText, Mic, Trash, RefreshCw, Tag, Calendar, Edit3, Plus, Check, Clock, StickyNote, User, DollarSign, Building, Phone, Mail, ChevronLeft } from 'lucide-react';
 import { formatTimeBrasilia, formatDateTimeBrasilia, parseDateUTC, getUserTimezone } from '@/lib/timezone';
 import { WavAudioRecorder } from '@/lib/WavAudioRecorder';
 
@@ -499,6 +499,37 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
+  // Abas de Ações Rápidas (Chat, Anotações, Lembretes, Etiquetas, Cadastro)
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'reminders' | 'tags' | 'edit'>('chat');
+  
+  // Estados para Anotações
+  const [notes, setNotes] = useState<any[]>([]);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+
+  // Estados para Lembretes
+  const [reminders, setReminders] = useState<any[]>([]);
+  const [newReminderTitle, setNewReminderTitle] = useState('');
+  const [newReminderTipo, setNewReminderTipo] = useState('TAREFA');
+  const [newReminderDate, setNewReminderDate] = useState('');
+  const [savingReminder, setSavingReminder] = useState(false);
+
+  // Estados para Etiquetas / Tags
+  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [newCustomTag, setNewCustomTag] = useState('');
+  const [savingTags, setSavingTags] = useState(false);
+
+  // Estados para Edição de Cadastro
+  const [editForm, setEditForm] = useState({
+    nomeFantasia: '',
+    contatoNome: '',
+    telefone: leadPhone || '',
+    email: '',
+    segmento: '',
+    valorEst: ''
+  });
+  const [savingDetails, setSavingDetails] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isFirstLoadRef = useRef(true);
@@ -509,6 +540,115 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  // Carregar Anotações do Lead
+  const fetchNotes = async () => {
+    if (!leadId) return;
+    const res = await getLeadNotes(leadId);
+    if (res.success && res.notes) setNotes(res.notes);
+  };
+
+  // Carregar Lembretes do Lead
+  const fetchReminders = async () => {
+    if (!leadId) return;
+    const res = await getLeadReminders(leadId);
+    if (res.success && res.reminders) setReminders(res.reminders);
+  };
+
+  useEffect(() => {
+    if (leadId) {
+      fetchNotes();
+      fetchReminders();
+    }
+  }, [leadId]);
+
+  // Adicionar Anotação
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteText.trim() || savingNote) return;
+    setSavingNote(true);
+    const res = await addLeadNote(leadId, newNoteText.trim());
+    if (res.success && res.note) {
+      setNotes(prev => [res.note, ...prev]);
+      setNewNoteText('');
+    } else {
+      alert('Erro ao salvar anotação: ' + (res.error || 'Erro desconhecido'));
+    }
+    setSavingNote(false);
+  };
+
+  // Adicionar Lembrete
+  const handleAddReminder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReminderTitle.trim() || !newReminderDate || savingReminder) return;
+    setSavingReminder(true);
+    const res = await addLeadReminder(leadId, {
+      titulo: newReminderTitle.trim(),
+      tipo: newReminderTipo,
+      dataInicio: newReminderDate
+    });
+    if (res.success && res.reminder) {
+      setReminders(prev => [...prev, res.reminder]);
+      setNewReminderTitle('');
+      setNewReminderDate('');
+    } else {
+      alert('Erro ao agendar lembrete: ' + (res.error || 'Erro desconhecido'));
+    }
+    setSavingReminder(false);
+  };
+
+  // Alternar / Salvar Etiquetas
+  const handleToggleTag = async (tagToToggle: string) => {
+    if (savingTags) return;
+    setSavingTags(true);
+    let updated: string[];
+    if (tagsList.includes(tagToToggle)) {
+      updated = tagsList.filter(t => t !== tagToToggle);
+    } else {
+      updated = [...tagsList, tagToToggle];
+    }
+    setTagsList(updated);
+    await updateLeadTags(leadId, JSON.stringify(updated));
+    setSavingTags(false);
+  };
+
+  const handleAddCustomTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomTag.trim() || savingTags) return;
+    const tagFormatted = newCustomTag.trim();
+    if (tagsList.includes(tagFormatted)) {
+      setNewCustomTag('');
+      return;
+    }
+    setSavingTags(true);
+    const updated = [...tagsList, tagFormatted];
+    setTagsList(updated);
+    setNewCustomTag('');
+    await updateLeadTags(leadId, JSON.stringify(updated));
+    setSavingTags(false);
+  };
+
+  // Salvar Alterações no Cadastro
+  const handleSaveDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (savingDetails) return;
+    setSavingDetails(true);
+    const res = await updateLeadQuickDetails(leadId, {
+      nomeFantasia: editForm.nomeFantasia,
+      contatoNome: editForm.contatoNome,
+      telefone: editForm.telefone,
+      email: editForm.email,
+      segmento: editForm.segmento,
+      valorEst: Number(editForm.valorEst) || 0
+    });
+    if (res.success) {
+      alert('Cadastro do Lead atualizado com sucesso!');
+      setActiveTab('chat');
+    } else {
+      alert('Erro ao atualizar cadastro: ' + (res.error || 'Erro desconhecido'));
+    }
+    setSavingDetails(false);
+  };
 
   // Play digital high-quality chime notification sound client-side
   const playNotificationSound = () => {
@@ -783,8 +923,378 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
 
   return (
     <div className="flex flex-col h-full bg-[#E5DDD5]">
-      {/* Área de Mensagens */}
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}>
+      {/* Sub-Header com Abas Rápidas: Chat, Anotações, Lembretes, Etiquetas, Cadastro */}
+      <div className="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center justify-between gap-1 shadow-xs shrink-0 overflow-x-auto scrollbar-none z-10">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('chat')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'chat' ? 'bg-[#1a365d] text-white shadow-2xs font-black' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <MessageSquare size={13} />
+            <span>Chat</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('notes');
+              fetchNotes();
+            }}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'notes' ? 'bg-[#1a365d] text-white shadow-2xs font-black' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <StickyNote size={13} className="text-amber-500" />
+            <span>Anotações</span>
+            {notes.length > 0 && (
+              <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 rounded-full font-extrabold">{notes.length}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('reminders');
+              fetchReminders();
+            }}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'reminders' ? 'bg-[#1a365d] text-white shadow-2xs font-black' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Clock size={13} className="text-blue-500" />
+            <span>Lembretes</span>
+            {reminders.length > 0 && (
+              <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 rounded-full font-extrabold">{reminders.length}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('tags')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'tags' ? 'bg-[#1a365d] text-white shadow-2xs font-black' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Tag size={13} className="text-emerald-500" />
+            <span>Etiquetas</span>
+            {tagsList.length > 0 && (
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 rounded-full font-extrabold">{tagsList.length}</span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('edit')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'edit' ? 'bg-[#1a365d] text-white shadow-2xs font-black' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Edit3 size={13} className="text-slate-600" />
+            <span>Cadastro</span>
+          </button>
+        </div>
+
+        {/* Tags badges no topo */}
+        {tagsList.length > 0 && activeTab === 'chat' && (
+          <div className="hidden md:flex items-center gap-1 overflow-x-auto scrollbar-none max-w-[220px]">
+            {tagsList.map(t => (
+              <span key={t} className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                🏷️ {t}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Painel: Anotações Internas */}
+      {activeTab === 'notes' && (
+        <div className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs">
+            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <StickyNote size={14} className="text-amber-500" /> Nova Anotação Interna
+            </h4>
+            <form onSubmit={handleAddNote} className="space-y-3">
+              <textarea
+                value={newNoteText}
+                onChange={e => setNewNoteText(e.target.value)}
+                placeholder="Escreva uma observação importante sobre esse lead/cliente..."
+                className="w-full p-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800 min-h-[80px]"
+                rows={3}
+              />
+              <button
+                type="submit"
+                disabled={savingNote || !newNoteText.trim()}
+                className="bg-[#1a365d] hover:bg-[#11223c] disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Plus size={14} /> Salvar Anotação
+              </button>
+            </form>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider px-1">Histórico de Anotações</h4>
+            {notes.length === 0 ? (
+              <div className="p-6 text-center text-slate-400 text-xs font-medium bg-white rounded-2xl border border-slate-200">
+                Nenhuma anotação cadastrada ainda.
+              </div>
+            ) : (
+              notes.map((note: any) => (
+                <div key={note.id} className="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold text-[9px] flex items-center justify-center uppercase">
+                        {note.user?.nome?.substring(0, 2) || 'US'}
+                      </div>
+                      <span className="text-xs font-bold text-slate-700">{note.user?.nome || 'Usuário'}</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {new Date(note.createdAt).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-800 font-medium whitespace-pre-wrap pl-6">{note.texto}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Painel: Lembretes / Agendamentos */}
+      {activeTab === 'reminders' && (
+        <div className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs">
+            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Clock size={14} className="text-blue-500" /> Agendar Lembrete / Follow-up
+            </h4>
+            <form onSubmit={handleAddReminder} className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Título do Lembrete</label>
+                <input
+                  type="text"
+                  value={newReminderTitle}
+                  onChange={e => setNewReminderTitle(e.target.value)}
+                  placeholder="Ex: Retornar ligação para alinhar orçamento"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Tipo</label>
+                  <select
+                    value={newReminderTipo}
+                    onChange={e => setNewReminderTipo(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 font-bold text-slate-700 cursor-pointer"
+                  >
+                    <option value="TAREFA">📝 Tarefa</option>
+                    <option value="LIGACAO">📞 Ligação</option>
+                    <option value="REUNIAO">🤝 Reunião</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Data e Hora</label>
+                  <input
+                    type="datetime-local"
+                    value={newReminderDate}
+                    onChange={e => setNewReminderDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50 font-medium text-slate-800 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingReminder || !newReminderTitle.trim() || !newReminderDate}
+                className="bg-[#1a365d] hover:bg-[#11223c] disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Clock size={14} /> Agendar Lembrete
+              </button>
+            </form>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider px-1">Lembretes Cadastrados</h4>
+            {reminders.length === 0 ? (
+              <div className="p-6 text-center text-slate-400 text-xs font-medium bg-white rounded-2xl border border-slate-200">
+                Nenhum lembrete agendado para este lead.
+              </div>
+            ) : (
+              reminders.map((rem: any) => (
+                <div key={rem.id} className="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-2xs flex items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-black uppercase text-blue-600 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-full inline-block">
+                      {rem.tipo}
+                    </span>
+                    <h5 className="text-xs font-bold text-slate-800">{rem.titulo}</h5>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-black text-slate-700 block">
+                      {new Date(rem.dataInicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {new Date(rem.dataInicio).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Painel: Etiquetas / Tags */}
+      {activeTab === 'tags' && (
+        <div className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Tag size={14} className="text-emerald-500" /> Etiquetas Rápidas (Clique para ativar/desativar)
+            </h4>
+            
+            <div className="flex flex-wrap gap-2">
+              {[
+                { name: 'VIP', bg: 'bg-amber-100 text-amber-800 border-amber-300' },
+                { name: 'Urgente', bg: 'bg-red-100 text-red-800 border-red-300' },
+                { name: 'Orçamento', bg: 'bg-blue-100 text-blue-800 border-blue-300' },
+                { name: 'Retornar Hoje', bg: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+                { name: 'Em Negociação', bg: 'bg-purple-100 text-purple-800 border-purple-300' },
+                { name: 'Aguardando Cliente', bg: 'bg-pink-100 text-pink-800 border-pink-300' },
+                { name: 'Qualificado', bg: 'bg-cyan-100 text-cyan-800 border-cyan-300' }
+              ].map(t => {
+                const isActive = tagsList.includes(t.name);
+                return (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => handleToggleTag(t.name)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                      isActive ? `${t.bg} ring-2 ring-emerald-500 shadow-xs` : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {isActive ? <Check size={14} className="text-emerald-600" /> : <Tag size={12} className="text-slate-400" />}
+                    <span>{t.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Criar Etiqueta Personalizada</label>
+              <form onSubmit={handleAddCustomTag} className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCustomTag}
+                  onChange={e => setNewCustomTag(e.target.value)}
+                  placeholder="Ex: Contrato Assinado"
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800"
+                />
+                <button
+                  type="submit"
+                  disabled={savingTags || !newCustomTag.trim()}
+                  className="bg-[#1a365d] hover:bg-[#11223c] disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus size={14} /> Adicionar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Painel: Edição de Cadastro */}
+      {activeTab === 'edit' && (
+        <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Edit3 size={14} className="text-slate-600" /> Editar Cadastro do Lead
+            </h4>
+            <form onSubmit={handleSaveDetails} className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Nome Fantasia / Empresa</label>
+                <input
+                  type="text"
+                  value={editForm.nomeFantasia}
+                  onChange={e => setEditForm({ ...editForm, nomeFantasia: e.target.value })}
+                  placeholder="Nome da Empresa"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-bold text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Nome do Contato</label>
+                  <input
+                    type="text"
+                    value={editForm.contatoNome}
+                    onChange={e => setEditForm({ ...editForm, contatoNome: e.target.value })}
+                    placeholder="Nome da pessoa"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Telefone / WhatsApp</label>
+                  <input
+                    type="text"
+                    value={editForm.telefone}
+                    onChange={e => setEditForm({ ...editForm, telefone: e.target.value })}
+                    placeholder="+55 (00) 00000-0000"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">E-mail</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                    placeholder="contato@empresa.com"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Segmento</label>
+                  <input
+                    type="text"
+                    value={editForm.segmento}
+                    onChange={e => setEditForm({ ...editForm, segmento: e.target.value })}
+                    placeholder="Ex: INDUSTRIAS"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Valor Estimado (R$)</label>
+                <input
+                  type="number"
+                  value={editForm.valorEst}
+                  onChange={e => setEditForm({ ...editForm, valorEst: e.target.value })}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1a365d] bg-slate-50 font-bold text-emerald-700"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingDetails || !editForm.nomeFantasia.trim()}
+                className="bg-[#1a365d] hover:bg-[#11223c] disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Check size={14} /> Salvar Alterações
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Área de Mensagens (Exibida somente na aba 'chat') */}
+      {activeTab === 'chat' && (
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}>
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <span className="bg-[#FFEECD] text-[#665544] px-4 py-2 rounded-lg text-xs font-medium inline-block shadow-sm">

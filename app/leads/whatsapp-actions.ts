@@ -496,3 +496,140 @@ export async function getLeadParticipants(leadId: string) {
     return { success: false, error: err.message, participants: [] };
   }
 }
+
+export async function updateLeadTags(leadId: string, tags: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { tags }
+    });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function addLeadNote(leadId: string, texto: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const comment = await prisma.comment.create({
+      data: {
+        leadId,
+        userId: user.id,
+        tenantId: user.tenantId,
+        texto
+      },
+      include: {
+        user: { select: { id: true, nome: true, avatarUrl: true } }
+      }
+    });
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'ANOTACAO',
+        descricao: `Anotação de ${user.nome}: ${texto}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, note: comment };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getLeadNotes(leadId: string) {
+  try {
+    const notes = await prisma.comment.findMany({
+      where: { leadId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, nome: true, avatarUrl: true } }
+      }
+    });
+    return { success: true, notes };
+  } catch (err: any) {
+    return { success: false, error: err.message, notes: [] };
+  }
+}
+
+export async function addLeadReminder(leadId: string, data: { titulo: string; tipo?: string; dataInicio: string }) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const dInicio = new Date(data.dataInicio);
+    const dFim = new Date(dInicio.getTime() + 30 * 60 * 1000); // 30 mins
+
+    const activity = await prisma.activity.create({
+      data: {
+        leadId,
+        userId: user.id,
+        tenantId: user.tenantId,
+        titulo: data.titulo,
+        tipo: data.tipo || 'TAREFA',
+        dataInicio: dInicio,
+        dataFim: dFim,
+        status: 'PENDENTE'
+      }
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        texto: `⏰ Lembrete agendado: ${data.titulo} para ${dInicio.toLocaleString('pt-BR')}`,
+        link: `/leads?id=${leadId}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, reminder: activity };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getLeadReminders(leadId: string) {
+  try {
+    const reminders = await prisma.activity.findMany({
+      where: { leadId },
+      orderBy: { dataInicio: 'asc' },
+      include: {
+        user: { select: { id: true, nome: true } }
+      }
+    });
+    return { success: true, reminders };
+  } catch (err: any) {
+    return { success: false, error: err.message, reminders: [] };
+  }
+}
+
+export async function updateLeadQuickDetails(leadId: string, data: { nomeFantasia?: string; contatoNome?: string; telefone?: string; email?: string; segmento?: string; valorEst?: number }) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        ...(data.nomeFantasia && { nomeFantasia: data.nomeFantasia }),
+        ...(data.contatoNome !== undefined && { contatoNome: data.contatoNome }),
+        ...(data.telefone !== undefined && { telefone: data.telefone }),
+        ...(data.email !== undefined && { email: data.email }),
+        ...(data.segmento !== undefined && { segmento: data.segmento }),
+        ...(data.valorEst !== undefined && { valorEst: Number(data.valorEst) || 0 })
+      }
+    });
+    revalidatePath('/leads');
+    return { success: true, lead: updatedLead };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
