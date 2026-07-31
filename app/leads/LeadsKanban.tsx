@@ -93,6 +93,36 @@ const normalizeText = (text?: string) => {
     .trim();
 };
 
+const sortLeadsByUnreadPriority = (leadArray: any[]) => {
+  if (!Array.isArray(leadArray)) return [];
+  return [...leadArray].sort((a, b) => {
+    const msgsA = a.whatsappMessages || [];
+    const msgsB = b.whatsappMessages || [];
+
+    const unreadA = msgsA.filter((m: any) => m.direction === 'INBOUND' && m.status !== 'READ').length;
+    const unreadB = msgsB.filter((m: any) => m.direction === 'INBOUND' && m.status !== 'READ').length;
+
+    if (unreadA !== unreadB) {
+      return unreadB - unreadA; // Coloca quem tem mais mensagens não lidas no topo da coluna
+    }
+
+    const latestMsgA = msgsA.slice().sort((x: any, y: any) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime())[0];
+    const latestMsgB = msgsB.slice().sort((x: any, y: any) => new Date(y.createdAt).getTime() - new Date(x.createdAt).getTime())[0];
+
+    const isInboundA = latestMsgA?.direction === 'INBOUND' ? 1 : 0;
+    const isInboundB = latestMsgB?.direction === 'INBOUND' ? 1 : 0;
+
+    if (isInboundA !== isInboundB) {
+      return isInboundB - isInboundA; // Coloca quem aguarda resposta do cliente no topo
+    }
+
+    const timeA = latestMsgA ? new Date(latestMsgA.createdAt).getTime() : new Date(a.createdAt || 0).getTime();
+    const timeB = latestMsgB ? new Date(latestMsgB.createdAt).getTime() : new Date(b.createdAt || 0).getTime();
+
+    return timeB - timeA;
+  });
+};
+
 const tailwindColorMap: { [key: string]: string } = {
   sky: '#0284c7',
   blue: '#2563eb',
@@ -1454,7 +1484,7 @@ export default function LeadsKanban() {
       id: 'unassigned',
       label: 'Não Atribuído',
       avatarUrl: null,
-      cards: unassigned,
+      cards: sortLeadsByUnreadPriority(unassigned),
       total: unassigned.reduce((acc, l) => acc + (l.valorEst || 0), 0)
     });
 
@@ -1465,7 +1495,7 @@ export default function LeadsKanban() {
         id: u.id,
         label: u.nome || 'Vendedor',
         avatarUrl: u.avatarUrl,
-        cards: userLeads,
+        cards: sortLeadsByUnreadPriority(userLeads),
         total: userLeads.reduce((acc, l) => acc + (l.valorEst || 0), 0)
       });
     });
@@ -1499,7 +1529,7 @@ export default function LeadsKanban() {
     cols.push({
       id: 'unassigned',
       label: 'Sem Segmento',
-      cards: unassigned,
+      cards: sortLeadsByUnreadPriority(unassigned),
       total: unassigned.reduce((acc, l) => acc + (l.valorEst || 0), 0)
     });
 
@@ -1511,7 +1541,7 @@ export default function LeadsKanban() {
       cols.push({
         id: seg.id || segName,
         label: segName,
-        cards: segLeads,
+        cards: sortLeadsByUnreadPriority(segLeads),
         total: segLeads.reduce((acc, l) => acc + (l.valorEst || 0), 0)
       });
     });
@@ -1860,7 +1890,7 @@ export default function LeadsKanban() {
           <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
             {stages.map((stage, idx) => {
-              const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
+              const stageLeads = sortLeadsByUnreadPriority(filteredLeads.filter(l => l.stageId === stage.id));
               const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
               const isFirst = idx === 0;
               const isLast = idx === stages.length - 1;
