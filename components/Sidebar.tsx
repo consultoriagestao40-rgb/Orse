@@ -2765,7 +2765,65 @@ const Sidebar = () => {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
+                            {/* Seletor Rápido de Transferência de Comercial */}
+                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs shrink-0">
+                              <UserCog size={13} className="text-emerald-600 shrink-0" />
+                              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider shrink-0 hidden sm:inline">
+                                Resp:
+                              </span>
+                              <select
+                                value={activeWidgetLead.assignedToId || ''}
+                                onChange={async (e) => {
+                                  const newOwnerId = e.target.value;
+                                  if (!newOwnerId) return;
+                                  const res = await changeLeadOwner(activeWidgetLead.id, newOwnerId);
+                                  if (res.success) {
+                                    setActiveWidgetLead({ ...activeWidgetLead, assignedToId: newOwnerId });
+                                  } else {
+                                    alert('Erro ao transferir lead: ' + res.error);
+                                  }
+                                }}
+                                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[120px] truncate"
+                              >
+                                <option value="">Sem resp.</option>
+                                {widgetUsers.map((u: any) => (
+                                  <option key={u.id} value={u.id}>{u.nome}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Botão de Encerrar ou Reabrir Atendimento */}
+                            {activeWidgetLead.chatStatus === 'CLOSED' ? (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const res = await reopenWhatsAppChat(activeWidgetLead.id);
+                                  if (res.success) {
+                                    setActiveWidgetLead({ ...activeWidgetLead, chatStatus: 'OPEN' });
+                                  }
+                                }}
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                              >
+                                <RefreshCw size={13} /> Reabrir
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (confirm(`Deseja realmente encerrar o atendimento do WhatsApp de ${activeWidgetLead.nomeFantasia}?`)) {
+                                    const res = await closeWhatsAppChat(activeWidgetLead.id);
+                                    if (res.success) {
+                                      setActiveWidgetLead(null);
+                                    }
+                                  }
+                                }}
+                                className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                              >
+                                <XCircle size={13} /> Encerrar
+                              </button>
+                            )}
+
                             {/* Inline Edit Button */}
                             <button
                               onClick={() => {
@@ -2778,7 +2836,7 @@ const Sidebar = () => {
                                 });
                                 setIsEditingWidgetInline(!isEditingWidgetInline);
                               }}
-                              className={`text-[10.5px] font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 border ${
+                              className={`text-[10.5px] font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 border shrink-0 whitespace-nowrap ${
                                 isEditingWidgetInline 
                                   ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
                                   : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
@@ -2786,11 +2844,11 @@ const Sidebar = () => {
                             >
                               {isEditingWidgetInline ? (
                                 <>
-                                  <X size={12} /> Fechar Edição
+                                  <X size={12} /> Fechar
                                 </>
                               ) : (
                                 <>
-                                  <UserCog size={13} className="text-slate-600" /> Completar Cadastro
+                                  <UserCog size={13} className="text-slate-600" /> Cadastro
                                 </>
                               )}
                             </button>
@@ -2800,10 +2858,10 @@ const Sidebar = () => {
                               onClick={() => {
                                 window.location.href = `/leads?leadId=${activeWidgetLead.id}`;
                               }}
-                              className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                              className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
                               title="Ver no Funil"
                             >
-                              <Target size={13} /> Ver no Funil
+                              <Target size={13} /> Funil
                             </button>
                           </div>
                         </div>
