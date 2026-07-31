@@ -2005,7 +2005,7 @@ export default function LeadsKanban() {
             title="Criar nova etapa no funil de vendas"
           >
             <Plus size={15} className="text-emerald-600" />
-            <span>+ Etapa</span>
+            <span>Etapa</span>
           </button>
 
           <button 
@@ -4408,7 +4408,7 @@ export default function LeadsKanban() {
                   setCustomModal(prev => ({ ...prev, isOpen: false }));
                   if (customModal.onCancel) customModal.onCancel();
                 }}
-                className="text-slate-455 hover:text-slate-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -4417,18 +4417,19 @@ export default function LeadsKanban() {
             {customModal.type === 'prompt' && (
               <input
                 type="text"
-                id="custom-modal-input"
+                id="custom-modal-input-single"
                 defaultValue={customModal.defaultValue || ''}
                 placeholder={customModal.placeholder || ''}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    const input = document.getElementById('custom-modal-input') as HTMLInputElement;
-                    customModal.onConfirm(input?.value || '');
+                    const input = document.getElementById('custom-modal-input-single') as HTMLInputElement;
+                    const val = input?.value || '';
                     setCustomModal(prev => ({ ...prev, isOpen: false }));
+                    customModal.onConfirm(val);
                   }
                 }}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             )}
             
@@ -4445,87 +4446,19 @@ export default function LeadsKanban() {
                     setCustomModal(prev => ({ ...prev, isOpen: false }));
                     if (customModal.onCancel) customModal.onCancel();
                   }}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                 >
                   Cancelar
                 </button>
               )}
               <button
                 onClick={() => {
-                  const input = document.getElementById('custom-modal-input') as HTMLInputElement;
-                  customModal.onConfirm(customModal.type === 'prompt' ? (input?.value || '') : '');
+                  const input = document.getElementById('custom-modal-input-single') as HTMLInputElement;
+                  const val = customModal.type === 'prompt' ? (input?.value || '') : '';
                   setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  customModal.onConfirm(val);
                 }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all"
-              >
-                {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {customModal.isOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 p-6 flex flex-col gap-4 font-sans">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                {customModal.title}
-              </h3>
-              <button
-                onClick={() => {
-                  setCustomModal(prev => ({ ...prev, isOpen: false }));
-                  if (customModal.onCancel) customModal.onCancel();
-                }}
-                className="text-slate-455 hover:text-slate-600 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            
-            {customModal.type === 'prompt' && (
-              <input
-                type="text"
-                id="custom-modal-input"
-                defaultValue={customModal.defaultValue || ''}
-                placeholder={customModal.placeholder || ''}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const input = document.getElementById('custom-modal-input') as HTMLInputElement;
-                    customModal.onConfirm(input?.value || '');
-                    setCustomModal(prev => ({ ...prev, isOpen: false }));
-                  }
-                }}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
-              />
-            )}
-            
-            {customModal.type !== 'prompt' && (
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {customModal.message}
-              </p>
-            )}
-            
-            <div className="flex justify-end gap-3 pt-2">
-              {customModal.type !== 'alert' && (
-                <button
-                  onClick={() => {
-                    setCustomModal(prev => ({ ...prev, isOpen: false }));
-                    if (customModal.onCancel) customModal.onCancel();
-                  }}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  const input = document.getElementById('custom-modal-input') as HTMLInputElement;
-                  customModal.onConfirm(customModal.type === 'prompt' ? (input?.value || '') : '');
-                  setCustomModal(prev => ({ ...prev, isOpen: false }));
-                }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer"
               >
                 {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
               </button>
