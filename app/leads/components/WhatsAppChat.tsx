@@ -1294,7 +1294,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
 
       {/* Área de Mensagens (Exibida somente na aba 'chat') */}
       {activeTab === 'chat' && (
-        <>
+        <div className="flex-1 flex flex-col min-h-0 relative">
           <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}>
         {messages.length === 0 ? (
           <div className="text-center py-8">
@@ -1499,7 +1499,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
           </div>
         )}
         </div>
-      </>
+      </div>
     )}
   </div>
 );
