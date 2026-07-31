@@ -3,8 +3,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead } from '../whatsapp-actions';
 import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText, Mic, Trash, RefreshCw } from 'lucide-react';
-import { formatTimeBrasilia } from '@/lib/timezone';
+import { formatTimeBrasilia, formatDateTimeBrasilia, parseDateUTC, getUserTimezone } from '@/lib/timezone';
 import { WavAudioRecorder } from '@/lib/WavAudioRecorder';
+
+const getDateDividerLabel = (dateInput: any): string => {
+  if (!dateInput) return '';
+  try {
+    const d = parseDateUTC(dateInput);
+    const tz = getUserTimezone();
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+    const dStr = formatter.format(d);
+    const todayStr = formatter.format(today);
+    const yestStr = formatter.format(yesterday);
+
+    if (dStr === todayStr) return 'Hoje';
+    if (dStr === yestStr) return 'Ontem';
+    return d.toLocaleDateString('pt-BR', { timeZone: tz, day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch (e) {
+    return '';
+  }
+};
 
 interface WhatsAppChatProps {
   leadId: string;
@@ -64,6 +86,10 @@ function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; message
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Extrair qualquer URL presente no texto de fallback
+  const urlMatch = messageText.match(/https?:\/\/[^\s]+/);
+  const fallbackUrl = urlMatch ? urlMatch[0] : null;
+
   useEffect(() => {
     let isMounted = true;
     const fetchMedia = async () => {
@@ -109,9 +135,61 @@ function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; message
   }
 
   if (error || !file) {
+    if (fallbackUrl) {
+      const docNameMatch = messageText.match(/📄 Documento:\s*([^\n]+)/);
+      const docName = docNameMatch ? docNameMatch[1].trim() : 'Documento Anexo';
+      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fallbackUrl);
+
+      if (isImage) {
+        return (
+          <div className="flex flex-col gap-2">
+            <div className="relative overflow-hidden rounded-lg border border-slate-200 max-w-sm">
+              <img 
+                src={fallbackUrl} 
+                alt="Foto" 
+                className="max-w-full max-h-64 object-contain rounded-lg cursor-pointer"
+                onClick={() => window.open(fallbackUrl, '_blank')}
+              />
+            </div>
+            <a 
+              href={fallbackUrl} 
+              target="_blank" 
+              rel="noreferrer"
+              className="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 mt-1"
+            >
+              <Download size={12} /> Abrir / Baixar Foto
+            </a>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center gap-3">
+            <div className="bg-emerald-100 text-emerald-700 p-2 rounded-lg">
+              <FileText size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-slate-700 truncate" title={docName}>{docName}</div>
+              <div className="text-[10px] text-slate-400">Documento Anexo</div>
+            </div>
+            <a 
+              href={fallbackUrl} 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+            >
+              <Download size={12} /> Visualizar / Baixar
+            </a>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="text-xs text-red-500 flex items-center gap-1.5 p-2 bg-red-50 border border-red-100 rounded-lg">
-        <span>⚠️ Erro ao carregar arquivo.</span>
+      <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs">
+        <FileText size={16} className="text-slate-400" />
+        <span>Arquivo anexo</span>
       </div>
     );
   }
@@ -227,8 +305,8 @@ function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; message
 function renderMessageContent(texto: string) {
   if (!texto) return null;
 
-  // Check if text contains a file reference ID
-  const fileIdMatch = texto.match(/file-([a-zA-Z0-9-]+)/);
+  // Check if text contains an internal file reference ID (not part of an http/https URL)
+  const fileIdMatch = !texto.includes('http://') && !texto.includes('https://') ? texto.match(/file-([a-zA-Z0-9-]+)/) : null;
   if (fileIdMatch) {
     const fileId = fileIdMatch[1];
     
@@ -714,34 +792,50 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
             </span>
           </div>
         ) : (
-          messages.map(msg => {
+          messages.map((msg, index) => {
             const isOutbound = msg.direction === 'OUTBOUND';
+            const dateLabel = getDateDividerLabel(msg.createdAt);
+            const prevDateLabel = index > 0 ? getDateDividerLabel(messages[index - 1].createdAt) : null;
+            const showDateDivider = dateLabel && dateLabel !== prevDateLabel;
+
             return (
-              <div key={msg.id} className={`flex ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                <div 
-                  className={`max-w-[80%] rounded-lg p-2.5 shadow-sm text-sm whitespace-pre-wrap ${
-                    isOutbound 
-                      ? 'bg-[#D9FDD3] text-slate-800 rounded-tr-none' 
-                      : 'bg-white text-slate-800 rounded-tl-none'
-                  }`}
-                >
-                  {renderMessageContent(msg.texto)}
-                  <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOutbound ? 'text-emerald-700/60' : 'text-slate-400'}`}>
-                    <span>{formatTimeBrasilia(msg.createdAt)}</span>
-                    {isOutbound && (
-                      <span className="text-[14px] leading-none select-none font-bold ml-1">
-                        {msg.status === 'READ' ? (
-                          <span className="text-[#53bdeb]">✓✓</span>
-                        ) : msg.status === 'DELIVERED' ? (
-                          <span className="text-slate-400">✓✓</span>
-                        ) : (
-                          <span className="text-slate-400">✓</span>
-                        )}
-                      </span>
-                    )}
+              <React.Fragment key={msg.id}>
+                {showDateDivider && (
+                  <div className="flex justify-center my-3 sticky top-2 z-10 pointer-events-none">
+                    <span className="bg-white/90 backdrop-blur-md shadow-2xs border border-slate-200/80 text-slate-600 px-3 py-1 rounded-full text-[10.5px] font-bold tracking-wide select-none">
+                      {dateLabel}
+                    </span>
+                  </div>
+                )}
+                <div className={`flex ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+                  <div 
+                    className={`max-w-[80%] rounded-lg p-2.5 shadow-sm text-sm whitespace-pre-wrap ${
+                      isOutbound 
+                        ? 'bg-[#D9FDD3] text-slate-800 rounded-tr-none' 
+                        : 'bg-white text-[#111b21] rounded-tl-none'
+                    }`}
+                  >
+                    {renderMessageContent(msg.texto)}
+                    <div 
+                      className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOutbound ? 'text-emerald-700/60' : 'text-slate-400'}`}
+                      title={formatDateTimeBrasilia(msg.createdAt)}
+                    >
+                      <span>{formatTimeBrasilia(msg.createdAt)}</span>
+                      {isOutbound && (
+                        <span className="text-[14px] leading-none select-none font-bold ml-1">
+                          {msg.status === 'READ' ? (
+                            <span className="text-[#53bdeb]">✓✓</span>
+                          ) : msg.status === 'DELIVERED' ? (
+                            <span className="text-slate-400">✓✓</span>
+                          ) : (
+                            <span className="text-slate-400">✓</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })
         )}

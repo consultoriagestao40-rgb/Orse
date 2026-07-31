@@ -133,31 +133,55 @@ export async function POST(req: Request) {
         text = '[Mensagem de mídia recebida]';
       }
  
-      // Busca flexível considerando DDI/DDD (últimos 8 dígitos)
-      const last8Digits = phone.slice(-8);
- 
-      // Busca na tabela de Leads principal pelo telefone e empresa
+      // Busca flexível considerando DDI/DDD e formatação (hífen, parênteses, espaços)
+      const digitsOnly = phone.replace(/\D/g, '');
+      const last8 = digitsOnly.slice(-8);
+      const last4 = digitsOnly.slice(-4);
+      const middle4 = digitsOnly.length >= 8 ? digitsOnly.slice(-8, -4) : '';
+
+      // Busca no banco por tenant e tenta encontrar o lead
       let leads = await prisma.lead.findMany({
         where: {
-          telefone: { contains: last8Digits },
-          tenantId: tenantId
+          tenantId: tenantId,
+          AND: [
+            { telefone: { contains: middle4 } },
+            { telefone: { contains: last4 } }
+          ]
         }
       });
- 
-      // Se não encontrou pelo telefone principal, busca nos contatos adicionais da empresa
+
+      // Se a busca por hífens/subpartes não retornar, faz busca por todos os leads do tenant e filtra em memória pelos últimos 8 dígitos
+      if (leads.length === 0) {
+        const allTenantLeads = await prisma.lead.findMany({
+          where: { tenantId: tenantId },
+          select: { id: true, nomeFantasia: true, telefone: true, stageId: true, pipelineId: true }
+        });
+        leads = allTenantLeads.filter(l => {
+          if (!l.telefone) return false;
+          const leadDigits = l.telefone.replace(/\D/g, '');
+          return leadDigits.endsWith(last8) || (last8.length >= 8 && leadDigits.includes(last8));
+        }) as any;
+      }
+
+      // Se não encontrou pelo principal, busca nos contatos adicionais da empresa
       if (leads.length === 0) {
         const additionalContacts = await prisma.leadContact.findMany({
           where: {
-            telefone: { contains: last8Digits },
             lead: { tenantId: tenantId }
           },
           include: {
             lead: true
           }
         });
- 
-        if (additionalContacts.length > 0) {
-          leads = additionalContacts.map(c => c.lead);
+
+        const matched = additionalContacts.filter(c => {
+          if (!c.telefone) return false;
+          const cDigits = c.telefone.replace(/\D/g, '');
+          return cDigits.endsWith(last8) || (last8.length >= 8 && cDigits.includes(last8));
+        });
+
+        if (matched.length > 0) {
+          leads = matched.map(c => c.lead);
         }
       }
  

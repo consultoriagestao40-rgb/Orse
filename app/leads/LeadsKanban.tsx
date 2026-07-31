@@ -1530,25 +1530,40 @@ export default function LeadsKanban() {
     return cols;
   }, [filteredLeads, segmentos, segmentoOrder]);
 
-  // Get all leads with WhatsApp messages, sorted by the latest message date
-  const chatLeads = leads
+  // Agrupa leads com mensagens de WhatsApp por número de telefone para eliminar abas duplicadas
+  const chatLeadsMap = new Map<string, any>();
+  leads
     .filter(lead => lead.telefone && (lead.whatsappMessages?.length > 0))
-    .map(lead => {
-      const sortedMsgs = [...(lead.whatsappMessages || [])].sort(
+    .forEach(lead => {
+      const cleanPhone = lead.telefone.replace(/\D/g, '').slice(-8);
+      const key = cleanPhone.length >= 8 ? cleanPhone : lead.telefone;
+      
+      const existing = chatLeadsMap.get(key);
+      const allMsgs = [...(existing?.whatsappMessages || []), ...(lead.whatsappMessages || [])];
+      
+      const sortedMsgs = allMsgs.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       const latestMsg = sortedMsgs[0];
-      const unreadCount = (lead.whatsappMessages || []).filter(
+      const unreadCount = allMsgs.filter(
         (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
       ).length;
-      return {
-        ...lead,
-        nome: lead.nomeFantasia,
+
+      const primaryLead = (existing && existing.nomeFantasia && !existing.nomeFantasia.startsWith('WhatsApp:'))
+        ? existing
+        : lead;
+
+      chatLeadsMap.set(key, {
+        ...primaryLead,
+        whatsappMessages: allMsgs,
+        nome: primaryLead.nomeFantasia,
         latestMsg,
         unreadCount,
         latestMsgDate: latestMsg ? new Date(latestMsg.createdAt) : new Date(0)
-      };
-    })
+      });
+    });
+
+  const chatLeads = Array.from(chatLeadsMap.values())
     .sort((a, b) => b.latestMsgDate.getTime() - a.latestMsgDate.getTime());
 
   const filteredChatLeads = chatLeads.filter(lead => 
@@ -3817,6 +3832,40 @@ export default function LeadsKanban() {
                             </div>
                             
                             <div className="flex items-center gap-2 shrink-0">
+                              {/* Seletor Rápido de Transferência de Comercial */}
+                              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs">
+                                <UserCog size={14} className="text-emerald-600 shrink-0" />
+                                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider shrink-0 hidden sm:inline">
+                                  Responsável:
+                                </span>
+                                <select
+                                  value={activeLead.assignedToId || ''}
+                                  onChange={async (e) => {
+                                    const newOwnerId = e.target.value;
+                                    if (!newOwnerId) return;
+                                    const res = await changeLeadOwner(activeLead.id, newOwnerId);
+                                    if (res.success) {
+                                      setLeads(prev => prev.map(l => l.id === activeLead.id ? { ...l, assignedToId: newOwnerId } : l));
+                                      const newOwnerName = filterUsers.find(u => u.id === newOwnerId)?.nome || 'Comercial';
+                                      setCustomModal({
+                                        isOpen: true,
+                                        title: 'Conversa Transferida',
+                                        message: `A conversa com ${activeLead.nomeFantasia} foi transferida para ${newOwnerName} com sucesso!`,
+                                        type: 'alert',
+                                        onConfirm: () => {}
+                                      });
+                                    } else {
+                                      alert('Erro ao transferir lead: ' + res.error);
+                                    }
+                                  }}
+                                  className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[140px] truncate"
+                                >
+                                  <option value="">Sem responsável</option>
+                                  {filterUsers.map(u => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
                               {/* Inline Edit Button */}
                               <button
                                 onClick={() => {
