@@ -2,12 +2,12 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
-import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage, getLeadStages, createLeadStage, updateLeadStageName, updateLeadStageColor, deleteLeadStage } from '@/app/leads/actions';
+import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage, getLeadStages, createLeadStage, updateLeadStageName, updateLeadStageColor, deleteLeadStage, reorderStages } from '@/app/leads/actions';
 import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, updateLeadTags } from '@/app/leads/whatsapp-actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
@@ -533,6 +533,8 @@ const Sidebar = () => {
   const [editingWidgetStageName, setEditingWidgetStageName] = useState('');
   const [newWidgetStageName, setNewWidgetStageName] = useState('');
   const [showNewWidgetStageForm, setShowNewWidgetStageForm] = useState(false);
+  const [draggedWidgetStageId, setDraggedWidgetStageId] = useState<string | null>(null);
+  const [draggedOverWidgetStageId, setDraggedOverWidgetStageId] = useState<string | null>(null);
 
   // Estados para Modal de Pendências de WhatsApp (Leads sem Resposta)
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -3028,18 +3030,63 @@ const Sidebar = () => {
                             return (
                               <div
                                 key={col.id}
-                                className="w-[280px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
-                                onDragOver={e => e.preventDefault()}
+                                className={`w-[280px] shrink-0 flex flex-col bg-slate-50/90 border rounded-2xl shadow-xs overflow-hidden transition-all ${
+                                  draggedOverWidgetStageId === col.id ? 'border-2 border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-500/20' : 'border-slate-200/80'
+                                }`}
+                                onDragOver={e => {
+                                  e.preventDefault();
+                                  if (draggedWidgetStageId && draggedWidgetStageId !== col.id && col.id !== 'unassigned') {
+                                    setDraggedOverWidgetStageId(col.id);
+                                  }
+                                }}
                                 onDrop={async e => {
                                   e.preventDefault();
+                                  // Caso 1: Reordenar colunas de etapas
+                                  if (draggedWidgetStageId) {
+                                    if (draggedWidgetStageId !== col.id && col.id !== 'unassigned') {
+                                      const currentStageIds = widgetStages.map(s => s.id);
+                                      const fromIdx = currentStageIds.indexOf(draggedWidgetStageId);
+                                      const toIdx = currentStageIds.indexOf(col.id);
+                                      if (fromIdx !== -1 && toIdx !== -1) {
+                                        const newIds = [...currentStageIds];
+                                        const [removed] = newIds.splice(fromIdx, 1);
+                                        newIds.splice(toIdx, 0, removed);
+
+                                        const reordered = newIds.map(id => widgetStages.find(s => s.id === id)).filter(Boolean);
+                                        setWidgetStages(reordered);
+                                        await reorderStages(newIds);
+                                      }
+                                    }
+                                    setDraggedWidgetStageId(null);
+                                    setDraggedOverWidgetStageId(null);
+                                    return;
+                                  }
+
+                                  // Caso 2: Mover card de lead
                                   if (!draggedWidgetLeadId) return;
                                   setWidgetLeads(prev => prev.map(l => l.id === draggedWidgetLeadId ? { ...l, stageId: col.id, stage: { ...l.stage, nome: col.label } } : l));
                                   await updateLeadStage(draggedWidgetLeadId, col.id);
                                   setDraggedWidgetLeadId(null);
                                 }}
                               >
-                                <div className="p-3 border-b flex items-center justify-between font-extrabold text-xs bg-slate-100/90 text-slate-800 border-slate-200">
+                                <div 
+                                  draggable={col.id !== 'unassigned'}
+                                  onDragStart={e => {
+                                    if (col.id === 'unassigned') return;
+                                    setDraggedWidgetStageId(col.id);
+                                  }}
+                                  onDragEnd={() => {
+                                    setDraggedWidgetStageId(null);
+                                    setDraggedOverWidgetStageId(null);
+                                  }}
+                                  className={`p-3 border-b flex items-center justify-between font-extrabold text-xs bg-slate-100/90 text-slate-800 border-slate-200 select-none ${
+                                    col.id !== 'unassigned' ? 'cursor-grab active:cursor-grabbing hover:bg-slate-200/50' : ''
+                                  }`}
+                                >
                                   <div className="flex items-center gap-1.5 truncate">
+                                    {col.id !== 'unassigned' && (
+                                      <GripVertical size={13} className="text-slate-400 shrink-0" />
+                                    )}
                                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color || '#0ca678' }} />
                                     <span className="truncate uppercase">{col.label}</span>
                                     <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
