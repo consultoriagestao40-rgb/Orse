@@ -438,7 +438,7 @@ export async function addChatParticipant(leadId: string, participantUserId: stri
         data: {
           leadId,
           userId: participantUserId,
-          permission: 'WRITE'
+          role: 'PARTICIPANTE'
         }
       });
     }
