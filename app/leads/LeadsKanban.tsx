@@ -1755,8 +1755,8 @@ export default function LeadsKanban() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
-      {/* Área Superior Fixa (Header + Métricas) */}
+    <div className="flex flex-col h-screen bg-slate-50 overflow-y-auto overflow-x-hidden">
+      {/* Área Superior (Header + Métricas) - Largura fixa (100% da tela) */}
       <div className="w-full shrink-0 bg-white border-b border-slate-200 z-40 shadow-xs">
         <div className="p-4 md:py-5 md:px-6 bg-white flex flex-col lg:flex-row justify-between lg:items-center gap-4 relative">
           <div className="relative">
@@ -2012,8 +2012,8 @@ export default function LeadsKanban() {
         )}
       </div>
 
-      {/* Conteúdo Principal do Kanban - Apenas esta área rola na horizontal e vertical */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto min-h-0 bg-slate-50">
+      {/* Conteúdo Principal do Kanban - Apenas as colunas rolam na horizontal */}
+      <div className="w-full overflow-x-auto bg-slate-50">
         {viewMode === 'kanban-status' && (
           <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
