@@ -1094,3 +1094,62 @@ export async function archiveLead(leadId: string) {
     return { success: false, error: error.message || String(error) };
   }
 }
+
+export async function getPendingUnansweredLeads() {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized', pendingLeads: [] };
+
+  try {
+    const leadsWithMsgs = await prisma.lead.findMany({
+      where: {
+        tenantId: user.tenantId,
+        telefone: { not: null },
+        whatsappMessages: { some: {} }
+      },
+      include: {
+        assignedTo: { select: { id: true, nome: true, email: true } },
+        stage: { select: { id: true, nome: true } },
+        whatsappMessages: {
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        }
+      }
+    });
+
+    const pendingLeads = leadsWithMsgs
+      .map(lead => {
+        const latestMsg = lead.whatsappMessages[0];
+        const isUnanswered = latestMsg && latestMsg.direction === 'INBOUND';
+        const unreadCount = lead.whatsappMessages.filter(m => m.direction === 'INBOUND' && m.status !== 'READ').length;
+
+        return {
+          id: lead.id,
+          nomeFantasia: lead.nomeFantasia,
+          telefone: lead.telefone,
+          segmento: lead.segmento,
+          stageName: lead.stage?.nome || 'Sem etapa',
+          assignedTo: lead.assignedTo,
+          assignedToId: lead.assignedToId,
+          latestMsg: latestMsg ? {
+            texto: latestMsg.texto,
+            createdAt: latestMsg.createdAt,
+            direction: latestMsg.direction,
+            status: latestMsg.status
+          } : null,
+          isUnanswered,
+          unreadCount
+        };
+      })
+      .filter(lead => lead.isUnanswered || lead.unreadCount > 0)
+      .sort((a, b) => {
+        const dateA = a.latestMsg ? new Date(a.latestMsg.createdAt).getTime() : 0;
+        const dateB = b.latestMsg ? new Date(b.latestMsg.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+    return { success: true, pendingLeads };
+  } catch (error: any) {
+    console.error('getPendingUnansweredLeads error:', error);
+    return { success: false, error: error.message, pendingLeads: [] };
+  }
+}

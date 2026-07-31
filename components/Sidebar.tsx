@@ -7,9 +7,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
-import { getLeads, getAllUsers, updateLeadData, changeLeadOwner } from '@/app/leads/actions';
+import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads } from '@/app/leads/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
+import { playWhatsAppChime } from '@/lib/sound';
 import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList, uploadChatFileAction, updateUserLastActive } from '@/app/leads/chat-actions';
 import { formatLastSeen } from '@/lib/timezone';
 import { WavAudioRecorder } from '@/lib/WavAudioRecorder';
@@ -523,6 +524,12 @@ const Sidebar = () => {
   const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
   const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
 
+  // Estados para Modal de Pendências de WhatsApp (Leads sem Resposta)
+  const [showPendingModal, setShowPendingModal] = useState(false);
+  const [pendingLeadsList, setPendingLeadsList] = useState<any[]>([]);
+  const hasCheckedPendingOnMountRef = useRef(false);
+  const prevUnreadWhatsAppRef = useRef(-1);
+
   // Estados para Chat Interno
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState<any | null>(null);
@@ -1025,6 +1032,40 @@ const Sidebar = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
+
+  // Polling global continuo para mensagens do WhatsApp sem resposta e som de notificação
+  useEffect(() => {
+    if (!user) return;
+
+    const checkWhatsAppGlobalStatus = async () => {
+      try {
+        const res = await getPendingUnansweredLeads();
+        if (res.success && Array.isArray(res.pendingLeads)) {
+          setPendingLeadsList(res.pendingLeads);
+
+          const totalUnread = res.pendingLeads.reduce((acc, l) => acc + (l.unreadCount || 0), 0);
+
+          if (prevUnreadWhatsAppRef.current !== -1 && totalUnread > prevUnreadWhatsAppRef.current) {
+            playWhatsAppChime();
+          }
+          prevUnreadWhatsAppRef.current = totalUnread;
+
+          if (!hasCheckedPendingOnMountRef.current) {
+            hasCheckedPendingOnMountRef.current = true;
+            if (res.pendingLeads.length > 0) {
+              setShowPendingModal(true);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Erro no polling global de WhatsApp:', err);
+      }
+    };
+
+    checkWhatsAppGlobalStatus();
+    const interval = setInterval(checkWhatsAppGlobalStatus, 6000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Efeito para carregar leads do WhatsApp com polling de 5 segundos
   useEffect(() => {
@@ -2429,6 +2470,120 @@ const Sidebar = () => {
                 })()}
               </div>
             </>
+          )}
+
+          {/* MODAL DE NOTIFICAÇÃO DE PENDÊNCIAS DE LEADS SEM RESPOSTA */}
+          {showPendingModal && (
+            <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center z-[99999] p-4 animate-fade-in font-sans">
+              <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh] animate-scale-up">
+                {/* Modal Header */}
+                <div className="p-5 bg-gradient-to-r from-emerald-900 via-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-emerald-800/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/30 flex items-center justify-center shrink-0 animate-pulse">
+                      <MessageCircle size={22} className="fill-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                        Pendências no WhatsApp
+                        <span className="bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {pendingLeadsList.length} {pendingLeadsList.length === 1 ? 'Lead' : 'Leads'}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300 font-medium">Clientes aguardando resposta da sua equipe comercial</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setShowPendingModal(false)}
+                    className="text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
+                    title="Fechar Notificação"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-5 flex-1 overflow-y-auto space-y-3 bg-slate-50/50">
+                  {pendingLeadsList.length === 0 ? (
+                    <div className="text-center py-10">
+                      <CheckCircle2 size={40} className="text-emerald-500 mx-auto mb-2" />
+                      <h4 className="text-sm font-bold text-slate-800">Tudo em dia!</h4>
+                      <p className="text-xs text-slate-500">Nenhum cliente aguardando resposta no WhatsApp no momento.</p>
+                    </div>
+                  ) : (
+                    pendingLeadsList.map(lead => {
+                      return (
+                        <div 
+                          key={lead.id} 
+                          className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-emerald-300 transition-all flex flex-col md:flex-row justify-between md:items-center gap-3"
+                        >
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-bold text-slate-900 truncate" title={lead.nomeFantasia}>
+                                {lead.nomeFantasia}
+                              </h4>
+                              <span className="text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shrink-0">
+                                Aguardando resposta
+                              </span>
+                            </div>
+
+                            <div className="text-xs text-slate-500 font-medium flex items-center gap-3">
+                              <span>📞 {lead.telefone}</span>
+                              {lead.assignedTo?.nome ? (
+                                <span className="text-slate-600 font-semibold">👤 Responsável: {lead.assignedTo.nome}</span>
+                              ) : (
+                                <span className="text-red-500 font-bold">⚠️ Sem responsável</span>
+                              )}
+                            </div>
+
+                            {lead.latestMsg && (
+                              <div className="bg-slate-50 border border-slate-200/60 p-2.5 rounded-xl text-xs text-slate-700 font-medium italic truncate mt-1">
+                                "{lead.latestMsg.texto}"
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 shrink-0 border-t md:border-t-0 border-slate-100 pt-2 md:pt-0">
+                            <button
+                              onClick={() => {
+                                setShowPendingModal(false);
+                                setActiveWidgetLead(lead);
+                                setShowWhatsAppWidget(true);
+                              }}
+                              className="bg-[#0ca678] hover:bg-[#099268] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                            >
+                              <MessageCircle size={14} /> Atender Agora
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowPendingModal(false);
+                                router.push(`/leads?id=${lead.id}`);
+                              }}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <Target size={14} /> Ver no Funil
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-4 bg-white border-t border-slate-100 flex justify-between items-center shrink-0">
+                  <span className="text-xs text-slate-500 font-medium">
+                    {pendingLeadsList.length} {pendingLeadsList.length === 1 ? 'conversa pendente' : 'conversas pendentes'}
+                  </span>
+                  <button
+                    onClick={() => setShowPendingModal(false)}
+                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-colors shadow-xs"
+                  >
+                    Entendido, Continuar no Sistema
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
