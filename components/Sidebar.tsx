@@ -525,6 +525,7 @@ const Sidebar = () => {
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
   const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
+  const [widgetChatTab, setWidgetChatTab] = useState<'open' | 'closed'>('open');
 
   // Estados para Modal de Pendências de WhatsApp (Leads sem Resposta)
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -2643,14 +2644,48 @@ const Sidebar = () => {
                     </div>
                   </div>
 
+                  {/* Tabs Abertas vs Encerradas */}
+                  {(() => {
+                    const allWhatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
+                    const openCount = allWhatsappLeads.filter(l => (l.chatStatus || 'OPEN') === 'OPEN').length;
+                    const closedCount = allWhatsappLeads.filter(l => l.chatStatus === 'CLOSED').length;
+                    return (
+                      <div className="flex border-b border-slate-100 bg-slate-50/60 p-1.5 gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setWidgetChatTab('open')}
+                          className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            widgetChatTab === 'open' ? 'bg-white text-emerald-800 shadow-2xs font-black' : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <MessageCircle size={13} className={widgetChatTab === 'open' ? 'text-emerald-600' : 'text-slate-400'} />
+                          Abertas ({openCount})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setWidgetChatTab('closed')}
+                          className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            widgetChatTab === 'closed' ? 'bg-white text-slate-800 shadow-2xs font-black' : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <Archive size={13} className={widgetChatTab === 'closed' ? 'text-slate-600' : 'text-slate-400'} />
+                          Encerradas ({closedCount})
+                        </button>
+                      </div>
+                    );
+                  })()}
+
                   {/* Lista */}
                   <div className="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white">
                     {(() => {
                       const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
-                      const filtered = whatsappLeads.filter(l => 
-                        l.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
-                        l.telefone.includes(widgetSearchTerm)
-                      );
+                      const filtered = whatsappLeads.filter(l => {
+                        const matchesSearch = l.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
+                                              l.telefone.includes(widgetSearchTerm);
+                        const status = l.chatStatus || 'OPEN';
+                        const matchesTab = widgetChatTab === 'open' ? status === 'OPEN' : status === 'CLOSED';
+                        return matchesSearch && matchesTab;
+                      });
 
                       if (filtered.length === 0) {
                         return (
@@ -2868,7 +2903,12 @@ const Sidebar = () => {
                                 onClick={async () => {
                                   const res = await reopenWhatsAppChat(activeWidgetLead.id);
                                   if (res.success) {
+                                    setWidgetLeads(prev => prev.map(l => l.id === activeWidgetLead.id ? { ...l, chatStatus: 'OPEN' } : l));
                                     setActiveWidgetLead({ ...activeWidgetLead, chatStatus: 'OPEN' });
+                                    const leadsRes = await getLeads();
+                                    if (leadsRes.success && leadsRes.leads) setWidgetLeads(leadsRes.leads);
+                                  } else {
+                                    alert('Erro ao reabrir atendimento: ' + res.error);
                                   }
                                 }}
                                 className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
@@ -2882,7 +2922,12 @@ const Sidebar = () => {
                                   if (confirm(`Deseja realmente encerrar o atendimento do WhatsApp de ${activeWidgetLead.nomeFantasia}?`)) {
                                     const res = await closeWhatsAppChat(activeWidgetLead.id);
                                     if (res.success) {
+                                      setWidgetLeads(prev => prev.map(l => l.id === activeWidgetLead.id ? { ...l, chatStatus: 'CLOSED' } : l));
                                       setActiveWidgetLead(null);
+                                      const leadsRes = await getLeads();
+                                      if (leadsRes.success && leadsRes.leads) setWidgetLeads(leadsRes.leads);
+                                    } else {
+                                      alert('Erro ao encerrar atendimento: ' + res.error);
                                     }
                                   }
                                 }}
