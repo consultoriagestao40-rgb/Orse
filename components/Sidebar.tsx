@@ -7,8 +7,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
-import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads } from '@/app/leads/actions';
-import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant } from '@/app/leads/whatsapp-actions';
+import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage } from '@/app/leads/actions';
+import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, updateLeadTags } from '@/app/leads/whatsapp-actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
 import { playWhatsAppChime } from '@/lib/sound';
@@ -526,6 +526,8 @@ const Sidebar = () => {
   const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
   const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
   const [widgetChatTab, setWidgetChatTab] = useState<'open' | 'closed'>('open');
+  const [widgetViewMode, setWidgetViewMode] = useState<'list' | 'kanban-tags' | 'kanban-stages'>('list');
+  const [draggedWidgetLeadId, setDraggedWidgetLeadId] = useState<string | null>(null);
 
   // Estados para Modal de Pendências de WhatsApp (Leads sem Resposta)
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -2604,8 +2606,8 @@ const Sidebar = () => {
                 <X size={20} className="stroke-[2.5] transition-transform group-hover:rotate-90" />
               </button>
 
-              {/* Cabeçalho Único do Widget */}
-              <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800 select-none rounded-t-3xl">
+              {/* Cabeçalho Único do Widget com Seletor de Visualização */}
+              <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex flex-wrap justify-between items-center shrink-0 border-b border-slate-800 select-none rounded-t-3xl gap-2">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
                     <MessageCircle size={16} className="fill-emerald-400" />
@@ -2615,12 +2617,46 @@ const Sidebar = () => {
                     <p className="text-[9px] text-slate-400 font-bold mt-0.5">Acompanhe e responda todas as conversas do funil em tempo real</p>
                   </div>
                 </div>
+
+                {/* Alternador de Visualização da Central */}
+                <div className="flex items-center bg-slate-800/80 border border-slate-700/80 p-1 rounded-xl gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setWidgetViewMode('list')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                      widgetViewMode === 'list' ? 'bg-emerald-500 text-white shadow-2xs font-black' : 'text-slate-300 hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <ClipboardList size={13} /> Lista
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setWidgetViewMode('kanban-tags')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                      widgetViewMode === 'kanban-tags' ? 'bg-emerald-500 text-white shadow-2xs font-black' : 'text-slate-300 hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <Boxes size={13} /> Kanban por Etiquetas
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setWidgetViewMode('kanban-stages')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                      widgetViewMode === 'kanban-stages' ? 'bg-emerald-500 text-white shadow-2xs font-black' : 'text-slate-300 hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <BarChart2 size={13} /> Kanban por Etapa
+                  </button>
+                </div>
               </div>
 
-              {/* Corpo em Duas Colunas */}
+              {/* Corpo da Central de Atendimento */}
               <div className="flex-1 flex overflow-hidden bg-white">
-                {/* Coluna da Esquerda: Lista de Conversas (w-[320px]) */}
-                <div className="w-[320px] border-r border-slate-200/80 flex flex-col bg-white shrink-0">
+                {/* Visualização 1: Lista Vertical Tradicional */}
+                {widgetViewMode === 'list' && (
+                  <div className="w-[320px] border-r border-slate-200/80 flex flex-col bg-white shrink-0">
                   {/* Busca */}
                   <div className="p-3 bg-white border-b border-slate-100 shrink-0">
                     <div className="relative">
@@ -2802,6 +2838,234 @@ const Sidebar = () => {
                     })()}
                   </div>
                 </div>
+                )}
+
+                {/* Visualização 2: Kanban de Conversas por Etiquetas */}
+                {widgetViewMode === 'kanban-tags' && (
+                  <div className="flex-1 overflow-x-auto p-3 bg-slate-100/70 border-r border-slate-200 flex gap-3 min-w-0">
+                    {[
+                      { id: 'VIP', label: '🏷️ VIP', bg: 'bg-amber-500/10 text-amber-800 border-amber-300', dot: 'bg-amber-500' },
+                      { id: 'Urgente', label: '🏷️ Urgente', bg: 'bg-red-500/10 text-red-800 border-red-300', dot: 'bg-red-500' },
+                      { id: 'Orçamento', label: '🏷️ Orçamento', bg: 'bg-blue-500/10 text-blue-800 border-blue-300', dot: 'bg-blue-500' },
+                      { id: 'Retornar Hoje', label: '🏷️ Retornar Hoje', bg: 'bg-emerald-500/10 text-emerald-800 border-emerald-300', dot: 'bg-emerald-500' },
+                      { id: 'Em Negociação', label: '🏷️ Em Negociação', bg: 'bg-purple-500/10 text-purple-800 border-purple-300', dot: 'bg-purple-500' },
+                      { id: 'Aguardando Cliente', label: '🏷️ Aguardando Cliente', bg: 'bg-pink-500/10 text-pink-800 border-pink-300', dot: 'bg-pink-500' },
+                      { id: 'Qualificado', label: '🏷️ Qualificado', bg: 'bg-cyan-500/10 text-cyan-800 border-cyan-300', dot: 'bg-cyan-500' },
+                      { id: 'unassigned', label: '⚪ Sem Etiqueta', bg: 'bg-slate-500/10 text-slate-800 border-slate-300', dot: 'bg-slate-500' }
+                    ].map(col => {
+                      const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
+                      const colLeads = whatsappLeads.filter(lead => {
+                        const matchesSearch = lead.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
+                                              lead.telefone.includes(widgetSearchTerm);
+                        const status = lead.chatStatus || 'OPEN';
+                        const matchesTab = widgetChatTab === 'open' ? status === 'OPEN' : status === 'CLOSED';
+                        if (!matchesSearch || !matchesTab) return false;
+
+                        let parsedTags: string[] = [];
+                        if (lead.tags) {
+                          try {
+                            parsedTags = typeof lead.tags === 'string' ? JSON.parse(lead.tags) : lead.tags;
+                          } catch (e) {
+                            parsedTags = lead.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+                          }
+                        }
+
+                        if (col.id === 'unassigned') {
+                          return !parsedTags || parsedTags.length === 0;
+                        }
+                        return parsedTags.includes(col.id);
+                      });
+
+                      return (
+                        <div
+                          key={col.id}
+                          className="w-[270px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
+                          onDragOver={e => e.preventDefault()}
+                          onDrop={async e => {
+                            e.preventDefault();
+                            if (!draggedWidgetLeadId) return;
+                            const newTags = col.id === 'unassigned' ? [] : [col.id];
+                            const tagsJson = JSON.stringify(newTags);
+                            setWidgetLeads(prev => prev.map(l => l.id === draggedWidgetLeadId ? { ...l, tags: tagsJson } : l));
+                            await updateLeadTags(draggedWidgetLeadId, tagsJson);
+                            setDraggedWidgetLeadId(null);
+                          }}
+                        >
+                          <div className={`p-3 border-b flex items-center justify-between font-extrabold text-xs ${col.bg}`}>
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className={`w-2.5 h-2.5 rounded-full ${col.dot} shrink-0`} />
+                              <span className="truncate uppercase">{col.label}</span>
+                            </div>
+                            <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
+                              {colLeads.length}
+                            </span>
+                          </div>
+
+                          <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[150px]">
+                            {colLeads.length === 0 ? (
+                              <div className="p-4 text-center text-slate-400 text-xs font-semibold border-2 border-dashed border-slate-200/70 rounded-xl">
+                                Nenhuma conversa nesta etiqueta
+                              </div>
+                            ) : (
+                              colLeads.map(lead => {
+                                const isSelected = activeWidgetLead?.id === lead.id;
+                                const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                                return (
+                                  <div
+                                    key={lead.id}
+                                    draggable
+                                    onDragStart={() => setDraggedWidgetLeadId(lead.id)}
+                                    onClick={() => setActiveWidgetLead(lead)}
+                                    className={`p-3 bg-white border rounded-xl shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-1.5 group relative ${
+                                      isSelected ? 'border-2 border-emerald-500 bg-emerald-50/20' : 'border-slate-200/80 hover:border-slate-300'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2 truncate">
+                                        <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                          {initials}
+                                        </div>
+                                        <h4 className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>
+                                          {lead.nomeFantasia}
+                                        </h4>
+                                      </div>
+                                      {lead.unreadCount > 0 && (
+                                        <span className="bg-emerald-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                                          {lead.unreadCount}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {lead.telefone && (
+                                      <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                        <Phone size={10} className="text-slate-400" />
+                                        <span className="truncate">{lead.telefone}</span>
+                                      </div>
+                                    )}
+
+                                    {lead.latestMsg && (
+                                      <p className="text-[11px] text-slate-600 line-clamp-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
+                                        {lead.latestMsg.texto}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Visualização 3: Kanban de Conversas por Etapa do Funil */}
+                {widgetViewMode === 'kanban-stages' && (
+                  <div className="flex-1 overflow-x-auto p-3 bg-slate-100/70 border-r border-slate-200 flex gap-3 min-w-0">
+                    {(() => {
+                      const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
+                      const stagesMap = new Map<string, { id: string; label: string }>();
+                      whatsappLeads.forEach(l => {
+                        const stageName = l.stage?.nome || 'Sem Etapa';
+                        const stageId = l.stageId || 'unassigned';
+                        if (!stagesMap.has(stageId)) {
+                          stagesMap.set(stageId, { id: stageId, label: stageName });
+                        }
+                      });
+                      const stageCols = Array.from(stagesMap.values());
+
+                      return stageCols.map(col => {
+                        const colLeads = whatsappLeads.filter(lead => {
+                          const matchesSearch = lead.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
+                                                lead.telefone.includes(widgetSearchTerm);
+                          const status = lead.chatStatus || 'OPEN';
+                          const matchesTab = widgetChatTab === 'open' ? status === 'OPEN' : status === 'CLOSED';
+                          if (!matchesSearch || !matchesTab) return false;
+                          const leadStageId = lead.stageId || 'unassigned';
+                          return leadStageId === col.id;
+                        });
+
+                        return (
+                          <div
+                            key={col.id}
+                            className="w-[270px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
+                            onDragOver={e => e.preventDefault()}
+                            onDrop={async e => {
+                              e.preventDefault();
+                              if (!draggedWidgetLeadId) return;
+                              setWidgetLeads(prev => prev.map(l => l.id === draggedWidgetLeadId ? { ...l, stageId: col.id, stage: { ...l.stage, nome: col.label } } : l));
+                              await updateLeadStage(draggedWidgetLeadId, col.id);
+                              setDraggedWidgetLeadId(null);
+                            }}
+                          >
+                            <div className="p-3 border-b flex items-center justify-between font-extrabold text-xs bg-emerald-500/10 text-emerald-900 border-emerald-300">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+                                <span className="truncate uppercase">{col.label}</span>
+                              </div>
+                              <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
+                                {colLeads.length}
+                              </span>
+                            </div>
+
+                            <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[150px]">
+                              {colLeads.length === 0 ? (
+                                <div className="p-4 text-center text-slate-400 text-xs font-semibold border-2 border-dashed border-slate-200/70 rounded-xl">
+                                  Nenhuma conversa nesta etapa
+                                </div>
+                              ) : (
+                                colLeads.map(lead => {
+                                  const isSelected = activeWidgetLead?.id === lead.id;
+                                  const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                                  return (
+                                    <div
+                                      key={lead.id}
+                                      draggable
+                                      onDragStart={() => setDraggedWidgetLeadId(lead.id)}
+                                      onClick={() => setActiveWidgetLead(lead)}
+                                      className={`p-3 bg-white border rounded-xl shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-1.5 group relative ${
+                                        isSelected ? 'border-2 border-emerald-500 bg-emerald-50/20' : 'border-slate-200/80 hover:border-slate-300'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 truncate">
+                                          <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                            {initials}
+                                          </div>
+                                          <h4 className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>
+                                            {lead.nomeFantasia}
+                                          </h4>
+                                        </div>
+                                        {lead.unreadCount > 0 && (
+                                          <span className="bg-emerald-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                                            {lead.unreadCount}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {lead.telefone && (
+                                        <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                          <Phone size={10} className="text-slate-400" />
+                                          <span className="truncate">{lead.telefone}</span>
+                                        </div>
+                                      )}
+
+                                      {lead.latestMsg && (
+                                        <p className="text-[11px] text-slate-600 line-clamp-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
+                                          {lead.latestMsg.texto}
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
 
                 {/* Coluna da Direita: Chat Ativo (flex-1) */}
                 <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
