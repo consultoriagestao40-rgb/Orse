@@ -3041,58 +3041,19 @@ export default function LeadsKanban() {
                       </div>
                     ) : (
                       colLeads.map(lead => (
-                        <div
+                        <LeadCard
                           key={lead.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, lead.id)}
-                          onClick={() => handleCardClick(lead)}
-                          className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-2 group relative"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 group-hover:text-[#1a365d] transition-colors">
-                              {lead.nomeFantasia}
-                            </h4>
-                            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 shrink-0">
-                              R$ {(lead.valorEst || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
-                            </span>
-                          </div>
-
-                          {lead.contatoNome && (
-                            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                              <User size={12} className="text-slate-400" />
-                              <span>{lead.contatoNome}</span>
-                            </div>
-                          )}
-
-                          {lead.telefone && (
-                            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                              <Phone size={12} className="text-slate-400" />
-                              <span>{lead.telefone}</span>
-                            </div>
-                          )}
-
-                          {/* Render current tags */}
-                          {(() => {
-                            let parsed: string[] = [];
-                            if (lead.tags) {
-                              try {
-                                parsed = typeof lead.tags === 'string' ? JSON.parse(lead.tags) : lead.tags;
-                              } catch (e) {
-                                parsed = lead.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
-                              }
-                            }
-                            if (!Array.isArray(parsed) || parsed.length === 0) return null;
-                            return (
-                              <div className="flex flex-wrap gap-1 pt-1">
-                                {parsed.map((t: string) => (
-                                  <span key={t} className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#1a365d]/10 text-[#1a365d] border border-[#1a365d]/20">
-                                    🏷️ {t}
-                                  </span>
-                                ))}
-                              </div>
-                            );
-                          })()}
-                        </div>
+                          lead={lead}
+                          handleDragStart={handleDragStart}
+                          handleDragEnd={handleDragEnd}
+                          setSelectedLead={setSelectedLead}
+                          showStageInFooter={true}
+                          onOwnerClick={(e, leadId) => {
+                            setInlineOwnerAnchorEl(e.currentTarget);
+                            setInlineOwnerLeadId(leadId);
+                          }}
+                          refreshData={() => fetchData(true)}
+                        />
                       ))
                     )}
                   </div>
