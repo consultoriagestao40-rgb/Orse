@@ -535,6 +535,18 @@ const Sidebar = () => {
   const [showNewWidgetStageForm, setShowNewWidgetStageForm] = useState(false);
   const [draggedWidgetStageId, setDraggedWidgetStageId] = useState<string | null>(null);
   const [draggedOverWidgetStageId, setDraggedOverWidgetStageId] = useState<string | null>(null);
+  const [userTags, setUserTags] = useState<string[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [showNewTagModal, setShowNewTagModal] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('orse_whatsapp_tags');
+    if (saved) {
+      try {
+        setUserTags(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
 
   // Estados para Modal de Pendências de WhatsApp (Leads sem Resposta)
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -2660,6 +2672,17 @@ const Sidebar = () => {
                   >
                     <BarChart2 size={13} /> Kanban por Etapa
                   </button>
+
+                  {widgetViewMode === 'kanban-tags' && (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewTagModal(true)}
+                      className="ml-2 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
+                      title="Cadastrar nova etiqueta"
+                    >
+                      <Plus size={13} /> Nova Etiqueta
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -2854,16 +2877,44 @@ const Sidebar = () => {
                 {/* Visualização 2: Kanban de Conversas por Etiquetas */}
                 {widgetViewMode === 'kanban-tags' && (
                   <div className="flex-1 overflow-x-auto p-3 bg-slate-100/70 border-r border-slate-200 flex gap-3 min-w-0">
-                    {[
-                      { id: 'VIP', label: '🏷️ VIP', bg: 'bg-amber-500/10 text-amber-800 border-amber-300', dot: 'bg-amber-500' },
-                      { id: 'Urgente', label: '🏷️ Urgente', bg: 'bg-red-500/10 text-red-800 border-red-300', dot: 'bg-red-500' },
-                      { id: 'Orçamento', label: '🏷️ Orçamento', bg: 'bg-blue-500/10 text-blue-800 border-blue-300', dot: 'bg-blue-500' },
-                      { id: 'Retornar Hoje', label: '🏷️ Retornar Hoje', bg: 'bg-emerald-500/10 text-emerald-800 border-emerald-300', dot: 'bg-emerald-500' },
-                      { id: 'Em Negociação', label: '🏷️ Em Negociação', bg: 'bg-purple-500/10 text-purple-800 border-purple-300', dot: 'bg-purple-500' },
-                      { id: 'Aguardando Cliente', label: '🏷️ Aguardando Cliente', bg: 'bg-pink-500/10 text-pink-800 border-pink-300', dot: 'bg-pink-500' },
-                      { id: 'Qualificado', label: '🏷️ Qualificado', bg: 'bg-cyan-500/10 text-cyan-800 border-cyan-300', dot: 'bg-cyan-500' },
-                      { id: 'unassigned', label: '⚪ Sem Etiqueta', bg: 'bg-slate-500/10 text-slate-800 border-slate-300', dot: 'bg-slate-500' }
-                    ].map(col => {
+                    {(() => {
+                      const DEFAULT_TAGS = [
+                        { id: 'VIP', label: '🏷️ VIP', bg: 'bg-amber-500/10 text-amber-800 border-amber-300', dot: 'bg-amber-500' },
+                        { id: 'Urgente', label: '🏷️ Urgente', bg: 'bg-red-500/10 text-red-800 border-red-300', dot: 'bg-red-500' },
+                        { id: 'Orçamento', label: '🏷️ Orçamento', bg: 'bg-blue-500/10 text-blue-800 border-blue-300', dot: 'bg-blue-500' },
+                        { id: 'Retornar Hoje', label: '🏷️ Retornar Hoje', bg: 'bg-emerald-500/10 text-emerald-800 border-emerald-300', dot: 'bg-emerald-500' },
+                        { id: 'Em Negociação', label: '🏷️ Em Negociação', bg: 'bg-purple-500/10 text-purple-800 border-purple-300', dot: 'bg-purple-500' },
+                        { id: 'Aguardando Cliente', label: '🏷️ Aguardando Cliente', bg: 'bg-pink-500/10 text-pink-800 border-pink-300', dot: 'bg-pink-500' },
+                        { id: 'Qualificado', label: '🏷️ Qualificado', bg: 'bg-cyan-500/10 text-cyan-800 border-cyan-300', dot: 'bg-cyan-500' }
+                      ];
+
+                      const allCustomTagIds = Array.from(new Set([
+                        ...DEFAULT_TAGS.map(t => t.id),
+                        ...userTags,
+                        ...widgetLeads.flatMap(l => {
+                          if (!l.tags) return [];
+                          try {
+                            return typeof l.tags === 'string' ? JSON.parse(l.tags) : l.tags;
+                          } catch (e) {
+                            return l.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+                          }
+                        })
+                      ]));
+
+                      const tagCols = allCustomTagIds.map(tagId => {
+                        const defaultFound = DEFAULT_TAGS.find(t => t.id === tagId);
+                        if (defaultFound) return defaultFound;
+                        return {
+                          id: tagId,
+                          label: `🏷️ ${tagId}`,
+                          bg: 'bg-emerald-500/10 text-emerald-900 border-emerald-300',
+                          dot: 'bg-emerald-600'
+                        };
+                      });
+
+                      tagCols.push({ id: 'unassigned', label: '⚪ Sem Etiqueta', bg: 'bg-slate-500/10 text-slate-800 border-slate-300', dot: 'bg-slate-500' });
+
+                      return tagCols.map(col => {
                       const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
                       const colLeads = whatsappLeads.filter(lead => {
                         const matchesSearch = lead.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
@@ -2976,9 +3027,10 @@ const Sidebar = () => {
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
-                )}
+                    });
+                  })()}
+                </div>
+              )}
 
                 {/* Visualização 3: Kanban de Conversas por Etapa do Funil */}
                 {widgetViewMode === 'kanban-stages' && (
@@ -4114,6 +4166,76 @@ const Sidebar = () => {
                       </p>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showNewTagModal && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[250] flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                    <Boxes size={16} className="text-emerald-600" /> Nova Etiqueta
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewTagModal(false); setNewTagName(''); }}
+                    className="text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Nome da Etiqueta *</label>
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Ex: Cliente Premium, Aguardando Proposta..."
+                      value={newTagName}
+                      onChange={e => setNewTagName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const trimmed = newTagName.trim();
+                          if (trimmed) {
+                            const updated = Array.from(new Set([...userTags, trimmed]));
+                            setUserTags(updated);
+                            localStorage.setItem('orse_whatsapp_tags', JSON.stringify(updated));
+                            setNewTagName('');
+                            setShowNewTagModal(false);
+                          }
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:border-emerald-600 font-semibold"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setShowNewTagModal(false); setNewTagName(''); }}
+                      className="px-3.5 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const trimmed = newTagName.trim();
+                        if (trimmed) {
+                          const updated = Array.from(new Set([...userTags, trimmed]));
+                          setUserTags(updated);
+                          localStorage.setItem('orse_whatsapp_tags', JSON.stringify(updated));
+                          setNewTagName('');
+                          setShowNewTagModal(false);
+                        }
+                      }}
+                      className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs cursor-pointer"
+                    >
+                      Cadastrar
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
