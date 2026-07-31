@@ -3881,7 +3881,7 @@ export default function LeadsKanban() {
               <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
                 {selectedChatLeadId ? (
                   (() => {
-                    const activeLead = leads.find(l => l.id === selectedChatLeadId);
+                    const activeLead = leads.find(l => l.id === selectedChatLeadId) || chatLeads.find(l => l.id === selectedChatLeadId);
                     if (!activeLead) return null;
                     return (
                       <div className="flex-1 flex h-full overflow-hidden bg-slate-100 relative">
