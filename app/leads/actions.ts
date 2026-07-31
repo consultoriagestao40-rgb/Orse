@@ -273,9 +273,17 @@ export async function getLeadStages(pipelineId?: string) {
   }
 }
 
-export async function createLeadStage(nome: string, pipelineId: string, insertAfterId?: string) {
+export async function createLeadStage(nome: string, pipelineId?: string, insertAfterId?: string) {
   try {
-    if (!pipelineId) return { success: false, error: 'Pipeline ID é obrigatório' };
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado' };
+
+    let targetPipeId = pipelineId;
+    if (!targetPipeId) {
+      const defaultPipe = await ensureDefaultPipeline(user.tenantId!);
+      targetPipeId = defaultPipe.id;
+    }
+
     let ordem = 0;
     
     if (insertAfterId) {
@@ -284,24 +292,25 @@ export async function createLeadStage(nome: string, pipelineId: string, insertAf
         ordem = targetStage.ordem + 1;
         // Shift subsequent stages within the same pipeline
         await prisma.leadStage.updateMany({
-          where: { pipelineId, ordem: { gte: ordem } },
+          where: { pipelineId: targetPipeId, ordem: { gte: ordem } },
           data: { ordem: { increment: 1 } }
         });
       }
     } else {
       const lastStage = await prisma.leadStage.findFirst({
-        where: { pipelineId },
+        where: { pipelineId: targetPipeId },
         orderBy: { ordem: 'desc' }
       });
       ordem = lastStage ? lastStage.ordem + 1 : 0;
     }
 
     const stage = await prisma.leadStage.create({
-      data: { nome, ordem, color: 'bg-slate-100', pipelineId }
+      data: { nome, ordem, color: '#10B981', pipelineId: targetPipeId }
     });
     revalidatePath('/leads');
     return { success: true, stage };
   } catch (error: any) {
+    console.error('createLeadStage error:', error);
     return { success: false, error: error.message };
   }
 }

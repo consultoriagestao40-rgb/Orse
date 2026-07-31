@@ -931,13 +931,24 @@ export default function LeadsKanban() {
     setCustomModal({
       isOpen: true,
       title: 'Nova Etapa',
-      placeholder: 'Nome da nova etapa (ex: Em Negociação)',
+      placeholder: 'Nome da nova etapa (ex: Convertido)',
       type: 'prompt',
       onConfirm: async (nome) => {
         if (!nome.trim()) return;
-        const res = await createLeadStage(nome.trim(), activePipelineId, insertAfterId);
-        if (res.success) {
-          fetchData();
+        const res = await createLeadStage(nome.trim(), activePipelineId || undefined, insertAfterId);
+        if (res.success && res.stage) {
+          setStages(prev => {
+            if (insertAfterId) {
+              const idx = prev.findIndex(s => s.id === insertAfterId);
+              if (idx !== -1) {
+                const next = [...prev];
+                next.splice(idx + 1, 0, res.stage);
+                return next;
+              }
+            }
+            return [...prev, res.stage];
+          });
+          fetchData(true);
         } else {
           showCustomAlert('Erro ao Criar Etapa', res.error || 'Erro desconhecido');
         }
