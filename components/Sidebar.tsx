@@ -2787,7 +2787,7 @@ const Sidebar = () => {
                                 className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[120px] truncate"
                               >
                                 <option value="">Sem resp.</option>
-                                {widgetUsers.map((u: any) => (
+                                {systemUsers.map((u: any) => (
                                   <option key={u.id} value={u.id}>{u.nome}</option>
                                 ))}
                               </select>
