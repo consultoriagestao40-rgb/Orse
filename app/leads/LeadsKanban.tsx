@@ -931,6 +931,8 @@ export default function LeadsKanban() {
   };
 
   const handleCreateStage = (insertAfterId?: string) => {
+    const targetPipeId = activePipelineId || (pipelines.length > 0 ? pipelines[0].id : localStorage.getItem('orse_active_pipeline_id') || undefined);
+
     setCustomModal({
       isOpen: true,
       title: 'Nova Etapa',
@@ -938,20 +940,14 @@ export default function LeadsKanban() {
       type: 'prompt',
       onConfirm: async (nome) => {
         if (!nome.trim()) return;
-        const res = await createLeadStage(nome.trim(), activePipelineId || undefined, insertAfterId);
+        const res = await createLeadStage(nome.trim(), targetPipeId, insertAfterId);
         if (res.success && res.stage) {
-          setStages(prev => {
-            if (insertAfterId) {
-              const idx = prev.findIndex(s => s.id === insertAfterId);
-              if (idx !== -1) {
-                const next = [...prev];
-                next.splice(idx + 1, 0, res.stage);
-                return next;
-              }
-            }
-            return [...prev, res.stage];
-          });
-          fetchData(true);
+          const finalPipeId = res.pipelineId || targetPipeId;
+          if (finalPipeId && finalPipeId !== activePipelineId) {
+            setActivePipelineId(finalPipeId);
+            localStorage.setItem('orse_active_pipeline_id', finalPipeId);
+          }
+          fetchData(true, finalPipeId);
         } else {
           showCustomAlert('Erro ao Criar Etapa', res.error || 'Erro desconhecido');
         }
@@ -1891,6 +1887,16 @@ export default function LeadsKanban() {
 
 
           <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
+
+          <button 
+            type="button"
+            onClick={() => handleCreateStage()}
+            className="flex items-center justify-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 text-xs md:text-sm rounded-xl font-bold transition-all w-full sm:w-auto shadow-2xs active:scale-95 cursor-pointer"
+            title="Criar nova etapa no funil de vendas"
+          >
+            <Plus size={15} className="text-emerald-600" />
+            <span>+ Etapa</span>
+          </button>
 
           <button 
             type="button"

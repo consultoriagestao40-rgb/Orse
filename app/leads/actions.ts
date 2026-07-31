@@ -262,14 +262,23 @@ export async function getUsersForFilter() {
 
 export async function getLeadStages(pipelineId?: string) {
   try {
-    if (!pipelineId) return { success: true, stages: [] };
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado', stages: [] };
+
+    let targetPipeId = pipelineId;
+    if (!targetPipeId) {
+      const defaultPipe = await ensureDefaultPipeline(user.tenantId!);
+      targetPipeId = defaultPipe.id;
+    }
+
     const stages = await prisma.leadStage.findMany({
-      where: { pipelineId },
+      where: { pipelineId: targetPipeId },
       orderBy: { ordem: 'asc' }
     });
-    return { success: true, stages };
+    return { success: true, stages, pipelineId: targetPipeId };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error('getLeadStages error:', error);
+    return { success: false, error: error.message, stages: [] };
   }
 }
 
@@ -308,7 +317,7 @@ export async function createLeadStage(nome: string, pipelineId?: string, insertA
       data: { nome, ordem, color: '#10B981', pipelineId: targetPipeId }
     });
     revalidatePath('/leads');
-    return { success: true, stage };
+    return { success: true, stage, pipelineId: targetPipeId };
   } catch (error: any) {
     console.error('createLeadStage error:', error);
     return { success: false, error: error.message };
