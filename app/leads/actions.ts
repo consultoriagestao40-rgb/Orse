@@ -266,6 +266,15 @@ export async function getLeadStages(pipelineId?: string) {
     if (!user) return { success: false, error: 'Não autorizado', stages: [] };
 
     let targetPipeId = pipelineId;
+    if (targetPipeId) {
+      const pipeExists = await prisma.pipeline.findFirst({
+        where: { id: targetPipeId, tenantId: user.tenantId! }
+      });
+      if (!pipeExists) {
+        targetPipeId = undefined;
+      }
+    }
+
     if (!targetPipeId) {
       const defaultPipe = await ensureDefaultPipeline(user.tenantId!);
       targetPipeId = defaultPipe.id;
@@ -288,6 +297,15 @@ export async function createLeadStage(nome: string, pipelineId?: string, insertA
     if (!user) return { success: false, error: 'Não autorizado' };
 
     let targetPipeId = pipelineId;
+    if (targetPipeId) {
+      const pipeExists = await prisma.pipeline.findFirst({
+        where: { id: targetPipeId, tenantId: user.tenantId! }
+      });
+      if (!pipeExists) {
+        targetPipeId = undefined;
+      }
+    }
+
     if (!targetPipeId) {
       const defaultPipe = await ensureDefaultPipeline(user.tenantId!);
       targetPipeId = defaultPipe.id;

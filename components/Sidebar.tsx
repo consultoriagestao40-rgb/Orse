@@ -2,12 +2,12 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
-import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads } from '@/app/leads/actions';
+import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, addChatParticipant, removeChatParticipant, closeWhatsAppChat, reopenWhatsAppChat } from '@/app/leads/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
 import { playWhatsAppChime } from '@/lib/sound';
@@ -520,6 +520,7 @@ const Sidebar = () => {
   // Estados da Barra Utilitária Direita e Widget de WhatsApp
   const [showWhatsAppWidget, setShowWhatsAppWidget] = useState(false);
   const [activeWidgetLead, setActiveWidgetLead] = useState<any | null>(null);
+  const [showWidgetParticipantPopover, setShowWidgetParticipantPopover] = useState(false);
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
   const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
@@ -2766,6 +2767,72 @@ const Sidebar = () => {
                           </div>
 
                           <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
+                            {/* Botão de Adicionar Participantes ao Chat */}
+                            <div className="relative shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => setShowWidgetParticipantPopover(!showWidgetParticipantPopover)}
+                                className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                                title="Adicionar ou remover participantes desta conversa"
+                              >
+                                <UserPlus size={13} className="text-emerald-600" />
+                                <span>+ Participante</span>
+                              </button>
+
+                              {showWidgetParticipantPopover && (
+                                <div className="absolute right-0 top-9 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+                                    <span className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1">
+                                      <Users size={12} className="text-emerald-600" /> Participantes
+                                    </span>
+                                    <button 
+                                      onClick={() => setShowWidgetParticipantPopover(false)}
+                                      className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg hover:bg-slate-100"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                  <p className="text-[10px] text-slate-500 mb-2 font-medium">Marque quem deve acompanhar esta conversa:</p>
+                                  <div className="max-h-48 overflow-y-auto space-y-1 scrollbar-thin">
+                                    {systemUsers.map((u: any) => {
+                                      const isParticipant = (activeWidgetLead.shares || []).some((s: any) => s.userId === u.id);
+                                      return (
+                                        <div 
+                                          key={u.id}
+                                          onClick={async () => {
+                                            if (isParticipant) {
+                                              await removeChatParticipant(activeWidgetLead.id, u.id);
+                                              setActiveWidgetLead({
+                                                ...activeWidgetLead,
+                                                shares: (activeWidgetLead.shares || []).filter((s: any) => s.userId !== u.id)
+                                              });
+                                            } else {
+                                              await addChatParticipant(activeWidgetLead.id, u.id);
+                                              setActiveWidgetLead({
+                                                ...activeWidgetLead,
+                                                shares: [...(activeWidgetLead.shares || []), { userId: u.id, user: u }]
+                                              });
+                                            }
+                                          }}
+                                          className={`flex items-center justify-between p-2 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
+                                            isParticipant ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2 truncate">
+                                            <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[9px] uppercase">
+                                              {u.nome?.substring(0, 2) || 'US'}
+                                            </div>
+                                            <span className="truncate">{u.nome}</span>
+                                          </div>
+                                          {isParticipant ? <Check size={14} className="text-emerald-600 shrink-0" /> : <UserPlus size={14} className="text-slate-400 shrink-0" />}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
                             {/* Seletor Rápido de Transferência de Comercial */}
                             <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs shrink-0">
                               <UserCog size={13} className="text-emerald-600 shrink-0" />

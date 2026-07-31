@@ -948,12 +948,23 @@ export default function LeadsKanban() {
         if (!nome.trim()) return;
         const res = await createLeadStage(nome.trim(), targetPipeId, insertAfterId);
         if (res.success && res.stage) {
+          setStages(prev => {
+            if (insertAfterId) {
+              const idx = prev.findIndex(s => s.id === insertAfterId);
+              if (idx !== -1) {
+                const next = [...prev];
+                next.splice(idx + 1, 0, res.stage);
+                return next;
+              }
+            }
+            return [...prev, res.stage];
+          });
           const finalPipeId = res.pipelineId || targetPipeId;
           if (finalPipeId && finalPipeId !== activePipelineId) {
             setActivePipelineId(finalPipeId);
             localStorage.setItem('orse_active_pipeline_id', finalPipeId);
           }
-          fetchData(true, finalPipeId);
+          await fetchData(true, finalPipeId);
         } else {
           showCustomAlert('Erro ao Criar Etapa', res.error || 'Erro desconhecido');
         }
