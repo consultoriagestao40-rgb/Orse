@@ -386,7 +386,13 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   
   const totalInsumos = vMateriais + vMaquinas + vDescartaveis + vServicos;
   
-  const totalGeral = totalEquipe + totalInsumos;
+  // Usa o faturamentoBruto salvo no banco (via getPropostaCompleta) como valor total definitivo,
+  // pois ele reflete o cálculo exato que foi feito na FPV e salvo pelo usuário.
+  // O recálculo dinâmico pode divergir devido a diferenças de CCT, encargos ou parâmetros de posto.
+  const totalGeralCalculado = totalEquipe + totalInsumos;
+  const totalGeral = (resultado?.faturamentoBruto && resultado.faturamentoBruto > 0)
+    ? resultado.faturamentoBruto
+    : totalGeralCalculado;
 
   const renderTabelaComercial = () => (
     <div className="mt-8 pr-2 font-sans w-full max-w-full">

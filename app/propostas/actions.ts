@@ -909,11 +909,13 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
     
     const calcInput = {
       items: returnObj.equipe,
-      impostos: { total: Number(totalTributos) },
+      impostos: { list: Array.isArray(impostos) ? impostos : (impostos?.list || []), total: Number(totalTributos) },
       margens: { 
         adm: margens?.adm ?? 5, 
         lucro: margens?.lucro ?? 10,
-        comissaoVendedor: margens?.comissaoVendedor || 0
+        comissaoVendedor: margens?.comissaoVendedor || 0,
+        reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
+        manutencaoPct: margens?.manutencaoPct || 0,
       },
       reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
       manutencaoPct: margens?.manutencaoPct || 0,
@@ -928,6 +930,27 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
     };
     
     const resultado = calculateEnterprisePrice(calcInput);
+
+    // O valor salvo pela FPV (precoVenda) é o valor oficial da proposta.
+    // Se o recálculo dinâmico divergir (devido a diferenças de CCT, parâmetros de posto, etc.),
+    // usamos o precoVenda salvo como faturamentoBruto e redistribuímos proporcionalmente nos itens.
+    const precoVendaSalvo = Number(v.precoVenda || 0);
+    if (precoVendaSalvo > 0) {
+      resultado.faturamentoBruto = precoVendaSalvo;
+      
+      // Redistribuir o precoVenda dos items proporcionalmente
+      // O faturamentoBruto = soma dos precoVenda dos items + insumos globais
+      const totalItemsDinamico = resultado.items?.reduce((acc: number, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+      if (totalItemsDinamico > 0 && resultado.items?.length > 0) {
+        // O valor de insumos não veio pelo precoVenda dos items,
+        // então o total de itens deve ser o precoVendaSalvo (insumos globais são R$ 0 aqui)
+        const fator = precoVendaSalvo / totalItemsDinamico;
+        resultado.items = resultado.items.map((item: any) => ({
+          ...item,
+          precoVenda: (item.precoVenda || 0) * fator
+        }));
+      }
+    }
 
     if (returnObj.availableVersions && returnObj.availableVersions.length > 0) {
       returnObj.availableVersions[0].resultado = resultado;
