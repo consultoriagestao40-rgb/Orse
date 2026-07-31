@@ -1756,258 +1756,264 @@ export default function LeadsKanban() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
-      <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
-        <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0 relative z-40">
-        <div className="relative">
-          <button
-            onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
-            className="flex items-center gap-2 text-xl md:text-2xl font-black text-slate-800 hover:text-[#1B4D3E] transition-colors group cursor-pointer focus:outline-none bg-transparent border-none p-0 text-left"
-          >
-            <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'Pipeline de Leads'}</span>
-            <ChevronDown size={20} className="text-slate-400 group-hover:text-[#1B4D3E] transition-colors" />
-          </button>
-          <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
+      {/* Área Superior Fixa (Header + Métricas) */}
+      <div className="w-full shrink-0 bg-white border-b border-slate-200 z-40 shadow-xs">
+        <div className="p-4 md:py-5 md:px-6 bg-white flex flex-col lg:flex-row justify-between lg:items-center gap-4 relative">
+          <div className="relative">
+            <button
+              onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
+              className="flex items-center gap-2 text-xl md:text-2xl font-black text-slate-800 hover:text-[#1B4D3E] transition-colors group cursor-pointer focus:outline-none bg-transparent border-none p-0 text-left"
+            >
+              <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'Pipeline de Leads'}</span>
+              <ChevronDown size={20} className="text-slate-400 group-hover:text-[#1B4D3E] transition-colors" />
+            </button>
+            <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
 
-          {isPipelineDropdownOpen && (
-            <>
-              <div 
-                className="fixed inset-0 z-40 bg-transparent" 
-                onClick={() => setIsPipelineDropdownOpen(false)}
-              />
-              <div className="absolute left-0 top-full mt-2 w-[280px] bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-1">
-                  Seus Funis
-                </div>
-                <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                  {pipelines.map((p) => (
-                    <div
-                      key={p.id}
-                      onClick={() => {
-                        setActivePipelineId(p.id);
-                        localStorage.setItem('orse_active_pipeline_id', p.id);
-                        setIsPipelineDropdownOpen(false);
-                      }}
-                      className={`flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-colors group/item ${
-                        p.id === activePipelineId
-                          ? 'bg-[#1B4D3E]/5 text-[#1B4D3E] font-bold'
-                          : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
-                    >
-                      <span className="truncate text-xs flex-1">{p.nome}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 focus-within:opacity-100 hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPipelineModalType('rename');
-                            setTargetPipelineId(p.id);
-                            setPipelineModalVal(p.nome);
-                            setShowPipelineModal(true);
-                            setIsPipelineDropdownOpen(false);
-                          }}
-                          title="Renomear funil"
-                          className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 border-none bg-transparent cursor-pointer"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        {pipelines.length > 1 && (
+            {isPipelineDropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40 bg-transparent" 
+                  onClick={() => setIsPipelineDropdownOpen(false)}
+                />
+                <div className="absolute left-0 top-full mt-2 w-[280px] bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-1">
+                    Seus Funis
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                    {pipelines.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActivePipelineId(p.id);
+                          localStorage.setItem('orse_active_pipeline_id', p.id);
+                          setIsPipelineDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-colors group/item ${
+                          p.id === activePipelineId
+                            ? 'bg-[#1B4D3E]/5 text-[#1B4D3E] font-bold'
+                            : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="truncate text-xs flex-1">{p.nome}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 focus-within:opacity-100 hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={async () => {
-                              if (confirm(`Deseja realmente excluir o funil "${p.nome}"? Esta ação não pode ser desfeita.`)) {
-                                const res = await deletePipeline(p.id);
-                                if (res.success) {
-                                  const otherPipe = pipelines.find(other => other.id !== p.id);
-                                  if (otherPipe) {
-                                    setActivePipelineId(otherPipe.id);
-                                    localStorage.setItem('orse_active_pipeline_id', otherPipe.id);
-                                    fetchData(true, otherPipe.id);
-                                  } else {
-                                    fetchData(true);
-                                  }
-                                } else {
-                                  alert(res.error || 'Erro ao excluir pipeline');
-                                }
-                              }
+                            onClick={() => {
+                              setPipelineModalType('rename');
+                              setTargetPipelineId(p.id);
+                              setPipelineModalVal(p.nome);
+                              setShowPipelineModal(true);
+                              setIsPipelineDropdownOpen(false);
                             }}
-                            title="Excluir funil"
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
+                            title="Renomear funil"
+                            className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 border-none bg-transparent cursor-pointer"
                           >
-                            <Trash2 size={12} />
+                            <Edit2 size={12} />
                           </button>
-                        )}
+                          {pipelines.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (confirm(`Deseja realmente excluir o funil "${p.nome}"? Esta ação não pode ser desfeita.`)) {
+                                  const res = await deletePipeline(p.id);
+                                  if (res.success) {
+                                    const otherPipe = pipelines.find(other => other.id !== p.id);
+                                    if (otherPipe) {
+                                      setActivePipelineId(otherPipe.id);
+                                      localStorage.setItem('orse_active_pipeline_id', otherPipe.id);
+                                      fetchData(true, otherPipe.id);
+                                    } else {
+                                      fetchData(true);
+                                    }
+                                  } else {
+                                    alert(res.error || 'Erro ao excluir pipeline');
+                                  }
+                                }
+                              }}
+                              title="Excluir funil"
+                              className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-100 mt-1.5 pt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPipelineModalType('create');
+                        setPipelineModalVal('');
+                        setShowPipelineModal(true);
+                        setIsPipelineDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-[#1B4D3E] hover:bg-slate-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                    >
+                      <Plus size={14} /> Novo funil
+                    </button>
+                  </div>
                 </div>
-                <div className="border-t border-slate-100 mt-1.5 pt-1.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPipelineModalType('create');
-                      setPipelineModalVal('');
-                      setShowPipelineModal(true);
-                      setIsPipelineDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-[#1B4D3E] hover:bg-slate-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-                  >
-                    <Plus size={14} /> Novo funil
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end bell-header-spacing">
-          {/* Alternador de visualização */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm gap-1 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('lista')}
-              title="Visualização em Lista"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-                viewMode === 'lista'
-                  ? 'bg-[#1B4D3E] text-white shadow-sm'
-                  : 'text-amber-500 hover:text-amber-600'
-              }`}
-            >
-              <LayoutList size={14} /> Lista
-            </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('kanban-status')}
-              title="Kanban por Status"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-                viewMode === 'kanban-status'
-                  ? 'bg-[#1B4D3E] text-white shadow-sm'
-                  : 'text-amber-500 hover:text-amber-600'
-              }`}
-            >
-              <LayoutGrid size={14} /> Por Etapa
-            </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('kanban-vendedor')}
-              title="Kanban por Vendedor"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-                viewMode === 'kanban-vendedor'
-                  ? 'bg-[#1B4D3E] text-white shadow-sm'
-                  : 'text-amber-500 hover:text-amber-600'
-              }`}
-            >
-              <Users size={14} /> Por Vendedor
-            </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('kanban-segmento')}
-              title="Kanban por Segmento"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-                viewMode === 'kanban-segmento'
-                  ? 'bg-[#1B4D3E] text-white shadow-sm'
-                  : 'text-amber-500 hover:text-amber-600'
-              }`}
-            >
-              <Building size={14} /> Por Segmento
-            </button>
-          </div>
-          {/* Real-time Search Input */}
-          <div className="relative flex-1 min-w-[200px] md:flex-none md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input 
-              type="text"
-              placeholder="Buscar por nome, celular, e-mail..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all shadow-sm"
-            />
-            {searchTerm && (
-              <button 
-                type="button"
-                onClick={() => setSearchTerm('')} 
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
-                title="Limpar busca"
-              >
-                <X size={14} />
-              </button>
+              </>
             )}
           </div>
-          <select 
-            value={userFilter}
-            onChange={(e) => setUserFilter(e.target.value)}
-            className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
-          >
-            <option value="all">Todos Usuários</option>
-            {filterUsers.map(u => (
-              <option key={u.id} value={u.id}>{u.nome}</option>
-            ))}
-          </select>
-
-          <select
-            value={datePreset}
-            onChange={(e) => setDatePreset(e.target.value)}
-            className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
-          >
-            <option value="all">Todo Período</option>
-            <option value="7d">Últimos 7 dias</option>
-            <option value="14d">Últimos 14 dias</option>
-            <option value="28d">Últimos 28 dias</option>
-            <option value="this_month">Este Mês</option>
-            <option value="last_month">Mês Passado</option>
-            <option value="this_year">Este Ano</option>
-            <option value="custom">Personalizado</option>
-          </select>
-
-          {datePreset === 'custom' && (
-            <div className="flex items-center gap-1.5 w-full sm:w-auto">
-              <input 
-                type="date" 
-                value={startDate} 
-                onChange={e => setStartDate(e.target.value)}
-                className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
-              />
-              <span className="text-slate-400 text-xs">até</span>
-              <input 
-                type="date" 
-                value={endDate} 
-                onChange={e => setEndDate(e.target.value)}
-                className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
-              />
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end bell-header-spacing">
+            {/* Alternador de visualização */}
+            <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm gap-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('lista')}
+                title="Visualização em Lista"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                  viewMode === 'lista'
+                    ? 'bg-[#1B4D3E] text-white shadow-sm'
+                    : 'text-amber-500 hover:text-amber-600'
+                }`}
+              >
+                <LayoutList size={14} /> Lista
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('kanban-status')}
+                title="Kanban por Status"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                  viewMode === 'kanban-status'
+                    ? 'bg-[#1B4D3E] text-white shadow-sm'
+                    : 'text-amber-500 hover:text-amber-600'
+                }`}
+              >
+                <LayoutGrid size={14} /> Por Etapa
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('kanban-vendedor')}
+                title="Kanban por Vendedor"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                  viewMode === 'kanban-vendedor'
+                    ? 'bg-[#1B4D3E] text-white shadow-sm'
+                    : 'text-amber-500 hover:text-amber-600'
+                }`}
+              >
+                <Users size={14} /> Por Vendedor
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('kanban-segmento')}
+                title="Kanban por Segmento"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                  viewMode === 'kanban-segmento'
+                    ? 'bg-[#1B4D3E] text-white shadow-sm'
+                    : 'text-amber-500 hover:text-amber-600'
+                }`}
+              >
+                <Building size={14} /> Por Segmento
+              </button>
             </div>
-          )}
+            {/* Real-time Search Input */}
+            <div className="relative flex-1 min-w-[200px] md:flex-none md:w-80">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text"
+                placeholder="Buscar por nome, celular, e-mail..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all shadow-sm"
+              />
+              {searchTerm && (
+                <button 
+                  type="button"
+                  onClick={() => setSearchTerm('')} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                  title="Limpar busca"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <select 
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
+            >
+              <option value="all">Todos Usuários</option>
+              {filterUsers.map(u => (
+                <option key={u.id} value={u.id}>{u.nome}</option>
+              ))}
+            </select>
 
-          <button 
-            type="button"
-            onClick={() => setShowMetrics(!showMetrics)}
-            className="flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-600 px-3 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-slate-50 transition-all w-full sm:w-auto shadow-sm"
-          >
-            {showMetrics ? "Ocultar Métricas" : "Mostrar Métricas"}
-          </button>
+            <select
+              value={datePreset}
+              onChange={(e) => setDatePreset(e.target.value)}
+              className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
+            >
+              <option value="all">Todo Período</option>
+              <option value="7d">Últimos 7 dias</option>
+              <option value="14d">Últimos 14 dias</option>
+              <option value="28d">Últimos 28 dias</option>
+              <option value="this_month">Este Mês</option>
+              <option value="last_month">Mês Passado</option>
+              <option value="this_year">Este Ano</option>
+              <option value="custom">Personalizado</option>
+            </select>
 
+            {datePreset === 'custom' && (
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={e => setStartDate(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
+                />
+                <span className="text-slate-400 text-xs">até</span>
+                <input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={e => setEndDate(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
+                />
+              </div>
+            )}
 
+            <button 
+              type="button"
+              onClick={() => setShowMetrics(!showMetrics)}
+              className="flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-600 px-3 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-slate-50 transition-all w-full sm:w-auto shadow-sm"
+            >
+              {showMetrics ? "Ocultar Métricas" : "Mostrar Métricas"}
+            </button>
 
-          <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
+            <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
 
-          <button 
-            type="button"
-            onClick={() => handleCreateStage()}
-            className="flex items-center justify-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 text-xs md:text-sm rounded-xl font-bold transition-all w-full sm:w-auto shadow-2xs active:scale-95 cursor-pointer"
-            title="Criar nova etapa no funil de vendas"
-          >
-            <Plus size={15} className="text-emerald-600" />
-            <span>Etapa</span>
-          </button>
+            <button 
+              type="button"
+              onClick={() => handleCreateStage()}
+              className="flex items-center justify-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 text-xs md:text-sm rounded-xl font-bold transition-all w-full sm:w-auto shadow-2xs active:scale-95 cursor-pointer"
+              title="Criar nova etapa no funil de vendas"
+            >
+              <Plus size={15} className="text-emerald-600" />
+              <span>Etapa</span>
+            </button>
 
-          <button 
-            type="button"
-            onClick={() => setShowNewLead(true)}
-            className="flex items-center justify-center gap-2 bg-[#1B4D3E] text-white px-4 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-[#13382d] transition-all w-full sm:w-auto cursor-pointer"
-          >
-            <Plus size={16} /> Novo Lead
-          </button>
+            <button 
+              type="button"
+              onClick={() => setShowNewLead(true)}
+              className="flex items-center justify-center gap-2 bg-[#1B4D3E] text-white px-4 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-[#13382d] transition-all w-full sm:w-auto cursor-pointer"
+            >
+              <Plus size={16} /> Novo Lead
+            </button>
+          </div>
         </div>
+
+        {showMetrics && (
+          <div className="px-4 md:px-6 pt-2 pb-4 border-t border-slate-100 bg-slate-50/50">
+            <PipelineMetrics leads={filteredLeads} stages={stages} />
+          </div>
+        )}
       </div>
-      
-      <div>
-        {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
+
+      {/* Conteúdo Principal do Kanban - Apenas esta área rola na horizontal e vertical */}
+      <div className="flex-1 overflow-x-auto overflow-y-auto min-h-0 bg-slate-50">
         {viewMode === 'kanban-status' && (
           <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
@@ -3067,7 +3073,6 @@ export default function LeadsKanban() {
           </div>
         )}
       </div>
-    </div>
 
       {/* Dropzones (Aparecem apenas quando arrastando) */}
       {isDragging && (
