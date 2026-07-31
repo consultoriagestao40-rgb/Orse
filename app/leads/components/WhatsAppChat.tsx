@@ -1500,7 +1500,8 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
         )}
         </div>
       </div>
-    )}
-  </div>
+    </div>
+  )}
+</div>
 );
 }
