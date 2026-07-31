@@ -3888,7 +3888,7 @@ export default function LeadsKanban() {
                         {/* Main Chat Container */}
                         <div className="flex-1 flex flex-col h-full overflow-hidden">
                           {/* Selected Lead mini header */}
-                          <div className="p-4 bg-white border-b border-slate-100 flex justify-between items-center shrink-0">
+                          <div className="p-3 md:p-4 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap justify-between items-center shrink-0 gap-3">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                 {getInitials(activeLead.nomeFantasia)}
@@ -3903,12 +3903,12 @@ export default function LeadsKanban() {
                               </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
                               {/* Seletor Rápido de Transferência de Comercial */}
-                              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs">
-                                <UserCog size={14} className="text-emerald-600 shrink-0" />
+                              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs shrink-0">
+                                <UserCog size={13} className="text-emerald-600 shrink-0" />
                                 <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider shrink-0 hidden sm:inline">
-                                  Responsável:
+                                  Resp:
                                 </span>
                                 <select
                                   value={activeLead.assignedToId || ''}
@@ -3930,9 +3930,9 @@ export default function LeadsKanban() {
                                       alert('Erro ao transferir lead: ' + res.error);
                                     }
                                   }}
-                                  className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[140px] truncate"
+                                  className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[120px] truncate"
                                 >
-                                  <option value="">Sem responsável</option>
+                                  <option value="">Sem resp.</option>
                                   {filterUsers.map(u => (
                                     <option key={u.id} value={u.id}>{u.nome}</option>
                                   ))}
@@ -3940,15 +3940,15 @@ export default function LeadsKanban() {
                               </div>
 
                               {/* Botão + Participante na Conversa */}
-                              <div className="relative">
+                              <div className="relative shrink-0">
                                 <button
                                   type="button"
                                   onClick={() => setShowParticipantPopover(!showParticipantPopover)}
-                                  className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-[10.5px] px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
-                                  title="Adicionar equipe à conversa"
+                                  className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 whitespace-nowrap"
+                                  title="Adicionar pessoas à conversa"
                                 >
                                   <UserPlus size={13} className="text-emerald-600" />
-                                  <span>+ Participantes</span>
+                                  <span>+ Participante</span>
                                   {(activeLead.shares || []).length > 0 && (
                                     <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-full">
                                       {(activeLead.shares || []).length}
@@ -4013,10 +4013,10 @@ export default function LeadsKanban() {
                                       alert('Erro ao reabrir atendimento: ' + res.error);
                                     }
                                   }}
-                                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
                                   title="Reabrir Atendimento"
                                 >
-                                  <RefreshCw size={13} /> Reabrir Atendimento
+                                  <RefreshCw size={13} /> Reabrir
                                 </button>
                               ) : (
                                 <button
@@ -4032,10 +4032,10 @@ export default function LeadsKanban() {
                                       }
                                     }
                                   }}
-                                  className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold text-[10.5px] px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                                  className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
                                   title="Encerrar Atendimento"
                                 >
-                                  <XCircle size={13} /> Encerrar Atendimento
+                                  <XCircle size={13} /> Encerrar
                                 </button>
                               )}
 
@@ -4051,7 +4051,7 @@ export default function LeadsKanban() {
                                   });
                                   setIsEditingInline(!isEditingInline);
                                 }}
-                                className={`text-[10.5px] font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 border ${
+                                className={`text-[10.5px] font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 border shrink-0 whitespace-nowrap ${
                                   isEditingInline 
                                     ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
                                     : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
@@ -4059,11 +4059,11 @@ export default function LeadsKanban() {
                               >
                                 {isEditingInline ? (
                                   <>
-                                    <X size={12} /> Fechar Edição
+                                    <X size={12} /> Fechar
                                   </>
                                 ) : (
                                   <>
-                                    <UserCog size={13} className="text-slate-600" /> Completar Cadastro
+                                    <UserCog size={13} className="text-slate-600" /> Cadastro
                                   </>
                                 )}
                               </button>
@@ -4074,10 +4074,10 @@ export default function LeadsKanban() {
                                   setSelectedLead(activeLead);
                                   setShowChatCenter(false);
                                 }}
-                                className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95"
+                                className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 shrink-0 whitespace-nowrap"
                                 title="Ver no Funil"
                               >
-                                <Target size={13} /> Ver no Funil
+                                <Target size={13} /> Funil
                               </button>
                             </div>
                           </div>
