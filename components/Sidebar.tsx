@@ -2982,7 +2982,7 @@ const Sidebar = () => {
                               colLeads.map(lead => {
                                 const isSelected = activeWidgetLead?.id === lead.id;
                                 const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                                const avatarUrl = lead.assignedTo?.avatarUrl || lead.avatarUrl;
+                                const contactAvatarUrl = lead.avatarUrl || lead.photoUrl || lead.profilePicUrl;
 
                                 return (
                                   <div
@@ -2996,10 +2996,10 @@ const Sidebar = () => {
                                   >
                                     <div className="flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-2 truncate">
-                                        {avatarUrl ? (
-                                          <img src={avatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                                        {contactAvatarUrl ? (
+                                          <img src={contactAvatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-200" />
                                         ) : (
-                                          <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                          <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-full flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                             {initials}
                                           </div>
                                         )}
@@ -3180,7 +3180,7 @@ const Sidebar = () => {
                                     colLeads.map(lead => {
                                       const isSelected = activeWidgetLead?.id === lead.id;
                                       const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                                      const avatarUrl = lead.assignedTo?.avatarUrl || lead.avatarUrl;
+                                      const contactAvatarUrl = lead.avatarUrl || lead.photoUrl || lead.profilePicUrl;
 
                                       return (
                                         <div
@@ -3194,8 +3194,8 @@ const Sidebar = () => {
                                         >
                                           <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 truncate">
-                                              {avatarUrl ? (
-                                                <img src={avatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                                              {contactAvatarUrl ? (
+                                                <img src={contactAvatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
                                               ) : (
                                                 <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                                   {initials}
