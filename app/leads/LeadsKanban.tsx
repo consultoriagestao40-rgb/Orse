@@ -695,7 +695,7 @@ export default function LeadsKanban() {
   const [userFilter, setUserFilter] = useState('all');
   const [filterUsers, setFilterUsers] = useState<any[]>([]);
 
-  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento' | 'kanban-etiqueta';
+  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
   const [viewMode, setViewMode] = useState<ViewMode>('kanban-status');
 
   useEffect(() => {
@@ -1908,18 +1908,6 @@ export default function LeadsKanban() {
             >
               <Building size={14} /> Por Segmento
             </button>
-            <button
-              type="button"
-              onClick={() => handleViewModeChange('kanban-etiqueta')}
-              title="Kanban por Etiqueta"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-                viewMode === 'kanban-etiqueta'
-                  ? 'bg-[#1B4D3E] text-white shadow-sm'
-                  : 'text-amber-500 hover:text-amber-600'
-              }`}
-            >
-              <Tag size={14} /> Por Etiqueta
-            </button>
           </div>
           {/* Real-time Search Input */}
           <div className="relative flex-1 min-w-[200px] md:flex-none md:w-80">
@@ -2985,84 +2973,6 @@ export default function LeadsKanban() {
           </div>
         )}
 
-        {viewMode === 'kanban-etiqueta' && (
-          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
-            <div className="flex gap-[3px]">
-            {kanbanEtiquetaCols.map((col, idx) => {
-              const colLeads = col.cards;
-              const colColor = col.color;
-              const resolvedHex = resolveColorToHex(colColor);
-              const contrast = getContrastYIQ(resolvedHex);
-              const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
-              const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
-              const textHex = getDarkenedHexForText(resolvedHex);
-
-              return (
-                <div 
-                  key={col.id}
-                  className="flex flex-col flex-shrink-0 transition-opacity duration-200"
-                  style={{ width: '274px' }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleDropEtiqueta(e, col.id)}
-                >
-                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanEtiquetaCols.length - idx) }}>
-                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
-                      <div 
-                        className="absolute inset-[3px] rounded-[16px] px-3 flex items-center justify-between transition-all duration-200 shadow-2xs border backdrop-blur-md"
-                        style={{
-                          backgroundColor: bgRgba,
-                          borderColor: borderRgba
-                        }}
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span 
-                            className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" 
-                            style={{ backgroundColor: resolvedHex }}
-                          />
-                          <span className="font-extrabold text-xs uppercase tracking-wide truncate" style={{ color: textHex }}>
-                            {col.label}
-                          </span>
-                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white/80 border border-slate-200/60 shadow-2xs shrink-0 text-slate-700">
-                            {colLeads.length}
-                          </span>
-                        </div>
-
-                        <div className="text-[11px] font-black text-slate-500 shrink-0">
-                          R$ {col.total.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 p-1 space-y-2 min-h-[calc(100vh-220px)]">
-                    {colLeads.length === 0 ? (
-                      <div className="border-2 border-dashed border-slate-200/80 rounded-2xl p-6 text-center text-xs text-slate-400 font-medium bg-slate-100/30">
-                        Nenhum lead com esta etiqueta
-                      </div>
-                    ) : (
-                      colLeads.map(lead => (
-                        <LeadCard
-                          key={lead.id}
-                          lead={lead}
-                          handleDragStart={handleDragStart}
-                          handleDragEnd={handleDragEnd}
-                          setSelectedLead={setSelectedLead}
-                          showStageInFooter={true}
-                          onOwnerClick={(e, leadId) => {
-                            setInlineOwnerAnchorEl(e.currentTarget);
-                            setInlineOwnerLeadId(leadId);
-                          }}
-                          refreshData={() => fetchData(true)}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-            </div>
-          </div>
-        )}
 
         {viewMode === 'lista' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full mb-6">
