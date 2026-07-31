@@ -3067,314 +3067,470 @@ const Sidebar = () => {
                   </div>
                 )}
 
-                {/* Coluna da Direita: Chat Ativo (flex-1) */}
-                <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
-                  {activeWidgetLead ? (
-                    <div className="flex-1 flex h-full overflow-hidden bg-slate-100 relative">
-                      {/* Main Chat Container */}
-                      <div className="flex-1 flex flex-col h-full overflow-hidden">
-                        {/* Mini Cabeçalho do Chat */}
-                        <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                              {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                {/* Coluna da Direita: Chat Ativo (Apenas no Modo Lista) */}
+                {widgetViewMode === 'list' && (
+                  <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+                    {activeWidgetLead ? (
+                      <div className="flex-1 flex h-full overflow-hidden bg-slate-100 relative">
+                        {/* Main Chat Container */}
+                        <div className="flex-1 flex flex-col h-full overflow-hidden">
+                          {/* Mini Cabeçalho do Chat */}
+                          <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-black text-slate-800 truncate leading-none mb-0.5">
+                                  {activeWidgetLead.nomeFantasia}
+                                </h4>
+                                <span className="text-[10px] text-slate-400 font-semibold">{activeWidgetLead.telefone}</span>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <h4 className="text-xs font-black text-slate-800 truncate leading-none mb-0.5">
-                                {activeWidgetLead.nomeFantasia}
-                              </h4>
-                              <span className="text-[10px] text-slate-400 font-semibold">{activeWidgetLead.telefone}</span>
-                            </div>
-                          </div>
 
-                          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
-                            {/* Botão de Adicionar Participantes ao Chat */}
-                            <div className="relative shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => setShowWidgetParticipantPopover(!showWidgetParticipantPopover)}
-                                className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
-                                title="Adicionar ou remover participantes desta conversa"
-                              >
-                                <UserPlus size={13} className="text-emerald-600" />
-                                <span>+ Participante</span>
-                              </button>
+                            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
+                              {/* Botão de Adicionar Participantes ao Chat */}
+                              <div className="relative shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowWidgetParticipantPopover(!showWidgetParticipantPopover)}
+                                  className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                                  title="Adicionar ou remover participantes desta conversa"
+                                >
+                                  <UserPlus size={13} className="text-emerald-600" />
+                                  <span>+ Participante</span>
+                                </button>
 
-                              {showWidgetParticipantPopover && (
-                                <div className="absolute right-0 top-9 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
-                                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
-                                    <span className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1">
-                                      <Users size={12} className="text-emerald-600" /> Participantes
-                                    </span>
-                                    <button 
-                                      onClick={() => setShowWidgetParticipantPopover(false)}
-                                      className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg hover:bg-slate-100"
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </div>
-                                  <p className="text-[10px] text-slate-500 mb-2 font-medium">Marque quem deve acompanhar esta conversa:</p>
-                                  <div className="max-h-48 overflow-y-auto space-y-1 scrollbar-thin">
-                                    {systemUsers.map((u: any) => {
-                                      const isParticipant = (activeWidgetLead.shares || []).some((s: any) => s.userId === u.id);
-                                      return (
-                                        <div 
-                                          key={u.id}
-                                          onClick={async () => {
-                                            if (isParticipant) {
-                                              await removeChatParticipant(activeWidgetLead.id, u.id);
-                                              setActiveWidgetLead({
-                                                ...activeWidgetLead,
-                                                shares: (activeWidgetLead.shares || []).filter((s: any) => s.userId !== u.id)
-                                              });
-                                            } else {
-                                              await addChatParticipant(activeWidgetLead.id, u.id);
-                                              setActiveWidgetLead({
-                                                ...activeWidgetLead,
-                                                shares: [...(activeWidgetLead.shares || []), { userId: u.id, user: u }]
-                                              });
-                                            }
-                                          }}
-                                          className={`flex items-center justify-between p-2 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
-                                            isParticipant ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <div className="flex items-center gap-2 truncate">
-                                            <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[9px] uppercase">
-                                              {u.nome?.substring(0, 2) || 'US'}
+                                {showWidgetParticipantPopover && (
+                                  <div className="absolute right-0 top-9 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+                                      <span className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1">
+                                        <Users size={12} className="text-emerald-600" /> Participantes
+                                      </span>
+                                      <button 
+                                        onClick={() => setShowWidgetParticipantPopover(false)}
+                                        className="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg hover:bg-slate-100"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mb-2 font-medium">Marque quem deve acompanhar esta conversa:</p>
+                                    <div className="max-h-48 overflow-y-auto space-y-1 scrollbar-thin">
+                                      {systemUsers.map((u: any) => {
+                                        const isParticipant = (activeWidgetLead.shares || []).some((s: any) => s.userId === u.id);
+                                        return (
+                                          <div 
+                                            key={u.id}
+                                            onClick={async () => {
+                                              if (isParticipant) {
+                                                await removeChatParticipant(activeWidgetLead.id, u.id);
+                                                setActiveWidgetLead({
+                                                  ...activeWidgetLead,
+                                                  shares: (activeWidgetLead.shares || []).filter((s: any) => s.userId !== u.id)
+                                                });
+                                              } else {
+                                                await addChatParticipant(activeWidgetLead.id, u.id);
+                                                setActiveWidgetLead({
+                                                  ...activeWidgetLead,
+                                                  shares: [...(activeWidgetLead.shares || []), { userId: u.id, user: u }]
+                                                });
+                                              }
+                                            }}
+                                            className={`flex items-center justify-between p-2 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
+                                              isParticipant ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200' : 'hover:bg-slate-50 text-slate-700'
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-2 truncate">
+                                              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[9px] uppercase">
+                                                {u.nome?.substring(0, 2) || 'US'}
+                                              </div>
+                                              <span className="truncate">{u.nome}</span>
                                             </div>
-                                            <span className="truncate">{u.nome}</span>
+                                            {isParticipant ? <Check size={14} className="text-emerald-600 shrink-0" /> : <UserPlus size={14} className="text-slate-400 shrink-0" />}
                                           </div>
-                                          {isParticipant ? <Check size={14} className="text-emerald-600 shrink-0" /> : <UserPlus size={14} className="text-slate-400 shrink-0" />}
-                                        </div>
-                                      );
-                                    })}
+                                        );
+                                      })}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                            </div>
+                                )}
+                              </div>
 
-                            {/* Seletor Rápido de Transferência de Comercial */}
-                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs shrink-0">
-                              <UserCog size={13} className="text-emerald-600 shrink-0" />
-                              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider shrink-0 hidden sm:inline">
-                                Resp:
-                              </span>
-                              <select
-                                value={activeWidgetLead.assignedToId || ''}
-                                onChange={async (e) => {
-                                  const newOwnerId = e.target.value;
-                                  if (!newOwnerId) return;
-                                  const res = await changeLeadOwner(activeWidgetLead.id, newOwnerId);
-                                  if (res.success) {
-                                    setActiveWidgetLead({ ...activeWidgetLead, assignedToId: newOwnerId });
-                                  } else {
-                                    alert('Erro ao transferir lead: ' + res.error);
-                                  }
-                                }}
-                                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[120px] truncate"
-                              >
-                                <option value="">Sem resp.</option>
-                                {systemUsers.map((u: any) => (
-                                  <option key={u.id} value={u.id}>{u.nome}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            {/* Botão de Encerrar ou Reabrir Atendimento */}
-                            {activeWidgetLead.chatStatus === 'CLOSED' ? (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const res = await reopenWhatsAppChat(activeWidgetLead.id);
-                                  if (res.success) {
-                                    setWidgetLeads(prev => prev.map(l => l.id === activeWidgetLead.id ? { ...l, chatStatus: 'OPEN' } : l));
-                                    setActiveWidgetLead({ ...activeWidgetLead, chatStatus: 'OPEN' });
-                                    const leadsRes = await getLeads();
-                                    if (leadsRes.success && leadsRes.leads) setWidgetLeads(leadsRes.leads);
-                                  } else {
-                                    alert('Erro ao reabrir atendimento: ' + res.error);
-                                  }
-                                }}
-                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
-                              >
-                                <RefreshCw size={13} /> Reabrir
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (confirm(`Deseja realmente encerrar o atendimento do WhatsApp de ${activeWidgetLead.nomeFantasia}?`)) {
-                                    const res = await closeWhatsAppChat(activeWidgetLead.id);
+                              {/* Seletor Rápido de Transferência de Comercial */}
+                              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs shrink-0">
+                                <UserCog size={13} className="text-emerald-600 shrink-0" />
+                                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider shrink-0 hidden sm:inline">
+                                  Resp:
+                                </span>
+                                <select
+                                  value={activeWidgetLead.assignedToId || ''}
+                                  onChange={async (e) => {
+                                    const newOwnerId = e.target.value;
+                                    if (!newOwnerId) return;
+                                    const res = await changeLeadOwner(activeWidgetLead.id, newOwnerId);
                                     if (res.success) {
-                                      setWidgetLeads(prev => prev.map(l => l.id === activeWidgetLead.id ? { ...l, chatStatus: 'CLOSED' } : l));
-                                      setActiveWidgetLead(null);
+                                      setActiveWidgetLead({ ...activeWidgetLead, assignedToId: newOwnerId });
+                                    } else {
+                                      alert('Erro ao transferir lead: ' + res.error);
+                                    }
+                                  }}
+                                  className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[120px] truncate"
+                                >
+                                  <option value="">Sem resp.</option>
+                                  {systemUsers.map((u: any) => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Botão de Encerrar ou Reabrir Atendimento */}
+                              {activeWidgetLead.chatStatus === 'CLOSED' ? (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const res = await reopenWhatsAppChat(activeWidgetLead.id);
+                                    if (res.success) {
+                                      setWidgetLeads(prev => prev.map(l => l.id === activeWidgetLead.id ? { ...l, chatStatus: 'OPEN' } : l));
+                                      setActiveWidgetLead({ ...activeWidgetLead, chatStatus: 'OPEN' });
                                       const leadsRes = await getLeads();
                                       if (leadsRes.success && leadsRes.leads) setWidgetLeads(leadsRes.leads);
                                     } else {
-                                      alert('Erro ao encerrar atendimento: ' + res.error);
+                                      alert('Erro ao reabrir atendimento: ' + res.error);
                                     }
-                                  }
-                                }}
-                                className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
-                              >
-                                <XCircle size={13} /> Encerrar
-                              </button>
-                            )}
-
-                            {/* Inline Edit Button */}
-                            <button
-                              onClick={() => {
-                                setWidgetInlineForm({
-                                  nomeFantasia: activeWidgetLead.nomeFantasia || '',
-                                  contatoNome: activeWidgetLead.contatoNome || '',
-                                  email: activeWidgetLead.email || '',
-                                  assignedToId: activeWidgetLead.assignedToId || '',
-                                  segmento: activeWidgetLead.segmento || ''
-                                });
-                                setIsEditingWidgetInline(!isEditingWidgetInline);
-                              }}
-                              className={`text-[10.5px] font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 border shrink-0 whitespace-nowrap ${
-                                isEditingWidgetInline 
-                                  ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
-                                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
-                              }`}
-                            >
-                              {isEditingWidgetInline ? (
-                                <>
-                                  <X size={12} /> Fechar
-                                </>
+                                  }}
+                                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                                >
+                                  <RefreshCw size={13} /> Reabrir
+                                </button>
                               ) : (
-                                <>
-                                  <UserCog size={13} className="text-slate-600" /> Cadastro
-                                </>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Deseja realmente encerrar o atendimento do WhatsApp de ${activeWidgetLead.nomeFantasia}?`)) {
+                                      const res = await closeWhatsAppChat(activeWidgetLead.id);
+                                      if (res.success) {
+                                        setWidgetLeads(prev => prev.map(l => l.id === activeWidgetLead.id ? { ...l, chatStatus: 'CLOSED' } : l));
+                                        setActiveWidgetLead(null);
+                                        const leadsRes = await getLeads();
+                                        if (leadsRes.success && leadsRes.leads) setWidgetLeads(leadsRes.leads);
+                                      } else {
+                                        alert('Erro ao encerrar atendimento: ' + res.error);
+                                      }
+                                    }
+                                  }}
+                                  className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                                >
+                                  <XCircle size={13} /> Encerrar
+                                </button>
                               )}
-                            </button>
 
-                            {/* Botão de Ver no Funil */}
-                            <button
-                              onClick={() => {
-                                window.location.href = `/leads?leadId=${activeWidgetLead.id}`;
-                              }}
-                              className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
-                              title="Ver no Funil"
-                            >
-                              <Target size={13} /> Funil
-                            </button>
+                              {/* Inline Edit Button */}
+                              <button
+                                onClick={() => {
+                                  setWidgetInlineForm({
+                                    nomeFantasia: activeWidgetLead.nomeFantasia || '',
+                                    contatoNome: activeWidgetLead.contatoNome || '',
+                                    email: activeWidgetLead.email || '',
+                                    assignedToId: activeWidgetLead.assignedToId || '',
+                                    segmento: activeWidgetLead.segmento || ''
+                                  });
+                                  setIsEditingWidgetInline(!isEditingWidgetInline);
+                                }}
+                                className={`text-[10.5px] font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 border shrink-0 whitespace-nowrap ${
+                                  isEditingWidgetInline 
+                                    ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
+                                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
+                                }`}
+                              >
+                                {isEditingWidgetInline ? (
+                                  <>
+                                    <X size={12} /> Fechar
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCog size={13} className="text-slate-600" /> Cadastro
+                                  </>
+                                )}
+                              </button>
+
+                              {/* Botão de Ver no Funil */}
+                              <button
+                                onClick={() => {
+                                  window.location.href = `/leads?leadId=${activeWidgetLead.id}`;
+                                }}
+                                className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+                                title="Ver no Funil"
+                              >
+                                <Target size={13} /> Funil
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Componente WhatsAppChat */}
+                          <div className="flex-1 overflow-hidden relative">
+                            <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
                           </div>
                         </div>
 
-                        {/* Componente WhatsAppChat */}
-                        <div className="flex-1 overflow-hidden relative">
+                        {/* Sliding inline edit panel */}
+                        {isEditingWidgetInline && (
+                          <div className="w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col shrink-0 animate-slide-left z-10">
+                            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 flex items-center gap-1.5">
+                                <UserCog size={16} className="text-[#0ca678]" />
+                                Completar Cadastro
+                              </h4>
+                              <button 
+                                onClick={() => setIsEditingWidgetInline(false)}
+                                className="text-slate-400 hover:text-slate-600"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome / Nome Fantasia</label>
+                                <input 
+                                  type="text" 
+                                  value={widgetInlineForm.nomeFantasia}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, nomeFantasia: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome do Contato</label>
+                                <input 
+                                  type="text" 
+                                  value={widgetInlineForm.contatoNome}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, contatoNome: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                  placeholder="Ex: João Silva"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
+                                <input 
+                                  type="email" 
+                                  value={widgetInlineForm.email}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, email: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                  placeholder="Ex: contato@empresa.com"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Segmento</label>
+                                <select 
+                                  value={widgetInlineForm.segmento}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, segmento: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                                >
+                                  <option value="">Selecione um segmento...</option>
+                                  {widgetSegmentos.map(seg => {
+                                    const val = seg.nome || seg;
+                                    return (
+                                      <option key={seg.id || seg} value={val}>{val}</option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Responsável pelo Lead</label>
+                                <select 
+                                  value={widgetInlineForm.assignedToId}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, assignedToId: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                                >
+                                  <option value="">Selecione um responsável...</option>
+                                  {systemUsers.map(u => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
+                              <button
+                                onClick={() => handleSaveWidgetInlineLeadEdit(activeWidgetLead.id)}
+                                className="w-full bg-[#0ca678] hover:bg-[#099268] text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-md shadow-[#0ca678]/10 flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCircle2 size={14} /> Salvar Alterações
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* Tela de instrução (Vazio) */
+                      <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center bg-slate-100/50 select-none">
+                        <div className="w-16 h-16 rounded-3xl bg-white border border-slate-200/60 shadow-md flex items-center justify-center text-[#1B4D3E]/30">
+                          <MessageCircle size={28} className="fill-[#1B4D3E]/5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-1">Central WhatsApp CRM</h4>
+                          <p className="text-[11px] text-slate-400 font-semibold max-w-[280px]">Selecione um contato na lista à esquerda para carregar a conversa e começar a responder.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Modal Overlay para Chat do WhatsApp quando em Modo Kanban */}
+                {widgetViewMode !== 'list' && activeWidgetLead && (
+                  <div className="fixed inset-0 z-[250] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-150">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden border border-slate-700/50 relative">
+                      {/* Mini Cabeçalho do Chat do Modal */}
+                      <div className="p-3.5 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-500/30">
+                            {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-black text-white truncate leading-tight mb-0.5">
+                              {activeWidgetLead.nomeFantasia}
+                            </h4>
+                            <span className="text-[11px] text-emerald-400 font-bold">{activeWidgetLead.telefone}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mr-10">
+                          {/* Inline Edit Button no Modal */}
+                          <button
+                            onClick={() => {
+                              setWidgetInlineForm({
+                                nomeFantasia: activeWidgetLead.nomeFantasia || '',
+                                contatoNome: activeWidgetLead.contatoNome || '',
+                                email: activeWidgetLead.email || '',
+                                assignedToId: activeWidgetLead.assignedToId || '',
+                                segmento: activeWidgetLead.segmento || ''
+                              });
+                              setIsEditingWidgetInline(!isEditingWidgetInline);
+                            }}
+                            className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border shrink-0 whitespace-nowrap ${
+                              isEditingWidgetInline 
+                                ? 'bg-emerald-600 text-white border-emerald-600' 
+                                : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                            }`}
+                          >
+                            <UserCog size={14} /> Cadastro
+                          </button>
+
+                          {/* Fechar Modal Chat */}
+                          <button
+                            type="button"
+                            onClick={() => setActiveWidgetLead(null)}
+                            className="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-white rounded-xl flex items-center justify-center transition-all active:scale-95 cursor-pointer border border-slate-700"
+                            title="Fechar Conversa"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Corpo do Chat no Modal */}
+                      <div className="flex-1 flex overflow-hidden bg-slate-100 relative">
+                        <div className="flex-1 flex flex-col h-full overflow-hidden">
                           <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
                         </div>
-                      </div>
 
-                      {/* Sliding inline edit panel */}
-                      {isEditingWidgetInline && (
-                        <div className="w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col shrink-0 animate-slide-left z-10">
-                          <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                            <h4 className="text-xs md:text-sm font-black text-slate-800 flex items-center gap-1.5">
-                              <UserCog size={16} className="text-[#0ca678]" />
-                              Completar Cadastro
-                            </h4>
-                            <button 
-                              onClick={() => setIsEditingWidgetInline(false)}
-                              className="text-slate-400 hover:text-slate-600"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-
-                          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome / Nome Fantasia</label>
-                              <input 
-                                type="text" 
-                                value={widgetInlineForm.nomeFantasia}
-                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, nomeFantasia: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome do Contato</label>
-                              <input 
-                                type="text" 
-                                value={widgetInlineForm.contatoNome}
-                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, contatoNome: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
-                                placeholder="Ex: João Silva"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
-                              <input 
-                                type="email" 
-                                value={widgetInlineForm.email}
-                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, email: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
-                                placeholder="Ex: contato@empresa.com"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Segmento</label>
-                              <select 
-                                value={widgetInlineForm.segmento}
-                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, segmento: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                        {/* Sliding inline edit panel no Modal */}
+                        {isEditingWidgetInline && (
+                          <div className="w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col shrink-0 animate-slide-left z-10">
+                            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 flex items-center gap-1.5">
+                                <UserCog size={16} className="text-[#0ca678]" />
+                                Completar Cadastro
+                              </h4>
+                              <button 
+                                onClick={() => setIsEditingWidgetInline(false)}
+                                className="text-slate-400 hover:text-slate-600"
                               >
-                                <option value="">Selecione um segmento...</option>
-                                {widgetSegmentos.map(seg => {
-                                  const val = seg.nome || seg;
-                                  return (
-                                    <option key={seg.id || seg} value={val}>{val}</option>
-                                  );
-                                })}
-                              </select>
+                                <X size={16} />
+                              </button>
                             </div>
 
-                            <div>
-                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Responsável pelo Lead</label>
-                              <select 
-                                value={widgetInlineForm.assignedToId}
-                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, assignedToId: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome / Nome Fantasia</label>
+                                <input 
+                                  type="text" 
+                                  value={widgetInlineForm.nomeFantasia}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, nomeFantasia: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome do Contato</label>
+                                <input 
+                                  type="text" 
+                                  value={widgetInlineForm.contatoNome}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, contatoNome: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                  placeholder="Ex: João Silva"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
+                                <input 
+                                  type="email" 
+                                  value={widgetInlineForm.email}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, email: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                  placeholder="Ex: contato@empresa.com"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Segmento</label>
+                                <select 
+                                  value={widgetInlineForm.segmento}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, segmento: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                                >
+                                  <option value="">Selecione um segmento...</option>
+                                  {widgetSegmentos.map(seg => {
+                                    const val = seg.nome || seg;
+                                    return (
+                                      <option key={seg.id || seg} value={val}>{val}</option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Responsável pelo Lead</label>
+                                <select 
+                                  value={widgetInlineForm.assignedToId}
+                                  onChange={e => setWidgetInlineForm({ ...widgetInlineForm, assignedToId: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                                >
+                                  <option value="">Selecione um responsável...</option>
+                                  {systemUsers.map(u => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
+                              <button
+                                onClick={() => handleSaveWidgetInlineLeadEdit(activeWidgetLead.id)}
+                                className="w-full bg-[#0ca678] hover:bg-[#099268] text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-md shadow-[#0ca678]/10 flex items-center justify-center gap-1.5"
                               >
-                                <option value="">Selecione um responsável...</option>
-                                {systemUsers.map(u => (
-                                  <option key={u.id} value={u.id}>{u.nome}</option>
-                                ))}
-                              </select>
+                                <CheckCircle2 size={14} /> Salvar Alterações
+                              </button>
                             </div>
                           </div>
-
-                          <div className="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
-                            <button
-                              onClick={() => handleSaveWidgetInlineLeadEdit(activeWidgetLead.id)}
-                              className="w-full bg-[#0ca678] hover:bg-[#099268] text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-md shadow-[#0ca678]/10 flex items-center justify-center gap-1.5"
-                            >
-                              <CheckCircle2 size={14} /> Salvar Alterações
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* Tela de instrução (Vazio) */
-                    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center bg-slate-100/50 select-none">
-                      <div className="w-16 h-16 rounded-3xl bg-white border border-slate-200/60 shadow-md flex items-center justify-center text-[#1B4D3E]/30">
-                        <MessageCircle size={28} className="fill-[#1B4D3E]/5" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-1">Central WhatsApp CRM</h4>
-                        <p className="text-[11px] text-slate-400 font-semibold max-w-[280px]">Selecione um contato na lista à esquerda para carregar a conversa e começar a responder.</p>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
