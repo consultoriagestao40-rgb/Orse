@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline } from './actions';
-import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, getLeadParticipants } from './whatsapp-actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check } from 'lucide-react';
+import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, getLeadParticipants, updateLeadTags } from './whatsapp-actions';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check, Tag } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -695,7 +695,7 @@ export default function LeadsKanban() {
   const [userFilter, setUserFilter] = useState('all');
   const [filterUsers, setFilterUsers] = useState<any[]>([]);
 
-  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
+  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento' | 'kanban-etiqueta';
   const [viewMode, setViewMode] = useState<ViewMode>('kanban-status');
 
   useEffect(() => {
@@ -1587,6 +1587,87 @@ export default function LeadsKanban() {
     return cols;
   }, [filteredLeads, segmentos, segmentoOrder]);
 
+  const kanbanEtiquetaCols = React.useMemo(() => {
+    const getLeadTagList = (lead: any): string[] => {
+      if (!lead.tags) return [];
+      try {
+        const parsed = typeof lead.tags === 'string' ? JSON.parse(lead.tags) : lead.tags;
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return lead.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+      }
+    };
+
+    const colsMap: Record<string, any[]> = {
+      VIP: [],
+      Urgente: [],
+      'Orçamento': [],
+      'Retornar Hoje': [],
+      'Em Negociação': [],
+      'Aguardando Cliente': [],
+      Qualificado: [],
+      other: [],
+      unassigned: []
+    };
+
+    filteredLeads.forEach(lead => {
+      const tags = getLeadTagList(lead);
+      if (tags.length === 0) {
+        colsMap.unassigned.push(lead);
+      } else {
+        let matched = false;
+        tags.forEach(t => {
+          if (colsMap[t]) {
+            colsMap[t].push(lead);
+            matched = true;
+          }
+        });
+        if (!matched) {
+          colsMap.other.push(lead);
+        }
+      }
+    });
+
+    const TAG_COLUMNS = [
+      { id: 'VIP', label: '🏷️ VIP', color: '#f59e0b' },
+      { id: 'Urgente', label: '🏷️ Urgente', color: '#ef4444' },
+      { id: 'Orçamento', label: '🏷️ Orçamento', color: '#3b82f6' },
+      { id: 'Retornar Hoje', label: '🏷️ Retornar Hoje', color: '#10b981' },
+      { id: 'Em Negociação', label: '🏷️ Em Negociação', color: '#8b5cf6' },
+      { id: 'Aguardando Cliente', label: '🏷️ Aguardando Cliente', color: '#ec4899' },
+      { id: 'Qualificado', label: '🏷️ Qualificado', color: '#06b6d4' },
+      { id: 'other', label: '🏷️ Outras Etiquetas', color: '#64748b' },
+      { id: 'unassigned', label: '⚪ Sem Etiqueta', color: '#94a3b8' }
+    ];
+
+    return TAG_COLUMNS.map(col => ({
+      id: col.id,
+      label: col.label,
+      color: col.color,
+      cards: sortLeadsByUnreadPriority(colsMap[col.id] || []),
+      total: (colsMap[col.id] || []).reduce((acc, l) => acc + (l.valorEst || 0), 0)
+    }));
+  }, [filteredLeads]);
+
+  const handleDropEtiqueta = async (e: React.DragEvent, targetTagId: string) => {
+    e.preventDefault();
+    if (!draggedLeadId) return;
+
+    let newTags: string[];
+    if (targetTagId === 'unassigned') {
+      newTags = [];
+    } else if (targetTagId === 'other') {
+      return;
+    } else {
+      newTags = [targetTagId];
+    }
+
+    const tagsJson = JSON.stringify(newTags);
+
+    setLeads(prev => prev.map(l => l.id === draggedLeadId ? { ...l, tags: tagsJson } : l));
+    await updateLeadTags(draggedLeadId, tagsJson);
+  };
+
   // Agrupa leads com mensagens de WhatsApp por número de telefone para eliminar abas duplicadas
   const chatLeadsMap = new Map<string, any>();
   leads
@@ -1826,6 +1907,18 @@ export default function LeadsKanban() {
               }`}
             >
               <Building size={14} /> Por Segmento
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('kanban-etiqueta')}
+              title="Kanban por Etiqueta"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                viewMode === 'kanban-etiqueta'
+                  ? 'bg-[#1B4D3E] text-white shadow-sm'
+                  : 'text-amber-500 hover:text-amber-600'
+              }`}
+            >
+              <Tag size={14} /> Por Etiqueta
             </button>
           </div>
           {/* Real-time Search Input */}
@@ -2890,7 +2983,125 @@ export default function LeadsKanban() {
               )}
             </div>
           </div>
-          )}
+        )}
+
+        {viewMode === 'kanban-etiqueta' && (
+          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
+            <div className="flex gap-[3px]">
+            {kanbanEtiquetaCols.map((col, idx) => {
+              const colLeads = col.cards;
+              const colColor = col.color;
+              const resolvedHex = resolveColorToHex(colColor);
+              const contrast = getContrastYIQ(resolvedHex);
+              const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+              const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+              const textHex = getDarkenedHexForText(resolvedHex);
+
+              return (
+                <div 
+                  key={col.id}
+                  className="flex flex-col flex-shrink-0 transition-opacity duration-200"
+                  style={{ width: '274px' }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDropEtiqueta(e, col.id)}
+                >
+                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanEtiquetaCols.length - idx) }}>
+                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                      <div 
+                        className="absolute inset-[3px] rounded-[16px] px-3 flex items-center justify-between transition-all duration-200 shadow-2xs border backdrop-blur-md"
+                        style={{
+                          backgroundColor: bgRgba,
+                          borderColor: borderRgba
+                        }}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span 
+                            className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" 
+                            style={{ backgroundColor: resolvedHex }}
+                          />
+                          <span className="font-extrabold text-xs uppercase tracking-wide truncate" style={{ color: textHex }}>
+                            {col.label}
+                          </span>
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white/80 border border-slate-200/60 shadow-2xs shrink-0 text-slate-700">
+                            {colLeads.length}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] font-black text-slate-500 shrink-0">
+                          R$ {col.total.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 p-1 space-y-2 min-h-[calc(100vh-220px)]">
+                    {colLeads.length === 0 ? (
+                      <div className="border-2 border-dashed border-slate-200/80 rounded-2xl p-6 text-center text-xs text-slate-400 font-medium bg-slate-100/30">
+                        Nenhum lead com esta etiqueta
+                      </div>
+                    ) : (
+                      colLeads.map(lead => (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, lead.id)}
+                          onClick={() => handleCardClick(lead)}
+                          className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-2 group relative"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 group-hover:text-[#1a365d] transition-colors">
+                              {lead.nomeFantasia}
+                            </h4>
+                            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 shrink-0">
+                              R$ {(lead.valorEst || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                            </span>
+                          </div>
+
+                          {lead.contatoNome && (
+                            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                              <User size={12} className="text-slate-400" />
+                              <span>{lead.contatoNome}</span>
+                            </div>
+                          )}
+
+                          {lead.telefone && (
+                            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                              <Phone size={12} className="text-slate-400" />
+                              <span>{lead.telefone}</span>
+                            </div>
+                          )}
+
+                          {/* Render current tags */}
+                          {(() => {
+                            let parsed: string[] = [];
+                            if (lead.tags) {
+                              try {
+                                parsed = typeof lead.tags === 'string' ? JSON.parse(lead.tags) : lead.tags;
+                              } catch (e) {
+                                parsed = lead.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+                              }
+                            }
+                            if (!Array.isArray(parsed) || parsed.length === 0) return null;
+                            return (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {parsed.map((t: string) => (
+                                  <span key={t} className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#1a365d]/10 text-[#1a365d] border border-[#1a365d]/20">
+                                    🏷️ {t}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            </div>
+          </div>
+        )}
 
         {viewMode === 'lista' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full mb-6">
