@@ -1120,20 +1120,32 @@ export async function getPendingUnansweredLeads() {
         stage: { select: { id: true, nome: true } },
         whatsappMessages: {
           orderBy: { createdAt: 'desc' },
-          take: 5
+          take: 10
         }
       }
     });
 
-    const pendingLeads = leadsWithMsgs
-      .map(lead => {
-        const latestMsg = lead.whatsappMessages[0];
-        const isUnanswered = latestMsg && latestMsg.direction === 'INBOUND';
-        const unreadCount = lead.whatsappMessages.filter(m => m.direction === 'INBOUND' && m.status !== 'READ').length;
+    const pendingLeadsMap = new Map<string, any>();
 
-        return {
+    leadsWithMsgs.forEach(lead => {
+      // Se o atendimento deste lead estiver marcado como encerrado, ignora
+      if ((lead as any).chatStatus === 'CLOSED') return;
+
+      const cleanPhone = lead.telefone ? lead.telefone.replace(/\D/g, '').slice(-8) : lead.id;
+      const existing = pendingLeadsMap.get(cleanPhone);
+
+      const allMsgs = [...(existing?.whatsappMessages || []), ...(lead.whatsappMessages || [])];
+      const sortedMsgs = allMsgs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const latestMsg = sortedMsgs[0];
+
+      // Apenas considera pendente se a ÚLTIMA mensagem enviada for INBOUND (do cliente) e tiver status diferente de READ
+      const isUnanswered = latestMsg && latestMsg.direction === 'INBOUND' && latestMsg.status !== 'READ';
+      const unreadCount = allMsgs.filter((m: any) => m.direction === 'INBOUND' && m.status !== 'READ').length;
+
+      if (isUnanswered && unreadCount > 0) {
+        pendingLeadsMap.set(cleanPhone, {
           id: lead.id,
-          nomeFantasia: lead.nomeFantasia,
+          nomeFantasia: (existing && !existing.nomeFantasia.startsWith('WhatsApp:')) ? existing.nomeFantasia : lead.nomeFantasia,
           telefone: lead.telefone,
           segmento: lead.segmento,
           stageName: lead.stage?.nome || 'Sem etapa',
@@ -1146,15 +1158,20 @@ export async function getPendingUnansweredLeads() {
             status: latestMsg.status
           } : null,
           isUnanswered,
-          unreadCount
-        };
-      })
-      .filter(lead => lead.isUnanswered || lead.unreadCount > 0)
-      .sort((a, b) => {
-        const dateA = a.latestMsg ? new Date(a.latestMsg.createdAt).getTime() : 0;
-        const dateB = b.latestMsg ? new Date(b.latestMsg.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+          unreadCount,
+          whatsappMessages: sortedMsgs
+        });
+      } else {
+        // Se a conversa já recebeu uma resposta da equipe (OUTBOUND recente) ou foi lida, não é pendente
+        pendingLeadsMap.delete(cleanPhone);
+      }
+    });
+
+    const pendingLeads = Array.from(pendingLeadsMap.values()).sort((a, b) => {
+      const dateA = a.latestMsg ? new Date(a.latestMsg.createdAt).getTime() : 0;
+      const dateB = b.latestMsg ? new Date(b.latestMsg.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
     return { success: true, pendingLeads };
   } catch (error: any) {

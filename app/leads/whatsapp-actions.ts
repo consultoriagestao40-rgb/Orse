@@ -315,3 +315,184 @@ export async function markWhatsAppMessagesAsRead(leadId: string) {
     return { success: false, error: err.message };
   }
 }
+
+export async function closeWhatsAppChat(leadId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) return { success: false, error: 'Lead não encontrado' };
+
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        chatStatus: 'CLOSED',
+        chatClosedAt: new Date(),
+        chatClosedById: user.id
+      }
+    });
+
+    if (lead.telefone) {
+      const last8 = lead.telefone.replace(/\D/g, '').slice(-8);
+      if (last8.length >= 8) {
+        const matchingLeads = await prisma.lead.findMany({
+          where: {
+            tenantId: user.tenantId,
+            id: { not: leadId }
+          },
+          select: { id: true, telefone: true }
+        });
+        const samePhoneIds = matchingLeads.filter(l => l.telefone && l.telefone.replace(/\D/g, '').endsWith(last8)).map(l => l.id);
+        if (samePhoneIds.length > 0) {
+          await prisma.lead.updateMany({
+            where: { id: { in: samePhoneIds } },
+            data: {
+              chatStatus: 'CLOSED',
+              chatClosedAt: new Date(),
+              chatClosedById: user.id
+            }
+          });
+        }
+      }
+    }
+
+    await markWhatsAppMessagesAsRead(leadId);
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'MUDANCA_FASE',
+        descricao: `Atendimento via WhatsApp encerrado por ${user.nome}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (err: any) {
+    console.error('closeWhatsAppChat error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function reopenWhatsAppChat(leadId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) return { success: false, error: 'Lead não encontrado' };
+
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        chatStatus: 'OPEN',
+        chatClosedAt: null,
+        chatClosedById: null
+      }
+    });
+
+    if (lead.telefone) {
+      const last8 = lead.telefone.replace(/\D/g, '').slice(-8);
+      if (last8.length >= 8) {
+        const matchingLeads = await prisma.lead.findMany({
+          where: {
+            tenantId: user.tenantId,
+            id: { not: leadId }
+          },
+          select: { id: true, telefone: true }
+        });
+        const samePhoneIds = matchingLeads.filter(l => l.telefone && l.telefone.replace(/\D/g, '').endsWith(last8)).map(l => l.id);
+        if (samePhoneIds.length > 0) {
+          await prisma.lead.updateMany({
+            where: { id: { in: samePhoneIds } },
+            data: {
+              chatStatus: 'OPEN',
+              chatClosedAt: null,
+              chatClosedById: null
+            }
+          });
+        }
+      }
+    }
+
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (err: any) {
+    console.error('reopenWhatsAppChat error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function addChatParticipant(leadId: string, participantUserId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const existingShare = await prisma.leadShare.findFirst({
+      where: { leadId, userId: participantUserId }
+    });
+
+    if (!existingShare) {
+      await prisma.leadShare.create({
+        data: {
+          leadId,
+          userId: participantUserId,
+          permission: 'WRITE'
+        }
+      });
+    }
+
+    const participant = await prisma.user.findUnique({ where: { id: participantUserId } });
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'MUDANCA_FASE',
+        descricao: `${user.nome} adicionou ${participant?.nome || 'um participante'} à conversa do WhatsApp`
+      }
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: participantUserId,
+        texto: `💬 WhatsApp: Você foi adicionado à conversa de atendimento por ${user.nome}`,
+        link: `/leads?id=${leadId}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (err: any) {
+    console.error('addChatParticipant error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function removeChatParticipant(leadId: string, participantUserId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await prisma.leadShare.deleteMany({
+      where: { leadId, userId: participantUserId }
+    });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (err: any) {
+    console.error('removeChatParticipant error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getLeadParticipants(leadId: string) {
+  try {
+    const shares = await prisma.leadShare.findMany({
+      where: { leadId },
+      include: { user: { select: { id: true, nome: true, avatarUrl: true, email: true } } }
+    });
+    return { success: true, participants: shares.map(s => s.user) };
+  } catch (err: any) {
+    return { success: false, error: err.message, participants: [] };
+  }
+}

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown } from 'lucide-react';
+import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, getLeadParticipants } from './whatsapp-actions';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -611,6 +612,8 @@ export default function LeadsKanban() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMetrics, setShowMetrics] = useState(true);
+  const [chatTab, setChatTab] = useState<'open' | 'closed'>('open');
+  const [showParticipantPopover, setShowParticipantPopover] = useState(false);
 
   
   const [showModal, setShowModal] = useState(false);
@@ -1607,10 +1610,14 @@ export default function LeadsKanban() {
   const chatLeads = Array.from(chatLeadsMap.values())
     .sort((a, b) => b.latestMsgDate.getTime() - a.latestMsgDate.getTime());
 
-  const filteredChatLeads = chatLeads.filter(lead => 
-    lead.nome.toLowerCase().includes(chatSearchTerm.toLowerCase()) ||
-    lead.telefone.includes(chatSearchTerm)
-  );
+  const filteredChatLeads = chatLeads.filter(lead => {
+    const matchesSearch = lead.nome.toLowerCase().includes(chatSearchTerm.toLowerCase()) || lead.telefone.includes(chatSearchTerm);
+    const matchesTab = chatTab === 'closed' ? lead.chatStatus === 'CLOSED' : lead.chatStatus !== 'CLOSED';
+    return matchesSearch && matchesTab;
+  });
+
+  const openChatLeadsCount = chatLeads.filter(l => l.chatStatus !== 'CLOSED').length;
+  const closedChatLeadsCount = chatLeads.filter(l => l.chatStatus === 'CLOSED').length;
 
   const totalUnreadCount = leads.reduce((acc, lead) => {
     return acc + (lead.whatsappMessages || []).filter(
@@ -1884,6 +1891,14 @@ export default function LeadsKanban() {
 
 
           <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
+
+          <button 
+            type="button"
+            onClick={() => handleCreateStage()}
+            className="flex items-center justify-center gap-1.5 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2 text-xs md:text-sm rounded-xl font-bold transition-all w-full sm:w-auto shadow-2xs active:scale-95 cursor-pointer"
+          >
+            <Plus size={16} /> Nova Etapa
+          </button>
 
           <button 
             type="button"
@@ -2257,6 +2272,20 @@ export default function LeadsKanban() {
                   </span>
                 </div>
               )}
+
+              {/* Card visual para adicionar nova etapa ao final do funil */}
+              <div 
+                onClick={() => handleCreateStage()}
+                className="w-[240px] shrink-0 border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-100/40 hover:bg-emerald-50/50 rounded-3xl h-[calc(100vh-120px)] flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer group p-6 text-center select-none ml-2"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 group-hover:border-emerald-400 shadow-xs flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-all group-hover:scale-110">
+                  <Plus size={24} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">Nova Etapa</p>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">Adicionar etapa ao funil</p>
+                </div>
+              </div>
             </div>
           </div>
           )}
@@ -3754,6 +3783,30 @@ export default function LeadsKanban() {
                   </div>
                 </div>
 
+                {/* Tabs Abertas vs Encerradas */}
+                <div className="flex border-b border-slate-100 bg-slate-50/60 p-1.5 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setChatTab('open')}
+                    className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      chatTab === 'open' ? 'bg-white text-emerald-800 shadow-2xs font-black' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <MessageCircle size={13} className={chatTab === 'open' ? 'text-emerald-600' : 'text-slate-400'} />
+                    Abertas ({openChatLeadsCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatTab('closed')}
+                    className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      chatTab === 'closed' ? 'bg-white text-slate-800 shadow-2xs font-black' : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Archive size={13} className={chatTab === 'closed' ? 'text-slate-600' : 'text-slate-400'} />
+                    Encerradas ({closedChatLeadsCount})
+                  </button>
+                </div>
+
                 {/* Chats scrollable container */}
                 <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-thin bg-white">
                   {filteredChatLeads.length === 0 ? (
@@ -3907,6 +3960,107 @@ export default function LeadsKanban() {
                                   ))}
                                 </select>
                               </div>
+
+                              {/* Botão + Participante na Conversa */}
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowParticipantPopover(!showParticipantPopover)}
+                                  className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-[10.5px] px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                                  title="Adicionar equipe à conversa"
+                                >
+                                  <UserPlus size={13} className="text-emerald-600" />
+                                  <span>+ Participantes</span>
+                                  {(activeLead.shares || []).length > 0 && (
+                                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                                      {(activeLead.shares || []).length}
+                                    </span>
+                                  )}
+                                </button>
+
+                                {showParticipantPopover && (
+                                  <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3 z-[100] animate-in fade-in zoom-in-95 duration-150 font-sans">
+                                    <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-2">
+                                      <span className="text-xs font-black text-slate-800 flex items-center gap-1">
+                                        <Users size={14} className="text-emerald-600" />
+                                        Participantes da Equipe
+                                      </span>
+                                      <button type="button" onClick={() => setShowParticipantPopover(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mb-2 font-medium">Marque quem deve acompanhar esta conversa:</p>
+                                    <div className="max-h-48 overflow-y-auto space-y-1">
+                                      {filterUsers.map(u => {
+                                        const isParticipant = (activeLead.shares || []).some((s: any) => s.userId === u.id);
+                                        return (
+                                          <div 
+                                            key={u.id}
+                                            onClick={async () => {
+                                              if (isParticipant) {
+                                                await removeChatParticipant(activeLead.id, u.id);
+                                              } else {
+                                                await addChatParticipant(activeLead.id, u.id);
+                                              }
+                                              fetchData(true);
+                                            }}
+                                            className={`flex items-center justify-between p-2 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
+                                              isParticipant ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200' : 'hover:bg-slate-50 text-slate-700'
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-2 truncate">
+                                              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[9px] uppercase">
+                                                {u.nome?.substring(0, 2) || 'US'}
+                                              </div>
+                                              <span className="truncate">{u.nome}</span>
+                                            </div>
+                                            {isParticipant ? <Check size={14} className="text-emerald-600 shrink-0" /> : <Plus size={14} className="text-slate-400 shrink-0" />}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Botão de Encerrar ou Reabrir Atendimento */}
+                              {activeLead.chatStatus === 'CLOSED' ? (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const res = await reopenWhatsAppChat(activeLead.id);
+                                    if (res.success) {
+                                      fetchData(true);
+                                    } else {
+                                      alert('Erro ao reabrir atendimento: ' + res.error);
+                                    }
+                                  }}
+                                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-extrabold text-[10.5px] px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                                  title="Reabrir Atendimento"
+                                >
+                                  <RefreshCw size={13} /> Reabrir Atendimento
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Deseja realmente encerrar o atendimento do WhatsApp de ${activeLead.nomeFantasia}?`)) {
+                                      const res = await closeWhatsAppChat(activeLead.id);
+                                      if (res.success) {
+                                        fetchData(true);
+                                        setSelectedChatLeadId(null);
+                                      } else {
+                                        alert('Erro ao encerrar atendimento: ' + res.error);
+                                      }
+                                    }
+                                  }}
+                                  className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-extrabold text-[10.5px] px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                                  title="Encerrar Atendimento"
+                                >
+                                  <XCircle size={13} /> Encerrar Atendimento
+                                </button>
+                              )}
+
                               {/* Inline Edit Button */}
                               <button
                                 onClick={() => {
