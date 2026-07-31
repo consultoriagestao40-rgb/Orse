@@ -808,10 +808,16 @@ export default function LeadsKanban() {
   }, []);
 
   useEffect(() => {
+    if (activePipelineId) {
+      fetchData(true, activePipelineId);
+    }
+  }, [activePipelineId]);
+
+  useEffect(() => {
     if (stages.length > 0) {
       fetchFilteredLeads(false, activePipelineId);
     }
-  }, [datePreset, startDate, endDate, userFilter, activePipelineId]);
+  }, [datePreset, startDate, endDate, userFilter]);
 
   const fetchData = async (silent = false, customActivePipelineId?: string) => {
     if (!silent) setLoading(true);
@@ -819,7 +825,7 @@ export default function LeadsKanban() {
     let pipeId = customActivePipelineId || activePipelineId;
 
     let pipes = pipelines;
-    if (pipes.length === 0 || customActivePipelineId) {
+    if (pipes.length === 0 || !pipeId || customActivePipelineId) {
       const pipesRes = await getPipelines();
       if (pipesRes.success && pipesRes.pipelines) {
         pipes = pipesRes.pipelines;
@@ -829,8 +835,8 @@ export default function LeadsKanban() {
           const savedPipeId = localStorage.getItem('orse_active_pipeline_id');
           const hasSaved = pipes.some((p: any) => p.id === savedPipeId);
           pipeId = hasSaved ? (savedPipeId || '') : (pipes[0]?.id || '');
-          setActivePipelineId(pipeId);
           if (pipeId) {
+            setActivePipelineId(pipeId);
             localStorage.setItem('orse_active_pipeline_id', pipeId);
           }
         }
