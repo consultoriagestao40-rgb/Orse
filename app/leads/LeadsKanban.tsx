@@ -1894,14 +1894,6 @@ export default function LeadsKanban() {
 
           <button 
             type="button"
-            onClick={() => handleCreateStage()}
-            className="flex items-center justify-center gap-1.5 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3.5 py-2 text-xs md:text-sm rounded-xl font-bold transition-all w-full sm:w-auto shadow-2xs active:scale-95 cursor-pointer"
-          >
-            <Plus size={16} /> Nova Etapa
-          </button>
-
-          <button 
-            type="button"
             onClick={() => setShowNewLead(true)}
             className="flex items-center justify-center gap-2 bg-[#1B4D3E] text-white px-4 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-[#13382d] transition-all w-full sm:w-auto cursor-pointer"
           >
@@ -2272,20 +2264,6 @@ export default function LeadsKanban() {
                   </span>
                 </div>
               )}
-
-              {/* Card visual para adicionar nova etapa ao final do funil */}
-              <div 
-                onClick={() => handleCreateStage()}
-                className="w-[240px] shrink-0 border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-100/40 hover:bg-emerald-50/50 rounded-3xl h-[calc(100vh-120px)] flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer group p-6 text-center select-none ml-2"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 group-hover:border-emerald-400 shadow-xs flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-all group-hover:scale-110">
-                  <Plus size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">Nova Etapa</p>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">Adicionar etapa ao funil</p>
-                </div>
-              </div>
             </div>
           </div>
           )}
