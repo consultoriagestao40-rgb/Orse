@@ -2,12 +2,12 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
-import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage } from '@/app/leads/actions';
+import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage, getLeadStages, createLeadStage, updateLeadStageName, updateLeadStageColor, deleteLeadStage } from '@/app/leads/actions';
 import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, updateLeadTags } from '@/app/leads/whatsapp-actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
@@ -528,6 +528,11 @@ const Sidebar = () => {
   const [widgetChatTab, setWidgetChatTab] = useState<'open' | 'closed'>('open');
   const [widgetViewMode, setWidgetViewMode] = useState<'list' | 'kanban-tags' | 'kanban-stages'>('list');
   const [draggedWidgetLeadId, setDraggedWidgetLeadId] = useState<string | null>(null);
+  const [widgetStages, setWidgetStages] = useState<any[]>([]);
+  const [editingWidgetStageId, setEditingWidgetStageId] = useState<string | null>(null);
+  const [editingWidgetStageName, setEditingWidgetStageName] = useState('');
+  const [newWidgetStageName, setNewWidgetStageName] = useState('');
+  const [showNewWidgetStageForm, setShowNewWidgetStageForm] = useState(false);
 
   // Estados para Modal de Pendências de WhatsApp (Leads sem Resposta)
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -1080,6 +1085,10 @@ const Sidebar = () => {
           const res = await getLeads();
           if (res.success && res.leads) {
             setWidgetLeads(res.leads);
+          }
+          const stagesRes = await getLeadStages();
+          if (stagesRes.success && stagesRes.stages) {
+            setWidgetStages(stagesRes.stages);
           }
         } catch (err) {
           console.error('Erro ao carregar leads para o widget:', err);
@@ -2876,10 +2885,12 @@ const Sidebar = () => {
                         return parsedTags.includes(col.id);
                       });
 
+                      const colTotalVal = colLeads.reduce((sum, l) => sum + (l.valorEst || 0), 0);
+
                       return (
                         <div
                           key={col.id}
-                          className="w-[270px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
+                          className="w-[280px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
                           onDragOver={e => e.preventDefault()}
                           onDrop={async e => {
                             e.preventDefault();
@@ -2895,10 +2906,13 @@ const Sidebar = () => {
                             <div className="flex items-center gap-1.5 truncate">
                               <span className={`w-2.5 h-2.5 rounded-full ${col.dot} shrink-0`} />
                               <span className="truncate uppercase">{col.label}</span>
+                              <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
+                                {colLeads.length}
+                              </span>
                             </div>
-                            <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
-                              {colLeads.length}
-                            </span>
+                            <div className="text-[10.5px] font-black text-slate-700 shrink-0">
+                              R$ {colTotalVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </div>
                           </div>
 
                           <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[150px]">
@@ -2910,6 +2924,8 @@ const Sidebar = () => {
                               colLeads.map(lead => {
                                 const isSelected = activeWidgetLead?.id === lead.id;
                                 const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                                const avatarUrl = lead.assignedTo?.avatarUrl || lead.avatarUrl;
+
                                 return (
                                   <div
                                     key={lead.id}
@@ -2922,18 +2938,21 @@ const Sidebar = () => {
                                   >
                                     <div className="flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-2 truncate">
-                                        <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                                          {initials}
-                                        </div>
+                                        {avatarUrl ? (
+                                          <img src={avatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                                        ) : (
+                                          <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                            {initials}
+                                          </div>
+                                        )}
                                         <h4 className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>
                                           {lead.nomeFantasia}
                                         </h4>
                                       </div>
-                                      {lead.unreadCount > 0 && (
-                                        <span className="bg-emerald-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
-                                          {lead.unreadCount}
-                                        </span>
-                                      )}
+
+                                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                                        R$ {(lead.valorEst || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                      </span>
                                     </div>
 
                                     {lead.telefone && (
@@ -2964,105 +2983,210 @@ const Sidebar = () => {
                   <div className="flex-1 overflow-x-auto p-3 bg-slate-100/70 border-r border-slate-200 flex gap-3 min-w-0">
                     {(() => {
                       const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
-                      const stagesMap = new Map<string, { id: string; label: string }>();
-                      whatsappLeads.forEach(l => {
-                        const stageName = l.stage?.nome || 'Sem Etapa';
-                        const stageId = l.stageId || 'unassigned';
-                        if (!stagesMap.has(stageId)) {
-                          stagesMap.set(stageId, { id: stageId, label: stageName });
-                        }
-                      });
-                      const stageCols = Array.from(stagesMap.values());
-
-                      return stageCols.map(col => {
-                        const colLeads = whatsappLeads.filter(lead => {
-                          const matchesSearch = lead.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
-                                                lead.telefone.includes(widgetSearchTerm);
-                          const status = lead.chatStatus || 'OPEN';
-                          const matchesTab = widgetChatTab === 'open' ? status === 'OPEN' : status === 'CLOSED';
-                          if (!matchesSearch || !matchesTab) return false;
-                          const leadStageId = lead.stageId || 'unassigned';
-                          return leadStageId === col.id;
+                      
+                      // Ordem estática das etapas vinda do banco de dados (widgetStages)
+                      let stageCols: { id: string; label: string; color?: string }[] = [];
+                      if (widgetStages && widgetStages.length > 0) {
+                        stageCols = widgetStages.map(s => ({
+                          id: s.id,
+                          label: s.nome,
+                          color: s.color || '#0ca678'
+                        }));
+                      } else {
+                        const stagesMap = new Map<string, { id: string; label: string; color?: string }>();
+                        whatsappLeads.forEach(l => {
+                          const stageName = l.stage?.nome || 'Sem Etapa';
+                          const stageId = l.stageId || 'unassigned';
+                          if (!stagesMap.has(stageId)) {
+                            stagesMap.set(stageId, { id: stageId, label: stageName, color: l.stage?.color || '#0ca678' });
+                          }
                         });
+                        stageCols = Array.from(stagesMap.values());
+                      }
 
-                        return (
-                          <div
-                            key={col.id}
-                            className="w-[270px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
-                            onDragOver={e => e.preventDefault()}
-                            onDrop={async e => {
-                              e.preventDefault();
-                              if (!draggedWidgetLeadId) return;
-                              setWidgetLeads(prev => prev.map(l => l.id === draggedWidgetLeadId ? { ...l, stageId: col.id, stage: { ...l.stage, nome: col.label } } : l));
-                              await updateLeadStage(draggedWidgetLeadId, col.id);
-                              setDraggedWidgetLeadId(null);
-                            }}
-                          >
-                            <div className="p-3 border-b flex items-center justify-between font-extrabold text-xs bg-emerald-500/10 text-emerald-900 border-emerald-300">
-                              <div className="flex items-center gap-1.5 truncate">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
-                                <span className="truncate uppercase">{col.label}</span>
-                              </div>
-                              <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
-                                {colLeads.length}
-                              </span>
-                            </div>
+                      // Adicionar coluna "Sem Etapa" se houver leads sem stageId
+                      const hasUnassigned = whatsappLeads.some(l => !l.stageId);
+                      if (hasUnassigned && !stageCols.some(s => s.id === 'unassigned')) {
+                        stageCols.push({ id: 'unassigned', label: 'Sem Etapa', color: '#94a3b8' });
+                      }
 
-                            <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[150px]">
-                              {colLeads.length === 0 ? (
-                                <div className="p-4 text-center text-slate-400 text-xs font-semibold border-2 border-dashed border-slate-200/70 rounded-xl">
-                                  Nenhuma conversa nesta etapa
-                                </div>
-                              ) : (
-                                colLeads.map(lead => {
-                                  const isSelected = activeWidgetLead?.id === lead.id;
-                                  const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                                  return (
-                                    <div
-                                      key={lead.id}
-                                      draggable
-                                      onDragStart={() => setDraggedWidgetLeadId(lead.id)}
-                                      onClick={() => setActiveWidgetLead(lead)}
-                                      className={`p-3 bg-white border rounded-xl shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-1.5 group relative ${
-                                        isSelected ? 'border-2 border-emerald-500 bg-emerald-50/20' : 'border-slate-200/80 hover:border-slate-300'
-                                      }`}
-                                    >
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2 truncate">
-                                          <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                                            {initials}
-                                          </div>
-                                          <h4 className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>
-                                            {lead.nomeFantasia}
-                                          </h4>
-                                        </div>
-                                        {lead.unreadCount > 0 && (
-                                          <span className="bg-emerald-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
-                                            {lead.unreadCount}
-                                          </span>
-                                        )}
-                                      </div>
+                      return (
+                        <>
+                          {stageCols.map(col => {
+                            const colLeads = whatsappLeads.filter(lead => {
+                              const matchesSearch = lead.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
+                                                    lead.telefone.includes(widgetSearchTerm);
+                              const status = lead.chatStatus || 'OPEN';
+                              const matchesTab = widgetChatTab === 'open' ? status === 'OPEN' : status === 'CLOSED';
+                              if (!matchesSearch || !matchesTab) return false;
+                              const leadStageId = lead.stageId || 'unassigned';
+                              return leadStageId === col.id;
+                            });
 
-                                      {lead.telefone && (
-                                        <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
-                                          <Phone size={10} className="text-slate-400" />
-                                          <span className="truncate">{lead.telefone}</span>
-                                        </div>
-                                      )}
+                            const colTotalVal = colLeads.reduce((sum, l) => sum + (l.valorEst || 0), 0);
 
-                                      {lead.latestMsg && (
-                                        <p className="text-[11px] text-slate-600 line-clamp-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
-                                          {lead.latestMsg.texto}
-                                        </p>
-                                      )}
+                            return (
+                              <div
+                                key={col.id}
+                                className="w-[280px] shrink-0 flex flex-col bg-slate-50/90 border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden"
+                                onDragOver={e => e.preventDefault()}
+                                onDrop={async e => {
+                                  e.preventDefault();
+                                  if (!draggedWidgetLeadId) return;
+                                  setWidgetLeads(prev => prev.map(l => l.id === draggedWidgetLeadId ? { ...l, stageId: col.id, stage: { ...l.stage, nome: col.label } } : l));
+                                  await updateLeadStage(draggedWidgetLeadId, col.id);
+                                  setDraggedWidgetLeadId(null);
+                                }}
+                              >
+                                <div className="p-3 border-b flex items-center justify-between font-extrabold text-xs bg-slate-100/90 text-slate-800 border-slate-200">
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color || '#0ca678' }} />
+                                    <span className="truncate uppercase">{col.label}</span>
+                                    <span className="bg-white/90 border border-slate-200 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shrink-0">
+                                      {colLeads.length}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-[10.5px] font-black text-slate-700 shrink-0">
+                                      R$ {colTotalVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                     </div>
-                                  );
-                                })
-                              )}
-                            </div>
+                                    {col.id !== 'unassigned' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingWidgetStageId(col.id);
+                                          setEditingWidgetStageName(col.label);
+                                        }}
+                                        className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors"
+                                        title="Editar etapa"
+                                      >
+                                        <Edit2 size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[150px]">
+                                  {colLeads.length === 0 ? (
+                                    <div className="p-4 text-center text-slate-400 text-xs font-semibold border-2 border-dashed border-slate-200/70 rounded-xl">
+                                      Nenhuma conversa nesta etapa
+                                    </div>
+                                  ) : (
+                                    colLeads.map(lead => {
+                                      const isSelected = activeWidgetLead?.id === lead.id;
+                                      const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                                      const avatarUrl = lead.assignedTo?.avatarUrl || lead.avatarUrl;
+
+                                      return (
+                                        <div
+                                          key={lead.id}
+                                          draggable
+                                          onDragStart={() => setDraggedWidgetLeadId(lead.id)}
+                                          onClick={() => setActiveWidgetLead(lead)}
+                                          className={`p-3 bg-white border rounded-xl shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-1.5 group relative ${
+                                            isSelected ? 'border-2 border-emerald-500 bg-emerald-50/20' : 'border-slate-200/80 hover:border-slate-300'
+                                          }`}
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 truncate">
+                                              {avatarUrl ? (
+                                                <img src={avatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                                              ) : (
+                                                <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                                  {initials}
+                                                </div>
+                                              )}
+                                              <h4 className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>
+                                                {lead.nomeFantasia}
+                                              </h4>
+                                            </div>
+
+                                            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                                              R$ {(lead.valorEst || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                            </span>
+                                          </div>
+
+                                          {lead.telefone && (
+                                            <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                              <Phone size={10} className="text-slate-400" />
+                                              <span className="truncate">{lead.telefone}</span>
+                                            </div>
+                                          )}
+
+                                          {lead.latestMsg && (
+                                            <p className="text-[11px] text-slate-600 line-clamp-2 bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
+                                              {lead.latestMsg.texto}
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Botão + Nova Etapa */}
+                          <div className="w-[280px] shrink-0 flex flex-col bg-slate-50/60 border-2 border-dashed border-slate-300 rounded-2xl p-4 items-center justify-center min-h-[180px]">
+                            {showNewWidgetStageForm ? (
+                              <div className="w-full space-y-2.5">
+                                <h4 className="text-xs font-black text-slate-700 uppercase">Nova Etapa do Funil</h4>
+                                <input
+                                  type="text"
+                                  placeholder="Nome da etapa..."
+                                  value={newWidgetStageName}
+                                  onChange={e => setNewWidgetStageName(e.target.value)}
+                                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-600 outline-none font-bold"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (!newWidgetStageName.trim()) return;
+                                      const res = await createLeadStage(newWidgetStageName.trim());
+                                      if (res.success) {
+                                        setNewWidgetStageName('');
+                                        setShowNewWidgetStageForm(false);
+                                        const stagesRes = await getLeadStages();
+                                        if (stagesRes.success && stagesRes.stages) setWidgetStages(stagesRes.stages);
+                                      } else {
+                                        alert('Erro ao criar etapa: ' + res.error);
+                                      }
+                                    }}
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-xl shadow-2xs cursor-pointer"
+                                  >
+                                    Criar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setShowNewWidgetStageForm(false);
+                                      setNewWidgetStageName('');
+                                    }}
+                                    className="px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold py-2 rounded-xl cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setShowNewWidgetStageForm(true)}
+                                className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-emerald-700 transition-all font-extrabold text-xs cursor-pointer"
+                              >
+                                <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center text-emerald-600">
+                                  <Plus size={20} />
+                                </div>
+                                <span>+ Nova Etapa</span>
+                              </button>
+                            )}
                           </div>
-                        );
-                      });
+                        </>
+                      );
                     })()}
                   </div>
                 )}
@@ -3527,6 +3651,70 @@ const Sidebar = () => {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Modal de Edição de Etapa */}
+                {editingWidgetStageId && (
+                  <div className="fixed inset-0 z-[300] bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-sm border border-slate-200 space-y-4">
+                      <div className="flex items-center justify-between border-b pb-2">
+                        <h4 className="text-xs font-black uppercase text-slate-800">Editar Etapa do Funil</h4>
+                        <button onClick={() => setEditingWidgetStageId(null)} className="text-slate-400 hover:text-slate-600">
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome da Etapa</label>
+                        <input
+                          type="text"
+                          value={editingWidgetStageName}
+                          onChange={e => setEditingWidgetStageName(e.target.value)}
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:border-emerald-600 outline-none font-bold"
+                          autoFocus
+                        />
+                      </div>
+
+                      <div className="flex justify-between gap-2 pt-2 border-t">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (confirm('Deseja excluir esta etapa do funil?')) {
+                              const res = await deleteLeadStage(editingWidgetStageId);
+                              if (res.success) {
+                                setEditingWidgetStageId(null);
+                                const stagesRes = await getLeadStages();
+                                if (stagesRes.success && stagesRes.stages) setWidgetStages(stagesRes.stages);
+                              } else {
+                                alert('Erro ao excluir etapa: ' + res.error);
+                              }
+                            }
+                          }}
+                          className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl border border-red-200 cursor-pointer"
+                        >
+                          Excluir
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!editingWidgetStageName.trim()) return;
+                            const res = await updateLeadStageName(editingWidgetStageId, editingWidgetStageName.trim());
+                            if (res.success) {
+                              setEditingWidgetStageId(null);
+                              const stagesRes = await getLeadStages();
+                              if (stagesRes.success && stagesRes.stages) setWidgetStages(stagesRes.stages);
+                            } else {
+                              alert('Erro ao atualizar etapa: ' + res.error);
+                            }
+                          }}
+                          className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-2xs cursor-pointer"
+                        >
+                          Salvar
+                        </button>
                       </div>
                     </div>
                   </div>
