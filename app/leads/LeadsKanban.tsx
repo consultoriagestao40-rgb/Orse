@@ -1755,9 +1755,9 @@ export default function LeadsKanban() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
-      {/* Área Superior (Header + Métricas) - Congelada na Horizontal e Fixa no Topo */}
-      <div className="w-full shrink-0 bg-white border-b border-slate-200 z-40 shadow-xs">
+    <div className="flex flex-col min-h-screen bg-slate-50 overflow-x-hidden">
+      {/* Área Superior (Header + Métricas) */}
+      <div className="w-full bg-white border-b border-slate-200 z-40 shadow-xs">
         <div className="p-4 md:py-5 md:px-6 bg-white flex flex-col lg:flex-row justify-between lg:items-center gap-4 relative">
           <div className="relative">
             <button
@@ -2012,8 +2012,8 @@ export default function LeadsKanban() {
         )}
       </div>
 
-      {/* Conteúdo Principal do Kanban - Rolagem Vertical e Horizontal com Títulos Congelados no Topo */}
-      <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
+      {/* Conteúdo Principal do Kanban - Rolagem Horizontal Isolada */}
+      <div className="w-full overflow-x-auto bg-slate-50">
         {viewMode === 'kanban-status' && (
           <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
