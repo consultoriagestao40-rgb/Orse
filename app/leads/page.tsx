@@ -27,7 +27,7 @@ export default async function LeadsPage({
   return (
     <div className="flex h-screen bg-slate-50">
       <Sidebar />
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <Suspense fallback={
           <div className="flex h-full w-full items-center justify-center bg-slate-950 text-slate-400">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B4D3E]"></div>
