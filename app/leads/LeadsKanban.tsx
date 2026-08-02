@@ -1756,8 +1756,8 @@ export default function LeadsKanban() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 overflow-x-hidden">
-      {/* Área Superior (Header) - Congelada no Topo da Tela */}
-      <div className="sticky top-0 w-full bg-white border-b border-slate-200 z-40 shadow-xs">
+      {/* Área Superior (Header + Métricas) - Rola naturalmente para cima */}
+      <div className="w-full bg-white border-b border-slate-200 shadow-xs">
         <div className="p-4 md:py-5 md:px-6 bg-white flex flex-col lg:flex-row justify-between lg:items-center gap-4 relative">
           <div className="relative">
             <button
@@ -2012,8 +2012,8 @@ export default function LeadsKanban() {
         )}
       </div>
 
-      {/* Conteúdo Principal do Kanban - Rolagem Horizontal Isolada */}
-      <div className="w-full overflow-x-auto bg-slate-50">
+      {/* Conteúdo Principal do Kanban - Títulos congelam no topo (top-0) do navegador ao rolar */}
+      <div className="w-full overflow-x-auto overflow-y-visible bg-slate-50">
         {viewMode === 'kanban-status' && (
           <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
@@ -2054,7 +2054,7 @@ export default function LeadsKanban() {
                       }
                     }}
                   >
-                    <div className="sticky top-[73px] select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx) }}>
+                    <div className="sticky top-0 select-none duration-200 bg-slate-50 pt-2 pb-1" style={{ zIndex: 30 + (stages.length - idx) }}>
                       <div 
                         className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto cursor-grab active:cursor-grabbing"
                         draggable={!editingStageId}
