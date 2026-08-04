@@ -490,11 +490,12 @@ export async function saveProposta(data: any) {
       condicoesCliente: cliente.condicoesCliente || [],
       itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
       insumos: {
-        ...data.insumos,
-        detalheMateriais: data.insumos.detalheMateriais || [],
-        detalheMaquinas: data.insumos.detalheMaquinas || [],
-        detalheDescartaveis: data.insumos.detalheDescartaveis || []
+        ...(data.insumos || {}),
+        detalheMateriais: data.insumos?.detalheMateriais || [],
+        detalheMaquinas: data.insumos?.detalheMaquinas || [],
+        detalheDescartaveis: data.insumos?.detalheDescartaveis || []
       },
+      resultado: resultado || null,
       dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
       dreEncargos: dreEncargos || null,
       encargos: encargos || null,
@@ -898,78 +899,43 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       })()
     };
 
-    // Calculate result dynamic to supply to DocumentoA4
-    const totalTributos = (() => {
-      if (Array.isArray(impostos)) return impostos.reduce((a: number, b: any) => a + (b.percent || 0), 0);
-      if (impostos?.list) return impostos.list.reduce((a: number, b: any) => a + (b.percent || 0), 0);
-      return Object.values(impostos || {}).filter((v: any) => !isNaN(Number(v))).reduce((a: number, b: any) => Number(a) + Number(b), 0);
-    })();
-    const cctDb = impostos?.sindicatoId ? await prisma.cCT.findUnique({ where: { id: impostos.sindicatoId }, include: { cargos: true } }) : null;
-    const { calculateEnterprisePrice } = await import('@/lib/pricingEngine');
-    
-    const calcInput = {
-      items: returnObj.equipe,
-      impostos: { list: Array.isArray(impostos) ? impostos : (impostos?.list || []), total: Number(totalTributos) },
-      margens: { 
-        adm: margens?.adm ?? 5, 
-        lucro: margens?.lucro ?? 10,
-        comissaoVendedor: margens?.comissaoVendedor || 0,
+    // Utiliza o resultado oficial gravado pela FPV no metadados ou recalcula dinamicamente se inexistente
+    let resultado = meta.resultado || null;
+    if (!resultado) {
+      const totalTributos = (() => {
+        if (Array.isArray(impostos)) return impostos.reduce((a: number, b: any) => a + (b.percent || 0), 0);
+        if (impostos?.list) return impostos.list.reduce((a: number, b: any) => a + (b.percent || 0), 0);
+        return Object.values(impostos || {}).filter((v: any) => !isNaN(Number(v))).reduce((a: number, b: any) => Number(a) + Number(b), 0);
+      })();
+      const cctDb = impostos?.sindicatoId ? await prisma.cCT.findUnique({ where: { id: impostos.sindicatoId }, include: { cargos: true } }) : null;
+      const { calculateEnterprisePrice } = await import('@/lib/pricingEngine');
+      
+      const calcInput = {
+        items: returnObj.equipe,
+        impostos: { list: Array.isArray(impostos) ? impostos : (impostos?.list || []), total: Number(totalTributos) },
+        margens: { 
+          adm: margens?.adm ?? 5, 
+          lucro: margens?.lucro ?? 10,
+          comissaoVendedor: margens?.comissaoVendedor || 0,
+          reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
+          manutencaoPct: margens?.manutencaoPct || 0,
+        },
         reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
         manutencaoPct: margens?.manutencaoPct || 0,
-      },
-      reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
-      manutencaoPct: margens?.manutencaoPct || 0,
-      encargos: meta.encargos,
-      cctGlobal: cctDb,
-      insumosGlobais: {
-        materiais: meta.insumos?.materiais || 0,
-        maquinas: meta.insumos?.maquinas || 0,
-        descartaveis: meta.insumos?.descartaveis || 0,
-        servicos: meta.insumos?.servicos || 0
-      }
-    };
-    
-    const resultado = calculateEnterprisePrice(calcInput);
-
-    // O valor salvo pela FPV (precoVenda) é o valor oficial da proposta.
-    // Se o recálculo dinâmico divergir (devido a diferenças de CCT, parâmetros de posto, etc.),
-    // usamos o precoVenda salvo como faturamentoBruto e redistribuímos proporcionalmente nos itens.
-    const precoVendaSalvo = Number(v.precoVenda || 0);
-    if (precoVendaSalvo > 0) {
-      resultado.faturamentoBruto = precoVendaSalvo;
-      
-      // Calcular valor de venda de insumos globais com tributos/margens aplicados (cascata)
-      const txAdm = (Number(meta.margens?.adm) || 0) / 100;
-      const txLucro = (Number(meta.margens?.lucro) || 0) / 100;
-      const txComissao = (Number(meta.margens?.comissaoVendedor) || 0) / 100;
-      const totalTributosPct = Array.isArray(meta.impostos?.list) 
-        ? meta.impostos.list.reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0)
-        : (Number(meta.impostos?.total) || 0);
-      const divisorTributos = 1 - (totalTributosPct / 100) - txComissao;
-
-      const applyCascataLocal = (custo: number) => {
-        const cD = Number(custo) || 0;
-        const comAdm = cD * (1 + txAdm);
-        const comLucro = comAdm * (1 + txLucro);
-        return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+        encargos: meta.encargos,
+        cctGlobal: cctDb,
+        insumosGlobais: {
+          materiais: meta.insumos?.materiais || 0,
+          maquinas: meta.insumos?.maquinas || 0,
+          descartaveis: meta.insumos?.descartaveis || 0,
+          servicos: meta.insumos?.servicos || 0
+        }
       };
-
-      const vMateriais = applyCascataLocal(meta.insumos?.materiais || 0);
-      const vMaquinas = applyCascataLocal(meta.insumos?.maquinas || 0);
-      const vDescartaveis = applyCascataLocal(meta.insumos?.descartaveis || 0);
-      const vServicos = applyCascataLocal(meta.insumos?.servicos || 0);
-      const totalInsumosVenda = vMateriais + vMaquinas + vDescartaveis + vServicos;
-
-      // O subtotal de mão de obra (Quadro 1) é o Faturamento Bruto menos o subtotal de insumos (Quadro 2)
-      const targetMaoDeObra = Math.max(0, precoVendaSalvo - totalInsumosVenda);
-
-      const totalItemsDinamico = resultado.items?.reduce((acc: number, i: any) => acc + (i.precoVenda || 0), 0) || 0;
-      if (totalItemsDinamico > 0 && resultado.items?.length > 0) {
-        const fator = targetMaoDeObra / totalItemsDinamico;
-        resultado.items = resultado.items.map((item: any) => ({
-          ...item,
-          precoVenda: (item.precoVenda || 0) * fator
-        }));
+      
+      resultado = calculateEnterprisePrice(calcInput);
+      const precoVendaSalvo = Number(v.precoVenda || 0);
+      if (precoVendaSalvo > 0) {
+        resultado.faturamentoBruto = precoVendaSalvo;
       }
     }
 
