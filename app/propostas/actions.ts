@@ -938,13 +938,34 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
     if (precoVendaSalvo > 0) {
       resultado.faturamentoBruto = precoVendaSalvo;
       
-      // Redistribuir o precoVenda dos items proporcionalmente
-      // O faturamentoBruto = soma dos precoVenda dos items + insumos globais
+      // Calcular valor de venda de insumos globais com tributos/margens aplicados (cascata)
+      const txAdm = (Number(meta.margens?.adm) || 0) / 100;
+      const txLucro = (Number(meta.margens?.lucro) || 0) / 100;
+      const txComissao = (Number(meta.margens?.comissaoVendedor) || 0) / 100;
+      const totalTributosPct = Array.isArray(meta.impostos?.list) 
+        ? meta.impostos.list.reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0)
+        : (Number(meta.impostos?.total) || 0);
+      const divisorTributos = 1 - (totalTributosPct / 100) - txComissao;
+
+      const applyCascataLocal = (custo: number) => {
+        const cD = Number(custo) || 0;
+        const comAdm = cD * (1 + txAdm);
+        const comLucro = comAdm * (1 + txLucro);
+        return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+      };
+
+      const vMateriais = applyCascataLocal(meta.insumos?.materiais || 0);
+      const vMaquinas = applyCascataLocal(meta.insumos?.maquinas || 0);
+      const vDescartaveis = applyCascataLocal(meta.insumos?.descartaveis || 0);
+      const vServicos = applyCascataLocal(meta.insumos?.servicos || 0);
+      const totalInsumosVenda = vMateriais + vMaquinas + vDescartaveis + vServicos;
+
+      // O subtotal de mão de obra (Quadro 1) é o Faturamento Bruto menos o subtotal de insumos (Quadro 2)
+      const targetMaoDeObra = Math.max(0, precoVendaSalvo - totalInsumosVenda);
+
       const totalItemsDinamico = resultado.items?.reduce((acc: number, i: any) => acc + (i.precoVenda || 0), 0) || 0;
       if (totalItemsDinamico > 0 && resultado.items?.length > 0) {
-        // O valor de insumos não veio pelo precoVenda dos items,
-        // então o total de itens deve ser o precoVendaSalvo (insumos globais são R$ 0 aqui)
-        const fator = precoVendaSalvo / totalItemsDinamico;
+        const fator = targetMaoDeObra / totalItemsDinamico;
         resultado.items = resultado.items.map((item: any) => ({
           ...item,
           precoVenda: (item.precoVenda || 0) * fator

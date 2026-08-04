@@ -377,7 +377,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     .filter((item: any) => !isLocado(item.descricao))
     .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
 
-  const totalEquipe = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+  const rawTotalEquipe = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
   
   const vMateriais = applyCascata(proposta.insumos?.materiais || 0);
   const vMaquinas = applyCascata(isSpot ? totalMaquinasNaoLocadas : (proposta.insumos?.maquinas || 0));
@@ -386,13 +386,17 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   
   const totalInsumos = vMateriais + vMaquinas + vDescartaveis + vServicos;
   
-  // Usa o faturamentoBruto salvo no banco (via getPropostaCompleta) como valor total definitivo,
-  // pois ele reflete o cálculo exato que foi feito na FPV e salvo pelo usuário.
-  // O recálculo dinâmico pode divergir devido a diferenças de CCT, encargos ou parâmetros de posto.
-  const totalGeralCalculado = totalEquipe + totalInsumos;
+  // Usa o faturamentoBruto salvo no banco (via getPropostaCompleta) como valor total definitivo.
+  const totalGeralCalculado = rawTotalEquipe + totalInsumos;
   const totalGeral = (resultado?.faturamentoBruto && resultado.faturamentoBruto > 0)
     ? resultado.faturamentoBruto
     : totalGeralCalculado;
+
+  // Se rawTotalEquipe foi gravado englobando o faturamento bruto total, ajustamos totalEquipe = totalGeral - totalInsumos
+  const isEquipeContendoFaturamentoTotal = totalGeral > 0 && totalInsumos > 0 && Math.abs(rawTotalEquipe - totalGeral) < 1.00;
+  const totalEquipe = isEquipeContendoFaturamentoTotal
+    ? Math.max(0, totalGeral - totalInsumos)
+    : rawTotalEquipe;
 
   const renderTabelaComercial = () => (
     <div className="mt-8 pr-2 font-sans w-full max-w-full">
@@ -413,9 +417,15 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </thead>
               <tbody>
                 {equipe.map((item: any, idx: number) => {
-                  const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
+                  let precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
                   const isSpotItem = item.tipoItem === 'SPOT';
                   const qty = isSpotItem ? (item.quantidadeDemanda || 1) : (item.quantidade || 1);
+
+                  if (isEquipeContendoFaturamentoTotal && rawTotalEquipe > 0) {
+                    const prop = (resultado?.items?.[idx]?.precoVenda || 0) / rawTotalEquipe;
+                    precoVendaTotal = prop * totalEquipe;
+                  }
+
                   const precoUnitario = isSpotItem ? (precoVendaTotal / qty) : (item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0);
                   
                   return (
