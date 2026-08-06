@@ -5627,19 +5627,38 @@ function PropostaEditor() {
                               />
                            </div>
 
-                           <div className="space-y-1.5 md:col-span-2">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">DSR s/ Adicionais (%)</label>
-                              <input 
-                                 type="number" 
-                                 step="0.01"
-                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
-                                 value={p.parametrosPosto?.dsrPercent || 0} 
-                                 onChange={(e) => {
-                                    const param = {...p.parametrosPosto, dsrPercent: (e.target.value === '' ? '' : Number(e.target.value))};
-                                    updatePosto(p.id, 'parametrosPosto', param);
-                                 }} 
-                              />
-                           </div>
+                            <div className="space-y-1.5">
+                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">DSR s/ Adicionais (%)</label>
+                               <input 
+                                  type="number" 
+                                  step="0.01"
+                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                  value={p.parametrosPosto?.dsrPercent || 0} 
+                                  onChange={(e) => {
+                                     const param = {...p.parametrosPosto, dsrPercent: (e.target.value === "" ? "" : Number(e.target.value))};
+                                     updatePosto(p.id, "parametrosPosto", param);
+                                  }} 
+                               />
+                            </div>
+
+                            <div className="space-y-1.5">
+                               <label className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block flex items-center gap-1">
+                                  <span>🎁</span> Adicional Assiduidade (R$/mês)
+                               </label>
+                               <input 
+                                  type="number" 
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="R$ 0,00"
+                                  className="w-full bg-emerald-50/40 border border-emerald-300/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none hover:border-emerald-400 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                  value={p.parametrosPosto?.adicionalAssiduidade !== undefined && p.parametrosPosto?.adicionalAssiduidade !== null ? p.parametrosPosto.adicionalAssiduidade : ""} 
+                                  onChange={(e) => {
+                                     const val = e.target.value === "" ? "" : Number(e.target.value);
+                                     const param = {...p.parametrosPosto, adicionalAssiduidade: val};
+                                     updatePosto(p.id, "parametrosPosto", param);
+                                  }} 
+                               />
+                            </div>
                         </div>
 
                         {/* Seção de Jornada */}
