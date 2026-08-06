@@ -2300,28 +2300,77 @@ function PropostaEditor() {
                                };
                            }, { ativos: 0, materiais:0, maquinas:0, descartaveis:0, servicos:0 }) || { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 };
 
-                                                       const rawRows = [
-                               ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos }] : []),
-                               { label: 'Materiais e produtos de limpeza', val: proposta.insumos.materiais },
-                               { 
-                                 label: 'Máquinas e equipamentos', 
-                                 val: isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas 
-                               },
-                               { label: 'Descartáveis', val: proposta.insumos.descartaveis },
-                               { 
-                                 label: isSpot ? 'Equipamentos Locados' : 'Serviços (Descriminar)', 
-                                 val: isSpot ? totalMaquinasLocadas : proposta.insumos.servicos 
-                               },
-                            ];
-                            const rows = rawRows.map((r, idx) => ({
-                               label: `${idx + 1}) ${r.label}`,
-                               val: r.val
-                            }));
+                           const rawRows = [
+                              ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos, isEditable: false }] : []),
+                              { label: 'Materiais e produtos de limpeza', val: proposta.insumos.materiais, isEditable: false },
+                              { 
+                                label: 'Máquinas e equipamentos', 
+                                val: isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas,
+                                isEditable: false
+                              },
+                              { label: 'Descartáveis', val: proposta.insumos.descartaveis, isEditable: false },
+                              { 
+                                label: isSpot ? 'Equipamentos Locados' : 'Serviços (Descriminar)', 
+                                val: isSpot ? totalMaquinasLocadas : (proposta.insumos.servicos || 0),
+                                isEditable: !isSpot
+                              },
+                           ];
+                           const rows = rawRows.map((r, idx) => ({
+                              ...r,
+                              indexNumber: idx + 1,
+                              label: `${idx + 1}) ${r.label}`,
+                           }));
 
                            return rows.map((row, i) => (
-                              <tr key={i} className="border-b border-slate-200 border-dotted">
-                                 <td colSpan={isSpot ? 4 : 3} className="py-1 px-6 font-bold">{row.label}</td>
-                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(row.val)}</td>
+                              <tr key={i} className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 transition-colors">
+                                 <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 font-bold text-slate-800">
+                                    {row.isEditable ? (
+                                       <div className="flex items-center gap-2">
+                                          <span className="text-slate-600 font-extrabold">{row.indexNumber})</span>
+                                          <input
+                                             type="text"
+                                             value={proposta.insumos.servicosDescricao !== undefined && proposta.insumos.servicosDescricao !== null ? proposta.insumos.servicosDescricao : 'Serviços (Descriminar)'}
+                                             onChange={(e) => setProposta((prev: any) => ({
+                                                ...prev,
+                                                insumos: {
+                                                   ...prev.insumos,
+                                                   servicosDescricao: e.target.value
+                                                }
+                                             }))}
+                                             placeholder="Descrição do serviço (ex: Serviços Terceirizados)"
+                                             className="px-2.5 py-1 border border-slate-300 rounded-md font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs w-full max-w-md shadow-xs transition-all"
+                                          />
+                                       </div>
+                                    ) : (
+                                       row.label
+                                    )}
+                                 </td>
+                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                                    {row.isEditable ? (
+                                       <div className="flex items-center justify-end gap-1.5">
+                                          <span className="text-xs text-slate-500 font-extrabold">R$</span>
+                                          <input
+                                             type="number"
+                                             step="0.01"
+                                             min="0"
+                                             value={proposta.insumos.servicos || 0}
+                                             onChange={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                setProposta((prev: any) => ({
+                                                   ...prev,
+                                                   insumos: {
+                                                      ...prev.insumos,
+                                                      servicos: val
+                                                   }
+                                                }));
+                                             }}
+                                             className="w-32 px-2.5 py-1 border border-slate-300 rounded-md text-right font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                          />
+                                       </div>
+                                    ) : (
+                                       formatCurrency(row.val)
+                                    )}
+                                 </td>
                               </tr>
                            ));
                         })()}

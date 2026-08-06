@@ -1754,7 +1754,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                               { label: 'Materiais e produtos de limpeza', val: fullProposta.insumos?.materiais || 0 },
                               { label: 'Máquinas e equipamentos', val: fullProposta.insumos?.maquinas || 0 },
                               { label: 'Descartáveis', val: fullProposta.insumos?.descartaveis || 0 },
-                              { label: 'Serviços (Descriminar)', val: fullProposta.insumos?.servicos || 0 },
+                              { label: fullProposta.insumos?.servicosDescricao || 'Serviços (Descriminar)', val: fullProposta.insumos?.servicos || 0 },
                             ];
 
                             const rows = rawRows.map((r, idx) => ({
