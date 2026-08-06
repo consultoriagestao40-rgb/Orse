@@ -202,8 +202,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const manutencaoValor = totalEquipe > 0 ? (totalManutencaoGlobal / totalEquipe) : 0;
 
   const outrosBeneficios = Number(cctEfetiva.outrosBeneficios || 0) || 0;
-  
-  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios) - (descontoVA + descontoVT);
+  const adicionalAssiduidade = Number(param.adicionalAssiduidade || colab.adicionalAssiduidade || 0) || 0;
+
+  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios + adicionalAssiduidade) - (descontoVA + descontoVT);
 
   // 5. BLOCO B - INSUMOS (Unificado para manter extrato limpo)
   // Calcula o total de ativos priorizando o valor manual do colaborador, depois a composição detalhada do cargo, e por fim o valor fixo.
@@ -250,6 +251,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       custosSindicato: custosSindicato,
       vaFerias: vaSobreFerias,
       cestaBasica: cestaBasica,
+      adicionalAssiduidade: adicionalAssiduidade,
       descontoVA: -descontoVA,
       descontoVT: -descontoVT,
       exames: examesMedicos,

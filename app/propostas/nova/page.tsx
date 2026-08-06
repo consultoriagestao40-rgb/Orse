@@ -2403,6 +2403,7 @@ function PropostaEditor() {
                                   custosSindicato: acc.custosSindicato + (d?.custosSindicato || 0) * i.quantidade,
                                   vaFerias: acc.vaFerias + (d?.vaFerias || 0) * i.quantidade,
                                   cestaBasica: acc.cestaBasica + (d?.cestaBasica || 0) * i.quantidade,
+                                  adicionalAssiduidade: acc.adicionalAssiduidade + (d?.adicionalAssiduidade || 0) * i.quantidade,
                                   descontoVA: acc.descontoVA + (d?.descontoVA || 0) * i.quantidade,
                                   descontoVT: acc.descontoVT + (d?.descontoVT || 0) * i.quantidade,
                                   exames: acc.exames + (d?.exames || 0) * i.quantidade,
@@ -2412,7 +2413,7 @@ function PropostaEditor() {
                                   manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
                                   outros: acc.outros + (d?.outros || 0) * i.quantidade,
                                };
-                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
+                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, adicionalAssiduidade:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, adicionalAssiduidade:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
 
                            const rows: any[] = [
                                { label: '1) Vale Alimentação', val: b.va },
@@ -2420,6 +2421,7 @@ function PropostaEditor() {
                                { label: '3) Custos com Sindicatos', val: b.custosSindicato },
                                { label: '4) Vale Alimentação Sobre Férias', val: b.vaFerias },
                                { label: '5) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
+                               ...(b.adicionalAssiduidade > 0 ? [{ label: '5.1) Adicional Assiduidade (Posto)', val: b.adicionalAssiduidade }] : []),
                                { label: '6) Desconto de VA(-)', val: b.descontoVA, red: true },
                                { label: '7) Desconto de VT(-)', val: b.descontoVT, red: true },
                                { label: '8) Exames Médicos', val: b.exames },

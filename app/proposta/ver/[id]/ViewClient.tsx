@@ -1804,7 +1804,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                                 manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
                                 outros: acc.outros + (d?.outros || 0) * i.quantidade,
                               };
-                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
+                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, adicionalAssiduidade:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, adicionalAssiduidade:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
 
                             const rows = [
                               { label: '1) Vale Alimentação', val: bC.va },
@@ -1812,6 +1812,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                               { label: '3) Custos com Sindicatos', val: bC.custosSindicato },
                               { label: '4) Vale Alimentação Sobre Férias', val: bC.vaFerias },
                               { label: '5) Cesta Básica Assiduidade(+)', val: bC.cestaBasica },
+                              ...(bC.adicionalAssiduidade > 0 ? [{ label: '5.1) Adicional Assiduidade (Posto)', val: bC.adicionalAssiduidade }] : []),
                               { label: '6) Desconto de VA(-)', val: bC.descontoVA, red: true },
                               { label: '7) Desconto de VT(-)', val: bC.descontoVT, red: true },
                               { label: '8) Exames Médicos', val: bC.exames },
