@@ -304,7 +304,7 @@ export default function MobileCRM() {
                           user.cargo?.toLowerCase().includes('entrega') || 
                           user.cargo?.toLowerCase().includes('motoboy') || 
                           user.cargo?.toLowerCase().includes('motorista');
-          const isGest = user.role === 'ADMIN' || user.role === 'MANAGER';
+          const isGest = user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'LOGISTICA';
           
           const tabParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : '';
           const isChatTab = tabParam === 'chat' || activeTab === 'chat';

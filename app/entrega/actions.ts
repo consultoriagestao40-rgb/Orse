@@ -530,20 +530,24 @@ export async function deleteEntrega(id: string) {
   }
 }
 
-export async function getEntregadorEntregas() {
+export async function getEntregadorEntregas(targetEmail?: string) {
   try {
     const user = await checkAuth();
-    const isManagerial = user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'LOGISTICA';
+    const isManagerial = user.role === 'ADMIN' || user.role === 'MANAGER';
     
+    const emailToFilter = targetEmail || user.email;
+    const nameToFilter = user.nome;
+
     const whereClause: any = {
       tenantId: user.tenantId,
       status: { in: ['PROGRAMADO', 'EM_DESLOCAMENTO', 'ENTREGA'] }
     };
 
-    if (!isManagerial) {
+    if (!isManagerial || targetEmail) {
       whereClause.OR = [
-        { entregadorEmail: user.email },
-        { entregadorResponsavel: user.nome }
+        { entregadorEmail: emailToFilter },
+        { entregadorResponsavel: nameToFilter },
+        { entregadorResponsavel: { equals: nameToFilter, mode: 'insensitive' } }
       ];
     }
 

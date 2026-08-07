@@ -292,6 +292,17 @@ export default function EntregadorPage() {
     const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     return list.filter((e: any) => {
+      if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'MANAGER') {
+        const userEmail = (currentUser.email || '').toLowerCase();
+        const userName = (currentUser.nome || '').toLowerCase();
+        const delivEmail = (e.entregadorEmail || '').toLowerCase();
+        const delivName = (e.entregadorResponsavel || '').toLowerCase();
+        
+        const isMine = (delivEmail && delivEmail === userEmail) || 
+                       (delivName && (delivName === userName || delivName.includes(userName) || userName.includes(delivName)));
+        if (!isMine) return false;
+      }
+
       if (!e.dataProgramada) return true;
       const progDate = new Date(e.dataProgramada);
       const progZero = new Date(progDate.getFullYear(), progDate.getMonth(), progDate.getDate());
