@@ -287,20 +287,24 @@ export default function EntregadorPage() {
     });
   };
 
-  const filterEntregasForDriver = (list: any[]) => {
+  const filterEntregasForDriver = (list: any[], userObj?: any) => {
     const today = new Date();
     const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
+    const activeUser = userObj || currentUser;
+
     return list.filter((e: any) => {
-      if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'MANAGER') {
-        const userEmail = (currentUser.email || '').toLowerCase();
-        const userName = (currentUser.nome || '').toLowerCase();
-        const delivEmail = (e.entregadorEmail || '').toLowerCase();
-        const delivName = (e.entregadorResponsavel || '').toLowerCase();
+      if (activeUser) {
+        const userEmail = (activeUser.email || '').toLowerCase().trim();
+        const userName = (activeUser.nome || '').toLowerCase().trim();
+        const delivEmail = (e.entregadorEmail || '').toLowerCase().trim();
+        const delivName = (e.entregadorResponsavel || '').toLowerCase().trim();
         
-        const isMine = (delivEmail && delivEmail === userEmail) || 
-                       (delivName && (delivName === userName || delivName.includes(userName) || userName.includes(delivName)));
-        if (!isMine) return false;
+        if (delivEmail || delivName) {
+          const isMine = (delivEmail && delivEmail === userEmail) || 
+                         (delivName && (delivName === userName || delivName.includes(userName) || userName.includes(delivName)));
+          if (!isMine) return false;
+        }
       }
 
       if (!e.dataProgramada) return true;
@@ -313,16 +317,7 @@ export default function EntregadorPage() {
   const loadEntregadorData = async () => {
     setLoading(true);
     try {
-      const [entregasRes, loggedUser] = await Promise.all([
-        getEntregadorEntregas(),
-        getLoggedUser()
-      ]);
-
-      if (entregasRes.success && entregasRes.entregas) {
-        const filtered = filterEntregasForDriver(entregasRes.entregas);
-        setEntregas(filtered);
-        setKnownEntregaIds(filtered.map((e: any) => e.id));
-      }
+      const loggedUser = await getLoggedUser();
       if (loggedUser) {
         setCurrentUser(loggedUser);
         loadWelcomeStats(loggedUser);
@@ -338,6 +333,14 @@ export default function EntregadorPage() {
             return;
           }
         }
+      }
+
+      const entregasRes = await getEntregadorEntregas();
+
+      if (entregasRes.success && entregasRes.entregas) {
+        const filtered = filterEntregasForDriver(entregasRes.entregas, loggedUser);
+        setEntregas(filtered);
+        setKnownEntregaIds(filtered.map((e: any) => e.id));
       }
     } catch (err) {
       console.error(err);
