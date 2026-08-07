@@ -1214,12 +1214,32 @@ export async function syncAllWhatsAppLeadsProfile() {
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: user.tenantId },
-      select: { whatsappInstanceId: true, whatsappToken: true }
+      select: { whatsappInstanceId: true, whatsappToken: true, whatsappClientToken: true }
     });
 
     if (!tenant || !tenant.whatsappInstanceId || !tenant.whatsappToken) {
       return { success: false, error: 'Z-API não configurada nesta empresa.' };
     }
+
+    const clientToken = tenant.whatsappClientToken || process.env.ZAPI_CLIENT_TOKEN || '';
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (clientToken) headers['Client-Token'] = clientToken;
+
+    // Buscar lista de chats da Z-API para mapear nomes reais
+    const chatMap = new Map<string, string>();
+    try {
+      const chatsRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/chats`, { headers });
+      if (chatsRes.ok) {
+        const chats = await chatsRes.json();
+        if (Array.isArray(chats)) {
+          chats.forEach(c => {
+            if (c.phone && !c.isGroup && c.name) {
+              chatMap.set(c.phone.replace(/\D/g, ''), c.name);
+            }
+          });
+        }
+      }
+    } catch (err) {}
 
     const leads = await prisma.lead.findMany({
       where: {
@@ -1242,32 +1262,35 @@ export async function syncAllWhatsAppLeadsProfile() {
       let photoUrl: string | null = null;
       let name: string | null = null;
 
+      // Procura nome no chatMap da Z-API
+      for (const [phone, chatName] of chatMap.entries()) {
+        if (phone.endsWith(cleanPhone.slice(-8)) || cleanPhone.endsWith(phone.slice(-8))) {
+          name = chatName;
+          break;
+        }
+      }
+
       // Buscar foto
       try {
-        const photoRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/profile-picture?phone=${cleanPhone}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
+        const photoRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/profile-picture?phone=${cleanPhone}`, { headers });
         if (photoRes.ok) {
           const photoData = await photoRes.json();
-          photoUrl = photoData.link || photoData.photo || photoData.url || photoData.profilePictureUrl || null;
-        }
-      } catch (err) {}
-
-      // Buscar contato
-      try {
-        const contactRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/contacts/${cleanPhone}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (contactRes.ok) {
-          const contactData = await contactRes.json();
-          name = contactData.name || contactData.pushName || contactData.shortName || null;
-          if (!photoUrl && (contactData.photo || contactData.profilePictureUrl)) {
-            photoUrl = contactData.photo || contactData.profilePictureUrl;
+          if (photoData && photoData.link && photoData.link !== 'null') {
+            photoUrl = photoData.link;
           }
         }
       } catch (err) {}
+
+      // Se ainda não achou nome, tenta buscar detalhes do contato
+      if (!name) {
+        try {
+          const contactRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/contacts/${cleanPhone}`, { headers });
+          if (contactRes.ok) {
+            const contactData = await contactRes.json();
+            name = contactData.name || contactData.pushName || contactData.shortName || null;
+          }
+        } catch (err) {}
+      }
 
       const updateData: any = {};
       if (lead.nomeFantasia.startsWith('WhatsApp:') && name && name.trim()) {

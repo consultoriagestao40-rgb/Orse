@@ -7,46 +7,67 @@ async function fetchZApiContactInfo(phoneNum: string, tId: string) {
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: tId },
-      select: { whatsappInstanceId: true, whatsappToken: true }
+      select: { whatsappInstanceId: true, whatsappToken: true, whatsappClientToken: true }
     });
     if (!tenant || !tenant.whatsappInstanceId || !tenant.whatsappToken) return null;
 
     const cleanPhone = phoneNum.replace(/\D/g, '');
     const instanceId = tenant.whatsappInstanceId;
     const token = tenant.whatsappToken;
+    const clientToken = tenant.whatsappClientToken || process.env.ZAPI_CLIENT_TOKEN || '';
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (clientToken) headers['Client-Token'] = clientToken;
 
     let photoUrl: string | null = null;
     let name: string | null = null;
 
-    // 1. Buscar foto de perfil via Z-API
+    // 1. Tentar buscar nome no /chats da Z-API
     try {
-      const photoRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/profile-picture?phone=${cleanPhone}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const chatsRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/chats`, { headers });
+      if (chatsRes.ok) {
+        const chats = await chatsRes.json();
+        if (Array.isArray(chats)) {
+          for (const c of chats) {
+            if (c.phone && !c.isGroup) {
+              const cPhone = c.phone.replace(/\D/g, '');
+              if (cPhone.endsWith(cleanPhone.slice(-8)) || cleanPhone.endsWith(cPhone.slice(-8))) {
+                name = c.name || null;
+                break;
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {}
+
+    // 2. Buscar foto de perfil via Z-API
+    try {
+      const photoRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/profile-picture?phone=${cleanPhone}`, { headers });
       if (photoRes.ok) {
         const photoData = await photoRes.json();
-        photoUrl = photoData.link || photoData.photo || photoData.url || photoData.profilePictureUrl || null;
+        if (photoData && photoData.link && photoData.link !== 'null') {
+          photoUrl = photoData.link;
+        }
       }
     } catch (err) {
       console.warn('Erro ao buscar foto Z-API:', err);
     }
 
-    // 2. Buscar informações do contato via Z-API
-    try {
-      const contactRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/contacts/${cleanPhone}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (contactRes.ok) {
-        const contactData = await contactRes.json();
-        name = contactData.name || contactData.pushName || contactData.shortName || null;
-        if (!photoUrl && (contactData.photo || contactData.profilePictureUrl)) {
-          photoUrl = contactData.photo || contactData.profilePictureUrl;
+    // 3. Se ainda não tem nome, tentar buscar detalhes do contato
+    if (!name) {
+      try {
+        const contactRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/contacts/${cleanPhone}`, { headers });
+        if (contactRes.ok) {
+          const contactData = await contactRes.json();
+          name = contactData.name || contactData.pushName || contactData.shortName || null;
+          if (!photoUrl && (contactData.photo || contactData.profilePictureUrl)) {
+            photoUrl = contactData.photo || contactData.profilePictureUrl;
+          }
         }
+      } catch (err) {
+        console.warn('Erro ao buscar contato Z-API:', err);
       }
-    } catch (err) {
-      console.warn('Erro ao buscar contato Z-API:', err);
     }
 
     return { photoUrl, name };
