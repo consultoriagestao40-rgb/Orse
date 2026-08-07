@@ -2,6 +2,60 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ensureDefaultPipeline } from '@/app/leads/actions';
  
+// Helper para buscar foto de perfil e nome do contato via Z-API
+async function fetchZApiContactInfo(phoneNum: string, tId: string) {
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tId },
+      select: { whatsappInstanceId: true, whatsappToken: true }
+    });
+    if (!tenant || !tenant.whatsappInstanceId || !tenant.whatsappToken) return null;
+
+    const cleanPhone = phoneNum.replace(/\D/g, '');
+    const instanceId = tenant.whatsappInstanceId;
+    const token = tenant.whatsappToken;
+
+    let photoUrl: string | null = null;
+    let name: string | null = null;
+
+    // 1. Buscar foto de perfil via Z-API
+    try {
+      const photoRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/profile-picture?phone=${cleanPhone}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (photoRes.ok) {
+        const photoData = await photoRes.json();
+        photoUrl = photoData.link || photoData.photo || photoData.url || photoData.profilePictureUrl || null;
+      }
+    } catch (err) {
+      console.warn('Erro ao buscar foto Z-API:', err);
+    }
+
+    // 2. Buscar informações do contato via Z-API
+    try {
+      const contactRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/contacts/${cleanPhone}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (contactRes.ok) {
+        const contactData = await contactRes.json();
+        name = contactData.name || contactData.pushName || contactData.shortName || null;
+        if (!photoUrl && (contactData.photo || contactData.profilePictureUrl)) {
+          photoUrl = contactData.photo || contactData.profilePictureUrl;
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao buscar contato Z-API:', err);
+    }
+
+    return { photoUrl, name };
+  } catch (err) {
+    console.error('Erro na função fetchZApiContactInfo:', err);
+    return null;
+  }
+}
+ 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -114,6 +168,8 @@ export async function POST(req: Request) {
     if (body.isGroup === false && body.phone && (body.text || body.image || body.video || body.audio || body.document)) {
       const phone = body.phone.replace(/\D/g, ''); // Telefone do cliente
       const messageId = body.messageId;
+      const incomingName = body.senderName || body.pushName || body.contactName || body.notifyName || body.name;
+      const incomingPhoto = body.photo || body.profilePicUrl || body.photoUrl || body.picture || body.contactPhoto;
       
       let text = '';
       if (body.text) {
@@ -132,7 +188,7 @@ export async function POST(req: Request) {
       } else {
         text = '[Mensagem de mídia recebida]';
       }
- 
+
       // Busca flexível considerando DDI/DDD e formatação (hífen, parênteses, espaços)
       const digitsOnly = phone.replace(/\D/g, '');
       const last8 = digitsOnly.slice(-8);
@@ -154,7 +210,7 @@ export async function POST(req: Request) {
       if (leads.length === 0) {
         const allTenantLeads = await prisma.lead.findMany({
           where: { tenantId: tenantId },
-          select: { id: true, nomeFantasia: true, telefone: true, stageId: true, pipelineId: true }
+          select: { id: true, nomeFantasia: true, telefone: true, stageId: true, pipelineId: true, fotoUrl: true }
         });
         leads = allTenantLeads.filter(l => {
           if (!l.telefone) return false;
@@ -196,6 +252,19 @@ export async function POST(req: Request) {
           formattedPhone = `+${phone}`;
         }
  
+        // Busca perfil do contato na Z-API para pegar nome real e foto de perfil
+        let pushName = incomingName;
+        let photoUrl = incomingPhoto;
+        if ((!pushName || !photoUrl) && tenantId) {
+          const zapiInfo = await fetchZApiContactInfo(phone, tenantId);
+          if (zapiInfo) {
+            if (!pushName && zapiInfo.name) pushName = zapiInfo.name;
+            if (!photoUrl && zapiInfo.photoUrl) photoUrl = zapiInfo.photoUrl;
+          }
+        }
+
+        const finalName = pushName && pushName.trim() ? pushName.trim() : `WhatsApp: ${formattedPhone}`;
+
         // Garantir que a empresa possui pelo menos um pipeline e obter o pipeline
         const pipeline = await ensureDefaultPipeline(tenantId);
 
@@ -219,8 +288,9 @@ export async function POST(req: Request) {
         // Criar o Lead automaticamente no funil vinculado ao tenantId correto!
         const newLead = await prisma.lead.create({
           data: {
-            nomeFantasia: `WhatsApp: ${formattedPhone}`,
+            nomeFantasia: finalName,
             telefone: formattedPhone,
+            fotoUrl: photoUrl || null,
             stageId: firstStage.id,
             pipelineId: pipeline.id,
             tenantId: tenantId
@@ -228,12 +298,46 @@ export async function POST(req: Request) {
         });
  
         leads = [newLead];
-        console.log(`Novo Lead criado automaticamente via WhatsApp para a empresa ${tenantId}: ${newLead.nomeFantasia}`);
+        console.log(`Novo Lead criado automaticamente via WhatsApp para a empresa ${tenantId}: ${newLead.nomeFantasia} (Foto: ${!!photoUrl})`);
       }
  
       if (leads.length > 0) {
         const lead = leads[0];
  
+        // Atualiza perfil (nome real e foto) caso ainda seja padrao "WhatsApp: +55..." ou sem foto
+        let pushName = incomingName;
+        let photoUrl = incomingPhoto;
+        const needsNameUpdate = !lead.nomeFantasia || lead.nomeFantasia.startsWith('WhatsApp:');
+        const needsPhotoUpdate = !(lead as any).fotoUrl;
+
+        if ((needsNameUpdate || needsPhotoUpdate) && tenantId) {
+          if ((!pushName && needsNameUpdate) || (!photoUrl && needsPhotoUpdate)) {
+            const zapiInfo = await fetchZApiContactInfo(phone, tenantId);
+            if (zapiInfo) {
+              if (!pushName && zapiInfo.name) pushName = zapiInfo.name;
+              if (!photoUrl && zapiInfo.photoUrl) photoUrl = zapiInfo.photoUrl;
+            }
+          }
+
+          const updateData: any = {};
+          if (needsNameUpdate && pushName && pushName.trim()) {
+            updateData.nomeFantasia = pushName.trim();
+          }
+          if (needsPhotoUpdate && photoUrl) {
+            updateData.fotoUrl = photoUrl;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await prisma.lead.update({
+              where: { id: lead.id },
+              data: updateData
+            });
+            if (updateData.nomeFantasia) lead.nomeFantasia = updateData.nomeFantasia;
+            if (updateData.fotoUrl) (lead as any).fotoUrl = updateData.fotoUrl;
+            console.log(`Lead [${lead.id}] atualizado via WhatsApp:`, updateData);
+          }
+        }
+
         // Salvar mensagem recebida no banco vinculada ao lead correto
         await prisma.whatsAppMessage.create({
           data: {

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline, syncAllWhatsAppLeadsProfile } from './actions';
 import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, getLeadParticipants, updateLeadTags } from './whatsapp-actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check, Tag } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check, Tag, RefreshCw } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -657,6 +657,17 @@ export default function LeadsKanban() {
     segmento: ''
   });
   const [chatSearchTerm, setChatSearchTerm] = useState('');
+  const [syncingProfiles, setSyncingProfiles] = useState(false);
+
+  useEffect(() => {
+    if (showChatCenter) {
+      syncAllWhatsAppLeadsProfile().then(res => {
+        if (res && res.success && res.updatedCount && res.updatedCount > 0) {
+          loadLeadsData();
+        }
+      }).catch(() => {});
+    }
+  }, [showChatCenter]);
   
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [convertForm, setConvertForm] = useState({
@@ -3831,16 +3842,38 @@ export default function LeadsKanban() {
                   <p className="text-[10px] md:text-xs text-slate-400 font-medium">Acompanhe e responda todas as conversas do funil em tempo real</p>
                 </div>
               </div>
-              <button 
-                onClick={() => {
-                  setShowChatCenter(false);
-                  setSelectedChatLeadId(null);
-                  setIsEditingInline(false);
-                }} 
-                className="text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setSyncingProfiles(true);
+                    const res = await syncAllWhatsAppLeadsProfile();
+                    setSyncingProfiles(false);
+                    if (res && res.success) {
+                      alert(`Sincronização concluída! ${res.updatedCount || 0} contatos atualizados.`);
+                      loadLeadsData();
+                    } else if (res && res.error) {
+                      alert(`Aviso: ${res.error}`);
+                    }
+                  }}
+                  disabled={syncingProfiles}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                  title="Buscar foto de perfil e nome do WhatsApp para todos os contatos"
+                >
+                  <RefreshCw size={14} className={syncingProfiles ? 'animate-spin' : ''} />
+                  <span>{syncingProfiles ? 'Sincronizando...' : 'Sincronizar Fotos/Nomes'}</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowChatCenter(false);
+                    setSelectedChatLeadId(null);
+                    setIsEditingInline(false);
+                  }} 
+                  className="text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -3918,9 +3951,13 @@ export default function LeadsKanban() {
                           }`}
                         >
                           {/* Avatar and Initials for Chat List Sidebar Item */}
-                          <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                            {getInitials(lead.nomeFantasia)}
-                          </div>
+                          {lead.fotoUrl ? (
+                            <img src={lead.fotoUrl} alt={lead.nomeFantasia} className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200" />
+                          ) : (
+                            <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                              {getInitials(lead.nomeFantasia)}
+                            </div>
+                          )}
 
                           {/* Info */}
                           <div className="flex-1 min-w-0 space-y-1">
@@ -3968,7 +4005,7 @@ export default function LeadsKanban() {
                               <p className="text-xs text-slate-500 truncate mt-1.5 bg-[#f1f3f5] p-2 rounded-xl border border-slate-200/60 italic font-medium">
                                 {lead.latestMsg.direction === 'OUTBOUND' ? (
                                   <span className="font-bold text-slate-600 not-italic">Você: </span>
-                                ) : ''}
+                                ) : null}
                                 {lead.latestMsg.texto}
                               </p>
                             )}
@@ -4000,9 +4037,13 @@ export default function LeadsKanban() {
                           {/* Selected Lead mini header */}
                           <div className="p-3 md:p-4 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap justify-between items-center shrink-0 gap-3">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                                {getInitials(activeLead.nomeFantasia)}
-                              </div>
+                              {activeLead.fotoUrl ? (
+                                <img src={activeLead.fotoUrl} alt={activeLead.nomeFantasia} className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-200" />
+                              ) : (
+                                <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                  {getInitials(activeLead.nomeFantasia)}
+                                </div>
+                              )}
                               <div className="min-w-0">
                                 <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate leading-none mb-1">
                                   {activeLead.nomeFantasia || 'Sem Nome'}

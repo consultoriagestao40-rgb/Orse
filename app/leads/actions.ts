@@ -1206,3 +1206,89 @@ export async function getPendingUnansweredLeads() {
     return { success: false, error: error.message, pendingLeads: [] };
   }
 }
+
+export async function syncAllWhatsAppLeadsProfile() {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) return { success: false, error: 'Não autorizado.' };
+
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: { whatsappInstanceId: true, whatsappToken: true }
+    });
+
+    if (!tenant || !tenant.whatsappInstanceId || !tenant.whatsappToken) {
+      return { success: false, error: 'Z-API não configurada nesta empresa.' };
+    }
+
+    const leads = await prisma.lead.findMany({
+      where: {
+        tenantId: user.tenantId,
+        telefone: { not: null },
+        OR: [
+          { nomeFantasia: { startsWith: 'WhatsApp:' } },
+          { fotoUrl: null }
+        ]
+      }
+    });
+
+    let updatedCount = 0;
+
+    for (const lead of leads) {
+      if (!lead.telefone) continue;
+      const cleanPhone = lead.telefone.replace(/\D/g, '');
+      if (!cleanPhone) continue;
+
+      let photoUrl: string | null = null;
+      let name: string | null = null;
+
+      // Buscar foto
+      try {
+        const photoRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/profile-picture?phone=${cleanPhone}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          photoUrl = photoData.link || photoData.photo || photoData.url || photoData.profilePictureUrl || null;
+        }
+      } catch (err) {}
+
+      // Buscar contato
+      try {
+        const contactRes = await fetch(`https://api.z-api.io/instances/${tenant.whatsappInstanceId}/token/${tenant.whatsappToken}/contacts/${cleanPhone}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (contactRes.ok) {
+          const contactData = await contactRes.json();
+          name = contactData.name || contactData.pushName || contactData.shortName || null;
+          if (!photoUrl && (contactData.photo || contactData.profilePictureUrl)) {
+            photoUrl = contactData.photo || contactData.profilePictureUrl;
+          }
+        }
+      } catch (err) {}
+
+      const updateData: any = {};
+      if (lead.nomeFantasia.startsWith('WhatsApp:') && name && name.trim()) {
+        updateData.nomeFantasia = name.trim();
+      }
+      if (!lead.fotoUrl && photoUrl) {
+        updateData.fotoUrl = photoUrl;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: updateData
+        });
+        updatedCount++;
+      }
+    }
+
+    return { success: true, updatedCount };
+  } catch (err: any) {
+    console.error('Erro ao sincronizar perfis do WhatsApp:', err);
+    return { success: false, error: err.message };
+  }
+}

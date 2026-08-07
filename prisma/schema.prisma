@@ -518,6 +518,7 @@ model Lead {
   chatClosedAt   DateTime?
   chatClosedById String?
   tags           String?
+  fotoUrl        String?
 
   stage        LeadStage     @relation(fields: [stageId], references: [id])
   pipeline     Pipeline?     @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
