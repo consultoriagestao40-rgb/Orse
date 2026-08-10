@@ -1506,22 +1506,31 @@ const Sidebar = () => {
         });
 
     if (typeof window !== 'undefined' && user?.email) {
-      const savedOrder = localStorage.getItem(`sb_sidebar_menu_order_${user.email}`);
+      const savedOrderKey = `sb_sidebar_menu_order_${user.email}`;
+      const savedOrder = localStorage.getItem(savedOrderKey);
       if (savedOrder) {
         try {
           const orderArray = JSON.parse(savedOrder) as string[];
-          const validLabels = baseItems.map(item => item.label);
+          const validLabels = baseItems.map(item => item?.label).filter(Boolean);
           const cleanOrder = orderArray.filter(label => validLabels.includes(label));
-          const missingItems = baseItems.filter(item => !cleanOrder.includes(item.label));
           
-          const sorted = [
-            ...cleanOrder.map(label => baseItems.find(item => item?.label === label)).filter(item => item && item.href && item.label),
-            ...missingItems
-          ].filter(item => item && item.href && item.label) as any[];
-          setOrderedItems(sorted);
-          return;
+          if (cleanOrder.length !== orderArray.length || cleanOrder.length !== baseItems.length) {
+            localStorage.removeItem(savedOrderKey);
+          } else {
+            const missingItems = baseItems.filter(item => !cleanOrder.includes(item.label));
+            const sorted = [
+              ...cleanOrder.map(label => baseItems.find(item => item?.label === label)),
+              ...missingItems
+            ].filter(item => item && item.href && item.label) as any[];
+            
+            if (sorted.length > 0) {
+              setOrderedItems(sorted);
+              return;
+            }
+          }
         } catch (e) {
           console.error('Erro ao ler ordem da sidebar:', e);
+          localStorage.removeItem(savedOrderKey);
         }
       }
     }

@@ -51,6 +51,21 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                  for (var i = 0; i < registrations.length; i++) {
+                    registrations[i].unregister();
+                  }
+                });
+              }
+              for (var key in localStorage) {
+                if (key.indexOf('sb_sidebar_menu_order_') === 0) {
+                  localStorage.removeItem(key);
+                }
+              }
+            } catch (swErr) {}
+
+            try {
               var cookie = document.cookie.split('; ').find(function(row) {
                 return row.startsWith('sb_user=');
               });
