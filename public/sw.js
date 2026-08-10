@@ -1,3 +1,21 @@
+self.addEventListener('install', function (event) {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    self.clients.claim().then(function () {
+      return caches.keys().then(function (keys) {
+        return Promise.all(
+          keys.map(function (key) {
+            return caches.delete(key);
+          })
+        );
+      });
+    })
+  );
+});
+
 self.addEventListener('push', function (event) {
   if (event.data) {
     try {
@@ -43,13 +61,27 @@ self.addEventListener('notificationclick', function (event) {
   );
 });
 
-// A fetch handler is required for PWA installability.
-// We use a simple pass-through fetch handler that falls back to cache if offline.
+// Safe fetch handler: ignores navigations, API, and Next.js static chunks
 self.addEventListener('fetch', function (event) {
-  event.respondWith(
-    fetch(event.request).catch(function () {
-      return caches.match(event.request);
-    })
-  );
+  if (event.request.method !== 'GET' || event.request.mode === 'navigate') {
+    return;
+  }
+
+  try {
+    const url = new URL(event.request.url);
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/')) {
+      return;
+    }
+
+    event.respondWith(
+      fetch(event.request).catch(function () {
+        return caches.match(event.request).then(function (response) {
+          return response || new Response('', { status: 503, statusText: 'Offline' });
+        });
+      })
+    );
+  } catch (e) {
+    return;
+  }
 });
 
