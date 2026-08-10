@@ -691,7 +691,7 @@ export async function getPropostas(preFetchedUser?: any) {
         clientId: p.clientId,
         segmento: p.client?.segmento || 'Sem Segmento',
         data: p.createdAt.toLocaleDateString('pt-BR'),
-        valor: lastVersao?.precoVenda || 0,
+        valor: meta.resultado?.faturamentoBruto || lastVersao?.precoVenda || 0,
         status: p.status,
         versao: lastVersao?.versao || 1,
         usuario: p.user.nome,
