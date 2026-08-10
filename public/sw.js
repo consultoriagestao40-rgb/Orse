@@ -61,27 +61,5 @@ self.addEventListener('notificationclick', function (event) {
   );
 });
 
-// Safe fetch handler: ignores navigations, API, and Next.js static chunks
-self.addEventListener('fetch', function (event) {
-  if (event.request.method !== 'GET' || event.request.mode === 'navigate') {
-    return;
-  }
-
-  try {
-    const url = new URL(event.request.url);
-    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/')) {
-      return;
-    }
-
-    event.respondWith(
-      fetch(event.request).catch(function () {
-        return caches.match(event.request).then(function (response) {
-          return response || new Response('', { status: 503, statusText: 'Offline' });
-        });
-      })
-    );
-  } catch (e) {
-    return;
-  }
-});
+// Service Worker para Push Notifications (sem interceptação de fetch)
 
