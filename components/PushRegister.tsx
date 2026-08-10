@@ -50,8 +50,8 @@ export default function PushRegister() {
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       });
 
-      const subJson = subscription.toJSON();
-      if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+      const subJson = subscription ? subscription.toJSON() : null;
+      if (subJson?.endpoint && subJson?.keys?.p256dh && subJson?.keys?.auth) {
         await subscribeUserToPush({
           endpoint: subJson.endpoint,
           p256dh: subJson.keys.p256dh,
@@ -123,8 +123,8 @@ export default function PushRegister() {
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       });
 
-      const subJson = subscription.toJSON();
-      if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+      const subJson = subscription ? subscription.toJSON() : null;
+      if (subJson?.endpoint && subJson?.keys?.p256dh && subJson?.keys?.auth) {
         await subscribeUserToPush({
           endpoint: subJson.endpoint,
           p256dh: subJson.keys.p256dh,
