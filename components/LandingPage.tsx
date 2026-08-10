@@ -149,19 +149,19 @@ export default function LandingPage() {
 
           {/* CTA Buttons in top right */}
           <div className="hidden md:flex items-center gap-4">
-            <Link 
+            <a 
               href="/login" 
               className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-white px-5 py-2.5 border border-white/5 hover:border-white/10 bg-white/5 rounded-xl transition-all"
             >
               Login
-            </Link>
-            <Link 
+            </a>
+            <a 
               href="/cadastro" 
               className="text-xs font-black uppercase tracking-widest text-slate-950 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 group"
             >
               Acesso Grátis
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -179,18 +179,18 @@ export default function LandingPage() {
             <a href="#precos" onClick={() => setMobileMenuOpen(false)} className="text-xs font-black uppercase tracking-widest text-slate-300 py-2 border-b border-white/5">Preços</a>
             
             <div className="flex gap-4 pt-4">
-              <Link 
+              <a 
                 href="/login" 
                 className="flex-1 text-center text-xs font-black uppercase tracking-wider text-slate-300 py-3 border border-white/10 rounded-xl bg-white/5"
               >
                 Login
-              </Link>
-              <Link 
+              </a>
+              <a 
                 href="/cadastro" 
                 className="flex-1 text-center text-xs font-black uppercase tracking-wider text-slate-950 py-3 bg-[#10B981] rounded-xl"
               >
                 Criar Conta
-              </Link>
+              </a>
             </div>
           </div>
         )}
@@ -1466,12 +1466,12 @@ export default function LandingPage() {
               Criar Minha Conta Grátis
               <ArrowRight size={16} />
             </a>
-            <Link 
+            <a 
               href="/login"
               className="px-10 py-5 bg-slate-900/60 hover:bg-slate-900/80 border border-white/10 text-sm font-black uppercase tracking-widest text-slate-300 hover:text-white rounded-xl transition-all flex items-center justify-center"
             >
               Entrar em Conta Existente
-            </Link>
+            </a>
           </div>
 
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">

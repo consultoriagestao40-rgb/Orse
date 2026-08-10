@@ -1674,7 +1674,7 @@ const Sidebar = () => {
                 isDragOver && isDraggingDown ? 'border-b-emerald-500 scale-[1.01]' : ''
               }`}
             >
-              <Link
+              <a
                 href={item?.href || '#'}
                 title={isCollapsed ? item.label : undefined}
                 style={
@@ -1696,7 +1696,7 @@ const Sidebar = () => {
               >
                 <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : 'text-slate-400 shrink-0'} />
                 <span className="text-sm truncate sidebar-expanded-only">{item.label}</span>
-              </Link>
+              </a>
             </div>
           );
         })}
