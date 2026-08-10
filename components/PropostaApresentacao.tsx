@@ -294,7 +294,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
       return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
     };
 
-    const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+    const maoDeObraSubtotalSemTributos = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+    const maoDeObraSubtotal = divisorTributos > 0 ? (maoDeObraSubtotalSemTributos / divisorTributos) : maoDeObraSubtotalSemTributos;
     const insumosSubtotal = applyCascata(
       Number(proposta.insumos?.materiais || 0) + 
       Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos?.maquinas || 0) + 
@@ -1985,7 +1986,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                    return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
                                  };
 
-                                 const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+                                 const maoDeObraSubtotalSemTributos = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+    const maoDeObraSubtotal = divisorTributos > 0 ? (maoDeObraSubtotalSemTributos / divisorTributos) : maoDeObraSubtotalSemTributos;
                                  const insumosSubtotal = applyCascata(
                                    Number(proposta.insumos?.materiais || 0) + 
                                    Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos?.maquinas || 0) + 
@@ -3194,7 +3196,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                               return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
                             };
 
-                            const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+                            const maoDeObraSubtotalSemTributos = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+    const maoDeObraSubtotal = divisorTributos > 0 ? (maoDeObraSubtotalSemTributos / divisorTributos) : maoDeObraSubtotalSemTributos;
                             const insumosSubtotal = applyCascata(
                               Number(proposta.insumos?.materiais || 0) + 
                               Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos?.maquinas || 0) + 
