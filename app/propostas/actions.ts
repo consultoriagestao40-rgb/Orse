@@ -991,13 +991,15 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
 export async function getKPIs() {
   try {
     const loggedUser = await getLoggedUser();
-    if (!loggedUser) return null;
+    if (!loggedUser) return { propostas: [], usuarios: [] };
 
     let whereClause: any = {};
     let usersWhereClause: any = {};
 
-    whereClause.tenantId = loggedUser.tenantId;
-    usersWhereClause.tenantId = loggedUser.tenantId;
+    if (loggedUser.tenantId) {
+      whereClause.tenantId = loggedUser.tenantId;
+      usersWhereClause.tenantId = loggedUser.tenantId;
+    }
 
     if (loggedUser.role === 'MANAGER') {
       const subordinateIds = await getSubordinateIds(loggedUser.id);
@@ -1025,22 +1027,23 @@ export async function getKPIs() {
     });
 
     const mappedPropostas = propostas.map(p => {
-      const sortedVersoes = [...p.versoes].sort((a, b) => b.versao - a.versao);
+      const sortedVersoes = [...(p.versoes || [])].sort((a, b) => (b.versao || 0) - (a.versao || 0));
       const lastVersao = sortedVersoes[0];
       const meta = (lastVersao?.metadados as any) || {};
-      const statusUpper = p.status.toUpperCase();
+      const statusUpper = (p.status || '').toUpperCase();
       const isAceito = statusUpper.startsWith('ACEIT') || statusUpper.startsWith('APROV');
+      const createdAtIso = p.createdAt ? p.createdAt.toISOString() : new Date().toISOString();
 
       return {
         id: p.id,
-        numero: `FPV-${p.numero.toString().padStart(3, '0')}`,
-        usuario: p.user.nome,
-        dataCriacao: p.createdAt.toISOString(),
+        numero: `FPV-${(p.numero || 0).toString().padStart(3, '0')}`,
+        usuario: p.user?.nome || 'Usuário',
+        dataCriacao: createdAtIso,
         valor: lastVersao?.precoVenda || 0,
-        status: p.status,
+        status: p.status || 'RASCUNHO',
         isAceito,
         tipoServicos: meta.tipoServicos || 'Outros',
-        dataAceitacao: meta.dataAceitacao || (isAceito ? lastVersao?.dataCriacao.toISOString() : null)
+        dataAceitacao: meta.dataAceitacao || (isAceito && lastVersao?.dataCriacao ? lastVersao.dataCriacao.toISOString() : null)
       };
     });
 
@@ -1052,11 +1055,11 @@ export async function getKPIs() {
 
     return {
       propostas: mappedPropostas,
-      usuarios: users.map(u => ({ id: u.id, nome: u.nome, meta: u.meta }))
+      usuarios: users.map(u => ({ id: u.id, nome: u.nome || 'Usuário', meta: u.meta || 0 }))
     };
   } catch (error) {
     console.error('Error fetching raw KPIs data:', error);
-    return null;
+    return { propostas: [], usuarios: [] };
   }
 }
 
