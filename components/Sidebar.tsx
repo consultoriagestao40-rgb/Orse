@@ -1398,15 +1398,25 @@ const Sidebar = () => {
         const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
         const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
 
-        const tenantFeatures = user?.tenantFeatures || user?.tenant?.features || {};
-        const tenantNome = user?.tenantNome || user?.tenant?.nomeFantasia || '';
-        const isSlimpe = tenantNome.toLowerCase().includes('slimpe') || 
+        const tenantFeatures = (typeof user?.tenantFeatures === 'object' && user?.tenantFeatures) 
+          ? user.tenantFeatures 
+          : (typeof user?.tenant?.features === 'object' && user?.tenant?.features) 
+            ? user.tenant.features 
+            : {};
+
+        const tenantNome = typeof user?.tenantNome === 'string' 
+          ? user.tenantNome 
+          : typeof user?.tenant?.nomeFantasia === 'string' 
+            ? user.tenant.nomeFantasia 
+            : '';
+
+        const isSlimpe = (tenantNome && tenantNome.toLowerCase().includes('slimpe')) || 
                          (user?.tenantId && String(user.tenantId).toLowerCase().includes('slimpe')) ||
                          (user?.email && String(user.email).toLowerCase().includes('slimpe'));
 
-        const hasAtivosModule = isSlimpe || Boolean((tenantFeatures as any)?.ativos);
-        const hasEntregasModule = isSlimpe || Boolean((tenantFeatures as any)?.entregas);
-        const hasErpFlexModule = isSlimpe || Boolean((tenantFeatures as any)?.erpflex);
+        const hasAtivosModule = Boolean(isSlimpe || (tenantFeatures as any)?.ativos);
+        const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
+        const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
         
         if (item.href.startsWith('/ativos') && !hasAtivosModule) {
           return false;
@@ -1452,16 +1462,33 @@ const Sidebar = () => {
           const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
           const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
 
-          const tenantFeatures = user?.tenant?.features || {};
-          const isSlimpe = user?.tenant?.nomeFantasia?.toLowerCase().includes('slimpe') || user?.tenantId?.includes('slimpe');
+          const tenantFeatures = (typeof user?.tenantFeatures === 'object' && user?.tenantFeatures) 
+            ? user.tenantFeatures 
+            : (typeof user?.tenant?.features === 'object' && user?.tenant?.features) 
+              ? user.tenant.features 
+              : {};
 
-          const hasAtivosModule = isSlimpe || Boolean((tenantFeatures as any)?.ativos);
-          const hasEntregasModule = isSlimpe || Boolean((tenantFeatures as any)?.entregas);
+          const tenantNome = typeof user?.tenantNome === 'string' 
+            ? user.tenantNome 
+            : typeof user?.tenant?.nomeFantasia === 'string' 
+              ? user.tenant.nomeFantasia 
+              : '';
+
+          const isSlimpe = (tenantNome && tenantNome.toLowerCase().includes('slimpe')) || 
+                           (user?.tenantId && String(user.tenantId).toLowerCase().includes('slimpe')) ||
+                           (user?.email && String(user.email).toLowerCase().includes('slimpe'));
+
+          const hasAtivosModule = Boolean(isSlimpe || (tenantFeatures as any)?.ativos);
+          const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
+          const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
           
           if (item.href.startsWith('/ativos') && !hasAtivosModule) {
             return false;
           }
           if (item.href.startsWith('/entrega') && !hasEntregasModule) {
+            return false;
+          }
+          if (item.href.startsWith('/integracoes') && !hasErpFlexModule) {
             return false;
           }
           
