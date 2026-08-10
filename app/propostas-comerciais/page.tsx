@@ -544,7 +544,7 @@ export default function PropostasComerciaisDashboard() {
     return cols;
   }, [filteredDocs, segmentos]);
 
-  const ProposalCard = ({ doc }: { doc: any }) => (
+  const renderProposalCard = (doc: any) => (
     <div
       draggable
       onDragStart={(e) => {
@@ -722,7 +722,7 @@ export default function PropostasComerciaisDashboard() {
   };
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
+  const renderKanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
@@ -1012,7 +1012,7 @@ export default function PropostasComerciaisDashboard() {
     return 'bg-slate-100/50 border border-slate-200/50';
   };
 
-  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
+  const renderKanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
     label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void; isFirst?: boolean;
   }) => {
     const resolvedHex = resolveColorToHex(color);
@@ -1074,7 +1074,7 @@ export default function PropostasComerciaisDashboard() {
                 </div>
               )
             ) : (
-              cards.map(doc => <ProposalCard key={doc.id} doc={doc} />)
+              cards.map(doc => renderProposalCard(doc))
             )}
           </div>
         </div>

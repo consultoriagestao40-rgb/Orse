@@ -563,7 +563,7 @@ function ProposalsDashboard() {
   }, [filteredProposals, segmentos]);
 
   // ── Menu de Ações Reutilizável ──────────────────────────────────────────────
-  const ActionMenu = ({ prop }: { prop: any }) => {
+  const renderActionMenu = (prop: any) => {
     const [open, setOpen] = useState(false);
     return (
       <div className="relative" onClick={e => e.stopPropagation()}>
@@ -593,7 +593,7 @@ function ProposalsDashboard() {
     );
   };
 
-  const ProposalCard = ({ prop }: { prop: any }) => (
+  const renderProposalCard = (prop: any) => (
     <div
       draggable
       onDragStart={(e) => {
@@ -656,7 +656,7 @@ function ProposalsDashboard() {
             )}
             <span className="text-[9px] text-slate-500 font-bold truncate max-w-[120px]">{prop.usuario}</span>
           </div>
-          <ActionMenu prop={prop} />
+          {renderActionMenu(prop)}
         </div>
       </div>
     </div>
@@ -887,7 +887,7 @@ function ProposalsDashboard() {
   ];
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
+  const renderKanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
@@ -1177,7 +1177,7 @@ function ProposalsDashboard() {
   };
 
   // ── Lista de cards da coluna ───────────────────────────────────────────────
-  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
+  const renderKanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
     label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void; isFirst?: boolean;
   }) => {
     const resolvedHex = resolveColorToHex(color);
@@ -1236,7 +1236,7 @@ function ProposalsDashboard() {
                 </div>
               )
             ) : (
-              cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
+              cards.map(prop => renderProposalCard(prop))
             )}
           </div>
         </div>
@@ -1603,42 +1603,40 @@ function ProposalsDashboard() {
                                       }}
                                       onDragEnd={handleDragColumnEnd}
                                     >
-                                      <KanbanColumnHeader
-                                        key={col.id}
-                                        label={col.label}
-                                        color={col.color}
-                                        cards={col.cards}
-                                        total={col.total}
-                                        statusId={col.id}
-                                        isFirst={isFirst}
-                                        isLast={isLast}
-                                        onCreateStatus={handleCreateStatus}
-                                        onColorChange={async (newColor) => {
-                                          await updatePropostaStatusParam(col.id, col.label, newColor);
-                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-                                        }}
-                                        onRenameColumn={async (newName) => {
-                                          await updatePropostaStatusParam(col.id, newName);
-                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
-                                        }}
-                                      />
+                                      {renderKanbanColumnHeader({
+      label: col.label,
+      color: col.color,
+      cards: col.cards,
+      total: col.total,
+      statusId: col.id,
+      isFirst,
+      isLast,
+      onCreateStatus: handleCreateStatus,
+      onColorChange: async (newColor) => {
+        await updatePropostaStatusParam(col.id, col.label, newColor);
+        setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+      },
+      onRenameColumn: async (newName) => {
+        await updatePropostaStatusParam(col.id, newName);
+        setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
+      }
+    })}
                                     </div>
-                                    <KanbanColumnCards
-                                      key={col.id + '-cards'}
-                                      label={col.label}
-                                      color={col.color}
-                                      type="status"
-                                      cards={col.cards}
-                                      isFirst={isFirst}
-                                      onDropProp={async (propId) => {
-                                        const prop = proposals.find(p => p.id === propId);
-                                        if (prop && prop.status !== col.label) {
-                                          setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
-                                          const res = await updatePropostaStatus(propId, col.label);
-                                          if (!res.success) alert(res.error);
-                                        }
-                                      }}
-                                    />
+                                    {renderKanbanColumnCards({
+      label: col.label,
+      color: col.color,
+      type: "status",
+      cards: col.cards,
+      isFirst,
+      onDropProp: async (propId) => {
+        const prop = proposals.find(p => p.id === propId);
+        if (prop && prop.status !== col.label) {
+          setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
+          const res = await updatePropostaStatus(propId, col.label);
+          if (!res.success) alert(res.error);
+        }
+      }
+    })}
                                   </div>
                                 </React.Fragment>
                               );
