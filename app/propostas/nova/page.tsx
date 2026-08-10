@@ -991,7 +991,7 @@ function PropostaEditor() {
       setShowConfirmDiscardModal(true);
     } else {
       const prevPath = typeof window !== 'undefined' ? sessionStorage.getItem('prevPath') : null;
-      if (prevPath) {
+      if (prevPath && typeof prevPath === 'string' && prevPath.startsWith('/')) {
         router.push(prevPath);
       } else if (typeof window !== 'undefined' && window.history.length > 1) {
         router.back();
@@ -1039,11 +1039,11 @@ function PropostaEditor() {
         
         const onSaveConfirm = () => {
           if (goBackAfterSave) {
-            if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
+            if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK' && typeof pendingNavigationUrl === 'string' && pendingNavigationUrl.startsWith('/')) {
                router.push(pendingNavigationUrl);
             } else {
                const prevPath = typeof window !== 'undefined' ? sessionStorage.getItem('prevPath') : null;
-               if (prevPath) {
+               if (prevPath && typeof prevPath === 'string' && prevPath.startsWith('/')) {
                  router.push(prevPath);
                } else if (typeof window !== 'undefined' && window.history.length > 1) {
                  router.back();

@@ -20,37 +20,7 @@ const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Redireciona usuários em celulares para a Área do Técnico por padrão, a menos que tenham optado pela versão desktop
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const mode = searchParams.get('mode');
-      
-      if (mode === 'desktop') {
-        sessionStorage.setItem('sb_mobile_mode', 'desktop');
-      }
-      
-      const isDesktopMode = sessionStorage.getItem('sb_mobile_mode') === 'desktop';
-      
-      if (!isDesktopMode) {
-        const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile && !pathname.startsWith('/ativos/tecnico') && !pathname.startsWith('/entrega/entregador')) {
-          let targetPath = '/ativos/tecnico';
-          try {
-            const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
-            if (cookie) {
-              const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-              const cargo = (parsed.cargo || '').toLowerCase();
-              if (cargo.includes('entregador') || cargo.includes('entrega') || cargo.includes('motoboy') || cargo.includes('motorista')) {
-                targetPath = '/entrega/entregador';
-              }
-            }
-          } catch (e) {}
-          router.push(targetPath);
-        }
-      }
-    }
-  }, [pathname, router]);
+
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
