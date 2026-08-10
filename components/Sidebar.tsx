@@ -1431,6 +1431,19 @@ const Sidebar = () => {
       : menuItems.filter(item => {
           const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
           const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
+
+          const tenantFeatures = user?.tenant?.features || {};
+          const isSlimpe = user?.tenant?.nomeFantasia?.toLowerCase().includes('slimpe') || user?.tenantId?.includes('slimpe');
+
+          const hasAtivosModule = isSlimpe || Boolean((tenantFeatures as any)?.ativos);
+          const hasEntregasModule = isSlimpe || Boolean((tenantFeatures as any)?.entregas);
+          
+          if (item.href.startsWith('/ativos') && !hasAtivosModule) {
+            return false;
+          }
+          if (item.href.startsWith('/entrega') && !hasEntregasModule) {
+            return false;
+          }
           
           if (isPlatformAccount) {
             return item.href === '/admin/empresas';
