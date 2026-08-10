@@ -452,6 +452,48 @@ export async function saveProposta(data: any) {
       numeroProposta = formattedNumero;
     }
 
+    // Preserva os insumos da versão anterior caso os insumos fornecidos estejam vazios ao criar nova versão
+    const lastVersionMeta = (lastVersion?.metadados as any) || {};
+    const previousInsumos = lastVersionMeta.insumos || {};
+    
+    const inputInsumos = data.insumos || {};
+    const finalInsumos = {
+      materiais: inputInsumos.materiais !== undefined ? Number(inputInsumos.materiais || 0) : Number(previousInsumos.materiais || 0),
+      maquinas: inputInsumos.maquinas !== undefined ? Number(inputInsumos.maquinas || 0) : Number(previousInsumos.maquinas || 0),
+      descartaveis: inputInsumos.descartaveis !== undefined ? Number(inputInsumos.descartaveis || 0) : Number(previousInsumos.descartaveis || 0),
+      servicos: inputInsumos.servicos !== undefined ? Number(inputInsumos.servicos || 0) : Number(previousInsumos.servicos || 0),
+      servicosDescricao: inputInsumos.servicosDescricao || previousInsumos.servicosDescricao || '',
+      detalheMateriais: (inputInsumos.detalheMateriais && inputInsumos.detalheMateriais.length > 0) ? inputInsumos.detalheMateriais : (previousInsumos.detalheMateriais || []),
+      detalheMaquinas: (inputInsumos.detalheMaquinas && inputInsumos.detalheMaquinas.length > 0) ? inputInsumos.detalheMaquinas : (previousInsumos.detalheMaquinas || []),
+      detalheDescartaveis: (inputInsumos.detalheDescartaveis && inputInsumos.detalheDescartaveis.length > 0) ? inputInsumos.detalheDescartaveis : (previousInsumos.detalheDescartaveis || [])
+    };
+
+    // Garante sincronismo 100% exato entre o Preço de Venda da Mão de Obra + Insumos em Cascata e o total salvo no Banco
+    const maoDeObraSubtotal = resultado?.items?.reduce((acc: number, i: any) => acc + (Number(i.precoVenda) || 0), 0) || 0;
+    const txAdm = (Number(premissas.taxaAdm) || 5) / 100;
+    const txLucro = (Number(premissas.margemLucro) || 10) / 100;
+    const tributosList = Array.isArray(premissas.tributos) ? premissas.tributos : [];
+    const totalTributosPct = tributosList.reduce((acc: number, t: any) => acc + (Number(t.percentual) || 0), 0);
+    const divisorTributos = 1 - (totalTributosPct / 100);
+
+    const insumosDirectCost = finalInsumos.materiais + finalInsumos.maquinas + finalInsumos.descartaveis + finalInsumos.servicos;
+    let insumosSubtotal = 0;
+    if (insumosDirectCost > 0) {
+      const comAdm = insumosDirectCost * (1 + txAdm);
+      const comLucro = comAdm * (1 + txLucro);
+      insumosSubtotal = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+    }
+
+    const totalFaturamentoExato = maoDeObraSubtotal + insumosSubtotal;
+    let finalCustoTotal = resultado?.custoDiretoTotal || 0;
+    let finalPrecoVenda = (totalFaturamentoExato > 0) ? totalFaturamentoExato : (resultado?.faturamentoBruto || 0);
+
+    const finalResultado = {
+      ...(resultado || {}),
+      custoDiretoTotal: finalCustoTotal,
+      faturamentoBruto: finalPrecoVenda
+    };
+
     const metadados = {
       clienteNome: cliente.cliente,
       segmento: cliente.segmento || '',
@@ -489,13 +531,8 @@ export async function saveProposta(data: any) {
       condicoesColaboradores: cliente.condicoesColaboradores || [],
       condicoesCliente: cliente.condicoesCliente || [],
       itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
-      insumos: {
-        ...(data.insumos || {}),
-        detalheMateriais: data.insumos?.detalheMateriais || [],
-        detalheMaquinas: data.insumos?.detalheMaquinas || [],
-        detalheDescartaveis: data.insumos?.detalheDescartaveis || []
-      },
-      resultado: resultado || null,
+      insumos: finalInsumos,
+      resultado: finalResultado,
       dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
       dreEncargos: dreEncargos || null,
       encargos: encargos || null,
@@ -545,8 +582,8 @@ export async function saveProposta(data: any) {
             comissaoVendedor: premissas.comissaoVendedor
           } as any,
           metadados: metadados as any,
-          custoTotal: resultado.custoDiretoTotal || 0,
-          precoVenda: resultado.faturamentoBruto || 0,
+          custoTotal: finalCustoTotal,
+          precoVenda: finalPrecoVenda,
           items: {
             create: itemsData
           }
@@ -567,8 +604,8 @@ export async function saveProposta(data: any) {
             comissaoVendedor: premissas.comissaoVendedor
           } as any,
           metadados: metadados as any,
-          custoTotal: resultado.custoDiretoTotal || 0,
-          precoVenda: resultado.faturamentoBruto || 0,
+          custoTotal: finalCustoTotal,
+          precoVenda: finalPrecoVenda,
           items: {
             create: itemsData
           }
