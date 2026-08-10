@@ -263,7 +263,16 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
     replaced = replaced.replace(/\[LOCAL_PRESTACAO\]/g, localPrestacao);
     replaced = replaced.replace(/\[PRAZO_CONTRATO\]/g, prazoContrato);
     
-    const divisorTributos = resultado?.divisor || 1;
+    const totalTributosPct = (() => {
+      const tributosList = Array.isArray(proposta?.premissas?.tributos) ? proposta.premissas.tributos : [];
+      if (tributosList.length > 0) {
+        return tributosList.reduce((acc: number, t: any) => acc + (Number(t.percentual || t.percent || t.aliquota) || 0), 0);
+      }
+      return 16.25;
+    })();
+    const divisorTributos = (resultado?.divisor && resultado.divisor > 0 && resultado.divisor < 1)
+      ? resultado.divisor
+      : (1 - (totalTributosPct / 100) || 0.8375);
     const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
     const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
     const isSpot = proposta.equipe?.some((e: any) => e.tipoItem === 'SPOT');
@@ -1954,7 +1963,16 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
 
                               if (layout === 'tabela') {
                                  const fc = formatCurrency;
-                                 const divisorTributos = resultado?.divisor || 1;
+                                 const totalTributosPct = (() => {
+      const tributosList = Array.isArray(proposta?.premissas?.tributos) ? proposta.premissas.tributos : [];
+      if (tributosList.length > 0) {
+        return tributosList.reduce((acc: number, t: any) => acc + (Number(t.percentual || t.percent || t.aliquota) || 0), 0);
+      }
+      return 16.25;
+    })();
+    const divisorTributos = (resultado?.divisor && resultado.divisor > 0 && resultado.divisor < 1)
+      ? resultado.divisor
+      : (1 - (totalTributosPct / 100) || 0.8375);
                                  const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
                                  const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
                                  
@@ -3164,7 +3182,16 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
 
                          {currentSlide === 11 && (() => {
                             const fc = formatCurrency;
-                            const divisorTributos = resultado?.divisor || 1;
+                            const totalTributosPct = (() => {
+      const tributosList = Array.isArray(proposta?.premissas?.tributos) ? proposta.premissas.tributos : [];
+      if (tributosList.length > 0) {
+        return tributosList.reduce((acc: number, t: any) => acc + (Number(t.percentual || t.percent || t.aliquota) || 0), 0);
+      }
+      return 16.25;
+    })();
+    const divisorTributos = (resultado?.divisor && resultado.divisor > 0 && resultado.divisor < 1)
+      ? resultado.divisor
+      : (1 - (totalTributosPct / 100) || 0.8375);
                             const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
                             const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
                             

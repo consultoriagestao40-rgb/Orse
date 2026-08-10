@@ -345,7 +345,17 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   const equipe = proposta.equipe || [];
   
   // Cascata
-  const divisorTributos = resultado?.divisor || 1;
+  const totalTributosPct = (() => {
+    const tributosList = Array.isArray(proposta?.premissas?.tributos) ? proposta.premissas.tributos : [];
+    if (tributosList.length > 0) {
+      return tributosList.reduce((acc: number, t: any) => acc + (Number(t.percentual || t.percent || t.aliquota) || 0), 0);
+    }
+    return 16.25;
+  })();
+  const divisorTributos = (resultado?.divisor && resultado.divisor > 0 && resultado.divisor < 1)
+    ? resultado.divisor
+    : (1 - (totalTributosPct / 100) || 0.8375);
+
   const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
   const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
   
