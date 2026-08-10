@@ -1515,9 +1515,9 @@ const Sidebar = () => {
           const missingItems = baseItems.filter(item => !cleanOrder.includes(item.label));
           
           const sorted = [
-            ...cleanOrder.map(label => baseItems.find(item => item.label === label)).filter(Boolean),
+            ...cleanOrder.map(label => baseItems.find(item => item?.label === label)).filter(item => item && item.href && item.label),
             ...missingItems
-          ] as any[];
+          ].filter(item => item && item.href && item.label) as any[];
           setOrderedItems(sorted);
           return;
         } catch (e) {
@@ -1664,7 +1664,7 @@ const Sidebar = () => {
       
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {orderedItems.map((item, index) => {
+        {(orderedItems && orderedItems.length > 0 ? orderedItems : []).filter(item => item && item.href && item.label).map((item, index) => {
           const isActive = item.href === '/'
             ? pathname === '/'
             : item.href === '/pipeline'
@@ -1696,7 +1696,7 @@ const Sidebar = () => {
               }`}
             >
               <Link
-                href={item.href}
+                href={item?.href || '#'}
                 title={isCollapsed ? item.label : undefined}
                 style={
                   isHighlighted
