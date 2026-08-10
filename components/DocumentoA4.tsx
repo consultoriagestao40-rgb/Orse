@@ -387,8 +387,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     .filter((item: any) => !isLocado(item.descricao))
     .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
 
-  const rawTotalEquipeSemTributos = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
-  const rawTotalEquipe = divisorTributos > 0 ? (rawTotalEquipeSemTributos / divisorTributos) : rawTotalEquipeSemTributos;
+  const rawTotalEquipe = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
   
   const vMateriais = applyCascata(proposta.insumos?.materiais || 0);
   const vMaquinas = applyCascata(isSpot ? totalMaquinasNaoLocadas : (proposta.insumos?.maquinas || 0));
@@ -397,11 +396,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   
   const totalInsumos = vMateriais + vMaquinas + vDescartaveis + vServicos;
   
-  // Usa o faturamentoBruto salvo no banco (via getPropostaCompleta) como valor total definitivo.
-  const totalGeralCalculado = rawTotalEquipe + totalInsumos;
-  const totalGeral = (resultado?.faturamentoBruto && resultado.faturamentoBruto > 0)
-    ? resultado.faturamentoBruto
-    : totalGeralCalculado;
+  const totalGeral = rawTotalEquipe + totalInsumos;
 
   // Se rawTotalEquipe foi gravado englobando o faturamento bruto total, ajustamos totalEquipe = totalGeral - totalInsumos
   const isEquipeContendoFaturamentoTotal = totalGeral > 0 && totalInsumos > 0 && Math.abs(rawTotalEquipe - totalGeral) < 1.00;
@@ -428,13 +423,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </thead>
               <tbody>
                 {equipe.map((item: any, idx: number) => {
-                  let precoVendaTotalSemTributos = resultado?.items?.[idx]?.precoVenda || 0;
-                  let precoVendaTotal = divisorTributos > 0 ? (precoVendaTotalSemTributos / divisorTributos) : precoVendaTotalSemTributos;
+                  let precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
                   const isSpotItem = item.tipoItem === 'SPOT';
                   const qty = isSpotItem ? (item.quantidadeDemanda || 1) : (item.quantidade || 1);
 
                   if (isEquipeContendoFaturamentoTotal && rawTotalEquipe > 0) {
-                    const prop = (resultado?.items?.[idx]?.precoVenda || 0) / (rawTotalEquipeSemTributos || 1);
+                    const prop = (resultado?.items?.[idx]?.precoVenda || 0) / (rawTotalEquipe || 1);
                     precoVendaTotal = prop * totalEquipe;
                   }
 

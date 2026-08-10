@@ -270,8 +270,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
       return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
     };
 
-    const maoDeObraSubtotalSemTributos = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
-    const maoDeObraSubtotal = divisorTributos > 0 ? (maoDeObraSubtotalSemTributos / divisorTributos) : maoDeObraSubtotalSemTributos;
+    const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
     const insumosSubtotal = applyCascata(
       Number(proposta.insumos?.materiais || 0) + 
       Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos?.maquinas || 0) + 
@@ -1435,8 +1434,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                    return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
                                  };
 
-                                 const maoDeObraSubtotalSemTributos = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
-    const maoDeObraSubtotal = divisorTributos > 0 ? (maoDeObraSubtotalSemTributos / divisorTributos) : maoDeObraSubtotalSemTributos;
+                                 const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
                                  const insumosSubtotal = applyCascata(
                                    Number(proposta?.insumos?.materiais || 0) + 
                                    Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta?.insumos?.maquinas || 0) + 

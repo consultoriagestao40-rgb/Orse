@@ -361,12 +361,19 @@ export function calculateEnterprisePrice(proposal: any): any {
     // Margem real de lucro calculada de forma padrão e positiva baseada no custo
     valorMargemLucro = (custoDiretoTotal + valorAdm) * txLucro;
   } else {
-    // Cálculo do Faturamento Bruto Total seguindo a mesma lógica
-    const totalComAdm = custoDiretoTotal * (1 + txAdm);
-    const totalComLucro = totalComAdm * (1 + txLucro);
-    faturamentoBruto = divisorTributos > 0 ? (totalComLucro / divisorTributos) : totalComLucro;
+    // Cálculo do Faturamento Bruto Total garantindo soma exata de mão de obra + insumos globais em cascata
+    const faturamentoMaoDeObra = itemResults.reduce((acc, i) => acc + (i.precoVenda || 0), 0);
+    let faturamentoInsumos = 0;
+    if (custoInsumosGlobais > 0) {
+      const comAdmInsumos = custoInsumosGlobais * (1 + txAdm);
+      const comLucroInsumos = comAdmInsumos * (1 + txLucro);
+      faturamentoInsumos = divisorTributos > 0 ? (comLucroInsumos / divisorTributos) : comLucroInsumos;
+    }
+
+    faturamentoBruto = faturamentoMaoDeObra + faturamentoInsumos;
 
     valorImpostos = faturamentoBruto * (totalTributosPct / 100);
+    const totalComAdm = custoDiretoTotal * (1 + txAdm);
     valorMargemLucro = faturamentoBruto - valorImpostos - totalComAdm;
     valorAdm = totalComAdm - custoDiretoTotal;
   }
