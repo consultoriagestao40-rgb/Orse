@@ -58,6 +58,13 @@ export default async function RootLayout({
                   }
                 });
               }
+              if ('caches' in window) {
+                caches.keys().then(function(keys) {
+                  for (var c = 0; c < keys.length; c++) {
+                    caches.delete(keys[c]);
+                  }
+                });
+              }
               for (var key in localStorage) {
                 if (key.indexOf('sb_sidebar_menu_order_') === 0) {
                   localStorage.removeItem(key);

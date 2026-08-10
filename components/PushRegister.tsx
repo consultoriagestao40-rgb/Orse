@@ -66,19 +66,13 @@ export default function PushRegister() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Registra o Service Worker incondicionalmente para suporte a PWA (instalação, offline, etc.)
+    // Garante o desregistro de Service Workers para prevenir bloqueios de cache
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then((reg) => {
-          console.log('Service Worker registrado com sucesso:', reg.scope);
-          // Se as notificações já foram concedidas, inscreve o usuário no push
-          if ('Notification' in window && Notification.permission === 'granted') {
-            subscribeUser();
-          }
-        })
-        .catch((err) => {
-          console.error('Erro ao registrar Service Worker:', err);
-        });
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const reg of registrations) {
+          reg.unregister();
+        }
+      }).catch(() => {});
     }
 
     // Check permissions
