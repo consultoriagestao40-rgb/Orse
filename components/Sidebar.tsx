@@ -446,6 +446,8 @@ const Sidebar = () => {
               avatarUrl: freshUser.avatarUrl ? `/api/user/avatar?email=${encodeURIComponent(freshUser.email)}&v=${freshUser.avatarUrl.length > 30 ? encodeURIComponent(freshUser.avatarUrl.substring(freshUser.avatarUrl.length - 10)) : encodeURIComponent(freshUser.avatarUrl.substring(0, 10))}` : undefined,
               tenantLogoUrl: (freshUser as any).tenant?.logoUrl ? `/api/tenant/logo?tenantId=${freshUser.tenantId}&v=${(freshUser as any).tenant.logoUrl.length > 30 ? encodeURIComponent((freshUser as any).tenant.logoUrl.substring((freshUser as any).tenant.logoUrl.length - 10)) : encodeURIComponent((freshUser as any).tenant.logoUrl.substring(0, 10))}` : undefined,
               tenantNome: (freshUser as any).tenant?.nomeFantasia || undefined,
+              tenantFeatures: (freshUser as any).tenant?.features || undefined,
+              tenant: (freshUser as any).tenant || undefined,
               primaryColor: (freshUser as any).tenant?.primaryColor || undefined,
               iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
             };
@@ -1374,6 +1376,7 @@ const Sidebar = () => {
     { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: Link, label: 'Integração ERPFlex', href: '/integracoes/erpflex', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
   ];
 
@@ -1385,22 +1388,39 @@ const Sidebar = () => {
   const renderedMenuItems = isSaaSArea
     ? isPlatformAccountGlobally
       ? [
-          // Operador do SaaS: sem "Voltar ao CRM" pois não possui CRM
-          { icon: ShieldCheck, label: 'Gest\u00e3o SaaS (Tenants)', href: '/admin/empresas' },
+          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
         ]
       : [
-          // Caso outro perfil acesse a área admin, oferece opção de voltar
           { icon: Home, label: 'Voltar ao CRM', href: '/' },
-          { icon: ShieldCheck, label: 'Gest\u00e3o SaaS (Tenants)', href: '/admin/empresas' },
+          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
         ]
     : menuItems.filter(item => {
+        const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
         const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
+
+        const tenantFeatures = user?.tenantFeatures || user?.tenant?.features || {};
+        const tenantNome = user?.tenantNome || user?.tenant?.nomeFantasia || '';
+        const isSlimpe = tenantNome.toLowerCase().includes('slimpe') || 
+                         (user?.tenantId && String(user.tenantId).toLowerCase().includes('slimpe')) ||
+                         (user?.email && String(user.email).toLowerCase().includes('slimpe'));
+
+        const hasAtivosModule = isSlimpe || Boolean((tenantFeatures as any)?.ativos);
+        const hasEntregasModule = isSlimpe || Boolean((tenantFeatures as any)?.entregas);
+        const hasErpFlexModule = isSlimpe || Boolean((tenantFeatures as any)?.erpflex);
+        
+        if (item.href.startsWith('/ativos') && !hasAtivosModule) {
+          return false;
+        }
+        if (item.href.startsWith('/entrega') && !hasEntregasModule) {
+          return false;
+        }
+        if (item.href.startsWith('/integracoes') && !hasErpFlexModule) {
+          return false;
+        }
         
         if (isPlatformAccount) {
-          // Conta de Operador do SaaS: vê apenas gestão de empresas
           return item.href === '/admin/empresas';
         } else {
-          // Contas de Clientes (como JVS): nunca veem o painel de gestão de SaaS no CRM
           if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
             return false;
           }
