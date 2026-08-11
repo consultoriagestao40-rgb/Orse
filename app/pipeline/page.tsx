@@ -563,7 +563,7 @@ function ProposalsDashboard() {
   }, [filteredProposals, segmentos]);
 
   // ── Menu de Ações Reutilizável ──────────────────────────────────────────────
-  const renderActionMenu = (prop: any) => {
+  const ActionMenu = ({ prop }: { prop: any }) => {
     const [open, setOpen] = useState(false);
     return (
       <div className="relative" onClick={e => e.stopPropagation()}>
@@ -656,7 +656,7 @@ function ProposalsDashboard() {
             )}
             <span className="text-[9px] text-slate-500 font-bold truncate max-w-[120px]">{prop.usuario}</span>
           </div>
-          {renderActionMenu(prop)}
+          <ActionMenu prop={prop} />
         </div>
       </div>
     </div>
@@ -887,7 +887,7 @@ function ProposalsDashboard() {
   ];
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const renderKanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
@@ -1497,7 +1497,7 @@ function ProposalsDashboard() {
                                 <Trash2 size={16} />
                               </button>
                             )}
-                            {renderActionMenu(prop)}
+                            <ActionMenu prop={prop} />
                           </div>
                         </td>
                       </tr>
@@ -1603,24 +1603,24 @@ function ProposalsDashboard() {
                                       }}
                                       onDragEnd={handleDragColumnEnd}
                                     >
-                                      {renderKanbanColumnHeader({
-      label: col.label,
-      color: col.color,
-      cards: col.cards,
-      total: col.total,
-      statusId: col.id,
-      isFirst,
-      isLast,
-      onCreateStatus: handleCreateStatus,
-      onColorChange: async (newColor) => {
-        await updatePropostaStatusParam(col.id, col.label, newColor);
-        setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-      },
-      onRenameColumn: async (newName) => {
-        await updatePropostaStatusParam(col.id, newName);
-        setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
-      }
-    })}
+                                      <KanbanColumnHeader
+                                        label={col.label}
+                                        color={col.color}
+                                        cards={col.cards}
+                                        total={col.total}
+                                        statusId={col.id}
+                                        isFirst={isFirst}
+                                        isLast={isLast}
+                                        onCreateStatus={handleCreateStatus}
+                                        onColorChange={async (newColor) => {
+                                          await updatePropostaStatusParam(col.id, col.label, newColor);
+                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                                        }}
+                                        onRenameColumn={async (newName) => {
+                                          await updatePropostaStatusParam(col.id, newName);
+                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
+                                        }}
+                                      />
                                     </div>
                                     {renderKanbanColumnCards({
       label: col.label,
