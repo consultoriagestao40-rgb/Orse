@@ -1497,7 +1497,7 @@ function ProposalsDashboard() {
                                 <Trash2 size={16} />
                               </button>
                             )}
-                            <ActionMenu prop={prop} />
+                            {renderActionMenu(prop)}
                           </div>
                         </td>
                       </tr>
