@@ -13,6 +13,15 @@ const nextConfig = {
       bodySizeLimit: '15mb',
     },
   },
+  async redirects() {
+    return [
+      {
+        source: '/pipaline',
+        destination: '/pipeline',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
