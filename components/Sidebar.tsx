@@ -1,7 +1,6 @@
 'use client';
- 
+
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
