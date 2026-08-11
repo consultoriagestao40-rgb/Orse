@@ -1579,7 +1579,7 @@ export default function AtivosPage() {
                               </td>
                               <td className="px-6 py-3.5 text-xs text-slate-650 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
                               <td className="px-6 py-3.5 text-center text-xs text-slate-600">
-                                {new Date(contrato.dataInicio).toLocaleDateString('pt-BR')}
+                                {new Date(contrato.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                               </td>
                               <td className="px-6 py-3.5 text-center text-xs font-bold text-slate-800">
                                 {contrato.vigenciaMeses} Meses

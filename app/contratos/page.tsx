@@ -115,7 +115,7 @@ function ContractCard({ c }: { c: any }) {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-            📅 {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}
+            📅 {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'A definir'}
           </p>
           <span className="text-xs font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
         </div>
@@ -1056,10 +1056,10 @@ export default function ContratosDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-3 text-slate-500 font-mono text-xs">{new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                          <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : '-'}</td>
+                          <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
                           <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.vigenciaMeses}m</td>
                           <td className="px-6 py-3 text-center text-slate-600">{renderVencimento(c.dataInicio, c.vigenciaMeses)}</td>
-                          <td className="px-6 py-3 text-center text-orange-600 font-bold">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : '-'}</td>
+                          <td className="px-6 py-3 text-center text-orange-600 font-bold">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
                           <td className="px-6 py-3 text-right font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</td>
                           <td className="px-6 py-3 text-center">
                             <span className="text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider border shadow-2xs"

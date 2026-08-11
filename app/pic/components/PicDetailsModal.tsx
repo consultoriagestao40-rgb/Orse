@@ -528,7 +528,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const FPVRev = meta.revisao || 'R01';
   const vendedor = proposta.user || {};
   const formattedDataInicio = contrato.dataInicio 
-    ? new Date(contrato.dataInicio).toLocaleDateString('pt-BR') 
+    ? new Date(contrato.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) 
     : 'Não definida';
   const formattedVigencia = contrato.vigenciaMeses 
     ? `${contrato.vigenciaMeses} meses` 
