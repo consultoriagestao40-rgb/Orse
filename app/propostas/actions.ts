@@ -613,6 +613,19 @@ export async function saveProposta(data: any) {
       });
     }
 
+    // Se existir um contrato vinculado a esta FPV, atualiza automaticamente o valor mensal e total do contrato
+    const existingContrato = await prisma.contrato.findUnique({ where: { propostaId } });
+    if (existingContrato) {
+      await prisma.contrato.update({
+        where: { id: existingContrato.id },
+        data: {
+          valorMensal: finalPrecoVenda,
+          valorTotal: finalPrecoVenda * (existingContrato.vigenciaMeses || 12)
+        }
+      }).catch(err => console.error('Erro ao sincronizar valor do contrato:', err));
+      revalidatePath('/contratos');
+    }
+
     await prisma.auditLog.create({
       data: {
         propostaId,

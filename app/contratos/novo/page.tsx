@@ -45,7 +45,8 @@ export default function NovoContrato() {
     
     // Pegar o valor mensal da proposta selecionada (da última versão)
     const prop = propostas.find(p => p.id === selectedProposta);
-    const valorMensal = prop?.versoes?.[0]?.precoVenda || 0;
+    const latestVersao = prop?.versoes ? [...prop.versoes].sort((a: any, b: any) => (b.versao || 0) - (a.versao || 0))[0] : null;
+    const valorMensal = latestVersao?.precoVenda || 0;
 
     const res = await createContratoFromFPV(selectedProposta, selectedEmpresa, selectedTemplate, valorMensal);
     if (res.success) {
