@@ -13,6 +13,8 @@ interface ClientLinkModalProps {
   onSaveSuccess?: (newConfig: any) => void;
 }
 
+const DEFAULT_CANVA_URL = 'https://www.canva.com/design/DAHJGeDzZ9E/A-eHiCzu4BxzaqCpL5kP7w/view?embed';
+
 export default function ClientLinkModal({ documentoId, configApresentacao, onClose, onSaveSuccess }: ClientLinkModalProps) {
   const [loading, setLoading] = useState(false);
   const [loadingFullConfig, setLoadingFullConfig] = useState(true);
@@ -36,7 +38,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     configApresentacao?.clientTabs?.minutaTemplateId || ''
   );
   const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
-    configApresentacao?.canvaEmbedUrl || ''
+    configApresentacao?.canvaEmbedUrl || DEFAULT_CANVA_URL
   );
 
   // Novos Estados
@@ -115,7 +117,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             setFaq(config.clientTabs.faq === true);
           }
           if (config.videoUrl) setVideoUrl(config.videoUrl);
-          if (config.canvaEmbedUrl) setCanvaEmbedUrl(config.canvaEmbedUrl);
+          setCanvaEmbedUrl(config.canvaEmbedUrl || DEFAULT_CANVA_URL);
           if (config.validadeDays) setValidadeDays(config.validadeDays);
         }
       } catch (err) {
@@ -171,7 +173,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
       setFotosList(prev => [...prev, ...urls]);
     } catch (err: any) {
       console.error(err);
-      alert('Erro ao carregar arquivos: ' + err.message);
+      alert('Erro ao carregar fotos: ' + err.message);
     } finally {
       setUploadingFotos(false);
       e.target.value = '';
@@ -219,10 +221,11 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
     setLoading(true);
     try {
+      const finalCanvaUrl = (canvaEmbedUrl || '').trim() || DEFAULT_CANVA_URL;
       const newConfig = {
         ...(configApresentacao || {}),
-        useCanva: apresentacao && !!canvaEmbedUrl.trim(),
-        canvaEmbedUrl: canvaEmbedUrl.trim(),
+        useCanva: apresentacao,
+        canvaEmbedUrl: finalCanvaUrl,
         clientTabs: {
           apresentacao,
           proposta,

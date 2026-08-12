@@ -596,8 +596,10 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
   
+  const DEFAULT_CANVA_URL = 'https://www.canva.com/design/DAHJGeDzZ9E/A-eHiCzu4BxzaqCpL5kP7w/view?embed';
+
   // Real-time Canva URL normalization & sanitization on the client view
-  let rawCanvaUrl = doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || '';
+  let rawCanvaUrl = doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || DEFAULT_CANVA_URL;
   if (rawCanvaUrl && rawCanvaUrl.includes('canva.com/design/')) {
     if (rawCanvaUrl.includes('<iframe')) {
       const match = rawCanvaUrl.match(/src="([^"]+)"/);
@@ -618,7 +620,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
   const canvaUrl = doc.id === 'cmpsloy27000004jlxvb5n9xo'
     ? 'https://www.canva.com/design/DAHCXKiLmiQ/v3lyl52DMCmsHRbgxx8uHQ/view?embed'
-    : rawCanvaUrl;
+    : (rawCanvaUrl || DEFAULT_CANVA_URL);
   const hasCanva = !!canvaUrl;
 
   const videoUrl = doc.configApresentacao?.videoUrl || '';
