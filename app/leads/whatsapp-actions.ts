@@ -633,3 +633,99 @@ export async function updateLeadQuickDetails(leadId: string, data: { nomeFantasi
     return { success: false, error: err.message };
   }
 }
+
+export async function syncZApiContactProfile(leadId: string) {
+  try {
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { id: true, telefone: true, tenantId: true, nomeFantasia: true, fotoUrl: true }
+    });
+    if (!lead || !lead.telefone || !lead.tenantId) return { success: false, error: 'Lead ou telefone não encontrado' };
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: lead.tenantId },
+      select: { whatsappInstanceId: true, whatsappToken: true, whatsappClientToken: true }
+    });
+    if (!tenant || !tenant.whatsappInstanceId || !tenant.whatsappToken) {
+      return { success: false, error: 'Instância do WhatsApp não configurada' };
+    }
+
+    const cleanPhone = lead.telefone.replace(/\D/g, '');
+    const instanceId = tenant.whatsappInstanceId;
+    const token = tenant.whatsappToken;
+    const clientToken = tenant.whatsappClientToken || process.env.ZAPI_CLIENT_TOKEN || '';
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (clientToken) headers['Client-Token'] = clientToken;
+
+    let photoUrl: string | null = null;
+    let name: string | null = null;
+
+    // 1. Tentar buscar foto de perfil via Z-API /profile-picture
+    try {
+      const photoRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/profile-picture?phone=${cleanPhone}`, { headers });
+      if (photoRes.ok) {
+        const photoData = await photoRes.json();
+        if (photoData && photoData.link && photoData.link !== 'null') {
+          photoUrl = photoData.link;
+        }
+      }
+    } catch (err) {}
+
+    // 2. Tentar buscar detalhes do contato no /contacts/{phone}
+    try {
+      const contactRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/contacts/${cleanPhone}`, { headers });
+      if (contactRes.ok) {
+        const contactData = await contactRes.json();
+        name = contactData.name || contactData.pushName || contactData.shortName || contactData.notifyName || null;
+        if (!photoUrl && (contactData.photo || contactData.profilePictureUrl)) {
+          photoUrl = contactData.photo || contactData.profilePictureUrl;
+        }
+      }
+    } catch (err) {}
+
+    // 3. Tentar buscar no /chats
+    if (!name) {
+      try {
+        const chatsRes = await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/chats`, { headers });
+        if (chatsRes.ok) {
+          const chats = await chatsRes.json();
+          if (Array.isArray(chats)) {
+            for (const c of chats) {
+              if (c.phone && !c.isGroup) {
+                const cPhone = c.phone.replace(/\D/g, '');
+                if (cPhone.endsWith(cleanPhone.slice(-8)) || cleanPhone.endsWith(cPhone.slice(-8))) {
+                  if (c.name) name = c.name;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {}
+    }
+
+    const updateData: any = {};
+    if (photoUrl && photoUrl !== lead.fotoUrl) {
+      updateData.fotoUrl = photoUrl;
+    }
+    if (name && name.trim() && (lead.nomeFantasia.startsWith('WhatsApp:') || lead.nomeFantasia === cleanPhone)) {
+      updateData.nomeFantasia = name.trim();
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      const updated = await prisma.lead.update({
+        where: { id: leadId },
+        data: updateData,
+        select: { id: true, nomeFantasia: true, fotoUrl: true }
+      });
+      revalidatePath('/leads');
+      return { success: true, lead: updated };
+    }
+
+    return { success: true, lead: { id: lead.id, nomeFantasia: lead.nomeFantasia, fotoUrl: photoUrl || lead.fotoUrl } };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+

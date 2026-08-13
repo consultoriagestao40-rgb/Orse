@@ -7,7 +7,7 @@ import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } 
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
 import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage, getLeadStages, createLeadStage, updateLeadStageName, updateLeadStageColor, deleteLeadStage, reorderStages } from '@/app/leads/actions';
-import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, updateLeadTags } from '@/app/leads/whatsapp-actions';
+import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, updateLeadTags, syncZApiContactProfile } from '@/app/leads/whatsapp-actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
 import { playWhatsAppChime } from '@/lib/sound';
@@ -2833,9 +2833,13 @@ const Sidebar = () => {
                                 : 'hover:bg-slate-50 bg-white border-transparent'
                             }`}
                           >
-                            <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                              {initials}
-                            </div>
+                            {lead.fotoUrl ? (
+                              <img src={lead.fotoUrl} alt={lead.nomeFantasia} className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200" />
+                            ) : (
+                              <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                {initials}
+                              </div>
+                            )}
                             
                             <div className="flex-1 min-w-0 space-y-1">
                               <div className="flex justify-between items-baseline mb-0.5">
@@ -3020,7 +3024,7 @@ const Sidebar = () => {
                               colLeads.map(lead => {
                                 const isSelected = activeWidgetLead?.id === lead.id;
                                 const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                                const contactAvatarUrl = lead.avatarUrl || lead.photoUrl || lead.profilePicUrl;
+                                const contactAvatarUrl = lead.fotoUrl || lead.avatarUrl || lead.photoUrl || lead.profilePicUrl;
 
                                 return (
                                   <div
@@ -3218,7 +3222,7 @@ const Sidebar = () => {
                                     colLeads.map(lead => {
                                       const isSelected = activeWidgetLead?.id === lead.id;
                                       const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                                      const contactAvatarUrl = lead.avatarUrl || lead.photoUrl || lead.profilePicUrl;
+                                      const contactAvatarUrl = lead.fotoUrl || lead.avatarUrl || lead.photoUrl || lead.profilePicUrl;
 
                                       return (
                                         <div
@@ -3285,13 +3289,33 @@ const Sidebar = () => {
                           {/* Mini Cabeçalho do Chat */}
                           <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
-                                {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                              </div>
+                              {activeWidgetLead.fotoUrl ? (
+                                <img src={activeWidgetLead.fotoUrl} alt={activeWidgetLead.nomeFantasia} className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-200" />
+                              ) : (
+                                <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                  {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                                </div>
+                              )}
                               <div className="min-w-0">
-                                <h4 className="text-xs font-black text-slate-800 truncate leading-none mb-0.5">
-                                  {activeWidgetLead.nomeFantasia}
-                                </h4>
+                                <div className="flex items-center gap-1.5">
+                                  <h4 className="text-xs font-black text-slate-800 truncate leading-none">
+                                    {activeWidgetLead.nomeFantasia}
+                                  </h4>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const res = await syncZApiContactProfile(activeWidgetLead.id);
+                                      if (res.success && res.lead) {
+                                        setActiveWidgetLead((prev: any) => prev ? { ...prev, ...res.lead } : prev);
+                                        setWidgetLeads((prev: any[]) => prev.map(l => l.id === activeWidgetLead.id ? { ...l, ...res.lead } : l));
+                                      }
+                                    }}
+                                    className="text-slate-400 hover:text-emerald-600 transition-colors p-0.5 rounded-md hover:bg-slate-100"
+                                    title="Sincronizar Foto e Perfil do WhatsApp"
+                                  >
+                                    <RefreshCw size={11} />
+                                  </button>
+                                </div>
                                 <span className="text-[10px] text-slate-400 font-semibold">{activeWidgetLead.telefone}</span>
                               </div>
                             </div>
