@@ -472,9 +472,16 @@ export async function saveProposta(data: any) {
     const maoDeObraSubtotal = resultado?.items?.reduce((acc: number, i: any) => acc + (Number(i.precoVenda) || 0), 0) || 0;
     const txAdm = (Number(premissas.taxaAdm) || 5) / 100;
     const txLucro = (Number(premissas.margemLucro) || 10) / 100;
-    const tributosList = Array.isArray(premissas.tributos) ? premissas.tributos : [];
-    const totalTributosPct = tributosList.reduce((acc: number, t: any) => acc + (Number(t.percentual) || 0), 0);
-    const divisorTributos = 1 - (totalTributosPct / 100);
+    const txComissao = (Number(premissas.comissaoVendedor) || 0) / 100;
+
+    const tributosList = Array.isArray(premissas.tributos)
+      ? premissas.tributos
+      : (Array.isArray(premissas.impostos) ? premissas.impostos : []);
+    const totalTributosPct = tributosList.reduce((acc: number, t: any) => acc + (Number(t.percent || t.percentual || t.aliquota) || 0), 0);
+
+    const divisorTributos = (resultado?.divisor && Number(resultado.divisor) > 0)
+      ? Number(resultado.divisor)
+      : (1 - (totalTributosPct / 100) - txComissao);
 
     const insumosDirectCost = finalInsumos.materiais + finalInsumos.maquinas + finalInsumos.descartaveis + finalInsumos.servicos;
     let insumosSubtotal = 0;
@@ -486,7 +493,11 @@ export async function saveProposta(data: any) {
 
     const totalFaturamentoExato = maoDeObraSubtotal + insumosSubtotal;
     let finalCustoTotal = resultado?.custoDiretoTotal || 0;
-    let finalPrecoVenda = (totalFaturamentoExato > 0) ? totalFaturamentoExato : (resultado?.faturamentoBruto || 0);
+
+    // Prioriza o faturamentoBruto vindo do calculo do motor/frontend, se valido (> 0)
+    let finalPrecoVenda = (resultado?.faturamentoBruto && Number(resultado.faturamentoBruto) > 0)
+      ? Number(resultado.faturamentoBruto)
+      : ((totalFaturamentoExato > 0) ? totalFaturamentoExato : 0);
 
     const finalResultado = {
       ...(resultado || {}),
@@ -612,6 +623,12 @@ export async function saveProposta(data: any) {
         }
       });
     }
+
+    // Atualiza o valorTotal de qualquer DocumentoProposta (Proposta Comercial) vinculado a esta FPV
+    await prisma.documentoProposta.updateMany({
+      where: { propostaId },
+      data: { valorTotal: finalPrecoVenda }
+    }).catch(err => console.error('Erro ao sincronizar valor do documento proposta:', err));
 
     // Se existir um contrato vinculado a esta FPV, atualiza automaticamente o valor mensal e total do contrato
     const existingContrato = await prisma.contrato.findUnique({ where: { propostaId }, include: { pic: true } });
