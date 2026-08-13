@@ -3952,9 +3952,9 @@ export default function LeadsKanban() {
                         >
                           {/* Avatar and Initials for Chat List Sidebar Item */}
                           {lead.fotoUrl ? (
-                            <img src={lead.fotoUrl} alt={lead.nomeFantasia} className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200" />
+                            <img src={lead.fotoUrl} alt={lead.nomeFantasia} className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200" />
                           ) : (
-                            <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                            <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-full flex items-center justify-center shrink-0 uppercase border border-blue-100">
                               {getInitials(lead.nomeFantasia)}
                             </div>
                           )}
@@ -4038,9 +4038,9 @@ export default function LeadsKanban() {
                           <div className="p-3 md:p-4 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap justify-between items-center shrink-0 gap-3">
                             <div className="flex items-center gap-2.5 min-w-0">
                               {activeLead.fotoUrl ? (
-                                <img src={activeLead.fotoUrl} alt={activeLead.nomeFantasia} className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-200" />
+                                <img src={activeLead.fotoUrl} alt={activeLead.nomeFantasia} className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200" />
                               ) : (
-                                <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-full flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                   {getInitials(activeLead.nomeFantasia)}
                                 </div>
                               )}

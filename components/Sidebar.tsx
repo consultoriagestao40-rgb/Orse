@@ -2834,9 +2834,9 @@ const Sidebar = () => {
                             }`}
                           >
                             {lead.fotoUrl ? (
-                              <img src={lead.fotoUrl} alt={lead.nomeFantasia} className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200" />
+                              <img src={lead.fotoUrl} alt={lead.nomeFantasia} className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200" />
                             ) : (
-                              <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                              <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-full flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                 {initials}
                               </div>
                             )}
@@ -3237,9 +3237,9 @@ const Sidebar = () => {
                                           <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 truncate">
                                               {contactAvatarUrl ? (
-                                                <img src={contactAvatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                                                <img src={contactAvatarUrl} alt={lead.nomeFantasia} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-200" />
                                               ) : (
-                                                <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                                <div className="w-7 h-7 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-[10px] rounded-full flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                                   {initials}
                                                 </div>
                                               )}
@@ -3290,9 +3290,9 @@ const Sidebar = () => {
                           <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
                             <div className="flex items-center gap-2.5 min-w-0">
                               {activeWidgetLead.fotoUrl ? (
-                                <img src={activeWidgetLead.fotoUrl} alt={activeWidgetLead.nomeFantasia} className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-200" />
+                                <img src={activeWidgetLead.fotoUrl} alt={activeWidgetLead.nomeFantasia} className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200" />
                               ) : (
-                                <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                                <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-full flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                   {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
                                 </div>
                               )}
