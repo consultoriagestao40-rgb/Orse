@@ -89,7 +89,7 @@ function ProposalsDashboard() {
           let order: string[] = [];
           if (type === 'status') {
             const currentCols = statuses.map(s => s.nome);
-            if (proposals.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+            if (proposals.some(p => !p.status || !statuses.find(s => (s.nome || '').toLowerCase() === (p.status || '').toLowerCase()))) {
               currentCols.push('Sem Status');
             }
             order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
@@ -148,7 +148,7 @@ function ProposalsDashboard() {
 
     if (type === 'status') {
       const currentCols = statuses.map(s => s.nome);
-      if (proposals.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+      if (proposals.some(p => !p.status || !statuses.find(s => (s.nome || '').toLowerCase() === (p.status || '').toLowerCase()))) {
         currentCols.push('Sem Status');
       }
       
@@ -491,13 +491,13 @@ function ProposalsDashboard() {
 
   const getStatusStyle = (statusNome: string) => {
     if (!statusNome) return 'bg-slate-100 text-slate-600 border border-slate-200';
-    const found = statuses.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
+    const found = statuses.find(s => (s.nome || '').toLowerCase() === (statusNome || '').toLowerCase());
     return found?.color || 'bg-slate-100 text-slate-600 border border-slate-200';
   };
 
   const filteredProposals = proposals.filter(p =>
-    p.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.numero || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.usuario || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -508,7 +508,7 @@ function ProposalsDashboard() {
 
   // ── Dados para Kanban por Status ────────────────────────────────────────────
   const kanbanStatusCols = statuses.map(s => {
-    const cards = filteredProposals.filter(p => (p.status || '').toLowerCase() === s.nome.toLowerCase());
+    const cards = filteredProposals.filter(p => (p.status || '').toLowerCase() === (s.nome || '').toLowerCase());
     return {
       id: s.id,
       label: s.nome,
@@ -518,7 +518,7 @@ function ProposalsDashboard() {
     };
   });
   // Propostas sem status mapeado
-  const semStatus = filteredProposals.filter(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()));
+  const semStatus = filteredProposals.filter(p => !p.status || !statuses.find(s => (s.nome || '').toLowerCase() === (p.status || '').toLowerCase()));
   if (semStatus.length > 0) {
     kanbanStatusCols.push({
       id: 'sem-status',

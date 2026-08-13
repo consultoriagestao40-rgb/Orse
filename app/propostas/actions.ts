@@ -717,9 +717,9 @@ export async function getPropostas(preFetchedUser?: any) {
         valor: meta.resultado?.faturamentoBruto || lastVersao?.precoVenda || 0,
         status: p.status,
         versao: lastVersao?.versao || 1,
-        usuario: p.user.nome,
-        userId: p.user.id,
-        avatarUrl: p.user.avatarUrl,
+        usuario: p.user?.nome || 'Usuário',
+        userId: p.user?.id || p.userId || '',
+        avatarUrl: p.user?.avatarUrl || null,
         shares: p.shares
       };
     });

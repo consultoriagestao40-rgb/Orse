@@ -208,7 +208,7 @@ export default function PropostasComerciaisDashboard() {
           let order: string[] = [];
           if (type === 'status') {
             const currentCols = statuses.map(s => s.nome);
-            if (docs.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+            if (docs.some(p => !p.status || !statuses.find(s => (s.nome || '').toLowerCase() === (p.status || '').toLowerCase()))) {
               currentCols.push('Sem Status');
             }
             order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
@@ -267,7 +267,7 @@ export default function PropostasComerciaisDashboard() {
 
     if (type === 'status') {
       const currentCols = statuses.map(s => s.nome);
-      if (docs.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+      if (docs.some(p => !p.status || !statuses.find(s => (s.nome || '').toLowerCase() === (p.status || '').toLowerCase()))) {
         currentCols.push('Sem Status');
       }
       
@@ -485,7 +485,7 @@ export default function PropostasComerciaisDashboard() {
 
   const getStatusStyle = (statusNome: string) => {
     if (!statusNome) return 'bg-slate-100 text-slate-600';
-    const found = statuses.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
+    const found = statuses.find(s => (s.nome || '').toLowerCase() === (statusNome || '').toLowerCase());
     if (found) {
       const hStyle = getHighlightedColorClass(found.color || '');
       return `${hStyle.bg} ${hStyle.text} border ${hStyle.border}`;
@@ -494,14 +494,14 @@ export default function PropostasComerciaisDashboard() {
   };
 
   const filteredDocs = docs.filter(d =>
-    String(d.numeroFPV).includes(searchTerm.toLowerCase()) ||
-    d.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(d.numeroFPV || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (d.usuario || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // ── Dados para Kanban por Status ────────────────────────────────────────────
   const kanbanStatusCols = statuses.map(s => {
-    const cards = filteredDocs.filter(d => d.status.toLowerCase() === s.nome.toLowerCase());
+    const cards = filteredDocs.filter(d => (d.status || '').toLowerCase() === (s.nome || '').toLowerCase());
     return {
       id: s.id,
       label: s.nome,
