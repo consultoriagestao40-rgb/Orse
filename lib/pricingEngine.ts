@@ -1,10 +1,11 @@
 import { EnterpriseCalculationResult } from '@/types/enterprise';
 
 export function calculateLaborCost(colab: any, premissas: any): any {
-  if (colab.tipoItem === 'SPOT') {
-    const qtyDemanda = Number(colab.quantidadeDemanda || 0);
+  const isSpot = colab.tipoItem === 'SPOT' || premissas?.isSpot || premissas?.tipoProposta === 'SPOT';
+  if (isSpot) {
+    const qtyDemanda = Number(colab.quantidadeDemanda ?? colab.quantidade ?? 1);
     const unit = colab.unidadeMedida || 'DIA';
-    const precoUnitDemanda = Number(colab.precoUnitarioDemanda || 0);
+    const precoUnitDemanda = Number(colab.precoUnitarioDemanda ?? 0);
     const configAtivos = colab.ativosConfig || {};
     
     const totalMensalMaoObra = Number(configAtivos.custoMensalMaoObra || 0);
@@ -266,9 +267,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 }
 
 export function calculateEnterprisePrice(proposal: any): any {
-  const { items, impostos, margens, reservaTecnicaPct, manutencaoPct, encargos, insumosGlobais } = proposal;
+  const { items = [], impostos, margens, reservaTecnicaPct, manutencaoPct, encargos, insumosGlobais } = proposal;
 
-  const isSpot = items.some((i: any) => i.tipoItem === 'SPOT');
+  const isSpot = proposal.tipoProposta === 'SPOT' || proposal.cliente?.tipoProposta === 'SPOT' || items.some((i: any) => i.tipoItem === 'SPOT');
 
   let custoDiretoTotal = 0;
   
@@ -297,21 +298,26 @@ export function calculateEnterprisePrice(proposal: any): any {
   let faturamentoServicosSpot = 0;
 
   const itemResults = items.map((item: any) => {
-    const res = calculateLaborCost(item, {
-      reservaTecnicaPct: margens?.reservaTecnicaPct || reservaTecnicaPct,
-      manutencaoPct: margens?.manutencaoPct || manutencaoPct,
-      encargos,
-      cctGlobal: proposal.cctGlobal,
-      maquinas: Number(proposal.insumosGlobais?.maquinas) || 0,
-      totalEquipeQuantidade: totalEquipeQtd
-    });
+    const isItemSpot = isSpot || item.tipoItem === 'SPOT';
+    const res = calculateLaborCost(
+      { ...item, tipoItem: isItemSpot ? 'SPOT' : (item.tipoItem || 'POSTO_FIXO') },
+      {
+        reservaTecnicaPct: margens?.reservaTecnicaPct || reservaTecnicaPct,
+        manutencaoPct: margens?.manutencaoPct || manutencaoPct,
+        encargos,
+        cctGlobal: proposal.cctGlobal,
+        maquinas: Number(proposal.insumosGlobais?.maquinas) || 0,
+        totalEquipeQuantidade: totalEquipeQtd,
+        isSpot: isItemSpot
+      }
+    );
     
     // CÁLCULO EM CASCATA SOLICITADO:
     // 1. Custo Direto
     const custoD = res.custoTotalDireto;
     let precoVendaItem = 0;
 
-    if (item.tipoItem === 'SPOT') {
+    if (isItemSpot) {
       // 2. Adiciona Taxa Adm sobre o Custo
       const comAdm = custoD * (1 + txAdm);
       // 3. Adiciona Lucro sobre (Custo + Adm)
@@ -332,6 +338,7 @@ export function calculateEnterprisePrice(proposal: any): any {
     
     return {
       ...item,
+      tipoItem: isItemSpot ? 'SPOT' : (item.tipoItem || 'POSTO_FIXO'),
       custoTotal: custoD,
       precoVenda: precoVendaItem,
       detalhes: res

@@ -515,8 +515,10 @@ function PropostaEditor() {
                   tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
                 },
                 equipe: (fullData.equipe || []).map((e: any) => {
+                    const isProposalSpot = (fullData.cliente?.tipoProposta === 'SPOT');
+                    const isItemSpot = isProposalSpot || e.tipoItem === 'SPOT';
                     let healedAtivosConfig = e.ativosConfig || {};
-                    if (e.tipoItem === 'SPOT' && e.equipeTecnicaId) {
+                    if (isItemSpot && e.equipeTecnicaId) {
                        const eq = (eqRes?.success ? eqRes.list : []).find((x: any) => x.id === e.equipeTecnicaId);
                        if (eq) {
                           healedAtivosConfig = {
@@ -530,6 +532,10 @@ function PropostaEditor() {
                     }
                     return {
                        ...e,
+                       tipoItem: isItemSpot ? 'SPOT' : (e.tipoItem || 'POSTO_FIXO'),
+                       quantidadeDemanda: isItemSpot ? Number(e.quantidadeDemanda ?? e.quantidade ?? 1) : e.quantidadeDemanda,
+                       precoUnitarioDemanda: isItemSpot ? Number(e.precoUnitarioDemanda ?? 0) : e.precoUnitarioDemanda,
+                       unidadeMedida: isItemSpot ? (e.unidadeMedida || 'DIA') : e.unidadeMedida,
                        showConfig: false,
                        cctBase: (dataCcts || []).find((c: any) => c.id === (e.cargo?.cctId || savedSindicatoId)) || {},
                        ativosConfig: healedAtivosConfig
@@ -662,28 +668,37 @@ function PropostaEditor() {
   useEffect(() => {
     if (proposta.equipe.length > 0) {
       const selectedCct = ccts.find(c => c.id === proposta.cliente.sindicatoId);
+      const isProposalSpot = proposta.cliente?.tipoProposta === 'SPOT';
 
       // Sanitize and heal ativosConfig for SPOT services dynamically on calculation
       const sanitizedItems = proposta.equipe.map((item: any) => {
-        if (item.tipoItem === 'SPOT' && item.equipeTecnicaId) {
-          const eq = equipesTecnicasDb.find(x => x.id === item.equipeTecnicaId);
-          if (eq) {
-            return {
-              ...item,
-              ativosConfig: {
-                ...item.ativosConfig,
-                custoMensalMaoObra: eq.custoMensalMaoObra,
-                custoMensalVeiculo: eq.custoMensalVeiculo,
-                custoMensalCombustivel: eq.custoMensalCombustivel,
-                custoMensalTotal: eq.custoMensalTotal
-              }
-            };
+        const isItemSpot = isProposalSpot || item.tipoItem === 'SPOT';
+        if (isItemSpot) {
+          const eq = item.equipeTecnicaId ? equipesTecnicasDb.find(x => x.id === item.equipeTecnicaId) : null;
+          let precoUnit = Number(item.precoUnitarioDemanda ?? 0);
+          if (precoUnit <= 0 && eq) {
+            precoUnit = item.unidadeMedida === 'HORA' ? (Number(eq.valorHoraSugerido) || 0) : (Number(eq.valorDiariaSugerido) || 0);
           }
+          return {
+            ...item,
+            tipoItem: 'SPOT',
+            precoUnitarioDemanda: precoUnit,
+            quantidadeDemanda: Number(item.quantidadeDemanda ?? item.quantidade ?? 1),
+            unidadeMedida: item.unidadeMedida || 'DIA',
+            ativosConfig: {
+              ...item.ativosConfig,
+              custoMensalMaoObra: eq?.custoMensalMaoObra || item.ativosConfig?.custoMensalMaoObra || 0,
+              custoMensalVeiculo: eq?.custoMensalVeiculo || item.ativosConfig?.custoMensalVeiculo || 0,
+              custoMensalCombustivel: eq?.custoMensalCombustivel || item.ativosConfig?.custoMensalCombustivel || 0,
+              custoMensalTotal: eq?.custoMensalTotal || item.ativosConfig?.custoMensalTotal || 0
+            }
+          };
         }
         return item;
       });
 
       const calcInput = {
+        tipoProposta: proposta.cliente?.tipoProposta,
         items: sanitizedItems,
         impostos: { total: totalTributos },
         margens: { adm: proposta.premissas.taxaAdm, lucro: proposta.premissas.margemLucro, comissaoVendedor: proposta.premissas.comissaoVendedor },
@@ -1097,7 +1112,7 @@ function PropostaEditor() {
 
   const sumGroup = (g: any) => Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number;
   const totalGeralEncargos = proposta.encargos.grupoA ? (sumGroup(proposta.encargos.grupoA) + sumGroup(proposta.encargos.grupoB) + sumGroup(proposta.encargos.grupoC) + sumGroup(proposta.encargos.grupoD) + sumGroup(proposta.encargos.grupoE) + sumGroup(proposta.encargos.grupoF)) : 0;
-  const isSpot = proposta.equipe.some((e: any) => e.tipoItem === 'SPOT');
+  const isSpot = proposta.cliente?.tipoProposta === 'SPOT' || proposta.equipe.some((e: any) => e.tipoItem === 'SPOT');
  
   const normalizeText = (text: string) => {
     if (!text) return "";
@@ -1503,9 +1518,14 @@ function PropostaEditor() {
                            <button
                               type="button"
                               onClick={() => {
+                                 const updatedEquipe = proposta.equipe.map((p: any) => ({
+                                    ...p,
+                                    tipoItem: 'POSTO_FIXO'
+                                 }));
                                  setProposta({
                                     ...proposta,
-                                    cliente: { ...proposta.cliente, tipoProposta: 'RECORRENTE' }
+                                    cliente: { ...proposta.cliente, tipoProposta: 'RECORRENTE' },
+                                    equipe: updatedEquipe
                                  });
                               }}
                               className={`flex-1 text-center py-2.5 text-xs font-black rounded-lg uppercase tracking-wide transition-all ${proposta.cliente.tipoProposta !== 'SPOT' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
@@ -1515,9 +1535,16 @@ function PropostaEditor() {
                            <button
                               type="button"
                               onClick={() => {
+                                 const updatedEquipe = proposta.equipe.map((p: any) => ({
+                                    ...p,
+                                    tipoItem: 'SPOT',
+                                    quantidadeDemanda: p.quantidadeDemanda ?? p.quantidade ?? 1,
+                                    unidadeMedida: p.unidadeMedida || 'DIA'
+                                 }));
                                  setProposta({
                                     ...proposta,
-                                    cliente: { ...proposta.cliente, tipoProposta: 'SPOT' }
+                                    cliente: { ...proposta.cliente, tipoProposta: 'SPOT' },
+                                    equipe: updatedEquipe
                                  });
                               }}
                               className={`flex-1 text-center py-2.5 text-xs font-black rounded-lg uppercase tracking-wide transition-all ${proposta.cliente.tipoProposta === 'SPOT' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
@@ -1959,7 +1986,7 @@ function PropostaEditor() {
                                           value={p.quantidadeDemanda ?? 1} 
                                           onChange={(e) => {
                                              const val = e.target.value === '' ? '' : Number(e.target.value);
-                                             const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, quantidadeDemanda: val} : x);
+                                             const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, tipoItem: 'SPOT', quantidadeDemanda: val} : x);
                                              setProposta({...proposta, equipe: newE});
                                           }} 
                                        />
@@ -1975,10 +2002,13 @@ function PropostaEditor() {
                                                 const preco = p.unidadeMedida === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido;
                                                 const newE = proposta.equipe.map((x: any) => x.id === p.id ? {
                                                    ...x, 
+                                                   tipoItem: 'SPOT',
                                                    nomeCargo: eq.nome, 
                                                    equipeTecnicaId: eq.id, 
                                                    precoUnitarioDemanda: preco,
                                                    quantidade: 1,
+                                                   quantidadeDemanda: x.quantidadeDemanda ?? 1,
+                                                   unidadeMedida: x.unidadeMedida || 'DIA',
                                                    ativosConfig: {
                                                       custoMensalMaoObra: eq.custoMensalMaoObra,
                                                       custoMensalVeiculo: eq.custoMensalVeiculo,
@@ -2006,6 +2036,7 @@ function PropostaEditor() {
                                              const preco = eq ? (unit === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido) : 0;
                                              const newE = proposta.equipe.map((x: any) => x.id === p.id ? {
                                                 ...x, 
+                                                tipoItem: 'SPOT',
                                                 unidadeMedida: unit, 
                                                 precoUnitarioDemanda: preco
                                              } : x);
@@ -2026,7 +2057,7 @@ function PropostaEditor() {
                                              value={p.precoUnitarioDemanda ?? 0} 
                                              onChange={(e) => {
                                                 const val = e.target.value === '' ? '' : Number(e.target.value);
-                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, precoUnitarioDemanda: val} : x);
+                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, tipoItem: 'SPOT', precoUnitarioDemanda: val} : x);
                                                 setProposta({...proposta, equipe: newE});
                                              }} 
                                           />
@@ -2230,33 +2261,39 @@ function PropostaEditor() {
                        </tr>
                     </thead>
                     <tbody>
-                       {proposta.equipe.map((p: any, idx: number) => {
-                          const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                          const custoTotal = itemRes?.detalhes?.remuneracao || 0;
-                          const isSpotItem = p.tipoItem === 'SPOT';
-                          const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
-                          const custoUnitario = isSpotItem ? (custoTotal / qty) : custoTotal;
-                          const totalLinha = isSpotItem ? custoTotal : (custoTotal * p.quantidade);
-                          return (
-                             <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50">
-                                <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
-                                <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
-                                {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
-                                <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
-                                <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalLinha)}</td>
-                             </tr>
-                          );
-                       })}
-                       
-                       {/* Total Função */}
-                       <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
-                          <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 text-right">Total Função</td>
-                          <td className="py-1.5 px-6 text-right">
-                             {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0)}
-                          </td>
-                       </tr>
+                        {proposta.equipe.map((p: any, idx: number) => {
+                           const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
+                           const isSpotItem = isSpot || p.tipoItem === 'SPOT';
+                           const qty = isSpotItem ? Number(p.quantidadeDemanda ?? p.quantidade ?? 1) : Number(p.quantidade || 1);
+                           const custoTotal = itemRes?.detalhes?.remuneracao ?? itemRes?.custoTotal ?? (isSpotItem ? (qty * Number(p.precoUnitarioDemanda || 0)) : 0);
+                           const custoUnitario = isSpotItem ? (Number(p.precoUnitarioDemanda) || (qty > 0 ? custoTotal / qty : 0)) : custoTotal;
+                           const totalLinha = isSpotItem ? custoTotal : (custoTotal * qty);
+                           return (
+                              <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                                 <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
+                                 <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
+                                 {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
+                                 <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
+                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalLinha)}</td>
+                              </tr>
+                           );
+                        })}
+                        
+                        {/* Total Função */}
+                        <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
+                           <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 text-right">Total Função</td>
+                           <td className="py-1.5 px-6 text-right">
+                              {formatCurrency(
+                                 resultado?.items?.reduce((acc: any, i: any) => {
+                                    const isItemSpot = isSpot || i.tipoItem === 'SPOT';
+                                    const remu = i.detalhes?.remuneracao ?? i.custoTotal ?? 0;
+                                    return acc + (isItemSpot ? remu : (remu * (i.quantidade || 1)));
+                                 }, 0) || 0
+                              )}
+                           </td>
+                        </tr>
 
-                       {/* Encargos e Outros */}
+                        {/* Encargos e Outros */}
                         {!isSpot && (
                            <>
                               <tr className="border-b border-slate-200 border-dotted">
@@ -2275,14 +2312,20 @@ function PropostaEditor() {
                               </tr>
                            </>
                         )}
-                       
-                       {/* Total Montante A */}
-                       <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                          <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
-                          <td className="py-2.5 px-6 text-right">
-                             {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
-                          </td>
-                       </tr>
+                        
+                        {/* Total Montante A */}
+                        <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
+                           <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
+                           <td className="py-2.5 px-6 text-right">
+                              {formatCurrency(
+                                 resultado?.items?.reduce((acc: any, i: any) => {
+                                    const isItemSpot = isSpot || i.tipoItem === 'SPOT';
+                                    const bA = i.detalhes?.blocoA ?? i.detalhes?.remuneracao ?? i.custoTotal ?? 0;
+                                    return acc + (isItemSpot ? bA : (bA * (i.quantidade || 1)));
+                                 }, 0) || 0
+                              )}
+                           </td>
+                        </tr>
 
                         {/* MONTANTE B */}
                         <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
