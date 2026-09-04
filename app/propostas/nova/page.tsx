@@ -502,13 +502,14 @@ function PropostaEditor() {
                   itensInclusosExcluidos: fullData.cliente.itensInclusosExcluidos || []
                 },
                 insumos: {
-                  materiais: fullData.insumos.materiais || 0,
-                  maquinas: fullData.insumos.maquinas || 0,
-                  descartaveis: fullData.insumos.descartaveis || 0,
-                  servicos: fullData.insumos.servicos || 0,
-                  servicosDescricao: fullData.insumos.servicosDescricao || '',
-                  detalheMateriais: fullData.insumos.detalheMateriais || [],
-                  detalheMaquinas: fullData.insumos.detalheMaquinas || [],
+                  materiais: fullData.insumos?.materiais || 0,
+                  maquinas: fullData.insumos?.maquinas || 0,
+                  descartaveis: fullData.insumos?.descartaveis || 0,
+                  servicos: fullData.insumos?.servicos || 0,
+                  servicosDescricao: fullData.insumos?.servicosDescricao || '',
+                  detalheMateriais: fullData.insumos?.detalheMateriais || [],
+                  detalheMaquinas: fullData.insumos?.detalheMaquinas || [],
+                  detalheDescartaveis: fullData.insumos?.detalheDescartaveis || [],
                 },
                 premissas: {
                   ...fullData.premissas,
@@ -542,7 +543,6 @@ function PropostaEditor() {
                     };
                  }),
                 versao: fullData.versao,
-                insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
                 dreEncargos: (fullData as any).dreEncargos,
                 encargos: (fullData as any).encargos || proposta.encargos,
                 itensInclusosExcluidos: (fullData.cliente as any).itensInclusosExcluidos || [

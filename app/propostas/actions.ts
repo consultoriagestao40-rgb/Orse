@@ -452,21 +452,62 @@ export async function saveProposta(data: any) {
       numeroProposta = formattedNumero;
     }
 
-    // Preserva os insumos da versão anterior caso os insumos fornecidos estejam vazios ao criar nova versão
+    // Preserva os insumos da versão anterior caso os insumos fornecidos não tenham sido enviados
     const lastVersionMeta = (lastVersion?.metadados as any) || {};
     const previousInsumos = lastVersionMeta.insumos || {};
     
-    const inputInsumos = data.insumos || {};
+    const inputInsumos = data.insumos;
     const finalInsumos = {
-      materiais: inputInsumos.materiais !== undefined ? Number(inputInsumos.materiais || 0) : Number(previousInsumos.materiais || 0),
-      maquinas: inputInsumos.maquinas !== undefined ? Number(inputInsumos.maquinas || 0) : Number(previousInsumos.maquinas || 0),
-      descartaveis: inputInsumos.descartaveis !== undefined ? Number(inputInsumos.descartaveis || 0) : Number(previousInsumos.descartaveis || 0),
-      servicos: inputInsumos.servicos !== undefined ? Number(inputInsumos.servicos || 0) : Number(previousInsumos.servicos || 0),
-      servicosDescricao: inputInsumos.servicosDescricao || previousInsumos.servicosDescricao || '',
-      detalheMateriais: (inputInsumos.detalheMateriais && inputInsumos.detalheMateriais.length > 0) ? inputInsumos.detalheMateriais : (previousInsumos.detalheMateriais || []),
-      detalheMaquinas: (inputInsumos.detalheMaquinas && inputInsumos.detalheMaquinas.length > 0) ? inputInsumos.detalheMaquinas : (previousInsumos.detalheMaquinas || []),
-      detalheDescartaveis: (inputInsumos.detalheDescartaveis && inputInsumos.detalheDescartaveis.length > 0) ? inputInsumos.detalheDescartaveis : (previousInsumos.detalheDescartaveis || [])
+      materiais: (inputInsumos && inputInsumos.materiais !== undefined)
+        ? Number(inputInsumos.materiais || 0)
+        : Number(previousInsumos.materiais || 0),
+      maquinas: (inputInsumos && inputInsumos.maquinas !== undefined)
+        ? Number(inputInsumos.maquinas || 0)
+        : Number(previousInsumos.maquinas || 0),
+      descartaveis: (inputInsumos && inputInsumos.descartaveis !== undefined)
+        ? Number(inputInsumos.descartaveis || 0)
+        : Number(previousInsumos.descartaveis || 0),
+      servicos: (inputInsumos && inputInsumos.servicos !== undefined)
+        ? Number(inputInsumos.servicos || 0)
+        : Number(previousInsumos.servicos || 0),
+      servicosDescricao: (inputInsumos && inputInsumos.servicosDescricao !== undefined)
+        ? inputInsumos.servicosDescricao
+        : (previousInsumos.servicosDescricao || ''),
+      detalheMateriais: (inputInsumos && Array.isArray(inputInsumos.detalheMateriais))
+        ? inputInsumos.detalheMateriais
+        : (previousInsumos.detalheMateriais || []),
+      detalheMaquinas: (inputInsumos && Array.isArray(inputInsumos.detalheMaquinas))
+        ? inputInsumos.detalheMaquinas
+        : (previousInsumos.detalheMaquinas || []),
+      detalheDescartaveis: (inputInsumos && Array.isArray(inputInsumos.detalheDescartaveis))
+        ? inputInsumos.detalheDescartaveis
+        : (previousInsumos.detalheDescartaveis || [])
     };
+
+    // Garantir consistência estrita entre listas de detalhes e os valores agregados:
+    if (Array.isArray(finalInsumos.detalheMateriais)) {
+      if (finalInsumos.detalheMateriais.length === 0) {
+        finalInsumos.materiais = 0;
+      } else if (inputInsumos && Array.isArray(inputInsumos.detalheMateriais)) {
+        finalInsumos.materiais = finalInsumos.detalheMateriais.reduce((acc: number, x: any) => acc + (Number(x.custoMensal) || 0), 0);
+      }
+    }
+
+    if (Array.isArray(finalInsumos.detalheMaquinas)) {
+      if (finalInsumos.detalheMaquinas.length === 0) {
+        finalInsumos.maquinas = 0;
+      } else if (inputInsumos && Array.isArray(inputInsumos.detalheMaquinas)) {
+        finalInsumos.maquinas = finalInsumos.detalheMaquinas.reduce((acc: number, x: any) => acc + (Number(x.custoMensal) || 0), 0);
+      }
+    }
+
+    if (Array.isArray(finalInsumos.detalheDescartaveis)) {
+      if (finalInsumos.detalheDescartaveis.length === 0) {
+        finalInsumos.descartaveis = 0;
+      } else if (inputInsumos && Array.isArray(inputInsumos.detalheDescartaveis)) {
+        finalInsumos.descartaveis = finalInsumos.detalheDescartaveis.reduce((acc: number, x: any) => acc + (Number(x.custoMensal) || 0), 0);
+      }
+    }
 
     // Garante sincronismo 100% exato entre o Preço de Venda da Mão de Obra + Insumos em Cascata e o total salvo no Banco
     const maoDeObraSubtotal = resultado?.items?.reduce((acc: number, i: any) => acc + (Number(i.precoVenda) || 0), 0) || 0;
@@ -1016,6 +1057,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       }
     }
 
+    returnObj.resultado = resultado;
     if (returnObj.availableVersions && returnObj.availableVersions.length > 0) {
       returnObj.availableVersions[0].resultado = resultado;
     }

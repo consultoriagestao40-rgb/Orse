@@ -389,10 +389,20 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
   const rawTotalEquipe = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
   
-  const vMateriais = applyCascata(proposta.insumos?.materiais || 0);
-  const vMaquinas = applyCascata(isSpot ? totalMaquinasNaoLocadas : (proposta.insumos?.maquinas || 0));
-  const vDescartaveis = applyCascata(proposta.insumos?.descartaveis || 0);
-  const vServicos = applyCascata(isSpot ? totalMaquinasLocadas : (proposta.insumos?.servicos || 0));
+  const detalheMateriais = proposta.insumos?.detalheMateriais || [];
+  const detalheDescartaveis = proposta.insumos?.detalheDescartaveis || [];
+  const vMateriais = (detalheMateriais.length === 0 && (!proposta.insumos?.materiais || Number(proposta.insumos.materiais) === 0))
+    ? 0
+    : applyCascata(proposta.insumos?.materiais || 0);
+  const vMaquinas = (detalheMaquinas.length === 0 && (!proposta.insumos?.maquinas || Number(proposta.insumos.maquinas) === 0))
+    ? 0
+    : applyCascata(isSpot ? totalMaquinasNaoLocadas : (proposta.insumos?.maquinas || 0));
+  const vDescartaveis = (detalheDescartaveis.length === 0 && (!proposta.insumos?.descartaveis || Number(proposta.insumos.descartaveis) === 0))
+    ? 0
+    : applyCascata(proposta.insumos?.descartaveis || 0);
+  const vServicos = (detalheMaquinas.length === 0 && (!proposta.insumos?.servicos || Number(proposta.insumos.servicos) === 0))
+    ? 0
+    : applyCascata(isSpot ? totalMaquinasLocadas : (proposta.insumos?.servicos || 0));
   
   const totalInsumos = vMateriais + vMaquinas + vDescartaveis + vServicos;
   

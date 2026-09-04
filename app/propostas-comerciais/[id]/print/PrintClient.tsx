@@ -223,7 +223,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
         <div className="w-[210mm] max-w-full bg-white shadow-2xl p-0 print:shadow-none print:w-full">
           <DocumentoA4
             proposta={mergedProposta}
-            resultado={versao?.resultado}
+            resultado={versao?.resultado || fullProposta?.resultado}
             empresaEmissora={doc.empresaEmissora}
             isPublicView={true}
           />
