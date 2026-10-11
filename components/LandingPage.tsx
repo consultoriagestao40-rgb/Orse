@@ -149,7 +149,7 @@ export default function LandingPage() {
     const targets: Element[] = [];
     root.querySelectorAll('section h2, [data-reveal]').forEach(el => {
       if (!below(el)) return;
-      el.classList.add(el.hasAttribute('data-reveal-scale') ? 'lp-reveal-scale' : 'lp-reveal');
+      el.classList.add(el.tagName === 'H2' ? 'lp-reveal-clip' : el.hasAttribute('data-reveal-scale') ? 'lp-reveal-scale' : 'lp-reveal');
       targets.push(el);
     });
     root.querySelectorAll('[data-stagger]').forEach(group => {
@@ -177,6 +177,8 @@ export default function LandingPage() {
       const r = el.getBoundingClientRect();
       el.style.setProperty('--mx', `${e.clientX - r.left}px`);
       el.style.setProperty('--my', `${e.clientY - r.top}px`);
+      el.style.setProperty('--nx', ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+      el.style.setProperty('--ny', ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
     };
     root.addEventListener('pointermove', onMove);
 
@@ -281,8 +283,7 @@ export default function LandingPage() {
             <a
               id="header-teste-gratis"
               href="/cadastro"
-              className="lp-btn lp-btn-dark text-[14px] font-semibold text-white px-4 py-2 rounded-full"
-              style={{ background: C.green }}
+              className="lp-btn lp-btn-orange text-[14px] font-semibold px-4 py-2 rounded-full"
             >
               Testar grátis por 7 dias
             </a>
@@ -304,8 +305,7 @@ export default function LandingPage() {
               <a href="/login" className="flex-1 text-center py-2.5 rounded-full border text-[14px]" style={{ borderColor: C.line }}>Entrar</a>
               <a
                 href="/cadastro"
-                className="flex-1 text-center py-2.5 rounded-full text-white text-[14px] font-semibold"
-                style={{ background: C.green }}
+                className="lp-btn-orange flex-1 text-center py-2.5 rounded-full text-[14px] font-semibold"
               >
                 Teste grátis
               </a>
@@ -320,59 +320,105 @@ export default function LandingPage() {
         <div className="px-3 sm:px-5">
           <div
             data-spot
-            className="relative overflow-hidden rounded-[28px] text-white text-center px-6 pt-20 md:pt-24 pb-[220px] md:pb-[300px]"
-            style={{ background: C.green }}
+            className="lp-hero-band relative overflow-hidden rounded-[28px] text-white text-center px-6 pt-20 md:pt-24 pb-[220px] md:pb-[300px]"
           >
-            {/* luz em movimento */}
-            <div className="lp-aurora lp-aurora-a" aria-hidden />
-            <div className="lp-aurora lp-aurora-b" aria-hidden />
+            {/* iluminação em camadas */}
+            <div className="lp-beam" aria-hidden />
+            <div className="lp-par absolute inset-0" style={{ '--depth': '-40px' } as React.CSSProperties} aria-hidden>
+              <div className="lp-aurora lp-aurora-a" />
+              <div className="lp-aurora lp-aurora-b" />
+            </div>
             <div className="lp-aurora lp-aurora-c" aria-hidden />
+            <div className="lp-par absolute inset-0" style={{ '--depth': '24px' } as React.CSSProperties} aria-hidden>
+              <div className="lp-sunrise" />
+            </div>
             <div className="lp-band-spot" aria-hidden />
             {/* textura sutil de linhas para dar profundidade */}
             <div
-              className="absolute inset-0 pointer-events-none opacity-[0.07]"
-              style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'linear-gradient(to bottom, black, transparent 85%)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 85%)' }}
+              className="absolute inset-0 pointer-events-none opacity-[0.06]"
+              style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent 80%)' }}
             />
+            <div className="lp-grain" aria-hidden />
             <div className="relative max-w-[980px] mx-auto">
-              <p className="lp-enter inline-flex items-center gap-2 text-[14px] font-medium text-white/80 mb-6" style={{ '--d': '0ms' } as React.CSSProperties}>
-                <span className="lp-live w-1.5 h-1.5 rounded-full bg-[#9FD3BC]" />
+              <p className="lp-enter lp-eyebrow inline-flex items-center gap-2.5 text-[13.5px] font-medium text-white/90 mb-7 pl-3 pr-4 py-1.5 rounded-full" style={{ '--d': '0ms' } as React.CSSProperties}>
+                <span className="relative flex w-2 h-2">
+                  <span className="absolute inset-0 rounded-full animate-ping" style={{ background: '#FF7A2F', opacity: 0.6 }} />
+                  <span className="relative w-2 h-2 rounded-full" style={{ background: '#FF7A2F' }} />
+                </span>
                 Plataforma para prestadoras de serviços terceirizados
               </p>
-              <h1 className="text-[38px] sm:text-[52px] lg:text-[64px] leading-[1.03]" style={{ ...serif, fontWeight: 800 }}>
-                {'Transforme a sua prestadora de serviços numa máquina de contratos previsíveis'.split(' ').map((w, i) => (
+              <h1 className="text-[38px] sm:text-[54px] lg:text-[68px] leading-[1.02]" style={{ ...serif, fontWeight: 800, letterSpacing: '-0.04em', textShadow: '0 2px 30px rgba(0,0,0,0.18)' }}>
+                {'Transforme a sua prestadora de serviços numa máquina de'.split(' ').map((w, i) => (
                   <React.Fragment key={i}>
                     <span className="lp-word" style={{ '--d': `${120 + i * 55}ms` } as React.CSSProperties}>{w}</span>{' '}
                   </React.Fragment>
                 ))}
+                <span className="lp-mark">
+                  <span className="lp-word" style={{ '--d': '620ms' } as React.CSSProperties}>contratos</span>{' '}
+                  <span className="lp-word" style={{ '--d': '675ms' } as React.CSSProperties}>previsíveis</span>
+                  <svg viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden>
+                    <path d="M4 14 C 60 4, 120 4, 170 9 S 260 16, 296 6" />
+                  </svg>
+                </span>
               </h1>
-              <p className="lp-enter mt-6 text-[17px] md:text-[19px] leading-[1.55] text-white/75 max-w-[760px] mx-auto" style={{ '--d': '750ms' } as React.CSSProperties}>
-                Da prospecção de grandes contas à blindagem de margem e reajustes automáticos. Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma.
+              <p className="lp-enter mt-7 text-[17px] md:text-[19px] leading-[1.55] text-white/75 max-w-[720px] mx-auto" style={{ '--d': '750ms' } as React.CSSProperties}>
+                Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma. Da primeira ligação à blindagem de margem.
               </p>
               <div className="lp-enter mt-10 flex flex-col sm:flex-row items-center justify-center gap-3" style={{ '--d': '900ms' } as React.CSSProperties}>
                 <a
                   id="hero-teste-gratis"
                   href="/cadastro"
-                  className="lp-btn lp-pulse group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[15px] font-semibold px-6 py-3.5 rounded-xl"
-                  style={{ color: C.green }}
+                  className="lp-btn lp-btn-orange lp-pulse-orange group w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[15px] font-bold px-7 py-4 rounded-xl"
                 >
                   Começar teste grátis de 7 dias
                   <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </a>
                 <button
                   onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
-                  className="lp-btn lp-btn-dark lp-btn-ghost w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-6 py-3.5 rounded-xl border border-white/40 text-white cursor-pointer hover:bg-white/10"
+                  className="lp-btn lp-btn-dark lp-btn-ghost w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-7 py-4 rounded-xl border border-white/25 bg-white/[0.06] text-white cursor-pointer hover:bg-white/[0.12] backdrop-blur-sm"
                 >
                   Agendar demonstração
                 </button>
               </div>
-              <p className="lp-enter mt-5 text-[13px] text-white/60" style={{ '--d': '1050ms' } as React.CSSProperties}>
-                Crie a conta em 2 minutos · sem cartão de crédito · acesso completo durante o teste
+              <p className="lp-enter mt-6 text-[13px] text-white/60 flex flex-wrap items-center justify-center gap-x-5 gap-y-1" style={{ '--d': '1050ms' } as React.CSSProperties}>
+                {['Conta pronta em 2 minutos', 'Sem cartão de crédito', 'Acesso completo no teste'].map(t => (
+                  <span key={t} className="inline-flex items-center gap-1.5"><Check size={13} style={{ color: '#FF9A5C' }} strokeWidth={3} />{t}</span>
+                ))}
               </p>
             </div>
           </div>
         </div>
 
         <div className="lp-stage lp-enter max-w-[1140px] mx-auto px-6 -mt-[180px] md:-mt-[250px] relative z-10" style={{ '--d': '1100ms' } as React.CSSProperties}>
+          {/* cartões flutuantes: o que acontece enquanto você trabalha */}
+          <div className="lp-float -left-[70px] top-[90px]" style={{ '--d': '2.0s' } as React.CSSProperties} aria-hidden>
+            <div className="lp-float-card rounded-2xl pl-3 pr-4 py-3 flex items-center gap-3 w-[250px]">
+              <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FFF1E8' }}>
+                <Check size={18} style={{ color: '#EA580C' }} strokeWidth={3} />
+              </span>
+              <div className="text-left leading-tight">
+                <p className="text-[13px] font-semibold" style={{ color: C.ink }}>Proposta aprovada</p>
+                <p className="text-[11.5px] mt-0.5" style={{ color: C.muted }}>Hospital São Lucas · agora</p>
+              </div>
+            </div>
+          </div>
+          <div className="lp-float -right-[64px] top-[150px]" style={{ '--d': '2.4s' } as React.CSSProperties} aria-hidden>
+            <div className="lp-float-card rounded-2xl px-4 py-3 w-[210px] text-left">
+              <p className="text-[11.5px]" style={{ color: C.muted }}>Margem bruta do contrato</p>
+              <p className="text-[22px] leading-tight tabular-nums" style={{ ...serif, color: C.green }}>R$ 8.987<span className="text-[13px]" style={{ color: C.muted }}>/mês</span></p>
+              <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: '#EFEDE8' }}>
+                <div className="h-full rounded-full" style={{ width: '62%', background: 'linear-gradient(90deg, #1B4D3E, #EA580C)' }} />
+              </div>
+            </div>
+          </div>
+          <div className="lp-float -right-[40px] top-[380px]" style={{ '--d': '2.8s' } as React.CSSProperties} aria-hidden>
+            <div className="lp-float-card rounded-full pl-2 pr-4 py-2 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: C.greenSoft }}>
+                <Eye size={14} style={{ color: C.green }} />
+              </span>
+              <span className="text-[12.5px] font-medium" style={{ color: C.ink }}>Planilha de custos aberta 9x</span>
+            </div>
+          </div>
           {/* PRODUTO */}
           <div id="produto" className="lp-tilt rounded-[22px] p-2 sm:p-2.5 bg-white/60 backdrop-blur-sm border border-white/70 shadow-[0_40px_80px_-30px_rgba(17,20,24,0.35)]">
             <div className="bg-white rounded-[18px] border overflow-hidden shadow-[0_1px_0_rgba(17,20,24,0.04),0_30px_60px_-30px_rgba(27,77,62,0.35)]" style={{ borderColor: '#DCE5DF' }}>
@@ -783,7 +829,7 @@ export default function LandingPage() {
                 {['Asseio e conservação', 'Portaria', 'Vigilância patrimonial', 'Limpeza hospitalar', 'Manutenção predial', 'Jardinagem', 'Recepção', 'Copeiragem', 'Apoio operacional', 'Facilities industrial'].map(s => (
                   <span key={s} className="flex items-center gap-10 pr-10 text-[20px] md:text-[24px] whitespace-nowrap" style={{ ...serif, fontWeight: 700, color: '#B9B3A8' }}>
                     {s}
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.green }} />
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#EA580C' }} />
                   </span>
                 ))}
               </div>
@@ -1171,7 +1217,7 @@ export default function LandingPage() {
                 <a
                   href={`/cadastro?plano=${encodeURIComponent(p.nome)}`}
                   className="mt-10 w-full py-3 rounded-full text-[14px] font-semibold text-center transition-opacity hover:opacity-90"
-                  style={p.destaque ? { background: '#fff', color: C.ink } : { border: `1px solid ${C.ink}`, color: C.ink }}
+                  style={p.destaque ? { background: '#EA580C', color: '#fff', boxShadow: '0 12px 30px -12px rgba(234,88,12,0.7)' } : { border: `1px solid ${C.ink}`, color: C.ink }}
                 >
                   Testar 7 dias grátis
                 </a>
@@ -1273,8 +1319,7 @@ export default function LandingPage() {
             <a
               id="final-teste-gratis"
               href="/cadastro"
-              className="lp-btn lp-pulse group mt-6 inline-flex items-center gap-2 bg-white text-[15px] font-semibold pl-5 pr-4 py-3 rounded-full"
-              style={{ color: C.ink }}
+              className="lp-btn lp-btn-orange lp-pulse-orange group mt-6 inline-flex items-center gap-2 text-[15px] font-bold pl-5 pr-4 py-3 rounded-full"
             >
               Criar conta grátis
               <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

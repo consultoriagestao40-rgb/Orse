@@ -113,7 +113,7 @@ function CadastroForm() {
       <main className="max-w-[1200px] mx-auto px-6 pb-20 pt-6 lg:pt-12 grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         {/* Coluna de valor */}
         <section className="lg:col-span-6 lg:pt-6">
-          <p className="text-[14px] font-semibold mb-5" style={{ color: C.green }}>
+          <p className="text-[14px] font-semibold mb-5" style={{ color: '#EA580C' }}>
             Teste grátis por 7 dias
           </p>
           <h1 className="text-[36px] sm:text-[46px] leading-[1.05]" style={title}>
@@ -239,8 +239,8 @@ function CadastroForm() {
                 id="cadastro-submit"
                 type="submit"
                 disabled={loading}
-                className="group w-full h-[52px] rounded-xl text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
-                style={{ background: C.green }}
+                className="group w-full h-[52px] rounded-xl text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-12px_rgba(234,88,12,0.8)] disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+                style={{ background: '#EA580C', boxShadow: '0 10px 30px -10px rgba(234,88,12,0.7)' }}
               >
                 {loading ? 'Criando a sua conta…' : (
                   <>
