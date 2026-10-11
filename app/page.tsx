@@ -8,7 +8,8 @@ import {
   ArrowUpRight, Award, Briefcase, Activity, Percent, Filter, 
   Calendar, CheckCircle, Edit2, Check, Target, Zap,
   Building, Wrench, Truck, Smartphone, LogOut, RefreshCw,
-  ChevronRight, Sparkles, Trophy, ArrowRight, Shield, Layers, Flame
+  ChevronRight, Sparkles, Trophy, ArrowRight, Shield, Layers, Flame,
+  PhoneCall, CalendarCheck, FileText, CheckCircle2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
@@ -294,7 +295,46 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
     }
   };
 
-  // Cálculo de meta da empresa
+  // Funil de Vendas em Quantidades (Leads, Contatos, Visitas, Propostas, Vendas)
+  const rawLeadsList = kpis?.leads || [];
+  const filteredLeads = useMemo(() => {
+    return rawLeadsList.filter((l: any) => {
+      if (userFilter !== 'ALL' && l.usuario !== userFilter) return false;
+      const dataCriacaoStr = l.createdAt ? l.createdAt.substring(0, 10) : '';
+      if (startDate && endDate) {
+        return dataCriacaoStr >= startDate && dataCriacaoStr <= endDate;
+      } else if (startDate) {
+        return dataCriacaoStr >= startDate;
+      } else if (endDate) {
+        return dataCriacaoStr <= endDate;
+      }
+      return true;
+    });
+  }, [rawLeadsList, userFilter, startDate, endDate]);
+
+  const funnelCounts = useMemo(() => {
+    const totalLeads = filteredLeads.length;
+    const totalContatos = filteredLeads.filter((l: any) => l.hasContact).length;
+    const totalVisitas = filteredLeads.filter((l: any) => l.hasVisita).length;
+    const totalPropostas = totalPropostasCount;
+    const totalVendas = totalAceitasCount;
+
+    return {
+      leads: totalLeads,
+      contatos: totalContatos,
+      visitas: totalVisitas,
+      propostas: totalPropostas,
+      vendas: totalVendas,
+      // Taxas de conversão entre etapas (%)
+      txLeadsParaContato: totalLeads > 0 ? (totalContatos / totalLeads) * 100 : 0,
+      txContatoParaVisita: totalContatos > 0 ? (totalVisitas / totalContatos) * 100 : 0,
+      txVisitaParaProposta: totalVisitas > 0 ? (totalPropostas / totalVisitas) * 100 : 0,
+      txPropostaParaVenda: totalPropostas > 0 ? (totalVendas / totalPropostas) * 100 : 0,
+      txGlobalLeadsParaVenda: totalLeads > 0 ? (totalVendas / totalLeads) * 100 : 0,
+    };
+  }, [filteredLeads, totalPropostasCount, totalAceitasCount]);
+
+  // Cálculo de meta da empresa (com fallback padrão de R$ 100.000 / vendedor caso não haja meta configurada)
   const totalMetasEmpresa = useMemo(() => {
     return totalSellers.reduce((acc: number, seller: any) => {
       const nome = seller.nome;
@@ -303,10 +343,10 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
       const keyMonth = `${nome}_${currentMonthKey}`;
       const keyDefault = `${nome}_default`;
       
-      let individualMeta = 0;
-      if (metas[keyMonth] && metas[keyMonth] > 0) {
+      let individualMeta = 100000;
+      if (metas[keyMonth] !== undefined && metas[keyMonth] > 0) {
         individualMeta = metas[keyMonth];
-      } else if (metas[keyDefault] && metas[keyDefault] > 0) {
+      } else if (metas[keyDefault] !== undefined && metas[keyDefault] > 0) {
         individualMeta = metas[keyDefault];
       } else if (seller.meta > 0) {
         individualMeta = seller.meta;
@@ -377,24 +417,28 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
       const key = `${userFilter}_${mKey}`;
       const keyDef = `${userFilter}_default`;
       const seller = totalSellers.find((u: any) => u.nome === userFilter);
-      if (metas[key] && metas[key] > 0) {
+      if (metas[key] !== undefined && metas[key] > 0) {
         previsto = metas[key];
-      } else if (metas[keyDef] && metas[keyDef] > 0) {
+      } else if (metas[keyDef] !== undefined && metas[keyDef] > 0) {
         previsto = metas[keyDef];
       } else if (seller?.meta > 0) {
         previsto = seller.meta;
+      } else {
+        previsto = 100000;
       }
     } else {
       totalSellers.forEach((seller: any) => {
         const nome = seller.nome;
         const key = `${nome}_${mKey}`;
         const keyDef = `${nome}_default`;
-        if (metas[key] && metas[key] > 0) {
+        if (metas[key] !== undefined && metas[key] > 0) {
           previsto += metas[key];
-        } else if (metas[keyDef] && metas[keyDef] > 0) {
+        } else if (metas[keyDef] !== undefined && metas[keyDef] > 0) {
           previsto += metas[keyDef];
         } else if (seller.meta > 0) {
           previsto += seller.meta;
+        } else {
+          previsto += 100000;
         }
       });
     }
@@ -444,10 +488,10 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
         const goalKey = `${nome}_${currentMonthKey}`;
         const keyDef = `${nome}_default`;
         
-        let metaVal = 0;
-        if (metas[goalKey] && metas[goalKey] > 0) {
+        let metaVal = 100000;
+        if (metas[goalKey] !== undefined && metas[goalKey] > 0) {
           metaVal = metas[goalKey];
-        } else if (metas[keyDef] && metas[keyDef] > 0) {
+        } else if (metas[keyDef] !== undefined && metas[keyDef] > 0) {
           metaVal = metas[keyDef];
         } else if (seller.meta > 0) {
           metaVal = seller.meta;
@@ -874,6 +918,168 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
 
               </div>
 
+              {/* FUNIL DE VENDAS EM QUANTIDADES (LEADS -> CONTATOS -> VISITAS -> PROPOSTAS -> VENDAS) */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow">
+                
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span 
+                      className="p-2.5 rounded-2xl text-white shadow-xs"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      <Layers size={18} />
+                    </span>
+                    <div>
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        Funil Comercial de Conversão
+                        <span className="text-[10px] font-bold text-slate-500 normal-case bg-slate-100 px-2 py-0.5 rounded-full">
+                          Volume em Quantidades
+                        </span>
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-wide">
+                        Jornada completa: prospecção, primeiro contato, visitas presenciais, propostas emitidas e fechamento
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* INDICADORES RESUMIDOS DE CONVERSÃO DO FUNIL */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="bg-slate-50 border border-slate-200/80 px-3.5 py-1.5 rounded-xl text-center">
+                      <span className="text-[9px] uppercase font-black text-slate-400 block">Conv. Leads → Vendas</span>
+                      <span className="text-xs font-black text-slate-800">{funnelCounts.txGlobalLeadsParaVenda.toFixed(1)}%</span>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-200/80 px-3.5 py-1.5 rounded-xl text-center">
+                      <span className="text-[9px] uppercase font-black text-emerald-600 block">Fechamento Propostas</span>
+                      <span className="text-xs font-black text-emerald-700">{funnelCounts.txPropostaParaVenda.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ETAPAS VISUAIS DO FUNIL CONECTADAS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 relative">
+                  
+                  {/* ETAPA 1: LEADS */}
+                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">1. Leads</span>
+                      <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                        <Users size={15} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">{funnelCounts.leads}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">leads</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Oportunidades no radar</p>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-slate-400">Base total</span>
+                      <span className="font-black text-blue-600">100%</span>
+                    </div>
+                  </div>
+
+                  {/* ETAPA 2: CONTATOS */}
+                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">2. Contatos</span>
+                      <span className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                        <PhoneCall size={15} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">{funnelCounts.contatos}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">contatados</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Primeiro contato ativo</p>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-slate-400">Taxa de contato</span>
+                      <span className="font-black text-indigo-600">{funnelCounts.txLeadsParaContato.toFixed(1)}%</span>
+                    </div>
+                  </div>
+
+                  {/* ETAPA 3: VISITAS / REUNIÕES */}
+                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">3. Visitas</span>
+                      <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                        <CalendarCheck size={15} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">{funnelCounts.visitas}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">visitas</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Vistorias & reuniões</p>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-slate-400">Contato → Visita</span>
+                      <span className="font-black text-amber-600">{funnelCounts.txContatoParaVisita.toFixed(1)}%</span>
+                    </div>
+                  </div>
+
+                  {/* ETAPA 4: PROPOSTAS */}
+                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">4. Propostas</span>
+                      <span className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                        <FileText size={15} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">{funnelCounts.propostas}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">emitidas</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Propostas comerciais</p>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-slate-400">Visita → Proposta</span>
+                      <span className="font-black text-purple-600">
+                        {funnelCounts.visitas > 0 ? `${funnelCounts.txVisitaParaProposta.toFixed(0)}%` : '--'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* ETAPA 5: VENDAS (CONTRATOS) */}
+                  <div 
+                    className="border rounded-2xl p-4 flex flex-col justify-between transition-all"
+                    style={{
+                      backgroundColor: hexToRgba(brandColor, 0.04),
+                      borderColor: hexToRgba(brandColor, 0.25)
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: brandColor }}>
+                        5. Vendas Fechadas
+                      </span>
+                      <span 
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        <CheckCircle2 size={15} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-900">{funnelCounts.vendas}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">fechamentos</span>
+                      </div>
+                      <p className="text-[10px] text-emerald-600 font-bold mt-1">Contratos convertidos</p>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-slate-500">Conversão Propostas</span>
+                      <span className="font-black text-emerald-600">{funnelCounts.txPropostaParaVenda.toFixed(1)}%</span>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
               {/* SEÇÃO PRINCIPAL: RANKING DOS VENDEDORES & MIX DE SERVIÇOS */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 
@@ -1203,7 +1409,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                       <div className="space-y-1.5 text-xs">
                         <div className="flex justify-between items-center">
                           <span className="text-slate-400 font-medium flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: hexToRgba(brandColor, 0.4) }} />
+                            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#6366F1' }} />
                             Meta Prevista:
                           </span>
                           <span className="font-bold text-white">
@@ -1308,7 +1514,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                               y={yPrevisto}
                               width="10"
                               height={Math.max(2, hPrevisto)}
-                              fill={isHovered ? hexToRgba(brandColor, 0.45) : hexToRgba(brandColor, 0.25)}
+                              fill={isHovered ? '#818CF8' : '#6366F1'}
                               rx="3"
                               className="transition-all duration-200"
                             />
@@ -1419,7 +1625,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                     <div className="flex items-center gap-2">
                       <span 
                         className="w-3.5 h-3.5 rounded-md block shadow-xs"
-                        style={{ backgroundColor: hexToRgba(brandColor, 0.3) }}
+                        style={{ backgroundColor: '#6366F1' }}
                       />
                       <span className="text-slate-600">Previsto (Meta)</span>
                     </div>

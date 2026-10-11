@@ -1129,6 +1129,62 @@ export async function getKPIs() {
       };
     });
 
+    // Busca leads e atividades para compor o funil de quantidades
+    let leadsWhere: any = {};
+    if (loggedUser.tenantId) {
+      leadsWhere.tenantId = loggedUser.tenantId;
+    }
+    if (loggedUser.role === 'USER') {
+      leadsWhere.assignedToId = loggedUser.id;
+    } else if (loggedUser.role === 'MANAGER') {
+      const subordinateIds = await getSubordinateIds(loggedUser.id);
+      leadsWhere.assignedToId = { in: [loggedUser.id, ...subordinateIds] };
+    }
+
+    const rawLeads = await prisma.lead.findMany({
+      where: leadsWhere,
+      select: {
+        id: true,
+        nomeFantasia: true,
+        createdAt: true,
+        stageId: true,
+        assignedToId: true,
+        assignedTo: { select: { id: true, nome: true } },
+        stage: { select: { id: true, nome: true, ordem: true } },
+        contacts: { select: { id: true } },
+        activities: { select: { id: true, tipo: true, createdAt: true } },
+        history: { select: { id: true, tipo: true, createdAt: true } }
+      }
+    });
+
+    const mappedLeads = rawLeads.map(l => {
+      const stageName = l.stage?.nome || 'PROSPECT';
+      const stageOrdem = l.stage?.ordem ?? 0;
+      const stageLower = stageName.toLowerCase();
+      
+      const hasContact = (l.contacts?.length > 0) ||
+        (l.history?.some(h => ['LIGACAO', 'EMAIL', 'PROSPECCAO', 'CONTATO'].includes(h.tipo))) ||
+        stageLower.includes('contato') ||
+        (stageOrdem >= 1 && !stageLower.includes('desqual') && !stageLower.includes('arquiv'));
+        
+      const hasVisita = (l.activities?.some(a => a.tipo === 'REUNIAO')) ||
+        (l.history?.some(h => h.tipo === 'REUNIAO')) ||
+        stageLower.includes('reuni') ||
+        stageLower.includes('visita') ||
+        (stageOrdem >= 2 && !stageLower.includes('desqual') && !stageLower.includes('arquiv'));
+
+      return {
+        id: l.id,
+        nome: l.nomeFantasia,
+        usuario: l.assignedTo?.nome || 'Não atribuído',
+        createdAt: l.createdAt.toISOString(),
+        stageName,
+        stageOrdem,
+        hasContact,
+        hasVisita
+      };
+    });
+
     // Busca todos os usuários permitidos do sistema
     const users = await prisma.user.findMany({
       where: usersWhereClause,
@@ -1137,11 +1193,12 @@ export async function getKPIs() {
 
     return {
       propostas: mappedPropostas,
-      usuarios: users.map(u => ({ id: u.id, nome: u.nome || 'Usuário', meta: u.meta || 0 }))
+      usuarios: users.map(u => ({ id: u.id, nome: u.nome || 'Usuário', meta: u.meta || 0 })),
+      leads: mappedLeads
     };
   } catch (error) {
     console.error('Error fetching raw KPIs data:', error);
-    return { propostas: [], usuarios: [] };
+    return { propostas: [], usuarios: [], leads: [] };
   }
 }
 
