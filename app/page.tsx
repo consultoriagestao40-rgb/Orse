@@ -841,12 +841,35 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                     </span>
                   </div>
                   <div className="mt-3">
-                    <p className="text-xl font-black tracking-tight" style={{ color: brandColor }}>
-                      {formatCurrency(totalAceito)}
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-bold mt-1">
-                      {totalAceitasCount} contratos convertidos
-                    </p>
+                    <div className="flex items-baseline justify-between gap-1">
+                      <p className="text-xl font-black tracking-tight" style={{ color: brandColor }}>
+                        {formatCurrency(totalAceito)}
+                      </p>
+                      {totalMetasEmpresa > 0 && (
+                        <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ${
+                          atingidoGeralPct >= 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {atingidoGeralPct.toFixed(1)}% atingido
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500 font-bold">
+                      <span>{totalAceitasCount} {totalAceitasCount === 1 ? 'contrato' : 'contratos'}</span>
+                      {totalMetasEmpresa > 0 && (
+                        <span>Meta: {formatCurrency(totalMetasEmpresa)}</span>
+                      )}
+                    </div>
+                    {totalMetasEmpresa > 0 && (
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500" 
+                          style={{ 
+                            width: `${Math.min(100, atingidoGeralPct)}%`,
+                            backgroundColor: atingidoGeralPct >= 100 ? '#10B981' : brandColor 
+                          }} 
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1411,11 +1434,11 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                             color: '#FFFFFF'
                           }}
                         >
-                          {chartData[hoveredChartIndex].atingidoPct.toFixed(1)}%
+                          {chartData[hoveredChartIndex].atingidoPct.toFixed(1)}% atingido
                         </span>
                       </div>
 
-                      <div className="space-y-1.5 text-xs">
+                      <div className="space-y-2 text-xs">
                         <div className="flex justify-between items-center">
                           <span className="text-slate-400 font-medium flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#6366F1' }} />
@@ -1434,6 +1457,27 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                           <span className="font-bold text-emerald-400">
                             {formatCurrency(chartData[hoveredChartIndex].realizado)}
                           </span>
+                        </div>
+
+                        {/* DESTAQUE DE % ATINGIDO DA META NO CORPO DO CARD */}
+                        <div className="py-1.5 px-2.5 rounded-xl bg-slate-800/90 border border-slate-700/90 flex flex-col gap-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-amber-400 font-black flex items-center gap-1.5 text-[11px]">
+                              <span>🎯</span> % Atingido:
+                            </span>
+                            <span className="font-black text-amber-300 text-xs">
+                              {chartData[hoveredChartIndex].atingidoPct.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-700/80 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{ 
+                                width: `${Math.min(100, chartData[hoveredChartIndex].atingidoPct)}%`,
+                                backgroundColor: chartData[hoveredChartIndex].atingidoPct >= 100 ? '#10B981' : '#F59E0B'
+                              }}
+                            />
+                          </div>
                         </div>
 
                         <div className="flex justify-between items-center pt-1.5 border-t border-slate-800 text-[11px]">
