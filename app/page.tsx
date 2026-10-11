@@ -1749,7 +1749,12 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
 
 export default function Page() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      return document.cookie.includes('sb_user=');
+    }
+    return false;
+  });
   const [showMobileHub, setShowMobileHub] = useState(false);
   const [loggedUser, setLoggedUser] = useState<any>(null);
 
@@ -1831,18 +1836,6 @@ export default function Page() {
       });
   }, []);
 
-  if (isLoggedIn === null) {
-    return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center relative overflow-hidden font-sans">
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-blue-900/30 rounded-2xl border border-blue-400/30 flex items-center justify-center animate-spin">
-            <TrendingUp className="text-blue-400" size={32} />
-          </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-blue-400 animate-pulse">Carregando SmartBidHub...</span>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoggedIn) {
     if (showMobileHub) {

@@ -40,6 +40,16 @@ export default function LandingPage() {
   const [clientAccepted, setClientAccepted] = useState(false);
   const [interactiveBdi, setInteractiveBdi] = useState(14.5);
 
+  // Estados para expansão/colapso da DRE simulada (igual ao sistema)
+  const [dreExpanded, setDreExpanded] = useState<Record<string, boolean>>({
+    '01': true,
+    '02': false,
+    '03': true,
+  });
+  const toggleDreRow = (id: string) => {
+    setDreExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   useEffect(() => {
     const fetchPlans = async () => {
       try {
@@ -80,12 +90,20 @@ export default function LandingPage() {
     }, 1000);
   };
 
-  // Cálculos dinâmicos da DRE simulada
-  const baseCost = 28450.00;
-  const tributosRate = 0.125; // 12.5%
+  // Cálculos dinâmicos da DRE simulada (Hospital Geral São Lucas - 22 Postos)
+  const custoSalarios = 18640.00;
+  const custoEncargos = 13383.52; // 71.80% CCT SIEMACO
+  const custoBeneficios = 4750.00; // VT líq + VR R$ 38,50/dia + Cesta Básica
+  const custoSSMA = 820.00; // EPIs + PCMSO
+  const custoInsumos = 1150.00; // Químicos hospitalares
+  const custoEquipamentos = 650.00; // Depreciação / Locação
+  const baseCost = custoSalarios + custoEncargos + custoBeneficios + custoSSMA + custoInsumos + custoEquipamentos; // R$ 39.393,52
+
+  const tributosRate = 0.125; // 12.50% (PIS, COFINS, ISSQN, CPRB)
   const calcPrecoVenda = baseCost / (1 - (tributosRate + interactiveBdi / 100));
   const calcTributos = calcPrecoVenda * tributosRate;
-  const calcMargemBruta = calcPrecoVenda - calcTributos - baseCost;
+  const calcReceitaLiquida = calcPrecoVenda - calcTributos;
+  const calcMargemBruta = calcReceitaLiquida - baseCost;
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -181,9 +199,9 @@ export default function LandingPage() {
           
           <div className="max-w-4xl mx-auto text-center space-y-6 mb-12">
             {/* Tag / Badge Corporativo Limpo */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
-              <Shield size={14} className="text-emerald-700" />
-              <span>SaaS Especializado para Prestadoras de Serviços Terceirizados</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-200 shadow-xs">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+              <span>Tecnologia Especializada para Prestadoras de Serviços & Terceirização</span>
             </div>
             
             {/* 1. HEADLINE */}
@@ -221,23 +239,29 @@ export default function LandingPage() {
             {/* BROWSER WINDOW MOCKUP REALISTA */}
             <div className="bg-white rounded-2xl border border-slate-300 shadow-2xl overflow-hidden">
               
-              {/* Barra superior de janela de aplicativo */}
+              {/* Barra superior de janela de aplicativo Mac OS */}
               <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                  <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                  <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                  <span className="text-xs text-slate-600 font-mono font-medium ml-2 hidden sm:inline">
-                    https://app.smartbidhub.com.br
-                  </span>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border-[#DEA123]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#27C93F] border-[#1AAB29]"></div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 ml-2 px-3 py-1 bg-white rounded-lg border border-slate-200/90 shadow-2xs text-[11px] font-mono text-slate-600">
+                    <Lock size={11} className="text-emerald-700 shrink-0" />
+                    <span>app.smartbidhub.com.br</span>
+                    <span className="text-slate-400">/dre-executiva</span>
+                  </div>
                 </div>
 
                 {/* Abas de Navegação do Mockup */}
-                <div className="flex bg-slate-200/80 p-1 rounded-xl gap-1 overflow-x-auto max-w-full">
+                <div className="flex bg-slate-200/70 p-1 rounded-xl gap-1 overflow-x-auto max-w-full">
                   <button
                     onClick={() => setHeroTab('propostaLink')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                      heroTab === 'propostaLink' ? 'bg-white text-emerald-900 shadow-xs ring-1 ring-emerald-500/20' : 'text-slate-600 hover:text-slate-900'
+                      heroTab === 'propostaLink' 
+                        ? 'bg-white text-emerald-950 shadow-xs ring-1 ring-slate-900/5' 
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -246,7 +270,9 @@ export default function LandingPage() {
                   <button
                     onClick={() => setHeroTab('telemetria')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      heroTab === 'telemetria' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      heroTab === 'telemetria' 
+                        ? 'bg-white text-slate-950 shadow-xs ring-1 ring-slate-900/5' 
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     2. Telemetria & Rastreio (127x)
@@ -254,18 +280,23 @@ export default function LandingPage() {
                   <button
                     onClick={() => setHeroTab('radar')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      heroTab === 'radar' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      heroTab === 'radar' 
+                        ? 'bg-white text-slate-950 shadow-xs ring-1 ring-slate-900/5' 
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     3. Radar Comercial
                   </button>
                   <button
                     onClick={() => setHeroTab('dre')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      heroTab === 'dre' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                      heroTab === 'dre' 
+                        ? 'bg-white text-emerald-950 shadow-xs ring-1 ring-slate-900/5' 
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    4. DRE do Projeto
+                    <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                    4. DRE do Projeto (Simulador)
                   </button>
                 </div>
               </div>
@@ -624,68 +655,383 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                {/* ABA 4: TABELA DA DRE DO PROJETO COM MARGEM BRUTA CALCULADA AO CENTAVO */}
+                {/* ABA 4: TABELA DA DRE DO PROJETO COM SIMULAÇÃO REAL IGUAL AO SISTEMA */}
                 {heroTab === 'dre' && (
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
-                      <div>
-                        <h4 className="text-base font-black text-slate-900">
-                          Demonstrativo de Resultado do Projeto (DRE Executiva)
-                        </h4>
-                        <p className="text-xs text-slate-500">Simulação de 12 meses • Escala 12x36 e 44h semanais</p>
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    {/* Cabeçalho da DRE no estilo Executivo do Sistema */}
+                    <div className="bg-gradient-to-r from-[#1B4D3E] via-[#245D4B] to-[#12362b] text-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-inner">
+                          <BarChart3 className="text-emerald-300" size={18} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-black text-xs uppercase tracking-widest text-emerald-100">
+                              DRE do Projeto • Demonstração do Resultado
+                            </h4>
+                            <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-bold">
+                              Orçamento Executivo
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-emerald-200/80 font-medium mt-0.5">
+                            Hospital Geral São Lucas • 22 Postos • Escala 12x36 e 44h Semanais
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-slate-600">Ajuste de Margem (BDI):</span>
-                        <span className="text-sm font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
-                          {interactiveBdi.toFixed(1)}%
+                      <div className="text-left sm:text-right shrink-0">
+                        <span className="bg-[#D4AF37]/20 text-[#f5d77f] border border-[#D4AF37]/40 text-[10px] px-3 py-1.5 rounded-full font-black tracking-wider uppercase inline-block shadow-xs">
+                          Margem Bruta Proposta: {interactiveBdi.toFixed(1)}%
                         </span>
                       </div>
                     </div>
 
-                    {/* Slider de BDI */}
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <span>Margem Mínima (8%)</span>
-                        <span className="font-bold text-slate-900">Deslize para recalcular impostos e preço final</span>
-                        <span>Margem Alta (25%)</span>
+                    {/* Barra de Ajuste de Margem (BDI) em Tempo Real */}
+                    <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="space-y-0.5 text-center sm:text-left w-full sm:w-auto">
+                        <div className="flex items-center gap-2 justify-center sm:justify-start">
+                          <span className="text-xs font-bold text-slate-800">Simulador de Margem (BDI):</span>
+                          <span className="text-xs font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-200 font-mono">
+                            {interactiveBdi.toFixed(1)}%
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          Deslize a barra para recalcular faturamento bruto, tributos e margem líquida ao centavo
+                        </p>
                       </div>
-                      <input 
-                        type="range" 
-                        min="8" 
-                        max="25" 
-                        step="0.5"
-                        value={interactiveBdi}
-                        onChange={(e) => setInteractiveBdi(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-700 cursor-pointer"
-                      />
+
+                      <div className="w-full sm:w-72 flex items-center gap-3">
+                        <span className="text-[10px] font-bold text-slate-400 shrink-0">8% Mín</span>
+                        <input 
+                          type="range" 
+                          min="8" 
+                          max="25" 
+                          step="0.5"
+                          value={interactiveBdi}
+                          onChange={(e) => setInteractiveBdi(parseFloat(e.target.value))}
+                          className="w-full accent-emerald-700 cursor-pointer h-2 bg-slate-200 rounded-lg appearance-none"
+                        />
+                        <span className="text-[10px] font-bold text-slate-400 shrink-0">25% Max</span>
+                      </div>
                     </div>
 
-                    {/* Tabela da DRE com Centavos */}
-                    <table className="w-full text-xs">
-                      <tbody>
-                        <tr className="border-b border-slate-100 py-2">
-                          <td className="py-2 text-slate-600 font-medium">(+) Custo Direto (Mão de Obra, Benefícios, CCT e Insumos)</td>
-                          <td className="py-2 text-right font-bold text-slate-900">{formatCurrency(baseCost)}</td>
-                        </tr>
-                        <tr className="border-b border-slate-100 py-2">
-                          <td className="py-2 text-slate-600 font-medium">(-) Impostos sobre Faturamento (PIS/COFINS/ISS - 12.50%)</td>
-                          <td className="py-2 text-right font-bold text-amber-700">-{formatCurrency(calcTributos)}</td>
-                        </tr>
-                        <tr className="border-b border-slate-200 py-2.5 bg-slate-50/80 font-bold">
-                          <td className="py-2.5 px-2 text-slate-900 font-bold">(=) Faturamento Bruto Mensal Contratado</td>
-                          <td className="py-2.5 px-2 text-right font-black text-slate-900">{formatCurrency(calcPrecoVenda)}</td>
-                        </tr>
-                        <tr className="py-3 bg-emerald-50/80">
-                          <td className="py-3 px-2 text-emerald-950 font-black text-sm">
-                            (=) Lucro Bruto Operacional (Margem Calculada ao Centavo)
-                          </td>
-                          <td className="py-3 px-2 text-right font-black text-emerald-800 text-base">
-                            {formatCurrency(calcMargemBruta)}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    {/* Planilha de Cálculo da DRE Completa */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-100/80 text-slate-500 uppercase text-[9px] tracking-wider font-extrabold border-b border-slate-200">
+                            <th className="py-2.5 px-3.5 w-72">Estrutura DRE (Contas do Projeto)</th>
+                            <th className="py-2.5 px-3 hidden md:table-cell text-slate-400 font-medium">Detalhamento Operacional</th>
+                            <th className="py-2.5 px-3 text-right font-black w-32">Mensal (R$)</th>
+                            <th className="py-2.5 px-3 text-right font-bold w-20">% s/ Rec.</th>
+                            <th className="py-2.5 px-3.5 text-right font-black bg-emerald-50/50 text-[#1B4D3E] border-l border-slate-200 w-36">Total Anual (12M)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+
+                          {/* 01. RECEITA BRUTA */}
+                          <tr className="bg-slate-50/70 font-bold border-b border-slate-200/80 hover:bg-slate-100/50 transition-colors">
+                            <td className="py-2.5 px-3.5 flex items-center gap-2">
+                              <button 
+                                onClick={() => toggleDreRow('01')} 
+                                className="text-slate-400 hover:text-blue-700 p-0.5 rounded cursor-pointer transition-colors"
+                              >
+                                <span className="text-[10px] block font-mono">{dreExpanded['01'] ? '▼' : '►'}</span>
+                              </button>
+                              <span className="text-xs uppercase tracking-wider font-black text-blue-700">01. RECEITA BRUTA</span>
+                            </td>
+                            <td className="py-2.5 px-3 hidden md:table-cell text-[11px] text-slate-500 font-normal">
+                              Faturamento Bruto Contratado com CCT Vinculada
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-blue-900 font-mono">
+                              {formatCurrency(calcPrecoVenda)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-slate-500 font-mono text-[11px]">100.0%</td>
+                            <td className="py-2.5 px-3.5 text-right font-black text-blue-900 bg-emerald-50/20 border-l border-slate-200 font-mono">
+                              {formatCurrency(calcPrecoVenda * 12)}
+                            </td>
+                          </tr>
+
+                          {/* 01.1 - Sublinhas de Receita */}
+                          {dreExpanded['01'] && (
+                            <tr className="bg-white border-b border-slate-100 text-slate-600 hover:bg-slate-50/40">
+                              <td className="py-2 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                01.1 - Serviços de Asseio e Higienização (22 Postos)
+                              </td>
+                              <td className="py-2 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                18x Limpeza Hospitalar (12x36) + 4x Encarregados (44h)
+                              </td>
+                              <td className="py-2 px-3 text-right font-semibold text-slate-800 font-mono text-[11px]">
+                                {formatCurrency(calcPrecoVenda)}
+                              </td>
+                              <td className="py-2 px-3 text-right text-slate-400 font-mono text-[10px]">100.0%</td>
+                              <td className="py-2 px-3.5 text-right font-semibold text-slate-800 border-l border-slate-100 font-mono text-[11px]">
+                                {formatCurrency(calcPrecoVenda * 12)}
+                              </td>
+                            </tr>
+                          )}
+
+                          {/* 02. TRIBUTO SOBRE FATURAMENTO */}
+                          <tr className="bg-slate-50/70 font-bold border-b border-slate-200/80 hover:bg-slate-100/50 transition-colors">
+                            <td className="py-2.5 px-3.5 flex items-center gap-2">
+                              <button 
+                                onClick={() => toggleDreRow('02')} 
+                                className="text-slate-400 hover:text-red-700 p-0.5 rounded cursor-pointer transition-colors"
+                              >
+                                <span className="text-[10px] block font-mono">{dreExpanded['02'] ? '▼' : '►'}</span>
+                              </button>
+                              <span className="text-xs uppercase tracking-wider font-black text-red-600">02. TRIBUTO SOBRE FATURAMENTO</span>
+                            </td>
+                            <td className="py-2.5 px-3 hidden md:table-cell text-[11px] text-slate-500 font-normal">
+                              PIS (0.65%), COFINS (3.00%), ISS (5.00%), CPRB (3.85%)
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-red-700 font-mono">
+                              -{formatCurrency(calcTributos)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-red-600 font-mono text-[11px]">
+                              -12.5%
+                            </td>
+                            <td className="py-2.5 px-3.5 text-right font-black text-red-700 bg-red-50/20 border-l border-slate-200 font-mono">
+                              -{formatCurrency(calcTributos * 12)}
+                            </td>
+                          </tr>
+
+                          {/* 02.1 - Sublinhas de Tributos */}
+                          {dreExpanded['02'] && (
+                            <>
+                              <tr className="bg-white border-b border-slate-100 text-slate-600 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] text-slate-600">
+                                  02.1.1 - ISSQN Municipal (5.00%)
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">Imposto Sobre Serviços de Qualquer Natureza</td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-red-700">
+                                  -{formatCurrency(calcPrecoVenda * 0.05)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">5.0%</td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-red-700 border-l border-slate-100">
+                                  -{formatCurrency(calcPrecoVenda * 0.05 * 12)}
+                                </td>
+                              </tr>
+                              <tr className="bg-white border-b border-slate-100 text-slate-600 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] text-slate-600">
+                                  02.1.2 - PIS (0.65%) e COFINS (3.00%)
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">Contribuições Federais s/ Faturamento</td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-red-700">
+                                  -{formatCurrency(calcPrecoVenda * 0.0365)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">3.65%</td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-red-700 border-l border-slate-100">
+                                  -{formatCurrency(calcPrecoVenda * 0.0365 * 12)}
+                                </td>
+                              </tr>
+                              <tr className="bg-white border-b border-slate-100 text-slate-600 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] text-slate-600">
+                                  02.1.3 - CPRB / Previdência Patronal (3.85%)
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">Desoneração da Folha / Contribuição Substitutiva</td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-red-700">
+                                  -{formatCurrency(calcPrecoVenda * 0.0385)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">3.85%</td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-red-700 border-l border-slate-100">
+                                  -{formatCurrency(calcPrecoVenda * 0.0385 * 12)}
+                                </td>
+                              </tr>
+                            </>
+                          )}
+
+                          {/* (=) RECEITA LÍQUIDA */}
+                          <tr className="bg-blue-50/50 font-black border-y border-blue-200/80 text-blue-950">
+                            <td className="py-2.5 px-3.5 pl-6 text-xs uppercase tracking-wider">
+                              (=) RECEITA LÍQUIDA MENSAL
+                            </td>
+                            <td className="py-2.5 px-3 hidden md:table-cell text-[11px] text-blue-800 font-normal">
+                              Faturamento Bruto deduzido de todos os impostos
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black font-mono">
+                              {formatCurrency(calcReceitaLiquida)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono text-[11px] text-blue-800">
+                              87.5%
+                            </td>
+                            <td className="py-2.5 px-3.5 text-right font-black text-blue-950 bg-blue-100/30 border-l border-blue-200 font-mono">
+                              {formatCurrency(calcReceitaLiquida * 12)}
+                            </td>
+                          </tr>
+
+                          {/* 03. CUSTO OPERACIONAL */}
+                          <tr className="bg-slate-50/70 font-bold border-b border-slate-200/80 hover:bg-slate-100/50 transition-colors">
+                            <td className="py-2.5 px-3.5 flex items-center gap-2">
+                              <button 
+                                onClick={() => toggleDreRow('03')} 
+                                className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded cursor-pointer transition-colors"
+                              >
+                                <span className="text-[10px] block font-mono">{dreExpanded['03'] ? '▼' : '►'}</span>
+                              </button>
+                              <span className="text-xs uppercase tracking-wider font-black text-[#1B4D3E]">
+                                03. CUSTO OPERACIONAL DIRETO
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 hidden md:table-cell text-[11px] text-slate-500 font-normal">
+                              Folha de Salários, Encargos CCT, Benefícios, Insumos e EPIs
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-[#1B4D3E] font-mono">
+                              -{formatCurrency(baseCost)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-slate-500 font-mono text-[11px]">
+                              {((baseCost / calcPrecoVenda) * 100).toFixed(1)}%
+                            </td>
+                            <td className="py-2.5 px-3.5 text-right font-black text-[#1B4D3E] bg-emerald-50/20 border-l border-slate-200 font-mono">
+                              -{formatCurrency(baseCost * 12)}
+                            </td>
+                          </tr>
+
+                          {/* 03.1 a 03.7 - Sublinhas de Custos Operacionais */}
+                          {dreExpanded['03'] && (
+                            <>
+                              <tr className="bg-white border-b border-slate-100 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                  03.1 - Salários Base + Insalubridade 40% + Adic. Noturno
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                  Piso CCT SIEMACO 2026 + Adicionais Legais de Função
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-slate-800">
+                                  -{formatCurrency(custoSalarios)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">
+                                  {((custoSalarios / calcPrecoVenda) * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-slate-800 border-l border-slate-100">
+                                  -{formatCurrency(custoSalarios * 12)}
+                                </td>
+                              </tr>
+
+                              <tr className="bg-white border-b border-slate-100 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                  03.2 - Encargos Sociais & Trabalhistas (71.80% CCT)
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                  FGTS (8%), 13º Salário (8.33%), Férias + 1/3 (11.11%), Multa Rescisória
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-slate-800">
+                                  -{formatCurrency(custoEncargos)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">
+                                  {((custoEncargos / calcPrecoVenda) * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-slate-800 border-l border-slate-100">
+                                  -{formatCurrency(custoEncargos * 12)}
+                                </td>
+                              </tr>
+
+                              <tr className="bg-white border-b border-slate-100 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                  03.3 - Benefícios Convencionados CCT
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                  Vale Transporte Líquido (desc 6%) + VR R$ 38,50/dia + Cesta Básica
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-slate-800">
+                                  -{formatCurrency(custoBeneficios)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">
+                                  {((custoBeneficios / calcPrecoVenda) * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-slate-800 border-l border-slate-100">
+                                  -{formatCurrency(custoBeneficios * 12)}
+                                </td>
+                              </tr>
+
+                              <tr className="bg-white border-b border-slate-100 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                  03.5 - SSMA, Uniformes Hospitalares & EPIs
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                  Luvas nitrílicas, calçados antiderrapantes e exames periódicos PCMSO
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-slate-800">
+                                  -{formatCurrency(custoSSMA)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">
+                                  {((custoSSMA / calcPrecoVenda) * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-slate-800 border-l border-slate-100">
+                                  -{formatCurrency(custoSSMA * 12)}
+                                </td>
+                              </tr>
+
+                              <tr className="bg-white border-b border-slate-100 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                  03.6 - Insumos e Materiais de Higienização
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                  Desinfetantes hospitalares nível intermediário e descartáveis
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-slate-800">
+                                  -{formatCurrency(custoInsumos)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">
+                                  {((custoInsumos / calcPrecoVenda) * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-slate-800 border-l border-slate-100">
+                                  -{formatCurrency(custoInsumos * 12)}
+                                </td>
+                              </tr>
+
+                              <tr className="bg-white border-b border-slate-100 hover:bg-slate-50/40">
+                                <td className="py-1.5 px-3.5 pl-8 text-[11px] font-medium text-slate-700">
+                                  03.7 - Depreciação / Locação de Equipamentos
+                                </td>
+                                <td className="py-1.5 px-3 hidden md:table-cell text-[10px] text-slate-400">
+                                  Lavadora de piso automática e aspiradores profissionais
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono text-[11px] text-slate-800">
+                                  -{formatCurrency(custoEquipamentos)}
+                                </td>
+                                <td className="py-1.5 px-3 text-right text-slate-400 font-mono text-[10px]">
+                                  {((custoEquipamentos / calcPrecoVenda) * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-1.5 px-3.5 text-right font-mono text-[11px] text-slate-800 border-l border-slate-100">
+                                  -{formatCurrency(custoEquipamentos * 12)}
+                                </td>
+                              </tr>
+                            </>
+                          )}
+
+                          {/* (=) MARGEM BRUTA DO PROJETO */}
+                          <tr className="bg-emerald-50 font-black border-t-2 border-emerald-600 text-[#1B4D3E]">
+                            <td className="py-3 px-3.5 pl-6 text-xs uppercase tracking-wider flex items-center gap-2">
+                              <span>📈</span>
+                              <span>(=) MARGEM BRUTA DO PROJETO (LUCRO OPERACIONAL)</span>
+                            </td>
+                            <td className="py-3 px-3 hidden md:table-cell text-[11px] text-emerald-800 font-medium">
+                              Resultado Líquido do Contrato calculado ao centavo
+                            </td>
+                            <td className="py-3 px-3 text-right font-black text-emerald-800 text-sm font-mono">
+                              {formatCurrency(calcMargemBruta)}
+                            </td>
+                            <td className="py-3 px-3 text-right text-emerald-800 font-black text-xs font-mono">
+                              {interactiveBdi.toFixed(1)}%
+                            </td>
+                            <td className="py-3 px-3.5 text-right font-black bg-[#1B4D3E] text-emerald-300 border-l border-emerald-700 shadow-inner font-mono text-sm">
+                              {formatCurrency(calcMargemBruta * 12)}
+                            </td>
+                          </tr>
+
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Rodapé da DRE com Garantia de Previsibilidade */}
+                    <div className="p-3 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-600 flex flex-col sm:flex-row items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle size={14} className="text-emerald-700 shrink-0" />
+                        <span><strong>Previsibilidade Cirúrgica:</strong> A DRE recalcula automaticamente conforme você adiciona postos ou insumos.</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Modelo homologado para empresas do Lucro Presumido e Simples</span>
+                    </div>
                   </div>
                 )}
 
