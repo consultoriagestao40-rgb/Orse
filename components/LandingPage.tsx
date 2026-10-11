@@ -147,7 +147,7 @@ export default function LandingPage() {
     // 2) Revelação ao rolar: só marca o que está abaixo da dobra (sem piscar o que já está visível)
     const below = (el: Element) => el.getBoundingClientRect().top > window.innerHeight * 0.95;
     const targets: Element[] = [];
-    root.querySelectorAll('section h2, [data-reveal]').forEach(el => {
+    root.querySelectorAll('section h2, section h3, [data-reveal], .lp-card, .lp-plan, .lp-problem').forEach(el => {
       if (!below(el)) return;
       el.classList.add(el.tagName === 'H2' ? 'lp-reveal-clip' : el.hasAttribute('data-reveal-scale') ? 'lp-reveal-scale' : 'lp-reveal');
       targets.push(el);
@@ -444,22 +444,27 @@ export default function LandingPage() {
                     <Lock size={11} /> app.smartbidhub.com.br
                   </span>
                 </div>
-                <div className="flex overflow-x-auto px-3">
-                  {heroTabs.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => { setAutoTabs(false); setHeroTab(t.id); }}
-                      className="relative px-3 py-3.5 text-[13px] whitespace-nowrap cursor-pointer transition-colors hover:text-[#111418]"
-                      style={{ color: heroTab === t.id ? C.ink : C.muted, fontWeight: heroTab === t.id ? 600 : 400 }}
-                    >
-                      {t.label}
-                      {heroTab === t.id && (
-                        <span className="absolute left-3 right-3 -bottom-px h-[2px] overflow-hidden rounded" style={{ background: autoTabs ? '#DCE5DF' : C.green }}>
-                          {autoTabs && <span key={heroTab} className="lp-tab-progress block h-full" style={{ background: C.green }} />}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 bg-[#F4F3F0] rounded-xl m-2 border border-[#E6E2DA]/80 shadow-inner">
+                  {heroTabs.map(t => {
+                    const active = heroTab === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => { setAutoTabs(false); setHeroTab(t.id); }}
+                        className={`relative px-4 py-2 text-[13px] rounded-lg font-medium whitespace-nowrap cursor-pointer transition-all duration-300 ${active ? 'bg-white text-[#111418] shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08)] scale-[1.02] border border-[#1B4D3E]/15' : 'text-[#5B6470] hover:text-[#111418] hover:bg-white/70'}`}
+                      >
+                        {t.label}
+                        {active && autoTabs && (
+                          <span className="absolute left-2 right-2 bottom-0.5 h-[2px] overflow-hidden rounded-full bg-[#E5E2DC]">
+                            <span key={heroTab} className="lp-tab-progress block h-full bg-[#EA580C]" />
+                          </span>
+                        )}
+                        {active && !autoTabs && (
+                          <span className="absolute left-3 right-3 bottom-0.5 h-[2px] rounded-full bg-[#EA580C] shadow-xs" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -469,12 +474,15 @@ export default function LandingPage() {
                 {heroTab === 'propostaLink' && (
                   <div key="propostaLink" className="lp-tab-content-enter grid lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-8 space-y-5">
-                      <div className="flex items-center justify-between gap-3 text-[12px] px-3 py-2 rounded-lg border bg-white" style={{ borderColor: C.line }}>
+                      <div className="flex items-center justify-between gap-3 text-[12px] px-3 py-2 rounded-lg border bg-white shadow-xs" style={{ borderColor: C.line }}>
                         <span className="truncate" style={{ color: C.muted }}>
-                          <Lock size={11} className="inline mr-1.5 -mt-0.5" />
+                          <Lock size={11} className="inline mr-1.5 -mt-0.5 text-[#1B4D3E]" />
                           smartbidhub.com.br/proposta/ver/<span style={{ color: C.ink }}>ct-892-hospital-sao-lucas</span>
                         </span>
-                        <span className="shrink-0 font-medium" style={{ color: C.green }}>● Link ativo</span>
+                        <span className="shrink-0 font-medium flex items-center gap-1.5" style={{ color: C.green }}>
+                          <span className="w-2 h-2 rounded-full bg-[#22A06B] animate-pulse" />
+                          Link ativo
+                        </span>
                       </div>
 
                       <div>
@@ -483,27 +491,28 @@ export default function LandingPage() {
                         <p className="text-[13px] mt-1" style={{ color: C.muted }}>Hospital Geral São Lucas · vigência de 12 meses</p>
                       </div>
 
-                      <div className="flex gap-5 border-b text-[13px] overflow-x-auto" style={{ borderColor: C.line }}>
+                      <div className="flex items-center gap-1.5 p-1 bg-[#F4F3F0] rounded-xl text-[12.5px] overflow-x-auto w-fit border border-[#E6E2DA]/80 shadow-xs">
                         {[
                           { id: 'postos', label: 'Postos e escala' },
                           { id: 'fpv', label: 'Planilha de custos (FPV)' },
                           { id: 'minuta', label: 'Minuta' },
                           { id: 'apresentacao', label: 'Apresentação' },
-                        ].map(s => (
-                          <button
-                            key={s.id}
-                            onClick={() => setClientProposalSubTab(s.id as any)}
-                            className="relative pb-2.5 whitespace-nowrap cursor-pointer"
-                            style={{ color: clientProposalSubTab === s.id ? C.ink : C.muted, fontWeight: clientProposalSubTab === s.id ? 600 : 400 }}
-                          >
-                            {s.label}
-                            {clientProposalSubTab === s.id && <span className="absolute left-0 right-0 -bottom-px h-[2px]" style={{ background: C.ink }} />}
-                          </button>
-                        ))}
+                        ].map(s => {
+                          const on = clientProposalSubTab === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => setClientProposalSubTab(s.id as any)}
+                              className={`px-3 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all duration-300 font-medium ${on ? 'bg-white text-[#111418] shadow-xs scale-[1.02] border border-[#1B4D3E]/15' : 'text-[#5B6470] hover:text-[#111418] hover:bg-white/60'}`}
+                            >
+                              {s.label}
+                            </button>
+                          );
+                        })}
                       </div>
 
                       {clientProposalSubTab === 'postos' && (
-                        <div className="divide-y text-[13px]" style={{ borderColor: C.line }}>
+                        <div key="postos" className="lp-subtab-enter divide-y text-[13px]" style={{ borderColor: C.line }}>
                           {[
                             { q: '18', cargo: 'Auxiliar de limpeza hospitalar', esc: '12x36 diurno e noturno · insalubridade 40%', v: 'R$ 38.880,00' },
                             { q: '4', cargo: 'Encarregado operacional', esc: '44h semanais · coordenação e controle de EPIs', v: 'R$ 10.020,00' },
@@ -523,7 +532,7 @@ export default function LandingPage() {
                       )}
 
                       {clientProposalSubTab === 'fpv' && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-lg overflow-hidden border text-[13px]" style={{ background: C.line, borderColor: C.line }}>
+                        <div key="fpv" className="lp-subtab-enter grid grid-cols-2 sm:grid-cols-4 gap-px rounded-lg overflow-hidden border text-[13px]" style={{ background: C.line, borderColor: C.line }}>
                           {[
                             ['Salário + adicionais', 'R$ 25.420,00'],
                             ['Encargos (71,8%)', 'R$ 18.251,56'],
@@ -539,7 +548,7 @@ export default function LandingPage() {
                       )}
 
                       {clientProposalSubTab === 'minuta' && (
-                        <div className="text-[13px] leading-relaxed">
+                        <div key="minuta" className="lp-subtab-enter text-[13px] leading-relaxed">
                           <p className="font-medium">Cláusula 5ª — Do reajuste anual e repasse sindical</p>
                           <p className="mt-1.5" style={{ color: C.muted }}>
                             Os valores contratados serão reajustados anualmente na data-base da categoria (maio/2026), mediante repasse integral do dissídio homologado pela convenção coletiva.
@@ -548,8 +557,8 @@ export default function LandingPage() {
                       )}
 
                       {clientProposalSubTab === 'apresentacao' && (
-                        <div className="flex items-center gap-3 text-[13px]">
-                          <span className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: C.greenSoft, color: C.green }}>
+                        <div key="apresentacao" className="lp-subtab-enter flex items-center gap-3 text-[13px]">
+                          <span className="w-10 h-10 rounded-lg flex items-center justify-center shadow-xs" style={{ background: C.greenSoft, color: C.green }}>
                             <Building2 size={18} />
                           </span>
                           <div>
@@ -612,14 +621,18 @@ export default function LandingPage() {
                           { s: 'Planilha de custos (FPV)', d: 'Pisos, benefícios e encargos da CCT', v: 58, t: '45 min' },
                           { s: 'Minuta contratual', d: 'Repasse, rescisão e data-base', v: 42, t: '31 min' },
                           { s: 'Apresentação e escopo', d: 'Serviços e certificações', v: 27, t: '18 min' },
-                        ].map(r => (
+                        ].map((r, _idx) => (
                           <div key={r.s}>
                             <div className="flex justify-between text-[13px]">
                               <span className="font-medium">{r.s}</span>
                               <span className="tabular-nums" style={{ color: C.muted }}>{r.v} visualizações</span>
                             </div>
-                            <div className="h-2 rounded-full mt-2" style={{ background: '#EFEDE8' }}>
-                              <div className="h-2 rounded-full" style={{ width: `${(r.v / 58) * 100}%`, background: C.green }} />
+                            <div className="h-2 rounded-full mt-2 overflow-hidden" style={{ background: '#EFEDE8' }}>
+                              <div
+                                key={`${heroTab}-${r.s}`}
+                                className="h-2 rounded-full lp-anim-bar"
+                                style={{ width: `${(r.v / 58) * 100}%`, background: C.green, animationDelay: `${_idx * 130}ms` }}
+                              />
                             </div>
                             <p className="text-[12px] mt-1.5" style={{ color: C.muted }}>{r.d}</p>
                           </div>
@@ -665,11 +678,15 @@ export default function LandingPage() {
                         { n: 'Visitas', v: 23, w: 12, s: '59,0% de avanço' },
                         { n: 'Propostas', v: 75, w: 39.3, s: 'emitidas' },
                         { n: 'Vendas', v: 11, w: 5.8, s: '14,7% de fechamento' },
-                      ].map(f => (
+                      ].map((f, _idx) => (
                         <div key={f.n} className="grid grid-cols-12 items-center gap-3 text-[13px]">
                           <span className="col-span-3 sm:col-span-2">{f.n}</span>
-                          <div className="col-span-6 sm:col-span-7 h-7 rounded-md" style={{ background: '#F2F0EB' }}>
-                            <div className="h-7 rounded-md" style={{ width: `${Math.max(f.w, 4)}%`, background: f.n === 'Vendas' ? C.green : '#B9CCC2' }} />
+                          <div className="col-span-6 sm:col-span-7 h-7 rounded-md overflow-hidden" style={{ background: '#F2F0EB' }}>
+                            <div
+                              key={`${heroTab}-${f.n}`}
+                              className="h-7 rounded-md lp-anim-bar"
+                              style={{ width: `${Math.max(f.w, 4)}%`, background: f.n === 'Vendas' ? '#EA580C' : '#B9CCC2', animationDelay: `${_idx * 90}ms` }}
+                            />
                           </div>
                           <span className="col-span-3 text-right tabular-nums">
                             <span className="font-medium">{f.v}</span>
@@ -730,7 +747,7 @@ export default function LandingPage() {
                             <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(calcPrecoVenda * 12)}</td>
                           </tr>
                           {dreExpanded['01'] && (
-                            <tr className="border-b" style={{ borderColor: C.line }}>
+                            <tr className="border-b lp-dre-row-enter bg-[#FAFAF8]" style={{ borderColor: C.line }}>
                               <td className="pl-11 pr-4 py-2.5" style={{ color: C.muted }}>01.1.1 Serviços vendidos (22 postos)</td>
                               <td className="px-4 py-2.5 text-right tabular-nums">{formatCurrency(calcPrecoVenda)}</td>
                               <td className="px-4 py-2.5 text-right tabular-nums" style={{ color: C.muted }}>100,0%</td>
@@ -753,7 +770,7 @@ export default function LandingPage() {
                             ['02.1.2 PIS e COFINS (3,65%)', 0.0365],
                             ['02.1.3 CPRB (3,85%)', 0.0385],
                           ].map(([n, r]) => (
-                            <tr key={n as string} className="border-b" style={{ borderColor: C.line }}>
+                            <tr key={n as string} className="border-b lp-dre-row-enter bg-[#FAFAF8]" style={{ borderColor: C.line }}>
                               <td className="pl-11 pr-4 py-2.5" style={{ color: C.muted }}>{n}</td>
                               <td className="px-4 py-2.5 text-right tabular-nums">−{formatCurrency(calcPrecoVenda * (r as number))}</td>
                               <td className="px-4 py-2.5 text-right tabular-nums" style={{ color: C.muted }}>{((r as number) * 100).toFixed(1).replace('.', ',')}%</td>
@@ -780,7 +797,7 @@ export default function LandingPage() {
                             <td className="px-4 py-3 text-right tabular-nums">−{formatCurrency(baseCost * 12)}</td>
                           </tr>
                           {dreExpanded['03'] && custoLinhas.map(l => (
-                            <tr key={l.cod} className="border-b" style={{ borderColor: C.line }}>
+                            <tr key={l.cod} className="border-b lp-dre-row-enter bg-[#FAFAF8]" style={{ borderColor: C.line }}>
                               <td className="pl-11 pr-4 py-2.5">
                                 <span>{l.cod} {l.nome}</span>
                                 <span className="block text-[11px]" style={{ color: C.muted }}>{l.det}</span>
@@ -1071,18 +1088,18 @@ export default function LandingPage() {
       {/* MÓDULOS */}
       <ModulesSection />
 
-      {/* PROPOSTA POR LINK vs PROVELO */}
+      {/* PROPOSTA POR LINK */}
       <section id="proposta-interativa" className="lp-bg-showcase py-24 md:py-32 border-y" style={{ borderColor: C.line }}>
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="grid lg:grid-cols-12 gap-10 mb-14">
             <div className="lg:col-span-7">
               <p className="text-[14px] mb-4" style={{ color: C.muted }}>Proposta por link</p>
               <h2 className="text-[40px] md:text-[52px] leading-[1.05]" style={serif}>
-                O fim do PDF que vai por e-mail e <span style={{ color: C.green }}>nunca mais volta.</span>
+                O fim do PDF que vai por e-mail e <span style={{ color: '#EA580C' }}>nunca mais volta.</span>
               </h2>
             </div>
             <p className="lg:col-span-5 text-[16px] leading-[1.65] lg:pt-10" style={{ color: C.muted }}>
-              Ferramentas como a Provelo vendem só o link rastreável da proposta. No SmartBid ele já vem junto — e os números da proposta saem direto da sua CCT, não de uma planilha colada à mão.
+              Outras ferramentas vendem só o link rastreável da proposta. No SmartBid ele já vem integrado — e os números da proposta saem direto da sua CCT, não de uma planilha colada à mão.
             </p>
           </div>
 
@@ -1097,7 +1114,7 @@ export default function LandingPage() {
                 <tr className="border-b text-left" style={{ borderColor: C.line }}>
                   <th className="px-6 py-5 font-normal" style={{ color: C.muted }}>&nbsp;</th>
                   <th className="px-6 py-5 font-medium w-[18%]">PDF anexo</th>
-                  <th className="px-6 py-5 font-medium w-[18%]">Provelo e similares</th>
+                  <th className="px-6 py-5 font-medium w-[18%]">Outras ferramentas</th>
                   <th className="px-6 py-5 font-medium w-[18%] text-white" style={{ background: C.green }}>SmartBid</th>
                 </tr>
               </thead>

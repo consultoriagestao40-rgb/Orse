@@ -96,17 +96,20 @@ export default function ModulesSection() {
                   key={x.id}
                   onClick={() => setG(i)}
                   onMouseEnter={() => setG(i)}
-                  className="group shrink-0 lg:shrink text-left rounded-2xl border px-5 py-4 lg:py-5 cursor-pointer transition-all duration-300"
-                  style={{ borderColor: on ? 'rgba(27,77,62,0.3)' : C.line, background: on ? '#fff' : 'transparent', boxShadow: on ? '0 20px 40px -28px rgba(17,20,24,0.35)' : 'none' }}
+                  className={`relative group shrink-0 lg:shrink text-left rounded-2xl border px-5 py-4 lg:py-5 cursor-pointer transition-all duration-400 overflow-hidden ${on ? 'bg-white border-[#1B4D3E]/50 shadow-[0_20px_45px_-18px_rgba(27,77,62,0.32)] scale-[1.01] lg:translate-x-2' : 'border-[#E6E2DA] hover:bg-white/70 hover:border-[#1B4D3E]/20'}`}
                 >
+                  <span
+                    className="absolute left-0 top-3 bottom-3 w-1.5 bg-[#EA580C] rounded-r-full transition-all duration-300"
+                    style={{ opacity: on ? 1 : 0, transform: on ? 'scaleY(1)' : 'scaleY(0.3)' }}
+                  />
                   <div className="flex items-center justify-between gap-6">
                     <div className="flex items-center gap-3">
-                      <span className="text-[13px] font-semibold tabular-nums transition-colors" style={{ color: on ? C.green : '#A8A296' }}>{x.n}</span>
+                      <span className="text-[13px] font-semibold tabular-nums transition-colors" style={{ color: on ? '#EA580C' : '#A8A296' }}>{x.n}</span>
                       <span className="text-[17px] lg:text-[19px] whitespace-nowrap" style={{ ...title, fontWeight: on ? 700 : 600 }}>{x.t}</span>
                     </div>
                     <span className="hidden lg:flex items-center gap-2 text-[12px] tabular-nums" style={{ color: C.muted }}>
                       {x.mods.length}
-                      <ArrowRight size={15} className="transition-all duration-300" style={{ color: C.green, opacity: on ? 1 : 0, transform: on ? 'none' : 'translateX(-6px)' }} />
+                      <ArrowRight size={15} className="transition-all duration-300" style={{ color: '#EA580C', opacity: on ? 1 : 0, transform: on ? 'none' : 'translateX(-6px)' }} />
                     </span>
                   </div>
                   <div className="hidden lg:grid transition-all duration-500" style={{ gridTemplateRows: on ? '1fr' : '0fr' }}>
@@ -120,16 +123,16 @@ export default function ModulesSection() {
           </div>
 
           {/* módulos da área */}
-          <div className="lp-modules-stage lg:col-span-8 rounded-[24px] p-4 sm:p-6 md:p-7">
+          <div className="lp-modules-stage lg:col-span-8 rounded-[24px] p-4 sm:p-6 md:p-7 shadow-[0_20px_50px_-25px_rgba(27,77,62,0.14)]">
             <p className="lg:hidden text-[14px] leading-[1.6] mb-4" style={{ color: C.muted }}>{group.d}</p>
             <div key={group.id} className="grid sm:grid-cols-2 gap-3">
               {group.mods.map((m, i) => (
                 <div
                   key={m.t}
-                  className="lp-mod lp-card lp-mod-interactive bg-white rounded-2xl border p-5 shadow-sm cursor-pointer group"
-                  style={{ borderColor: C.line, animationDelay: `${i * 60}ms` }}
+                  className="lp-mod-stagger lp-card lp-mod-interactive bg-white rounded-2xl border p-5 shadow-xs cursor-pointer group"
+                  style={{ borderColor: C.line, animationDelay: `${i * 55}ms` }}
                 >
-                  <span className="lp-mod-icon w-10 h-10 rounded-xl flex items-center justify-center shadow-sm" style={{ background: C.greenSoft }}>
+                  <span className="lp-mod-icon w-10 h-10 rounded-xl flex items-center justify-center shadow-xs" style={{ background: C.greenSoft }}>
                     <m.icon size={19} style={{ color: C.green }} strokeWidth={2} />
                   </span>
                   <p className="text-[16px] font-semibold mt-4 transition-colors duration-300 group-hover:text-[#1B4D3E]">{m.t}</p>

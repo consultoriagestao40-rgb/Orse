@@ -157,8 +157,8 @@
 }
 .lp-tilt {
   transform-origin: 50% 0%;
-  transform: rotateX(calc(var(--tilt, 1) * 14deg)) scale(calc(1 - var(--tilt, 1) * 0.06)) translateY(calc(var(--tilt, 1) * 20px));
-  transition: transform 0.12s linear;
+  transform: rotateX(calc(var(--tilt, 1) * 12deg)) scale(calc(1 - var(--tilt, 1) * 0.05)) translateY(calc(var(--tilt, 1) * 16px));
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
 
@@ -181,26 +181,36 @@
   transition: left 0.45s var(--ease-out), width 0.45s var(--ease-out);
 }
 
-/* ---------- Revelação ao rolar ---------- */
+/* ---------- Revelação ao rolar (Cinematic deblur + spring) ---------- */
 .lp-reveal {
   opacity: 0;
-  transform: translateY(36px);
-  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+  transform: translateY(28px);
+  filter: blur(8px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--d, 0ms);
+  will-change: opacity, transform, filter;
 }
 .lp-reveal.is-in {
   opacity: 1;
   transform: none;
+  filter: blur(0);
 }
 .lp-reveal-scale {
   opacity: 0;
-  transform: translateY(40px) scale(0.96);
-  transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+  transform: translateY(32px) scale(0.96);
+  filter: blur(10px);
+  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.95s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--d, 0ms);
+  will-change: opacity, transform, filter;
 }
 .lp-reveal-scale.is-in {
   opacity: 1;
   transform: none;
+  filter: blur(0);
 }
 
 /* linha que se desenha */
@@ -879,13 +889,92 @@
    V6 — Micro-efeitos de Elite & Interações Dinâmicas
    ========================================================= */
 
-/* Transição fluida de abas e palcos */
-@keyframes lp-stage-fade-in {
-  0% { opacity: 0; transform: translateY(10px) scale(0.992); filter: blur(3px); }
-  100% { opacity: 1; transform: none; filter: blur(0); }
+/* Transição fluida de abas e palcos com deblur e glide cinematográfico */
+@keyframes lp-stage-glide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.988);
+    filter: blur(6px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 .lp-tab-content-enter {
-  animation: lp-stage-fade-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: lp-stage-glide-in 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, filter;
+}
+
+/* Transição de sub-abas dentro da proposta comercial */
+@keyframes lp-subtab-glide {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.994);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.lp-subtab-enter {
+  animation: lp-subtab-glide 0.34s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, filter;
+}
+
+/* Expansão fluida de sub-linhas da DRE */
+@keyframes lp-dre-expand {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lp-dre-row-enter {
+  animation: lp-dre-expand 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Animação progressiva de preenchimento de barras */
+@keyframes lp-grow-bar {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  100% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+.lp-anim-bar {
+  animation: lp-grow-bar 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+/* Efeito cascata para os módulos ao trocar de categoria */
+@keyframes lp-mod-stagger-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.965);
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.lp-mod-stagger {
+  animation: lp-mod-stagger-in 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform, filter;
 }
 
 /* Pulso de erro para células de planilha quebradas */

@@ -225,7 +225,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
     const clienteContato = proposta.cliente?.contato || proposta.cliente?.contatoNome || '';
     
     const vendedorNome = proposta.cliente?.vendedorNome || proposta.proposta?.user?.nome || 'Ádamo Quadros';
-    const vendedorEmail = proposta.cliente?.vendedorEmail || proposta.proposta?.user?.email || 'contato@provelo.com.br';
+    const vendedorEmail = proposta.cliente?.vendedorEmail || proposta.proposta?.user?.email || 'contato@smartbidhub.com.br';
     const vendedorTelefone = proposta.cliente?.vendedorTelefone || proposta.proposta?.user?.celular || '(41) 9 9737-0880';
     
     const numProposta = proposta.cliente?.numeroProposta || (proposta.numero ? `FPV-${String(proposta.numero).padStart(3, '0')}` : 'FPV-XXX');
@@ -1181,7 +1181,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                           <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
                                                              <span className="text-[1.0cqw] font-black text-[#0f3156] uppercase">Treinamento JVS</span>
                                                              <p className="text-[0.75cqw] text-slate-500 mt-[0.5cqw] leading-normal">Centro de treinamento físico próprio para capacitação prática e homologação de processos.</p>
-                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.7cqw] font-bold p-[0.3cqw] rounded mt-[0.5cqw]">Provelo Academy</div>
+                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.7cqw] font-bold p-[0.3cqw] rounded mt-[0.5cqw]">SmartBid Academy</div>
                                                           </div>
                                                        </div>
                                                     </div>
@@ -1329,11 +1329,11 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                              <div className="pt-4 border-t border-slate-100 flex gap-8 text-[9px] font-extrabold text-slate-400">
                                                 <div className="flex items-center gap-2">
                                                    <div className="w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shadow-sm">✉</div>
-                                                   <span className="text-slate-600">contato@provelo.com.br</span>
+                                                   <span className="text-slate-600">contato@smartbidhub.com.br</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                    <div className="w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shadow-sm">🌐</div>
-                                                   <span className="text-slate-600">www.provelo.com.br</span>
+                                                   <span className="text-slate-600">www.smartbidhub.com.br</span>
                                                 </div>
                                              </div>
                                           </div>
@@ -1413,7 +1413,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                           <h2 className="text-5xl font-black uppercase tracking-tight text-white leading-none" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
                                           <p className="text-[11px] font-semibold leading-relaxed text-white/95 whitespace-pre-line text-justify">{replaceTags(conteudo)}</p>
                                           {/* Mini logo outline */}
-                                          <div className="absolute bottom-6 left-20 text-[8px] font-bold text-white/50 tracking-widest">PROVELO SERVIÇOS</div>
+                                          <div className="absolute bottom-6 left-20 text-[8px] font-bold text-white/50 tracking-widest">SMARTBID SERVIÇOS</div>
                                        </div>
 
                                        {/* Coluna Direita: Imagem Industrial + 2 Cards Verticais */}

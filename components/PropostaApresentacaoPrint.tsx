@@ -794,11 +794,11 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                 <div className="flex gap-8">
                                                    <div className="flex items-center gap-2">
                                                       <div className="w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shadow-sm">✉</div>
-                                                      <span className="text-slate-600">contato@provelo.com.br</span>
+                                                      <span className="text-slate-600">contato@smartbidhub.com.br</span>
                                                    </div>
                                                    <div className="flex items-center gap-2">
                                                       <div className="w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shadow-sm">🌐</div>
-                                                      <span className="text-slate-600">www.provelo.com.br</span>
+                                                      <span className="text-slate-600">www.smartbidhub.com.br</span>
                                                    </div>
                                                 </div>
                                                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
@@ -868,7 +868,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                        <div className="col-span-5 bg-[#ef4444] p-16 flex flex-col justify-center space-y-6 z-20 pl-20 relative text-left">
                                           <h2 className="text-5xl font-black uppercase tracking-tight text-white leading-none" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
                                           <p className="text-[11px] font-semibold leading-relaxed text-white/95 whitespace-pre-line text-justify">{replaceTags(conteudo)}</p>
-                                          <div className="absolute bottom-6 left-20 text-[8px] font-bold text-white/50 tracking-widest">PROVELO SERVIÇOS</div>
+                                          <div className="absolute bottom-6 left-20 text-[8px] font-bold text-white/50 tracking-widest">SMARTBID SERVIÇOS</div>
                                        </div>
 
                                        <div className="col-span-7 h-full relative flex items-center justify-center p-12 z-10">

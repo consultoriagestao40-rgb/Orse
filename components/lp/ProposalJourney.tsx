@@ -499,16 +499,15 @@ export default function ProposalJourney() {
             <button
               key={s.id}
               onClick={() => go(i)}
-              className="relative text-left rounded-2xl border p-4 cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-              style={{ borderColor: on ? 'rgba(27,77,62,0.35)' : C.line, background: on ? '#fff' : 'transparent', boxShadow: on ? '0 18px 40px -26px rgba(17,20,24,0.35)' : 'none' }}
+              className={`relative text-left rounded-2xl border p-4 cursor-pointer overflow-hidden transition-all duration-400 ${on ? 'bg-white border-[#1B4D3E]/50 shadow-[0_22px_48px_-18px_rgba(27,77,62,0.32)] -translate-y-1.5 scale-[1.015]' : 'border-[#E6E2DA] hover:-translate-y-0.5 hover:bg-white/70 hover:border-[#1B4D3E]/20'}`}
             >
               <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold tabular-nums transition-colors duration-300" style={{ background: on ? C.green : '#EFEDE8', color: on ? '#fff' : C.muted }}>{s.n}</span>
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold tabular-nums transition-all duration-400 ${on ? 'bg-[#1B4D3E] text-white shadow-sm scale-110' : 'bg-[#EFEDE8] text-[#5B6470]'}`}>{s.n}</span>
                 <span className="text-[15px] font-semibold">{s.t}</span>
               </div>
               <p className="text-[13px] mt-2 leading-snug" style={{ color: C.muted }}>{s.d}</p>
               <span className="absolute left-0 bottom-0 h-[3px] w-full" style={{ background: on ? '#E3EBE6' : 'transparent' }}>
-                {on && <span key={`${step}-${auto}-${visible}`} className="block h-full" style={{ background: C.green, width: auto && visible ? undefined : '100%', animation: auto && visible ? `lp-tab-fill ${DURATION}ms linear forwards` : 'none' }} />}
+                {on && <span key={`${step}-${auto}-${visible}`} className="block h-full shadow-[0_0_8px_rgba(234,88,12,0.6)]" style={{ background: '#EA580C', width: auto && visible ? undefined : '100%', animation: auto && visible ? `lp-tab-fill ${DURATION}ms linear forwards` : 'none' }} />}
               </span>
             </button>
           );
@@ -516,17 +515,18 @@ export default function ProposalJourney() {
       </div>
 
       {/* palco */}
-      <div className="lp-showcase-stage mt-5 relative rounded-[28px] p-3 sm:p-5 md:p-8 overflow-hidden">
+      <div className="lp-showcase-stage mt-5 relative rounded-[28px] p-3 sm:p-5 md:p-8 overflow-hidden shadow-[0_24px_60px_-25px_rgba(27,77,62,0.18)]">
         <div className="relative h-[620px] md:h-[540px]">
           {STEPS.map((s, i) => (
             <div
               key={s.id}
-              className="absolute inset-0 transition-all duration-700"
+              className="absolute inset-0 transition-all duration-650"
               style={{
                 opacity: i === step ? 1 : 0,
-                transform: i === step ? 'none' : i < step ? 'translateX(-36px) scale(0.985)' : 'translateX(36px) scale(0.985)',
+                transform: i === step ? 'none' : i < step ? 'translateX(-44px) scale(0.975)' : 'translateX(44px) scale(0.975)',
+                filter: i === step ? 'blur(0)' : 'blur(5px)',
                 pointerEvents: i === step ? 'auto' : 'none',
-                transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)',
+                transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               aria-hidden={i !== step}
             >
