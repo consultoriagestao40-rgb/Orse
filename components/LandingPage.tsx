@@ -896,28 +896,42 @@ export default function LandingPage() {
       </section>
 
       {/* SOLUÇÃO */}
-      <section id="solucao" className="py-24 md:py-28 text-white" style={{ background: C.green }}>
-        <div className="max-w-[1200px] mx-auto px-6">
+      <section id="solucao" className="lp-hero-band relative overflow-hidden py-24 md:py-28 text-white">
+        <div className="lp-dots" aria-hidden />
+        <div className="lp-grain" aria-hidden />
+        <div className="relative max-w-[1200px] mx-auto px-6">
           <p className="text-[14px] text-white/60 mb-6">O que é o SmartBid</p>
           <p className="text-[30px] md:text-[40px] leading-[1.18] max-w-[980px]" style={{ ...serif, fontWeight: 600, letterSpacing: '-0.025em' }}>
             Uma esteira única, feita para a realidade de prestadoras de limpeza, portaria, segurança e apoio operacional.
             <span className="text-white/55"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
           </p>
 
-          <div data-stagger className="mt-16 grid sm:grid-cols-2 lg:grid-cols-5 gap-y-8 border-t border-white/15 pt-8">
-            {[
-              ['Prospecção', 'Decisores via Google Places'],
-              ['Custos', 'Multi-CCT, encargos e benefícios'],
-              ['DRE', 'Margem por contrato, ao centavo'],
-              ['Proposta por link', 'Rastreio e aceite online'],
-              ['Contratos', 'Vigência e alerta de reajuste'],
-            ].map(([t, d], i) => (
-              <div key={t} className="pr-6">
-                <p className="text-[13px] text-white/50 tabular-nums">0{i + 1}</p>
-                <p className="text-[17px] font-medium mt-2">{t}</p>
-                <p className="text-[14px] text-white/60 mt-1">{d}</p>
-              </div>
-            ))}
+          <div data-reveal className="lp-timeline relative mt-16 pt-10">
+            {/* trilho e linha laranja que se desenha */}
+            <span className="hidden lg:block absolute left-0 right-0 top-0 h-px bg-white/15" aria-hidden />
+            <span className="lp-line-draw hidden lg:block absolute left-0 top-0 h-[2px] -mt-[0.5px] w-[90%] rounded-full" style={{ background: 'linear-gradient(90deg, #FF7A2F, #EA580C 70%, rgba(234,88,12,0.2))', transitionDuration: '1.6s' }} aria-hidden />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-y-10">
+              {[
+                ['Prospecção', 'Decisores via Google Places'],
+                ['Custos', 'Multi-CCT, encargos e benefícios'],
+                ['DRE', 'Margem por contrato, ao centavo'],
+                ['Proposta por link', 'Rastreio e aceite online'],
+                ['Contratos', 'Vigência e alerta de reajuste'],
+              ].map(([t, d], i) => (
+                <div key={t} className="lp-phase group relative pr-6" style={{ '--i': i } as React.CSSProperties}>
+                  {/* marcador da fase, sentado na linha */}
+                  <span className="lp-phase-dot absolute -top-10 left-0 lg:-translate-y-1/2 flex items-center justify-center" aria-hidden>
+                    <span className="lp-phase-halo absolute rounded-full" />
+                    <span className="relative w-[14px] h-[14px] rounded-full border-2 flex items-center justify-center" style={{ borderColor: '#FF7A2F', background: '#0F3A2E' }}>
+                      <span className="w-[6px] h-[6px] rounded-full" style={{ background: '#FF7A2F' }} />
+                    </span>
+                  </span>
+                  <p className="text-[13px] tabular-nums font-semibold transition-colors duration-300 group-hover:text-[#FF9A5C]" style={{ color: 'rgba(255,154,92,0.85)' }}>0{i + 1}</p>
+                  <p className="text-[17px] font-medium mt-2">{t}</p>
+                  <p className="text-[14px] text-white/60 mt-1">{d}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
