@@ -1,0 +1,421 @@
+/* =========================================================
+   SmartBid LP — sistema de movimento
+   Fundo claro, sem neon. Movimento com propósito.
+   ========================================================= */
+
+/* barra de tempo da aba ativa (abas giram sozinhas) */
+@keyframes lp-tab-fill { from { width: 0; } to { width: 100%; } }
+.lp-tab-progress { width: 0; animation: lp-tab-fill 6.5s linear forwards; }
+
+/* palco 3D: entrada sem blur (blur quebraria o backdrop e o 3D) */
+@keyframes lp-rise-nf {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: none; }
+}
+.lp-stage.lp-enter { animation-name: lp-rise-nf; animation-duration: 1.2s; }
+
+.lp-root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  scroll-behavior: smooth;
+}
+
+/* ---------- Barra de progresso de leitura ---------- */
+.lp-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--lp-progress, 0));
+  background: linear-gradient(90deg, #1B4D3E, #2F7A61 60%, #6FB59A);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* ---------- Header flutuante ---------- */
+.lp-header {
+  transition: padding 0.45s var(--ease-out);
+}
+.lp-header-inner {
+  transition: max-width 0.5s var(--ease-out), background-color 0.4s, box-shadow 0.4s, border-color 0.4s, border-radius 0.5s var(--ease-out), height 0.4s var(--ease-out);
+  border: 1px solid transparent;
+}
+.lp-header.is-scrolled {
+  padding-top: 10px;
+}
+.lp-header.is-scrolled .lp-header-inner {
+  max-width: 1080px;
+  height: 58px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  border-color: rgba(17, 20, 24, 0.07);
+  box-shadow: 0 12px 32px -16px rgba(17, 20, 24, 0.25);
+}
+
+/* link do menu com sublinhado animado */
+.lp-navlink {
+  position: relative;
+}
+.lp-navlink::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 1.5px;
+  background: #1B4D3E;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.35s var(--ease-out);
+}
+.lp-navlink:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ---------- Entrada do hero (no carregamento) ---------- */
+@keyframes lp-rise {
+  from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+.lp-enter {
+  opacity: 0;
+  animation: lp-rise 0.9s var(--ease-out) forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* palavras do título entrando uma a uma */
+.lp-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.45em);
+  animation: lp-word 0.8s var(--ease-out) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes lp-word {
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Faixa verde: luz em movimento ---------- */
+.lp-aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform;
+}
+.lp-aurora-a {
+  width: 620px;
+  height: 620px;
+  top: -260px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(111, 181, 154, 0.55), transparent 65%);
+  animation: lp-drift-a 18s ease-in-out infinite alternate;
+}
+.lp-aurora-b {
+  width: 560px;
+  height: 560px;
+  top: -120px;
+  right: -160px;
+  background: radial-gradient(circle, rgba(196, 230, 213, 0.38), transparent 65%);
+  animation: lp-drift-b 22s ease-in-out infinite alternate;
+}
+.lp-aurora-c {
+  width: 700px;
+  height: 380px;
+  bottom: -160px;
+  left: 30%;
+  background: radial-gradient(ellipse, rgba(13, 46, 36, 0.7), transparent 70%);
+  animation: lp-drift-a 26s ease-in-out infinite alternate-reverse;
+}
+@keyframes lp-drift-a {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(180px, 90px) scale(1.15); }
+}
+@keyframes lp-drift-b {
+  0% { transform: translate(0, 0) scale(1.1); }
+  100% { transform: translate(-200px, 120px) scale(0.95); }
+}
+
+/* luz que segue o mouse dentro da faixa verde */
+.lp-band-spot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.10), transparent 60%);
+  transition: opacity 0.4s;
+}
+
+/* ---------- Mockup em 3D que "deita" com o scroll ---------- */
+.lp-stage {
+  perspective: 1600px;
+}
+.lp-tilt {
+  transform-origin: 50% 0%;
+  transform: rotateX(calc(var(--tilt, 1) * 14deg)) scale(calc(1 - var(--tilt, 1) * 0.06)) translateY(calc(var(--tilt, 1) * 20px));
+  transition: transform 0.12s linear;
+  will-change: transform;
+}
+
+/* conteúdo das abas trocando com suavidade */
+@keyframes lp-tab-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.995); }
+  to { opacity: 1; transform: none; }
+}
+.lp-tab-panel > * {
+  animation: lp-tab-in 0.5s var(--ease-out);
+}
+
+/* indicador da aba ativa deslizando */
+.lp-tab-ind {
+  position: absolute;
+  bottom: -1px;
+  height: 2px;
+  background: #1B4D3E;
+  border-radius: 2px;
+  transition: left 0.45s var(--ease-out), width 0.45s var(--ease-out);
+}
+
+/* ---------- Revelação ao rolar ---------- */
+.lp-reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+  transition-delay: var(--d, 0ms);
+}
+.lp-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+.lp-reveal-scale {
+  opacity: 0;
+  transform: translateY(40px) scale(0.96);
+  transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+  transition-delay: var(--d, 0ms);
+}
+.lp-reveal-scale.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* linha que se desenha */
+.lp-line-draw {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.2s var(--ease-out);
+}
+.is-in .lp-line-draw,
+.lp-line-draw.is-in {
+  transform: scaleX(1);
+}
+
+/* ---------- Botões ---------- */
+.lp-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.35s var(--ease-spring), box-shadow 0.35s var(--ease-out), background-color 0.3s;
+}
+.lp-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.8s var(--ease-out);
+}
+.lp-btn:hover::before {
+  transform: translateX(120%);
+}
+.lp-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -12px rgba(17, 20, 24, 0.35);
+}
+.lp-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+.lp-btn-dark::before {
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
+}
+.lp-btn-ghost:hover {
+  box-shadow: none;
+}
+
+/* pulso discreto no CTA principal */
+@keyframes lp-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45); }
+  70% { box-shadow: 0 0 0 14px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+.lp-pulse {
+  animation: lp-ring 2.6s ease-out infinite;
+  animation-delay: 1.6s;
+}
+
+/* ---------- Cartões com spotlight e elevação ---------- */
+.lp-card {
+  position: relative;
+  transition: opacity 0.9s var(--ease-out) var(--d, 0ms), transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out), border-color 0.4s;
+}
+.lp-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(27, 77, 62, 0.08), transparent 60%);
+}
+.lp-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 60px -30px rgba(17, 20, 24, 0.28);
+  border-color: rgba(27, 77, 62, 0.25) !important;
+}
+.lp-card:hover::after {
+  opacity: 1;
+}
+.lp-card .lp-card-media {
+  transition: transform 0.7s var(--ease-out);
+}
+.lp-card:hover .lp-card-media {
+  transform: scale(1.025);
+}
+
+/* itens dentro dos previews levantando em sequência */
+.lp-card .lp-chip {
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+}
+.lp-card:hover .lp-chip {
+  transform: translateX(4px);
+  box-shadow: 0 6px 16px -10px rgba(17, 20, 24, 0.3);
+}
+.lp-card:hover .lp-chip:nth-child(2) { transition-delay: 60ms; }
+.lp-card:hover .lp-chip:nth-child(3) { transition-delay: 120ms; }
+
+/* ---------- Lista de problemas ---------- */
+.lp-problem {
+  position: relative;
+}
+.lp-problem .lp-problem-n {
+  transition: color 0.3s, transform 0.45s var(--ease-out);
+}
+.lp-problem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  width: 100%;
+  background: #1B4D3E;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s var(--ease-out);
+}
+.lp-problem:hover::before {
+  transform: scaleX(1);
+}
+.lp-problem:hover .lp-problem-n {
+  color: #1B4D3E !important;
+  transform: translateX(4px);
+}
+
+/* ---------- Planos ---------- */
+.lp-plan {
+  transition: opacity 0.9s var(--ease-out) var(--d, 0ms), transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+}
+.lp-plan:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 40px 70px -35px rgba(17, 20, 24, 0.4);
+}
+/* borda animada no plano em destaque */
+.lp-plan-featured {
+  position: relative;
+}
+.lp-plan-featured::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  background: conic-gradient(from var(--lp-angle, 0deg), #1B4D3E, #6FB59A, #111418 40%, #111418 60%, #6FB59A, #1B4D3E);
+  animation: lp-spin 6s linear infinite;
+}
+@property --lp-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes lp-spin {
+  to { --lp-angle: 360deg; }
+}
+
+/* ---------- Letreiro contínuo ---------- */
+.lp-marquee {
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.lp-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: lp-marquee 38s linear infinite;
+}
+.lp-marquee:hover .lp-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes lp-marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* ---------- Linha da comparação ---------- */
+.lp-row {
+  transition: background-color 0.25s;
+}
+.lp-row:hover {
+  background: #F7F6F2;
+}
+
+/* ---------- FAQ ---------- */
+.lp-faq-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s var(--ease-out);
+}
+.lp-faq-body.is-open {
+  grid-template-rows: 1fr;
+}
+.lp-faq-body > div {
+  overflow: hidden;
+}
+
+/* ---------- Indicador ao vivo ---------- */
+@keyframes lp-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+.lp-live {
+  display: inline-block;
+  animation: lp-live 1.6s ease-in-out infinite;
+}
+
+/* ---------- Acessibilidade ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .lp-root *,
+  .lp-root *::before,
+  .lp-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .lp-enter, .lp-word, .lp-reveal, .lp-reveal-scale { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .lp-tilt { transform: none !important; }
+}

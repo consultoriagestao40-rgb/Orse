@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getPlanConfigs } from '@/app/admin/empresas/actions';
 import { displayFont, textFont } from '@/components/lp/fonts';
+import '@/components/lp/lp.css';
 
 // Paleta: papel quente, tinta escura e um único verde (o mesmo do sistema)
 const C = {
@@ -20,6 +21,41 @@ const C = {
 
 // Títulos: sans-serif firme, negrito e com espaçamento justo (autoridade, sem itálico)
 const serif: React.CSSProperties = { fontFamily: 'var(--font-lp-text)', fontWeight: 700, letterSpacing: '-0.035em' };
+
+// Número que conta de 0 até o valor quando entra na tela (ex.: "R$ 1,2 bi", "127×", "100%")
+function CountUp({ value }: { value: string }) {
+  const ref = React.useRef<HTMLSpanElement>(null);
+  const match = value.match(/(\d+(?:,\d+)?)/);
+  const [display, setDisplay] = useState(value);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !match) return;
+    const target = parseFloat(match[1].replace(',', '.'));
+    const decimals = match[1].includes(',') ? match[1].split(',')[1].length : 0;
+    const fmt = (n: number) => value.replace(match[1], n.toFixed(decimals).replace('.', ','));
+    if (el.getBoundingClientRect().top < window.innerHeight) return; // já visível: não anima
+    setDisplay(fmt(0));
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const dur = 1600;
+      const tick = (now: number) => {
+        const p = Math.min(1, (now - start) / dur);
+        const eased = 1 - Math.pow(1 - p, 4);
+        setDisplay(fmt(target * eased));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: 0.6 });
+    io.observe(el);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return <span ref={ref}>{display}</span>;
+}
 
 export default function LandingPage() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -43,6 +79,16 @@ export default function LandingPage() {
 
   // --- ESTADOS INTERATIVOS DO VISUAL HERO ---
   const [heroTab, setHeroTab] = useState<'propostaLink' | 'telemetria' | 'radar' | 'dre'>('propostaLink');
+  // Abas do produto giram sozinhas até o visitante interagir
+  const [autoTabs, setAutoTabs] = useState(true);
+  useEffect(() => {
+    if (!autoTabs) return;
+    const order = ['propostaLink', 'telemetria', 'radar', 'dre'] as const;
+    const id = setTimeout(() => {
+      setHeroTab(prev => order[(order.indexOf(prev) + 1) % order.length]);
+    }, 6500);
+    return () => clearTimeout(id);
+  }, [autoTabs, heroTab]);
   const [clientProposalSubTab, setClientProposalSubTab] = useState<'postos' | 'fpv' | 'minuta' | 'apresentacao'>('postos');
   const [clientAccepted, setClientAccepted] = useState(false);
   const [interactiveBdi, setInteractiveBdi] = useState(14.5);
@@ -67,6 +113,77 @@ export default function LandingPage() {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // --- SISTEMA DE MOVIMENTO ---
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    // 1) Progresso de leitura + mockup 3D que "deita" conforme rola
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        root.style.setProperty('--lp-progress', String(max > 0 ? window.scrollY / max : 0));
+        const prod = document.getElementById('produto');
+        if (prod) {
+          const r = prod.getBoundingClientRect();
+          const t = Math.max(0, Math.min(1, (r.top - window.innerHeight * 0.15) / (window.innerHeight * 0.55)));
+          prod.style.setProperty('--tilt', t.toFixed(3));
+        }
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+
+    // 2) Revelação ao rolar: só marca o que está abaixo da dobra (sem piscar o que já está visível)
+    const below = (el: Element) => el.getBoundingClientRect().top > window.innerHeight * 0.95;
+    const targets: Element[] = [];
+    root.querySelectorAll('section h2, [data-reveal]').forEach(el => {
+      if (!below(el)) return;
+      el.classList.add(el.hasAttribute('data-reveal-scale') ? 'lp-reveal-scale' : 'lp-reveal');
+      targets.push(el);
+    });
+    root.querySelectorAll('[data-stagger]').forEach(group => {
+      Array.from(group.children).forEach((child, i) => {
+        if (!below(child)) return;
+        child.classList.add('lp-reveal');
+        (child as HTMLElement).style.setProperty('--d', `${Math.min(i, 6) * 90}ms`);
+        targets.push(child);
+      });
+    });
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    targets.forEach(t => io.observe(t));
+
+    // 3) Spotlight que segue o mouse em cartões e na faixa verde
+    const onMove = (e: PointerEvent) => {
+      const el = (e.target as HTMLElement).closest('.lp-card, [data-spot]') as HTMLElement | null;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      el.style.setProperty('--my', `${e.clientY - r.top}px`);
+    };
+    root.addEventListener('pointermove', onMove);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      root.removeEventListener('pointermove', onMove);
+      io.disconnect();
+    };
   }, []);
 
   const openDemoWithPlan = (planName: string) => {
@@ -131,16 +248,15 @@ export default function LandingPage() {
 
   return (
     <div
-      className={`${displayFont.variable} ${textFont.variable} min-h-screen antialiased selection:bg-[#1B4D3E] selection:text-white`}
+      ref={rootRef}
+      className={`lp-root ${displayFont.variable} ${textFont.variable} min-h-screen antialiased selection:bg-[#1B4D3E] selection:text-white`}
       style={{ background: C.paper, color: C.ink, fontFamily: 'var(--font-lp-text)' }}
     >
+      <div className="lp-progress" aria-hidden />
 
       {/* HEADER */}
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${scrolled ? 'border-b backdrop-blur-md' : 'border-b border-transparent'}`}
-        style={{ background: scrolled ? 'rgba(251,250,247,0.9)' : C.paper, borderColor: scrolled ? C.line : 'transparent' }}
-      >
-        <div className="max-w-[1200px] mx-auto px-6 h-[68px] flex items-center justify-between">
+      <header className={`lp-header fixed top-0 left-0 right-0 z-50 px-3 ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="lp-header-inner max-w-[1200px] mx-auto px-6 h-[68px] flex items-center justify-between">
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2 cursor-pointer">
             <span className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: C.green }}>
               <TrendingUp size={15} className="text-white" strokeWidth={2.5} />
@@ -150,7 +266,7 @@ export default function LandingPage() {
 
           <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map(l => (
-              <a key={l.href} href={l.href} className="text-[14px] hover:text-[#111418] transition-colors" style={{ color: C.muted }}>
+              <a key={l.href} href={l.href} className="lp-navlink text-[14px] hover:text-[#111418] transition-colors" style={{ color: C.muted }}>
                 {l.label}
               </a>
             ))}
@@ -161,7 +277,7 @@ export default function LandingPage() {
             <a
               id="header-teste-gratis"
               href="/cadastro"
-              className="text-[14px] font-semibold text-white px-4 py-2 rounded-full transition-opacity hover:opacity-90"
+              className="lp-btn lp-btn-dark text-[14px] font-semibold text-white px-4 py-2 rounded-full"
               style={{ background: C.green }}
             >
               Testar grátis por 7 dias
@@ -199,51 +315,62 @@ export default function LandingPage() {
         {/* Faixa verde de autoridade */}
         <div className="px-3 sm:px-5">
           <div
+            data-spot
             className="relative overflow-hidden rounded-[28px] text-white text-center px-6 pt-20 md:pt-24 pb-[220px] md:pb-[300px]"
             style={{ background: C.green }}
           >
+            {/* luz em movimento */}
+            <div className="lp-aurora lp-aurora-a" aria-hidden />
+            <div className="lp-aurora lp-aurora-b" aria-hidden />
+            <div className="lp-aurora lp-aurora-c" aria-hidden />
+            <div className="lp-band-spot" aria-hidden />
             {/* textura sutil de linhas para dar profundidade */}
             <div
               className="absolute inset-0 pointer-events-none opacity-[0.07]"
               style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'linear-gradient(to bottom, black, transparent 85%)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 85%)' }}
             />
             <div className="relative max-w-[980px] mx-auto">
-              <p className="text-[14px] font-medium text-white/70 mb-6">
+              <p className="lp-enter inline-flex items-center gap-2 text-[14px] font-medium text-white/80 mb-6" style={{ '--d': '0ms' } as React.CSSProperties}>
+                <span className="lp-live w-1.5 h-1.5 rounded-full bg-[#9FD3BC]" />
                 Plataforma para prestadoras de serviços terceirizados
               </p>
               <h1 className="text-[38px] sm:text-[52px] lg:text-[64px] leading-[1.03]" style={{ ...serif, fontWeight: 800 }}>
-                Transforme a sua prestadora de serviços numa máquina de contratos previsíveis
+                {'Transforme a sua prestadora de serviços numa máquina de contratos previsíveis'.split(' ').map((w, i) => (
+                  <React.Fragment key={i}>
+                    <span className="lp-word" style={{ '--d': `${120 + i * 55}ms` } as React.CSSProperties}>{w}</span>{' '}
+                  </React.Fragment>
+                ))}
               </h1>
-              <p className="mt-6 text-[17px] md:text-[19px] leading-[1.55] text-white/75 max-w-[760px] mx-auto">
+              <p className="lp-enter mt-6 text-[17px] md:text-[19px] leading-[1.55] text-white/75 max-w-[760px] mx-auto" style={{ '--d': '750ms' } as React.CSSProperties}>
                 Da prospecção de grandes contas à blindagem de margem e reajustes automáticos. Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="lp-enter mt-10 flex flex-col sm:flex-row items-center justify-center gap-3" style={{ '--d': '900ms' } as React.CSSProperties}>
                 <a
                   id="hero-teste-gratis"
                   href="/cadastro"
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[15px] font-semibold px-6 py-3.5 rounded-xl transition-transform hover:-translate-y-0.5"
+                  className="lp-btn lp-pulse group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[15px] font-semibold px-6 py-3.5 rounded-xl"
                   style={{ color: C.green }}
                 >
                   Começar teste grátis de 7 dias
-                  <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </a>
                 <button
                   onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-6 py-3.5 rounded-xl border border-white/40 text-white cursor-pointer transition-colors hover:bg-white/10"
+                  className="lp-btn lp-btn-dark lp-btn-ghost w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-6 py-3.5 rounded-xl border border-white/40 text-white cursor-pointer hover:bg-white/10"
                 >
                   Agendar demonstração
                 </button>
               </div>
-              <p className="mt-5 text-[13px] text-white/60">
+              <p className="lp-enter mt-5 text-[13px] text-white/60" style={{ '--d': '1050ms' } as React.CSSProperties}>
                 Crie a conta em 2 minutos · sem cartão de crédito · acesso completo durante o teste
               </p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-[1140px] mx-auto px-6 -mt-[180px] md:-mt-[250px] relative z-10">
+        <div className="lp-stage lp-enter max-w-[1140px] mx-auto px-6 -mt-[180px] md:-mt-[250px] relative z-10" style={{ '--d': '1100ms' } as React.CSSProperties}>
           {/* PRODUTO */}
-          <div id="produto" className="rounded-[22px] p-2 sm:p-2.5 bg-white/60 backdrop-blur-sm border border-white/70 shadow-[0_40px_80px_-30px_rgba(17,20,24,0.35)]">
+          <div id="produto" className="lp-tilt rounded-[22px] p-2 sm:p-2.5 bg-white/60 backdrop-blur-sm border border-white/70 shadow-[0_40px_80px_-30px_rgba(17,20,24,0.35)]">
             <div className="bg-white rounded-[18px] border overflow-hidden shadow-[0_1px_0_rgba(17,20,24,0.04),0_30px_60px_-30px_rgba(27,77,62,0.35)]" style={{ borderColor: '#DCE5DF' }}>
               {/* Barra do app */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b" style={{ borderColor: C.line }}>
@@ -261,18 +388,22 @@ export default function LandingPage() {
                   {heroTabs.map(t => (
                     <button
                       key={t.id}
-                      onClick={() => setHeroTab(t.id)}
-                      className="relative px-3 py-3.5 text-[13px] whitespace-nowrap cursor-pointer transition-colors"
+                      onClick={() => { setAutoTabs(false); setHeroTab(t.id); }}
+                      className="relative px-3 py-3.5 text-[13px] whitespace-nowrap cursor-pointer transition-colors hover:text-[#111418]"
                       style={{ color: heroTab === t.id ? C.ink : C.muted, fontWeight: heroTab === t.id ? 600 : 400 }}
                     >
                       {t.label}
-                      {heroTab === t.id && <span className="absolute left-3 right-3 -bottom-px h-[2px]" style={{ background: C.green }} />}
+                      {heroTab === t.id && (
+                        <span className="absolute left-3 right-3 -bottom-px h-[2px] overflow-hidden rounded" style={{ background: autoTabs ? '#DCE5DF' : C.green }}>
+                          {autoTabs && <span key={heroTab} className="lp-tab-progress block h-full" style={{ background: C.green }} />}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="p-5 sm:p-7 min-h-[440px]" style={{ background: '#FCFCFB' }}>
+              <div className="lp-tab-panel p-5 sm:p-7 min-h-[440px]" style={{ background: '#FCFCFB' }} onPointerDown={() => setAutoTabs(false)}>
 
                 {/* ABA: LINK DA PROPOSTA (o que o cliente vê) */}
                 {heroTab === 'propostaLink' && (
@@ -628,7 +759,7 @@ export default function LandingPage() {
           <p className="text-center text-[15px] font-medium mb-10" style={{ color: C.muted }}>
             Usado por prestadoras de serviços de limpeza, portaria, vigilância e manutenção
           </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10">
+          <div data-stagger className="grid grid-cols-2 lg:grid-cols-4 gap-y-10">
             {[
               ['R$ 1,2 bi', 'em propostas gerenciadas'],
               ['100%', 'das CCTs parametrizadas'],
@@ -636,8 +767,24 @@ export default function LandingPage() {
               ['7 dias', 'grátis para testar tudo'],
             ].map(([n, l], i) => (
               <div key={n} className={`text-center px-4 ${i > 0 ? 'lg:border-l' : ''} ${i % 2 === 1 ? 'border-l lg:border-l' : ''}`} style={{ borderColor: C.line }}>
-                <p className="text-[44px] md:text-[52px] leading-none tabular-nums" style={{ ...serif, fontWeight: 800, color: C.ink }}>{n}</p>
+                <p className="text-[44px] md:text-[52px] leading-none tabular-nums" style={{ ...serif, fontWeight: 800, color: C.ink }}><CountUp value={n} /></p>
                 <p className="text-[14px] mt-3 font-medium" style={{ color: C.muted }}>{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Letreiro contínuo de segmentos atendidos */}
+        <div className="lp-marquee mt-20 border-y py-5 overflow-hidden" style={{ borderColor: C.line }} aria-hidden>
+          <div className="lp-marquee-track">
+            {[0, 1].map(k => (
+              <div key={k} className="flex items-center shrink-0">
+                {['Asseio e conservação', 'Portaria', 'Vigilância patrimonial', 'Limpeza hospitalar', 'Manutenção predial', 'Jardinagem', 'Recepção', 'Copeiragem', 'Apoio operacional', 'Facilities industrial'].map(s => (
+                  <span key={s} className="flex items-center gap-10 pr-10 text-[20px] md:text-[24px] whitespace-nowrap" style={{ ...serif, fontWeight: 700, color: '#B9B3A8' }}>
+                    {s}
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.green }} />
+                  </span>
+                ))}
               </div>
             ))}
           </div>
@@ -678,8 +825,8 @@ export default function LandingPage() {
                 i: 'Margem perdida por falta de repasse',
               },
             ].map((p, idx) => (
-              <div key={p.t} className="grid grid-cols-[48px_1fr] gap-4 py-8 border-t first:border-t-0 first:pt-0" style={{ borderColor: C.line }}>
-                <span className="text-[13px] tabular-nums pt-1.5" style={{ color: C.muted }}>0{idx + 1}</span>
+              <div key={p.t} data-reveal className="lp-problem grid grid-cols-[48px_1fr] gap-4 py-8 border-t first:border-t-0 first:pt-0" style={{ borderColor: C.line }}>
+                <span className="lp-problem-n text-[13px] tabular-nums pt-1.5 font-semibold" style={{ color: C.muted }}>0{idx + 1}</span>
                 <div>
                   <h3 className="text-[22px] font-semibold tracking-tight leading-snug">{p.t}</h3>
                   <p className="text-[16px] leading-[1.65] mt-2" style={{ color: C.muted }}>{p.d}</p>
@@ -700,7 +847,7 @@ export default function LandingPage() {
             <span className="text-white/55"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
           </p>
 
-          <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-5 gap-y-8 border-t border-white/15 pt-8">
+          <div data-stagger className="mt-16 grid sm:grid-cols-2 lg:grid-cols-5 gap-y-8 border-t border-white/15 pt-8">
             {[
               ['Prospecção', 'Decisores via Google Places'],
               ['Custos', 'Multi-CCT, encargos e benefícios'],
@@ -726,7 +873,7 @@ export default function LandingPage() {
             <h2 className="text-[40px] md:text-[52px] leading-[1.05]" style={serif}>Cinco etapas conectadas, do primeiro contato ao reajuste.</h2>
           </div>
 
-          <div className="space-y-6">
+          <div data-stagger className="space-y-6">
             {[
               {
                 n: '01', tag: 'Prospecção',
@@ -739,7 +886,7 @@ export default function LandingPage() {
                       ['Condomínio Residencial Alto da XV', 'Síndico profissional · 32 postos'],
                       ['Indústria Metalúrgica Campo Largo', 'RH · 3 turnos'],
                     ].map(([a, b], i) => (
-                      <div key={a} className="flex items-center justify-between bg-white border rounded-lg px-3.5 py-3" style={{ borderColor: C.line }}>
+                      <div key={a} className="lp-chip flex items-center justify-between bg-white border rounded-lg px-3.5 py-3" style={{ borderColor: C.line }}>
                         <div>
                           <p className="font-medium">{a}</p>
                           <p style={{ color: C.muted }}>{b}</p>
@@ -807,7 +954,7 @@ export default function LandingPage() {
                       ['há 2 h', 'Minuta encaminhada para o jurídico do cliente'],
                       ['ontem', 'Proposta aberta 6 vezes no mesmo dia'],
                     ].map(([t, m], i) => (
-                      <div key={m} className="flex gap-3 bg-white border rounded-lg px-3.5 py-3" style={{ borderColor: C.line }}>
+                      <div key={m} className="lp-chip flex gap-3 bg-white border rounded-lg px-3.5 py-3" style={{ borderColor: C.line }}>
                         <span className="w-12 shrink-0 tabular-nums" style={{ color: i === 0 ? C.green : C.muted }}>{t}</span>
                         <span>{m}</span>
                       </div>
@@ -835,13 +982,13 @@ export default function LandingPage() {
                 ),
               },
             ].map((f, idx) => (
-              <div key={f.n} className="grid lg:grid-cols-12 gap-8 lg:gap-14 items-center rounded-[24px] p-6 md:p-10 border" style={{ borderColor: C.line, background: idx % 2 === 0 ? '#FFFFFF' : C.paper }}>
+              <div key={f.n} className="lp-card grid lg:grid-cols-12 gap-8 lg:gap-14 items-center rounded-[24px] p-6 md:p-10 border overflow-hidden" style={{ borderColor: C.line, background: idx % 2 === 0 ? '#FFFFFF' : C.paper }}>
                 <div className={`lg:col-span-6 ${idx % 2 === 1 ? 'lg:order-2' : ''}`}>
                   <p className="text-[13px]" style={{ color: C.muted }}>{f.n} — {f.tag}</p>
                   <h3 className="text-[28px] md:text-[34px] leading-[1.1] mt-3" style={serif}>{f.t}</h3>
                   <p className="text-[16px] leading-[1.65] mt-4" style={{ color: C.muted }}>{f.d}</p>
                 </div>
-                <div className={`lg:col-span-6 rounded-2xl p-4 md:p-5 ${idx % 2 === 1 ? 'lg:order-1' : ''}`} style={{ background: '#F3F1EC' }}>
+                <div className={`lp-card-media lg:col-span-6 rounded-2xl p-4 md:p-5 ${idx % 2 === 1 ? 'lg:order-1' : ''}`} style={{ background: '#F3F1EC' }}>
                   {f.v}
                 </div>
               </div>
@@ -885,7 +1032,7 @@ export default function LandingPage() {
                   ['DRE e margem do contrato', 0, 0, 1],
                   ['Alerta de reajuste depois de fechado', 0, 0, 1],
                 ].map(([label, a, b, c]) => (
-                  <tr key={label as string} className="border-b last:border-b-0" style={{ borderColor: C.line }}>
+                  <tr key={label as string} className="lp-row border-b last:border-b-0" style={{ borderColor: C.line }}>
                     <td className="px-6 py-4">{label}</td>
                     {[a, b, c].map((v, i) => (
                       <td key={i} className="px-6 py-4" style={i === 2 ? { background: C.greenSoft } : undefined}>
@@ -900,7 +1047,7 @@ export default function LandingPage() {
             </table>
           </div>
 
-          <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div data-stagger className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               ['Rastreio silencioso', 'Saiba se o decisor abriu às 22h ou mandou o link para o diretor financeiro.'],
               ['Aceite na hora', 'O cliente clica em "Aprovar" e o contrato entra direto na implantação.'],
@@ -920,7 +1067,7 @@ export default function LandingPage() {
       <section id="qualificacao" className="py-24 md:py-32">
         <div className="max-w-[1200px] mx-auto px-6">
           <h2 className="text-[40px] md:text-[52px] leading-[1.05] max-w-[700px] mb-14" style={serif}>O SmartBid é para a sua empresa?</h2>
-          <div className="grid md:grid-cols-2 gap-px rounded-2xl overflow-hidden border" style={{ background: C.line, borderColor: C.line }}>
+          <div data-reveal data-reveal-scale className="grid md:grid-cols-2 gap-px rounded-2xl overflow-hidden border" style={{ background: C.line, borderColor: C.line }}>
             <div className="bg-white p-8 md:p-10">
               <p className="text-[15px] font-semibold flex items-center gap-2"><Check size={17} style={{ color: C.green }} strokeWidth={2.5} /> É para você se…</p>
               <ul className="mt-6 space-y-5 text-[15px] leading-[1.6]">
@@ -944,7 +1091,7 @@ export default function LandingPage() {
       <section className="pb-24 md:pb-32">
         <div className="max-w-[1200px] mx-auto px-6">
           <p className="text-[14px] mb-10" style={{ color: C.muted }}>O que costumam nos perguntar</p>
-          <div className="grid md:grid-cols-3 gap-10">
+          <div data-stagger className="grid md:grid-cols-3 gap-10">
             {[
               ['"Já uso um CRM, tipo Bitrix24 ou Pipedrive."', 'CRM move cartão. Não calcula encargo de convenção, não gera DRE de projeto e não avisa quando a CCT de um posto venceu. O SmartBid cobre a parte de engenharia e pós-venda que eles deixam de fora.'],
               ['"Meu orçamentista faz o per capita de cabeça."', 'Conta de cabeça pega erro grosseiro. Não pega o reflexo de benefício esquecido, nem avisa que o cliente abriu a minuta 11 vezes.'],
@@ -967,7 +1114,7 @@ export default function LandingPage() {
             <p className="text-[15px]" style={{ color: C.muted }}>Preço fechado por mês. Sem taxa de implantação escondida.</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-5">
+          <div data-stagger className="grid lg:grid-cols-3 gap-5">
             {[
               {
                 nome: 'Básico', para: 'Para quem está começando', preco: '149', extra: null,
@@ -987,7 +1134,7 @@ export default function LandingPage() {
             ].map(p => (
               <div
                 key={p.nome}
-                className="rounded-2xl p-8 flex flex-col"
+                className={`lp-plan rounded-2xl p-8 flex flex-col ${p.destaque ? 'lp-plan-featured' : ''}`}
                 style={p.destaque ? { background: C.ink, color: '#fff' } : { border: `1px solid ${C.line}`, background: C.paper }}
               >
                 <div className="flex items-center justify-between">
@@ -1086,9 +1233,11 @@ export default function LandingPage() {
                       <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                     </span>
                   </button>
-                  {isOpen && (
-                    <p className="pb-6 pr-14 text-[15px] leading-[1.65]" style={{ color: C.muted }}>{faq.resposta}</p>
-                  )}
+                  <div className={`lp-faq-body ${isOpen ? 'is-open' : ''}`}>
+                    <div>
+                      <p className="pb-6 pr-14 text-[15px] leading-[1.65]" style={{ color: C.muted }}>{faq.resposta}</p>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -1098,18 +1247,21 @@ export default function LandingPage() {
 
       {/* CTA FINAL */}
       <section className="px-4 sm:px-6 pb-6">
-        <div className="max-w-[1200px] mx-auto rounded-[28px] px-8 py-16 md:px-16 md:py-24 text-white grid lg:grid-cols-12 gap-10 items-end" style={{ background: C.green }}>
-          <h2 className="lg:col-span-8 text-[40px] md:text-[56px] leading-[1.03]" style={serif}>
+        <div data-spot data-reveal data-reveal-scale className="relative overflow-hidden max-w-[1200px] mx-auto rounded-[28px] px-8 py-16 md:px-16 md:py-24 text-white grid lg:grid-cols-12 gap-10 items-end" style={{ background: C.green }}>
+          <div className="lp-aurora lp-aurora-a" aria-hidden />
+          <div className="lp-aurora lp-aurora-b" aria-hidden />
+          <div className="lp-band-spot" aria-hidden />
+          <h2 className="relative lg:col-span-8 text-[40px] md:text-[56px] leading-[1.03]" style={serif}>
             Pare de deixar margem na mesa e assuma o controle da sua esteira comercial.
           </h2>
-          <div className="lg:col-span-4">
+          <div className="relative lg:col-span-4">
             <p className="text-[15px] text-white/70 leading-[1.6]">
               Teste por 7 dias, monte a primeira proposta e veja a DRE do projeto antes de enviar. Sem cartão de crédito.
             </p>
             <a
               id="final-teste-gratis"
               href="/cadastro"
-              className="group mt-6 inline-flex items-center gap-2 bg-white text-[15px] font-semibold pl-5 pr-4 py-3 rounded-full"
+              className="lp-btn lp-pulse group mt-6 inline-flex items-center gap-2 bg-white text-[15px] font-semibold pl-5 pr-4 py-3 rounded-full"
               style={{ color: C.ink }}
             >
               Criar conta grátis
