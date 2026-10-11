@@ -1112,268 +1112,9 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
 
               </div>
 
-              {/* SEÇÃO PRINCIPAL: RANKING DOS VENDEDORES & MIX DE SERVIÇOS */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                
-                {/* TABELA DE DESEMPENHO DOS VENDEDORES (LEADERBOARD) */}
-                <div id="secao-equipe-metas" className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col scroll-mt-6">
-                  
-                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span 
-                        className="p-2 rounded-xl"
-                        style={{ 
-                          backgroundColor: hexToRgba(brandColor, 0.12),
-                          color: brandColor 
-                        }}
-                      >
-                        <Users size={16} />
-                      </span>
-                      <div>
-                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                          Desempenho da Equipe Comercial
-                        </h2>
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          Ranking por faturamento aceito e acompanhamento de metas individuais
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full uppercase">
-                      {rankedSellers.length} {rankedSellers.length === 1 ? 'consultor' : 'consultores'}
-                    </span>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-50/80 text-slate-400 uppercase text-[9px] font-black tracking-wider border-b border-slate-100">
-                          <th className="px-5 py-3.5">Consultor</th>
-                          <th className="px-4 py-3.5 text-center">Propostas</th>
-                          <th className="px-4 py-3.5 text-right">Volume Aceito</th>
-                          <th className="px-4 py-3.5 text-right">Meta Individual</th>
-                          <th className="px-5 py-3.5 text-center w-36">Atingimento</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-xs divide-y divide-slate-100">
-                        {rankedSellers.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium italic">
-                              Nenhum vendedor encontrado.
-                            </td>
-                          </tr>
-                        ) : (
-                          rankedSellers.map((seller: any, idx: number) => {
-                            const stats = seller.stats;
-                            const isFiltered = userFilter === seller.nome;
-
-                            return (
-                              <tr 
-                                key={seller.id} 
-                                className={`transition-all ${
-                                  isFiltered 
-                                    ? 'bg-blue-50/40 border-l-4 font-semibold' 
-                                    : 'hover:bg-slate-50/60'
-                                }`}
-                                style={{
-                                  borderLeftColor: isFiltered ? brandColor : 'transparent'
-                                }}
-                              >
-                                <td className="px-5 py-3.5 flex items-center gap-3">
-                                  <div className="relative">
-                                    <div 
-                                      className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center border shadow-xs"
-                                      style={{
-                                        backgroundColor: idx === 0 ? hexToRgba(brandColor, 0.15) : '#F1F5F9',
-                                        color: idx === 0 ? brandColor : '#475569',
-                                        borderColor: idx === 0 ? hexToRgba(brandColor, 0.3) : '#E2E8F0'
-                                      }}
-                                    >
-                                      {seller.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
-                                    </div>
-                                    {idx < 3 && (
-                                      <span className="absolute -top-1 -right-1 text-[10px]">
-                                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div>
-                                    <span className="font-extrabold text-slate-800 block text-xs">
-                                      {seller.nome}
-                                    </span>
-                                    <div className="text-[9px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-2 mt-0.5">
-                                      <span style={{ color: brandColor }}>Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(0) : 0}%</span>
-                                      <span>•</span>
-                                      <span className="text-slate-600">Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(0) : 0}%</span>
-                                    </div>
-                                  </div>
-                                </td>
-                                
-                                <td className="px-4 py-3.5 text-center font-bold text-slate-600">
-                                  <span>{stats.count}</span>
-                                  <span className="text-[10px] text-slate-400 font-medium block">
-                                    {stats.totalAceitasCount} fechadas
-                                  </span>
-                                </td>
-                                
-                                <td className="px-4 py-3.5 text-right font-black text-slate-900">
-                                  <span>{formatCurrency(stats.totalAceito)}</span>
-                                  <span className="text-[10px] text-slate-400 font-medium block">
-                                    Total: {formatCurrency(stats.totalVal)}
-                                  </span>
-                                </td>
-                                
-                                <td className="px-4 py-3.5 text-right font-bold text-slate-700">
-                                  {editingUserId === seller.id ? (
-                                    <div className="flex items-center justify-end gap-1.5">
-                                      <span className="text-slate-400 font-bold text-[10px]">R$</span>
-                                      <input
-                                        type="text"
-                                        className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none"
-                                        style={{ borderColor: brandColor }}
-                                        value={editGoalValue}
-                                        onChange={(e) => setEditGoalValue(e.target.value)}
-                                        onBlur={() => handleSaveInlineGoal(seller.id, seller.nome)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            handleSaveInlineGoal(seller.id, seller.nome);
-                                          } else if (e.key === 'Escape') {
-                                            setEditingUserId(null);
-                                          }
-                                        }}
-                                        autoFocus
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div 
-                                      className="flex items-center justify-end gap-1.5 group cursor-pointer" 
-                                      onClick={() => {
-                                        setEditingUserId(seller.id);
-                                        setEditGoalValue(seller.metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
-                                      }}
-                                      title="Clique para editar a meta individual"
-                                    >
-                                      <span>{seller.metaVal > 0 ? formatCurrency(seller.metaVal) : 'Definir Meta'}</span>
-                                      <Edit2 size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity ml-1" />
-                                    </div>
-                                  )}
-                                </td>
-                                
-                                <td className="px-5 py-3.5">
-                                  <div className="flex flex-col items-center justify-center">
-                                    <div className="flex items-center gap-1">
-                                      <span 
-                                        className="text-[10px] font-black"
-                                        style={{ 
-                                          color: seller.metaVal > 0 
-                                            ? (seller.atingidoPct >= 100 ? '#10B981' : brandColor) 
-                                            : (seller.conversaoPct > 0 ? '#10B981' : '#94A3B8') 
-                                        }}
-                                      >
-                                        {seller.metaVal > 0 
-                                          ? `${seller.atingidoPct.toFixed(1)}%` 
-                                          : seller.stats.totalVal > 0 
-                                            ? `${seller.conversaoPct.toFixed(1)}%` 
-                                            : '--'}
-                                      </span>
-                                      <span className="text-[8px] font-bold text-slate-400 uppercase">
-                                        {seller.metaVal > 0 ? 'meta' : seller.stats.totalVal > 0 ? 'conv.' : ''}
-                                      </span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                      <div 
-                                        className="h-full rounded-full transition-all duration-500" 
-                                        style={{ 
-                                          width: `${Math.min(100, seller.metaVal > 0 ? seller.atingidoPct : seller.conversaoPct)}%`,
-                                          backgroundColor: (seller.metaVal > 0 ? seller.atingidoPct : seller.conversaoPct) >= 100 ? '#10B981' : brandColor
-                                        }} 
-                                      />
-                                    </div>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* MIX POR CATEGORIA DE SERVIÇOS */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-                      <span 
-                        className="p-2 rounded-xl"
-                        style={{ 
-                          backgroundColor: hexToRgba(brandColor, 0.12),
-                          color: brandColor 
-                        }}
-                      >
-                        <Briefcase size={16} />
-                      </span>
-                      <div>
-                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                          Mix por Categoria
-                        </h2>
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          Distribuição de volume por tipo de serviço
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 space-y-3.5">
-                      {Object.keys(volumePorServico).length === 0 ? (
-                        <p className="text-slate-400 text-xs text-center py-6 italic">
-                          Nenhuma categoria registrada no período.
-                        </p>
-                      ) : (
-                        Object.entries(volumePorServico)
-                          .sort((a, b) => b[1].totalVal - a[1].totalVal)
-                          .map(([nome, data]) => {
-                            const pctTotal = totalVolume > 0 ? (data.totalVal / totalVolume) * 100 : 0;
-                            return (
-                              <div key={nome} className="space-y-1.5">
-                                <div className="flex justify-between items-center text-xs">
-                                  <span className="font-extrabold text-slate-700 truncate max-w-[160px]">
-                                    {nome}
-                                  </span>
-                                  <span className="font-black text-slate-900">
-                                    {formatCurrency(data.totalVal)}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full rounded-full transition-all duration-500" 
-                                      style={{ 
-                                        width: `${Math.min(100, pctTotal)}%`,
-                                        backgroundColor: brandColor
-                                      }} 
-                                    />
-                                  </div>
-                                  <span className="text-[10px] font-bold text-slate-400 w-10 text-right">
-                                    {pctTotal.toFixed(0)}%
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                    <span className="font-bold">Total Categorizado:</span>
-                    <span className="font-black text-slate-800">{formatCurrency(totalVolume)}</span>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL COM TOOLTIP INTERATIVO NO HOVER */}
+              {/* SEÇÃO DE ANÁLISE GRÁFICA COMPARATIVA: METAS MENSAIS (VERTICAL) & MIX POR CATEGORIA (HORIZONTAL) NO MESMO ESPAÇO */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+{/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL COM TOOLTIP INTERATIVO NO HOVER */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow relative">
                 
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-5">
@@ -1736,6 +1477,263 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                 </div>
 
               </div>
+
+{/* MIX POR CATEGORIA DE SERVIÇOS */}
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+                      <span 
+                        className="p-2 rounded-xl"
+                        style={{ 
+                          backgroundColor: hexToRgba(brandColor, 0.12),
+                          color: brandColor 
+                        }}
+                      >
+                        <Briefcase size={16} />
+                      </span>
+                      <div>
+                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                          Mix por Categoria
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Distribuição de volume por tipo de serviço
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3.5 flex-1 overflow-y-auto max-h-[290px] pr-2">
+                      {Object.keys(volumePorServico).length === 0 ? (
+                        <p className="text-slate-400 text-xs text-center py-6 italic">
+                          Nenhuma categoria registrada no período.
+                        </p>
+                      ) : (
+                        Object.entries(volumePorServico)
+                          .sort((a, b) => b[1].totalVal - a[1].totalVal)
+                          .map(([nome, data]) => {
+                            const pctTotal = totalVolume > 0 ? (data.totalVal / totalVolume) * 100 : 0;
+                            return (
+                              <div key={nome} className="space-y-1.5">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-slate-700 truncate max-w-[160px]">
+                                    {nome}
+                                  </span>
+                                  <span className="font-black text-slate-900">
+                                    {formatCurrency(data.totalVal)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full rounded-full transition-all duration-500" 
+                                      style={{ 
+                                        width: `${Math.min(100, pctTotal)}%`,
+                                        backgroundColor: brandColor
+                                      }} 
+                                    />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-400 w-10 text-right">
+                                    {pctTotal.toFixed(0)}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <span className="font-bold">Total Categorizado:</span>
+                    <span className="font-black text-slate-800">{formatCurrency(totalVolume)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* DESEMPENHO DA EQUIPE COMERCIAL (LEADERBOARD) - LARGURA COMPLETA, SEM ESPAÇO VAZIO */}
+              <div id="secao-equipe-metas" className="w-full bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col scroll-mt-6">
+                  
+                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span 
+                        className="p-2 rounded-xl"
+                        style={{ 
+                          backgroundColor: hexToRgba(brandColor, 0.12),
+                          color: brandColor 
+                        }}
+                      >
+                        <Users size={16} />
+                      </span>
+                      <div>
+                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                          Desempenho da Equipe Comercial
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Ranking por faturamento aceito e acompanhamento de metas individuais
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full uppercase">
+                      {rankedSellers.length} {rankedSellers.length === 1 ? 'consultor' : 'consultores'}
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/80 text-slate-400 uppercase text-[9px] font-black tracking-wider border-b border-slate-100">
+                          <th className="px-5 py-3.5">Consultor</th>
+                          <th className="px-4 py-3.5 text-center">Propostas</th>
+                          <th className="px-4 py-3.5 text-right">Volume Aceito</th>
+                          <th className="px-4 py-3.5 text-right">Meta Individual</th>
+                          <th className="px-5 py-3.5 text-center w-36">Atingimento</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-xs divide-y divide-slate-100">
+                        {rankedSellers.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium italic">
+                              Nenhum vendedor encontrado.
+                            </td>
+                          </tr>
+                        ) : (
+                          rankedSellers.map((seller: any, idx: number) => {
+                            const stats = seller.stats;
+                            const isFiltered = userFilter === seller.nome;
+
+                            return (
+                              <tr 
+                                key={seller.id} 
+                                className={`transition-all ${
+                                  isFiltered 
+                                    ? 'bg-blue-50/40 border-l-4 font-semibold' 
+                                    : 'hover:bg-slate-50/60'
+                                }`}
+                                style={{
+                                  borderLeftColor: isFiltered ? brandColor : 'transparent'
+                                }}
+                              >
+                                <td className="px-5 py-3.5 flex items-center gap-3">
+                                  <div className="relative">
+                                    <div 
+                                      className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center border shadow-xs"
+                                      style={{
+                                        backgroundColor: idx === 0 ? hexToRgba(brandColor, 0.15) : '#F1F5F9',
+                                        color: idx === 0 ? brandColor : '#475569',
+                                        borderColor: idx === 0 ? hexToRgba(brandColor, 0.3) : '#E2E8F0'
+                                      }}
+                                    >
+                                      {seller.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                                    </div>
+                                    {idx < 3 && (
+                                      <span className="absolute -top-1 -right-1 text-[10px]">
+                                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <span className="font-extrabold text-slate-800 block text-xs">
+                                      {seller.nome}
+                                    </span>
+                                    <div className="text-[9px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-2 mt-0.5">
+                                      <span style={{ color: brandColor }}>Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(0) : 0}%</span>
+                                      <span>•</span>
+                                      <span className="text-slate-600">Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(0) : 0}%</span>
+                                    </div>
+                                  </div>
+                                </td>
+                                
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-600">
+                                  <span>{stats.count}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium block">
+                                    {stats.totalAceitasCount} fechadas
+                                  </span>
+                                </td>
+                                
+                                <td className="px-4 py-3.5 text-right font-black text-slate-900">
+                                  <span>{formatCurrency(stats.totalAceito)}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium block">
+                                    Total: {formatCurrency(stats.totalVal)}
+                                  </span>
+                                </td>
+                                
+                                <td className="px-4 py-3.5 text-right font-bold text-slate-700">
+                                  {editingUserId === seller.id ? (
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <span className="text-slate-400 font-bold text-[10px]">R$</span>
+                                      <input
+                                        type="text"
+                                        className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none"
+                                        style={{ borderColor: brandColor }}
+                                        value={editGoalValue}
+                                        onChange={(e) => setEditGoalValue(e.target.value)}
+                                        onBlur={() => handleSaveInlineGoal(seller.id, seller.nome)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            handleSaveInlineGoal(seller.id, seller.nome);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingUserId(null);
+                                          }
+                                        }}
+                                        autoFocus
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="flex items-center justify-end gap-1.5 group cursor-pointer" 
+                                      onClick={() => {
+                                        setEditingUserId(seller.id);
+                                        setEditGoalValue(seller.metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
+                                      }}
+                                      title="Clique para editar a meta individual"
+                                    >
+                                      <span>{seller.metaVal > 0 ? formatCurrency(seller.metaVal) : 'Definir Meta'}</span>
+                                      <Edit2 size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity ml-1" />
+                                    </div>
+                                  )}
+                                </td>
+                                
+                                <td className="px-5 py-3.5">
+                                  <div className="flex flex-col items-center justify-center">
+                                    <div className="flex items-center gap-1">
+                                      <span 
+                                        className="text-[10px] font-black"
+                                        style={{ 
+                                          color: seller.metaVal > 0 
+                                            ? (seller.atingidoPct >= 100 ? '#10B981' : brandColor) 
+                                            : (seller.conversaoPct > 0 ? '#10B981' : '#94A3B8') 
+                                        }}
+                                      >
+                                        {seller.metaVal > 0 
+                                          ? `${seller.atingidoPct.toFixed(1)}%` 
+                                          : seller.stats.totalVal > 0 
+                                            ? `${seller.conversaoPct.toFixed(1)}%` 
+                                            : '--'}
+                                      </span>
+                                      <span className="text-[8px] font-bold text-slate-400 uppercase">
+                                        {seller.metaVal > 0 ? 'meta' : seller.stats.totalVal > 0 ? 'conv.' : ''}
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                      <div 
+                                        className="h-full rounded-full transition-all duration-500" 
+                                        style={{ 
+                                          width: `${Math.min(100, seller.metaVal > 0 ? seller.atingidoPct : seller.conversaoPct)}%`,
+                                          backgroundColor: (seller.metaVal > 0 ? seller.atingidoPct : seller.conversaoPct) >= 100 ? '#10B981' : brandColor
+                                        }} 
+                                      />
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
             </>
           )}
