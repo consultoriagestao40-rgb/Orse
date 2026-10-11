@@ -266,8 +266,8 @@ export default function LandingPage() {
   return (
     <div
       ref={rootRef}
-      className={`lp-root ${displayFont.variable} ${textFont.variable} min-h-screen antialiased selection:bg-[#1B4D3E] selection:text-white`}
-      style={{ background: C.paper, color: C.ink, fontFamily: 'var(--font-lp-text)' }}
+      className={`lp-root lp-bg-luminous ${displayFont.variable} ${textFont.variable} min-h-screen antialiased selection:bg-[#1B4D3E] selection:text-white`}
+      style={{ color: C.ink, fontFamily: 'var(--font-lp-text)' }}
     >
       <div className="lp-progress" aria-hidden />
 
@@ -811,7 +811,7 @@ export default function LandingPage() {
       </section>
 
       {/* NÚMEROS */}
-      <section className="pt-20 md:pt-24 pb-4">
+      <section className="lp-bg-luminous-warm pt-20 md:pt-24 pb-4 border-b border-[#E6E2DA]/60">
         <div className="max-w-[1140px] mx-auto px-6">
           <p className="text-center text-[15px] font-medium mb-10" style={{ color: C.muted }}>
             Usado por prestadoras de serviços de limpeza, portaria, vigilância e manutenção
@@ -849,7 +849,7 @@ export default function LandingPage() {
       </section>
 
       {/* PROBLEMA */}
-      <section className="py-24 md:py-32">
+      <section className="lp-bg-clean-stone py-24 md:py-32">
         <div className="max-w-[1200px] mx-auto px-6 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-28">
@@ -937,7 +937,7 @@ export default function LandingPage() {
       </section>
 
       {/* FUNCIONALIDADES */}
-      <section id="funcionalidades" className="py-24 md:py-32">
+      <section id="funcionalidades" className="lp-bg-clean-emerald py-24 md:py-32">
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="max-w-[720px] mb-16">
             <p className="text-[14px] mb-4" style={{ color: C.muted }}>Como funciona</p>
@@ -1053,13 +1053,13 @@ export default function LandingPage() {
                 ),
               },
             ].map((f, idx) => (
-              <div key={f.n} className="lp-card grid lg:grid-cols-12 gap-8 lg:gap-14 items-center rounded-[24px] p-6 md:p-10 border overflow-hidden" style={{ borderColor: C.line, background: idx % 2 === 0 ? '#FFFFFF' : C.paper }}>
+              <div key={f.n} className="lp-card grid lg:grid-cols-12 gap-8 lg:gap-14 items-center rounded-[24px] p-6 md:p-10 border overflow-hidden" style={{ borderColor: C.line, background: idx % 2 === 0 ? '#FFFFFF' : '#FAF9F6' }}>
                 <div className={`lg:col-span-6 ${idx % 2 === 1 ? 'lg:order-2' : ''}`}>
                   <p className="text-[13px]" style={{ color: C.muted }}>{f.n} — {f.tag}</p>
                   <h3 className="text-[28px] md:text-[34px] leading-[1.1] mt-3" style={serif}>{f.t}</h3>
                   <p className="text-[16px] leading-[1.65] mt-4" style={{ color: C.muted }}>{f.d}</p>
                 </div>
-                <div className={`lp-card-media lg:col-span-6 rounded-2xl p-4 md:p-5 ${idx % 2 === 1 ? 'lg:order-1' : ''}`} style={{ background: '#F3F1EC' }}>
+                <div className={`lp-card-media lp-feature-media lg:col-span-6 rounded-2xl p-4 md:p-5 ${idx % 2 === 1 ? 'lg:order-1' : ''}`}>
                   {f.v}
                 </div>
               </div>
@@ -1072,7 +1072,7 @@ export default function LandingPage() {
       <ModulesSection />
 
       {/* PROPOSTA POR LINK vs PROVELO */}
-      <section id="proposta-interativa" className="py-24 md:py-32 bg-white border-y" style={{ borderColor: C.line }}>
+      <section id="proposta-interativa" className="lp-bg-showcase py-24 md:py-32 border-y" style={{ borderColor: C.line }}>
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="grid lg:grid-cols-12 gap-10 mb-14">
             <div className="lg:col-span-7">
@@ -1146,7 +1146,7 @@ export default function LandingPage() {
       <SpreadsheetCompare />
 
       {/* PARA QUEM É / NÃO É */}
-      <section id="qualificacao" className="py-24 md:py-32">
+      <section id="qualificacao" className="lp-bg-clean-stone py-24 md:py-32">
         <div className="max-w-[1200px] mx-auto px-6">
           <h2 className="text-[40px] md:text-[52px] leading-[1.05] max-w-[700px] mb-14" style={serif}>O SmartBid é para a sua empresa?</h2>
           <div data-reveal data-reveal-scale className="grid md:grid-cols-2 gap-px rounded-2xl overflow-hidden border" style={{ background: C.line, borderColor: C.line }}>
@@ -1170,7 +1170,7 @@ export default function LandingPage() {
       </section>
 
       {/* OBJEÇÕES */}
-      <section className="pb-24 md:pb-32">
+      <section className="lp-bg-clean-warm pb-24 md:pb-32">
         <div className="max-w-[1200px] mx-auto px-6">
           <p className="text-[14px] mb-10" style={{ color: C.muted }}>O que costumam nos perguntar</p>
           <div data-stagger className="grid md:grid-cols-3 gap-10">
@@ -1189,7 +1189,7 @@ export default function LandingPage() {
       </section>
 
       {/* PLANOS */}
-      <section id="planos" className="py-24 md:py-32 bg-white border-y" style={{ borderColor: C.line }}>
+      <section id="planos" className="lp-bg-pricing py-24 md:py-32 border-y" style={{ borderColor: C.line }}>
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
             <h2 className="text-[40px] md:text-[52px] leading-[1.05]" style={serif}>Planos</h2>
@@ -1217,7 +1217,7 @@ export default function LandingPage() {
               <div
                 key={p.nome}
                 className={`lp-plan rounded-2xl p-8 flex flex-col ${p.destaque ? 'lp-plan-featured' : ''}`}
-                style={p.destaque ? { background: C.ink, color: '#fff' } : { border: `1px solid ${C.line}`, background: C.paper }}
+                style={p.destaque ? { background: C.ink, color: '#fff' } : { border: `1px solid ${C.line}`, background: '#FFFFFF', boxShadow: '0 10px 30px -15px rgba(17,20,24,0.06)' }}
               >
                 <div className="flex items-center justify-between">
                   <p className="text-[15px] font-semibold">{p.nome}</p>
@@ -1255,7 +1255,7 @@ export default function LandingPage() {
       </section>
 
       {/* GARANTIA + DEPOIMENTO */}
-      <section className="py-24 md:py-32">
+      <section className="lp-bg-clean-warm py-24 md:py-32 border-t" style={{ borderColor: C.line }}>
         <div className="max-w-[1200px] mx-auto px-6 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5">
             <p className="text-[14px] mb-4" style={{ color: C.muted }}>Garantia</p>
@@ -1277,7 +1277,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="pb-24 md:pb-32">
+      <section id="faq" className="lp-bg-clean-warm pb-24 md:pb-32">
         <div className="max-w-[1200px] mx-auto px-6 grid lg:grid-cols-12 gap-10">
           <h2 className="lg:col-span-4 text-[40px] md:text-[48px] leading-[1.05]" style={serif}>Perguntas frequentes</h2>
           <div className="lg:col-span-8 border-t" style={{ borderColor: C.line }}>
@@ -1305,14 +1305,14 @@ export default function LandingPage() {
             ].map((faq, idx) => {
               const isOpen = openFaqIndex === idx;
               return (
-                <div key={idx} className="border-b" style={{ borderColor: C.line }}>
+                <div key={idx} className="border-b transition-colors duration-300 hover:bg-[#1B4D3E]/[0.02] px-3 -mx-3 rounded-xl" style={{ borderColor: C.line }}>
                   <button
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                     className="w-full py-6 text-left flex items-center justify-between gap-6 cursor-pointer"
                   >
                     <span className="text-[17px] font-medium">{faq.pergunta}</span>
-                    <span className="w-8 h-8 rounded-full border flex items-center justify-center shrink-0" style={{ borderColor: C.line }}>
-                      <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    <span className="w-8 h-8 rounded-full border flex items-center justify-center shrink-0 transition-colors duration-300" style={{ borderColor: C.line, background: isOpen ? '#FAF8F5' : '#FFFFFF' }}>
+                      <ChevronDown size={16} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                     </span>
                   </button>
                   <div className={`lp-faq-body ${isOpen ? 'is-open' : ''}`}>
@@ -1385,8 +1385,8 @@ export default function LandingPage() {
 
       {/* MODAL DE DEMONSTRAÇÃO */}
       {demoModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#111418]/40 backdrop-blur-[2px]">
-          <div className="relative w-full max-w-md rounded-2xl p-7 sm:p-8 shadow-2xl" style={{ background: C.paper }}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#111418]/50 backdrop-blur-sm transition-all duration-300">
+          <div className="lp-modal-in relative w-full max-w-md rounded-2xl p-7 sm:p-8 bg-white border shadow-[0_25px_60px_-15px_rgba(17,20,24,0.35)]" style={{ borderColor: C.line }}>
             <button
               onClick={() => setDemoModalOpen(false)}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 cursor-pointer"

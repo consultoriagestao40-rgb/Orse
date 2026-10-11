@@ -72,7 +72,7 @@ export default function ModulesSection() {
   const total = GROUPS.reduce((a, x) => a + x.mods.length, 0);
 
   return (
-    <section id="modulos" className="py-24 md:py-32">
+    <section id="modulos" className="lp-bg-clean-emerald py-24 md:py-32">
       <div className="max-w-[1200px] mx-auto px-6">
         <div className="grid lg:grid-cols-12 gap-8 mb-14 items-end">
           <div className="lg:col-span-7">
@@ -120,13 +120,13 @@ export default function ModulesSection() {
           </div>
 
           {/* módulos da área */}
-          <div className="lg:col-span-8 rounded-[24px] p-4 sm:p-6 md:p-7" style={{ background: 'linear-gradient(180deg, #EEF3F0 0%, #F4F2ED 100%)' }}>
+          <div className="lp-modules-stage lg:col-span-8 rounded-[24px] p-4 sm:p-6 md:p-7">
             <p className="lg:hidden text-[14px] leading-[1.6] mb-4" style={{ color: C.muted }}>{group.d}</p>
             <div key={group.id} className="grid sm:grid-cols-2 gap-3">
               {group.mods.map((m, i) => (
                 <div
                   key={m.t}
-                  className="lp-mod lp-card bg-white rounded-2xl border p-5"
+                  className="lp-mod lp-card bg-white rounded-2xl border p-5 shadow-sm"
                   style={{ borderColor: C.line, animationDelay: `${i * 70}ms` }}
                 >
                   <span className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-500" style={{ background: C.greenSoft }}>

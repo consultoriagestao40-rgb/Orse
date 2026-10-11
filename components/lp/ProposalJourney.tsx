@@ -516,7 +516,7 @@ export default function ProposalJourney() {
       </div>
 
       {/* palco */}
-      <div className="mt-5 relative rounded-[28px] p-3 sm:p-5 md:p-8 overflow-hidden" style={{ background: 'linear-gradient(180deg, #EEF3F0 0%, #F4F2ED 100%)' }}>
+      <div className="lp-showcase-stage mt-5 relative rounded-[28px] p-3 sm:p-5 md:p-8 overflow-hidden">
         <div className="relative h-[620px] md:h-[540px]">
           {STEPS.map((s, i) => (
             <div
@@ -524,9 +524,9 @@ export default function ProposalJourney() {
               className="absolute inset-0 transition-all duration-700"
               style={{
                 opacity: i === step ? 1 : 0,
-                transform: i === step ? 'none' : i < step ? 'translateX(-40px) scale(0.98)' : 'translateX(40px) scale(0.98)',
+                transform: i === step ? 'none' : i < step ? 'translateX(-36px) scale(0.985)' : 'translateX(36px) scale(0.985)',
                 pointerEvents: i === step ? 'auto' : 'none',
-                transitionTimingFunction: 'cubic-bezier(0.22,1,0.36,1)',
+                transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)',
               }}
               aria-hidden={i !== step}
             >

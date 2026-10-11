@@ -31,7 +31,7 @@ export default function SpreadsheetCompare() {
   const [hover, setHover] = useState<number | null>(null);
 
   return (
-    <section id="vs-planilhas" className="py-24 md:py-32">
+    <section id="vs-planilhas" className="lp-bg-compare py-24 md:py-32 border-t border-[#E6E2DA]/80">
       <div className="max-w-[1200px] mx-auto px-6">
         <div className="max-w-[760px] mb-14">
           <p className="text-[14px] mb-4" style={{ color: C.muted }}>SmartBid x planilhas</p>
@@ -41,11 +41,11 @@ export default function SpreadsheetCompare() {
         </div>
 
         {/* Lado a lado visual */}
-        <div data-stagger className="grid md:grid-cols-2 gap-4 mb-6">
+        <div data-stagger className="grid md:grid-cols-2 gap-5 mb-8">
           {/* A planilha */}
-          <div className="rounded-[22px] border overflow-hidden bg-white" style={{ borderColor: C.line }}>
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b text-[12px]" style={{ borderColor: C.line, background: '#F3F6F3' }}>
-              <FileSpreadsheet size={14} style={{ color: '#1D6F42' }} />
+          <div className="rounded-[22px] border overflow-hidden bg-white shadow-sm transition-all duration-300 hover:shadow-md" style={{ borderColor: '#EBDCD8' }}>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b text-[12px]" style={{ borderColor: C.line, background: '#F9F6F5' }}>
+              <FileSpreadsheet size={14} style={{ color: '#C05621' }} />
               <span className="truncate" style={{ color: C.muted }}>Orcamento_HSL_v7_FINAL_revisado(2).xlsx</span>
             </div>
             <div className="text-[12px] tabular-nums">
@@ -77,8 +77,8 @@ export default function SpreadsheetCompare() {
           </div>
 
           {/* O SmartBid */}
-          <div className="rounded-[22px] border overflow-hidden bg-white" style={{ borderColor: 'rgba(27,77,62,0.3)' }}>
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b text-[12px]" style={{ borderColor: C.line, background: C.greenSoft }}>
+          <div className="rounded-[22px] border overflow-hidden bg-white shadow-[0_20px_45px_-20px_rgba(27,77,62,0.22)] transition-all duration-300 hover:shadow-[0_25px_55px_-22px_rgba(27,77,62,0.28)]" style={{ borderColor: 'rgba(27,77,62,0.32)' }}>
+            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b text-[12px]" style={{ borderColor: 'rgba(27,77,62,0.15)', background: C.greenSoft }}>
               <span className="font-semibold" style={{ color: C.green }}>FPV-128 · Auxiliar de limpeza hospitalar</span>
               <span style={{ color: C.green }}>CCT SIEMACO 2026</span>
             </div>
