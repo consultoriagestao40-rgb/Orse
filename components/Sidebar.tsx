@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -1346,6 +1346,7 @@ const Sidebar = () => {
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Link, label: 'Integração ERPFlex', href: '/integracoes/erpflex', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: Layers, label: 'Gestão de Módulos', href: '/admin/modulos', roles: ['ADMIN', 'SUPER_ADMIN'] },
     { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
   ];
 
@@ -1387,6 +1388,27 @@ const Sidebar = () => {
         const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
         const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
         
+        const hasCrmModule = (tenantFeatures as any)?.crm !== false;
+        const hasTasksModule = (tenantFeatures as any)?.tasks !== false;
+        const hasContratosModule = (tenantFeatures as any)?.contratos !== false;
+        const hasAtasModule = (tenantFeatures as any)?.atas !== false;
+        const hasPicModule = (tenantFeatures as any)?.pic !== false;
+
+        if ((item.href === '/leads' || item.href === '/prospeccao' || item.href === '/emails') && !hasCrmModule) {
+          return false;
+        }
+        if (item.href === '/tasks' && !hasTasksModule) {
+          return false;
+        }
+        if (item.href === '/contratos' && !hasContratosModule) {
+          return false;
+        }
+        if (item.href === '/atas' && !hasAtasModule) {
+          return false;
+        }
+        if (item.href === '/pic' && !hasPicModule) {
+          return false;
+        }
         if (item.href.startsWith('/ativos') && !hasAtivosModule) {
           return false;
         }
@@ -1451,6 +1473,27 @@ const Sidebar = () => {
           const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
           const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
           
+          const hasCrmModule = (tenantFeatures as any)?.crm !== false;
+          const hasTasksModule = (tenantFeatures as any)?.tasks !== false;
+          const hasContratosModule = (tenantFeatures as any)?.contratos !== false;
+          const hasAtasModule = (tenantFeatures as any)?.atas !== false;
+          const hasPicModule = (tenantFeatures as any)?.pic !== false;
+
+          if ((item.href === '/leads' || item.href === '/prospeccao' || item.href === '/emails') && !hasCrmModule) {
+            return false;
+          }
+          if (item.href === '/tasks' && !hasTasksModule) {
+            return false;
+          }
+          if (item.href === '/contratos' && !hasContratosModule) {
+            return false;
+          }
+          if (item.href === '/atas' && !hasAtasModule) {
+            return false;
+          }
+          if (item.href === '/pic' && !hasPicModule) {
+            return false;
+          }
           if (item.href.startsWith('/ativos') && !hasAtivosModule) {
             return false;
           }

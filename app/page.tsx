@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
 import LandingPage from '@/components/LandingPage';
 import { 
   BarChart2, TrendingUp, Users, Clock, DollarSign, 
   ArrowUpRight, Award, Briefcase, Activity, Percent, Filter, 
-  Calendar, CheckCircle, Edit2, Check, Target,
-  Building, Wrench, Truck, Smartphone, LogOut
+  Calendar, CheckCircle, Edit2, Check, Target, Zap,
+  Building, Wrench, Truck, Smartphone, LogOut, RefreshCw,
+  ChevronRight, Sparkles, Trophy, ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
@@ -19,9 +20,9 @@ function RadarComercialDashboard() {
 
   // Filtros
   const [userFilter, setUserFilter] = useState<string>('ALL');
-  const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('all');
+  const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('mes');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return new Date().toISOString().substring(0, 7); // Ex: "2026-06"
+    return new Date().toISOString().substring(0, 7); // Ex: "2026-10"
   });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -37,7 +38,7 @@ function RadarComercialDashboard() {
     try {
       const [data] = await Promise.all([
         getKPIs(),
-        new Promise(resolve => setTimeout(resolve, 2000))
+        new Promise(resolve => setTimeout(resolve, 800))
       ]);
       setKpis(data);
 
@@ -101,7 +102,6 @@ function RadarComercialDashboard() {
     }
   }, [period, selectedMonth]);
 
-  // Carrega metas do localStorage
   // Carrega metas do localStorage e sincroniza com o banco de dados
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -176,25 +176,19 @@ function RadarComercialDashboard() {
     const day = String(d.getDate()).padStart(2, '0');
     const dataCriacaoStr = `${y}-${m}-${day}`;
     
-    // 1. Filtro por Usuário
     if (userFilter !== 'ALL' && p.usuario !== userFilter) {
       return false;
     }
-
-    // 2. Filtro por Data de Início
     if (startDate && dataCriacaoStr < startDate) {
       return false;
     }
-
-    // 3. Filtro por Data de Fim
     if (endDate && dataCriacaoStr > endDate) {
       return false;
     }
-
     return true;
   });
 
-  // Re-computar todas as estatísticas principais
+  // Totais principais
   let totalVolume = 0;
   let totalAceito = 0;
   let totalPropostasCount = filteredPropostas.length;
@@ -215,7 +209,6 @@ function RadarComercialDashboard() {
       totalAceito += valor;
       totalAceitasCount++;
 
-      // Ciclo de fechamento
       if (p.dataAceitacao) {
         const start = new Date(p.dataCriacao);
         const end = new Date(p.dataAceitacao);
@@ -226,7 +219,6 @@ function RadarComercialDashboard() {
       }
     }
 
-    // Por usuário
     const usuario = p.usuario;
     if (!volumePorUsuario[usuario]) {
       volumePorUsuario[usuario] = { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
@@ -238,7 +230,6 @@ function RadarComercialDashboard() {
     }
     volumePorUsuario[usuario].count += 1;
 
-    // Por tipo de serviço (normalizado com agrupamento)
     const servico = (p.tipoServicos || 'Outros').trim().toUpperCase();
     if (!volumePorServico[servico]) {
       volumePorServico[servico] = { totalVal: 0, count: 0 };
@@ -247,14 +238,47 @@ function RadarComercialDashboard() {
     volumePorServico[servico].count += 1;
   });
 
-  const ticketMedio = totalPropostasCount > 0 ? totalVolume / totalPropostasCount : 0;
+  const ticketMedio = totalAceitasCount > 0 ? totalAceito / totalAceitasCount : (totalPropostasCount > 0 ? totalVolume / totalPropostasCount : 0);
   const taxaConversao = totalVolume > 0 ? (totalAceito / totalVolume) * 100 : 0;
   const conversaoQuantidade = totalPropostasCount > 0 ? (totalAceitasCount / totalPropostasCount) * 100 : 0;
   const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
 
-  // =========================================================================
-  // CÁLCULOS DO GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL (COMBO BAR + LINE)
-  // =========================================================================
+  const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+
+  const formatMonthYear = (monthKey: string) => {
+    try {
+      const [year, month] = monthKey.split('-');
+      const date = new Date(Number(year), Number(month) - 1, 1);
+      return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    } catch {
+      return monthKey;
+    }
+  };
+
+  const totalMetasEmpresa = totalSellers.reduce((acc: number, seller: any) => {
+    const nome = seller.nome;
+    if (userFilter !== 'ALL' && nome !== userFilter) return acc;
+    const key = `${nome}_${activeMonthKey}`;
+    const dbMeta = seller.meta > 0 ? seller.meta : 100000;
+    const m = metas[key] !== undefined ? metas[key] : dbMeta;
+    return acc + m;
+  }, 0);
+
+  const atingidoGeralPct = totalMetasEmpresa > 0 ? (totalAceito / totalMetasEmpresa) * 100 : 0;
+
+  // Projeção de Fechamento (Run-Rate do Mês)
+  const runRateProjection = useMemo(() => {
+    const today = new Date();
+    const currentDay = today.getDate();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    if (currentDay > 0 && totalAceito > 0) {
+      const projecao = (totalAceito / currentDay) * daysInMonth;
+      return projecao;
+    }
+    return totalAceito;
+  }, [totalAceito]);
+
+  // Gráfico histórico
   const currentYear = new Date().getFullYear();
   const chartMonths: string[] = [];
   for (let i = 0; i < 12; i++) {
@@ -270,10 +294,9 @@ function RadarComercialDashboard() {
     };
     return months[m] || m;
   };
-  
+
   const monthlyData = chartMonths.map((mKey: string) => {
     let realizado = 0;
-    
     propostasList.forEach((p: any) => {
       if (p.dataCriacao) {
         const d = new Date(p.dataCriacao);
@@ -306,10 +329,8 @@ function RadarComercialDashboard() {
     }
 
     const atingidoPct = previsto > 0 ? (realizado / previsto) * 100 : 0;
-    
     return {
       monthKey: mKey,
-      monthLabel: mKey,
       previsto,
       realizado,
       atingidoPct
@@ -335,7 +356,6 @@ function RadarComercialDashboard() {
 
   const maxFaturamento = Math.max(...chartData.map(d => Math.max(d.previsto, d.realizado)), 50000);
   const maxValY = maxFaturamento * 1.15;
-  
   const maxPct = Math.max(...chartData.map(d => d.atingidoPct), 100);
   const maxPctY = maxPct * 1.15;
 
@@ -345,28 +365,26 @@ function RadarComercialDashboard() {
     return `R$ ${val}`;
   };
 
-  const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-
-  const formatMonthYear = (monthKey: string) => {
-    try {
-      const [year, month] = monthKey.split('-');
-      const date = new Date(Number(year), Number(month) - 1, 1);
-      return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    } catch {
-      return monthKey;
-    }
-  };
-
-  const totalMetasEmpresa = totalSellers.reduce((acc: number, seller: any) => {
-    const nome = seller.nome;
-    if (userFilter !== 'ALL' && nome !== userFilter) return acc;
-    const key = `${nome}_${activeMonthKey}`;
-    const dbMeta = seller.meta > 0 ? seller.meta : 100000;
-    const m = metas[key] !== undefined ? metas[key] : dbMeta;
-    return acc + m;
-  }, 0);
-
-  const atingidoGeralPct = totalMetasEmpresa > 0 ? (totalAceito / totalMetasEmpresa) * 100 : 0;
+  // Ranking de vendedores ordenados por faturamento aceito
+  const rankedSellers = useMemo(() => {
+    return totalSellers
+      .filter((seller: any) => userFilter === 'ALL' || seller.nome === userFilter)
+      .map((seller: any) => {
+        const nome = seller.nome;
+        const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
+        const goalKey = `${nome}_${activeMonthKey}`;
+        const dbMeta = seller.meta > 0 ? seller.meta : 100000;
+        const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : dbMeta;
+        const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
+        return {
+          ...seller,
+          stats,
+          metaVal,
+          atingidoPct
+        };
+      })
+      .sort((a: any, b: any) => b.stats.totalAceito - a.stats.totalAceito);
+  }, [totalSellers, volumePorUsuario, metas, activeMonthKey, userFilter]);
 
   if (!hasLoadedOnce) {
     return (
@@ -378,7 +396,7 @@ function RadarComercialDashboard() {
           <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
             <TrendingUp className="text-[#10B981]" size={32} />
           </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando SmartBidHub...</span>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando Radar Comercial...</span>
         </div>
       </div>
     );
@@ -388,612 +406,595 @@ function RadarComercialDashboard() {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           
-          {/* HEADER */}
-          <header className="flex justify-between items-end border-b border-slate-300 pb-4">
+          {/* HEADER EXECUTIVO COM FILTROS EM PILLS */}
+          <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/90 pb-5">
             <div>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase flex items-center gap-2">
-                <BarChart2 size={24} /> Radar Comercial & KPIs
-              </h1>
-              <p className="text-slate-500 text-sm mt-1 uppercase font-bold tracking-tighter">Gestão analítica de performance e metas comerciais</p>
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-[#1B4D3E] text-white rounded-xl shadow-sm shadow-[#1B4D3E]/20">
+                  <BarChart2 size={22} />
+                </span>
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    Radar Comercial & KPIs
+                  </h1>
+                  <p className="text-slate-500 text-xs font-medium mt-0.5">
+                    Cockpit executivo de conversão, metas corporativas e inteligência comercial
+                  </p>
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={loadData}
-              className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-extrabold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-[0.98] bell-header-spacing"
-            >
-              Atualizar
-            </button>
-          </header>
 
-          {/* FILTERS PANEL */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filtrar por Vendedor</label>
+            {/* SELETORES E BOTÃO ATUALIZAR */}
+            <div className="flex flex-wrap items-center gap-3">
+              
+              {/* FILTRO DE VENDEDOR */}
               <select 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#1B4D3E] shadow-xs cursor-pointer"
                 value={userFilter}
                 onChange={e => setUserFilter(e.target.value)}
               >
-                <option value="ALL">👥 Todos os Vendedores</option>
+                <option value="ALL">👥 Toda a Equipe Comercial</option>
                 {totalSellers.map((seller: any) => (
                   <option key={seller.id} value={seller.nome}>👤 {seller.nome}</option>
                 ))}
               </select>
-            </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filtro de Período</label>
-              <select 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
-                value={period}
-                onChange={e => setPeriod(e.target.value as any)}
+              {/* SELETOR DE MÊS (SE ESTIVER EM MENSAL) */}
+              {period === 'mes' && (
+                <input 
+                  type="month"
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#1B4D3E] shadow-xs cursor-pointer"
+                  value={selectedMonth}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                />
+              )}
+
+              {/* BOTÃO ATUALIZAR */}
+              <button 
+                onClick={loadData}
+                disabled={loading}
+                title="Sincronizar indicadores"
+                className="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-extrabold py-2 px-3.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer active:scale-95"
               >
-                <option value="all">📅 Todos os Períodos (Sem Filtro)</option>
-                <option value="mes">📅 Mensal (Escolher Mês)</option>
-                <option value="7">📅 Últimos 07 dias</option>
-                <option value="30">📅 Últimos 30 dias</option>
-                <option value="ano">📅 Este Ano</option>
-                <option value="custom">⚙️ Período Personalizado</option>
-              </select>
+                <RefreshCw size={14} className={loading ? 'animate-spin text-[#1B4D3E]' : ''} />
+                <span>Atualizar</span>
+              </button>
+            </div>
+          </header>
+
+          {/* BARRA DE FILTROS RÁPIDOS EM PILLS */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-2 flex items-center gap-1">
+                <Filter size={12} /> Período:
+              </span>
+              {[
+                { id: 'mes', label: '📅 Este Mês' },
+                { id: '7', label: '7 Dias' },
+                { id: '30', label: '30 Dias' },
+                { id: 'ano', label: 'Ano Vigente' },
+                { id: 'all', label: 'Todo o Histórico' },
+                { id: 'custom', label: '⚙️ Personalizado' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setPeriod(item.id as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    period === item.id 
+                      ? 'bg-[#1B4D3E] text-white shadow-xs' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
 
-            {period === 'mes' ? (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Escolher Mês (Meta)</label>
-                  <input 
-                    type="month"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
-                    value={selectedMonth}
-                    onChange={e => setSelectedMonth(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Período Ativo</label>
-                  <div className="w-full bg-slate-100 border border-slate-200/60 rounded-xl px-3.5 py-2.5 text-xs font-extrabold text-slate-500 select-none">
-                    {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''} a {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início</label>
-                  <input 
-                    type="date"
-                    disabled={period !== 'custom'}
-                    className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim</label>
-                  <input 
-                    type="date"
-                    disabled={period !== 'custom'}
-                    className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
+            {/* Range de Datas Ativo */}
+            <div className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
+              {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início'} 
+              <span className="mx-1 text-slate-400">até</span> 
+              {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Hoje'}
+            </div>
           </div>
 
           {loading ? (
             <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1B4D3E] mx-auto mb-4"></div>
-              <p className="text-slate-400 font-medium">Processando indicadores comerciais...</p>
+              <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Processando indicadores comerciais...</p>
             </div>
           ) : (propostasList.length === 0 && totalSellers.length === 0) ? (
             <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
-              <p className="text-slate-400 font-bold uppercase tracking-wider">Nenhuma proposta cadastrada no sistema.</p>
-              <p className="text-slate-300 text-xs mt-1">Crie propostas para visualizar os KPIs comerciais.</p>
+              <p className="text-slate-500 font-bold uppercase tracking-wider">Nenhuma proposta encontrada para os filtros selecionados.</p>
+              <p className="text-slate-400 text-xs mt-1">Crie propostas comerciais para visualizar os KPIs.</p>
             </div>
           ) : (
             <>
-              {/* TARGETS BANNER (Meta Global da Empresa) */}
-              <div className="bg-gradient-to-r from-[#1B4D3E] to-[#12362B] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(27,77,62,0.15)] border border-emerald-950 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="space-y-1.5 text-center md:text-left flex-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest flex items-center justify-center md:justify-start gap-1" style={{ color: '#34D399' }}>
-                    <Target size={12} /> Meta Geral da Empresa (Mês)
-                  </span>
-                  <h2 className="text-xl font-black tracking-tight">Desempenho Comercial Corporativo - {formatMonthYear(activeMonthKey)}</h2>
-                  <p className="text-xs text-slate-200 font-medium">
-                    Soma de todas as metas individuais vs. Volume convertido nesta consulta.
-                  </p>
-                </div>
-                
-                <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 w-full md:w-auto">
-                  <div className="text-center md:text-right shrink-0">
-                    <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#34D399' }}>Aceito / Meta Geral</p>
-                    <p className="text-2xl font-black mt-1">
-                      {formatCurrency(totalAceito)} <span className="text-xs font-bold text-emerald-300">/ {formatCurrency(totalMetasEmpresa)}</span>
-                    </p>
-                  </div>
+              {/* CARD HERO CORPORATIVO: META GLOBAL DA EMPRESA */}
+              <div className="bg-gradient-to-br from-[#0B251E] via-[#12362B] to-[#1B4D3E] rounded-3xl p-6 md:p-8 text-white shadow-xl border border-emerald-950/40 relative overflow-hidden">
+                <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
                   
-                  {/* Speedometer Gauge */}
-                  <div className="flex flex-col items-center shrink-0 select-none mt-2 md:mt-0">
-                    <div className="w-44 h-20 overflow-hidden relative">
-                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#0D2C22"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#34D399"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          strokeDasharray="125.66"
-                          strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
-                          className="transition-all duration-1000 ease-out"
-                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(52, 211, 153, 0.4))' }}
-                        />
-                        <line
-                          x1="50"
-                          y1="50"
-                          x2="50"
-                          y2="18"
-                          stroke="#F59E0B"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
-                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3))' }}
-                        />
-                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
-                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                      </svg>
-                    </div>
-                    
-                    <div className="text-center mt-2 z-10">
-                      <span className="text-xl font-extrabold text-white leading-none block">
-                        {atingidoGeralPct.toFixed(1)}%
+                  {/* Lado Esquerdo: Identificação da Meta */}
+                  <div className="space-y-3 max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                        <Target size={12} className="text-emerald-400" /> Meta Global Corporativa
                       </span>
-                      <p className="text-[7px] uppercase tracking-widest font-black mt-1" style={{ color: '#34D399' }}>Meta Atingida</p>
+                      <span className="text-xs text-slate-300 font-medium">
+                        {formatMonthYear(activeMonthKey)}
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                      Desempenho Comercial & Metas
+                    </h2>
+
+                    <p className="text-xs text-emerald-100/80 leading-relaxed font-normal">
+                      Acompanhamento em tempo real do faturamento convertido pela equipe comercial vs. a meta estipulada para a carteira.
+                    </p>
+
+                    {/* Projeção / Run Rate */}
+                    <div className="flex flex-wrap items-center gap-4 pt-2">
+                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs">
+                        <span className="text-[10px] text-emerald-200 block uppercase font-black">Projeção do Mês (Run-Rate)</span>
+                        <span className="font-extrabold text-white">{formatCurrency(runRateProjection)}</span>
+                      </div>
+
+                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs">
+                        <span className="text-[10px] text-emerald-200 block uppercase font-black">Pipeline Quente (Aberto)</span>
+                        <span className="font-extrabold text-emerald-300">{formatCurrency(Math.max(0, totalVolume - totalAceito))}</span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Lado Direito: Velocímetro SVG & Valores */}
+                  <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-10 border-t lg:border-t-0 lg:border-l border-emerald-800/80 pt-6 lg:pt-0 lg:pl-10">
+                    
+                    <div className="text-center sm:text-right">
+                      <span className="text-[10px] uppercase font-black tracking-wider text-emerald-300 block">
+                        Faturamento Aceito / Meta
+                      </span>
+                      <p className="text-2xl md:text-3xl font-black text-white mt-1">
+                        {formatCurrency(totalAceito)}
+                      </p>
+                      <p className="text-xs text-emerald-200/80 font-bold mt-0.5">
+                        Meta: {formatCurrency(totalMetasEmpresa)}
+                      </p>
+                    </div>
+
+                    {/* Velocímetro Precision SVG */}
+                    <div className="flex flex-col items-center shrink-0">
+                      <div className="w-36 h-20 overflow-hidden relative">
+                        <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                          {/* Trilho de Fundo */}
+                          <path
+                            d="M 10 50 A 40 40 0 0 1 90 50"
+                            fill="none"
+                            stroke="#06211A"
+                            strokeWidth="9"
+                            strokeLinecap="round"
+                          />
+                          {/* Arco de Progresso com Gradiente */}
+                          <path
+                            d="M 10 50 A 40 40 0 0 1 90 50"
+                            fill="none"
+                            stroke="#10B981"
+                            strokeWidth="9"
+                            strokeLinecap="round"
+                            strokeDasharray="125.66"
+                            strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
+                            className="transition-all duration-1000 ease-out"
+                            style={{ filter: 'drop-shadow(0px 2px 6px rgba(16, 185, 129, 0.4))' }}
+                          />
+                          {/* Ponteiro */}
+                          <line
+                            x1="50"
+                            y1="50"
+                            x2="50"
+                            y2="17"
+                            stroke="#F59E0B"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
+                          />
+                          <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                          <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                        </svg>
+                      </div>
+
+                      <div className="text-center mt-2">
+                        <span className="text-2xl font-black text-white leading-none">
+                          {atingidoGeralPct.toFixed(1)}%
+                        </span>
+                        <span className={`text-[9px] uppercase font-black tracking-wider block mt-1 ${
+                          atingidoGeralPct >= 100 ? 'text-emerald-300' : atingidoGeralPct >= 70 ? 'text-amber-300' : 'text-slate-300'
+                        }`}>
+                          {atingidoGeralPct >= 100 ? '🏆 Meta Batida!' : atingidoGeralPct >= 70 ? '⚡ Ritmo Forte' : 'Em Andamento'}
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+
                 </div>
               </div>
 
-              {/* STATS CARDS */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {/* GRID DE KPIS EXECUTIVOS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 
-                {/* TICKET MÉDIO */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
-                  <div className="flex justify-between items-start">
-                    <div className="p-2.5 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100 shrink-0">
-                      <DollarSign size={18} />
-                    </div>
-                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Ticket Médio</span>
+                {/* 1. VOLUME TOTAL */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pipeline Total</span>
+                    <span className="p-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
+                      <TrendingUp size={16} />
+                    </span>
                   </div>
-                  <div className="mt-2 flex-1 flex flex-col justify-end">
-                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
-                      {formatCurrency(ticketMedio)}
-                    </p>
-                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Média geral por proposta</p>
-                  </div>
-                </div>
-
-                {/* TAXA DE CONVERSÃO VOLUME */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
-                  <div className="flex justify-between items-start">
-                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shrink-0">
-                      <Percent size={18} />
-                    </div>
-                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão R$ (Volume)</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center select-none mt-1">
-                    <div className="w-28 h-12 overflow-hidden relative">
-                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#F1F5F9"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#2563EB"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          strokeDasharray="125.66"
-                          strokeDashoffset={125.66 - (125.66 * Math.min(100, taxaConversao)) / 100}
-                          className="transition-all duration-1000 ease-out"
-                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(37, 99, 235, 0.3))' }}
-                        />
-                        <line
-                          x1="50"
-                          y1="50"
-                          x2="50"
-                          y2="18"
-                          stroke="#F59E0B"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          transform={`rotate(${((Math.min(100, taxaConversao) / 100) * 180) - 90} 50 50)`}
-                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
-                        />
-                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
-                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                      </svg>
-                    </div>
-                    
-                    <div className="text-center mt-1.5 z-10">
-                      <span className="text-lg font-black text-slate-800 leading-none block">
-                        {taxaConversao.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* TAXA DE CONVERSÃO PROPOSTAS (QTD) */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
-                  <div className="flex justify-between items-start">
-                    <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 shrink-0">
-                      <Percent size={18} />
-                    </div>
-                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão Qtd (Propostas)</span>
-                  </div>
-                  
-                  <div className="flex flex-col items-center select-none mt-1">
-                    <div className="w-28 h-12 overflow-hidden relative">
-                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#F1F5F9"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#10B981"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          strokeDasharray="125.66"
-                          strokeDashoffset={125.66 - (125.66 * Math.min(100, conversaoQuantidade)) / 100}
-                          className="transition-all duration-1000 ease-out"
-                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(16, 185, 129, 0.3))' }}
-                        />
-                        <line
-                          x1="50"
-                          y1="50"
-                          x2="50"
-                          y2="18"
-                          stroke="#F59E0B"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          transform={`rotate(${((Math.min(100, conversaoQuantidade) / 100) * 180) - 90} 50 50)`}
-                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
-                        />
-                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
-                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                      </svg>
-                    </div>
-                    
-                    <div className="text-center mt-1.5 z-10">
-                      <span className="text-lg font-black text-slate-800 leading-none block">
-                        {conversaoQuantidade.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* VOLUME TOTAL */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
-                  <div className="flex justify-between items-start">
-                    <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shrink-0">
-                      <TrendingUp size={18} />
-                    </div>
-                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Volume Total</span>
-                  </div>
-                  <div className="mt-2 flex-1 flex flex-col justify-end">
-                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                  <div className="mt-3">
+                    <p className="text-xl font-black text-slate-900 tracking-tight">
                       {formatCurrency(totalVolume)}
                     </p>
-                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
-                      Aceito: {formatCurrency(totalAceito)} ({totalAceitasCount} de {totalPropostasCount})
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">
+                      {totalPropostasCount} {totalPropostasCount === 1 ? 'proposta emitida' : 'propostas emitidas'}
                     </p>
                   </div>
                 </div>
 
-                {/* CICLO DE FECHAMENTO */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
-                  <div className="flex justify-between items-start">
-                    <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100 shrink-0">
-                      <Clock size={18} />
-                    </div>
-                    <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Ciclo Médio</span>
+                {/* 2. VOLUME FECHADO */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Vendas Fechadas</span>
+                    <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+                      <CheckCircle size={16} />
+                    </span>
                   </div>
-                  
-                  <div className="flex flex-col items-center select-none mt-1">
-                    <div className="w-28 h-12 overflow-hidden relative">
-                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#F1F5F9"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M 10 50 A 40 40 0 0 1 90 50"
-                          fill="none"
-                          stroke="#F59E0B"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          strokeDasharray="125.66"
-                          strokeDashoffset={125.66 - (125.66 * Math.min(100, cicloMedio)) / 100}
-                          className="transition-all duration-1000 ease-out"
-                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(245, 158, 11, 0.3))' }}
-                        />
-                        <line
-                          x1="50"
-                          y1="50"
-                          x2="50"
-                          y2="18"
-                          stroke="#EF4444"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          transform={`rotate(${((Math.min(100, cicloMedio) / 100) * 180) - 90} 50 50)`}
-                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
-                        />
-                        <circle cx="50" cy="50" r="4.5" fill="#EF4444" />
-                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                      </svg>
+                  <div className="mt-3">
+                    <p className="text-xl font-black text-emerald-700 tracking-tight">
+                      {formatCurrency(totalAceito)}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">
+                      {totalAceitasCount} contratos convertidos
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. TAXA DE CONVERSÃO EM R$ */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Conversão (R$)</span>
+                    <span className="p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                      <Percent size={16} />
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-xl font-black text-slate-900 tracking-tight">
+                        {taxaConversao.toFixed(1)}%
+                      </p>
+                      <span className="text-[10px] text-blue-600 font-black">Volume</span>
                     </div>
-                    
-                    <div className="text-center mt-1.5 z-10">
-                      <span className="text-lg font-black text-slate-800 leading-none block">
-                        {cicloMedio.toFixed(1)} <span className="text-xs font-semibold text-slate-400">dias</span>
-                      </span>
+                    {/* Progress mini bar */}
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                      <div 
+                        className="bg-blue-600 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min(100, taxaConversao)}%` }} 
+                      />
                     </div>
+                  </div>
+                </div>
+
+                {/* 4. TICKET MÉDIO */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ticket Médio</span>
+                    <span className="p-2 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
+                      <DollarSign size={16} />
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xl font-black text-slate-900 tracking-tight">
+                      {formatCurrency(ticketMedio)}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">
+                      Média por contrato
+                    </p>
+                  </div>
+                </div>
+
+                {/* 5. CICLO MÉDIO */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ciclo de Venda</span>
+                    <span className="p-2 bg-amber-50 text-amber-600 rounded-xl border border-amber-100">
+                      <Clock size={16} />
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xl font-black text-slate-900 tracking-tight">
+                      {cicloMedio.toFixed(0)} <span className="text-xs text-slate-400 font-semibold">dias</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">
+                      Tempo médio de decisão
+                    </p>
                   </div>
                 </div>
 
               </div>
 
-              {/* DETAILED STATS ROW */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* SEÇÃO PRINCIPAL DE ANÁLISE: RANKING DE VENDEDORES & SERVIÇOS */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 
-                {/* PERFORMANCE POR USUÁRIO */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                  <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center gap-2.5">
-                    <Users size={16} className="text-[#1B4D3E]" />
-                    <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Desempenho dos Vendedores</h2>
+                {/* TABELA DE DESEMPENHO DOS VENDEDORES (LEADERBOARD) */}
+                <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                  
+                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="p-2 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
+                        <Users size={16} />
+                      </span>
+                      <div>
+                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                          Desempenho da Equipe Comercial
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Ranking por faturamento convertido e acompanhamento de metas individuais
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full uppercase">
+                      {rankedSellers.length} {rankedSellers.length === 1 ? 'consultor' : 'consultores'}
+                    </span>
                   </div>
+
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-100 text-slate-500 uppercase text-[9px] font-black tracking-wider border-b border-slate-200/80">
-                          <th className="px-5 py-3.5">Nome do Vendedor</th>
-                          <th className="px-5 py-3.5 text-center">Propostas</th>
-                          <th className="px-5 py-3.5 text-right">Volume Aceito</th>
-                          <th className="px-5 py-3.5 text-right">Meta Individual ({formatMonthYear(activeMonthKey)})</th>
-                          <th className="px-5 py-3.5 text-center w-1/4">Atingimento Meta</th>
+                        <tr className="bg-slate-50/80 text-slate-400 uppercase text-[9px] font-black tracking-wider border-b border-slate-100">
+                          <th className="px-5 py-3.5">Consultor</th>
+                          <th className="px-4 py-3.5 text-center">Propostas</th>
+                          <th className="px-4 py-3.5 text-right">Volume Aceito</th>
+                          <th className="px-4 py-3.5 text-right">Meta Individual</th>
+                          <th className="px-5 py-3.5 text-center w-36">Atingimento</th>
                         </tr>
                       </thead>
                       <tbody className="text-xs divide-y divide-slate-100">
-                        {totalSellers.length === 0 ? (
+                        {rankedSellers.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium italic">Nenhum vendedor encontrado.</td>
+                            <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium italic">
+                              Nenhum vendedor encontrado.
+                            </td>
                           </tr>
                         ) : (
-                          totalSellers
-                            .filter((seller: any) => userFilter === 'ALL' || seller.nome === userFilter)
-                            .map((seller: any) => {
-                              const nome = seller.nome;
-                              const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
-                              const goalKey = `${nome}_${activeMonthKey}`;
-                              const dbMeta = seller.meta > 0 ? seller.meta : 100000;
-                              const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : dbMeta;
-                              const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
-                              const isFiltered = userFilter === nome;
+                          rankedSellers.map((seller: any, idx: number) => {
+                            const stats = seller.stats;
+                            const isFiltered = userFilter === seller.nome;
 
-                              return (
-                                <tr 
-                                  key={seller.id} 
-                                  className={`transition-all ${
-                                    isFiltered 
-                                      ? 'bg-emerald-50/40 border-l-4 border-emerald-600 font-semibold' 
-                                      : 'hover:bg-slate-50/50'
-                                  }`}
-                                >
-                                  <td className="px-5 py-4.5 flex items-center gap-3">
-                                    <div className="w-7 h-7 bg-slate-100 text-slate-700 font-black rounded-lg flex items-center justify-center text-[10px] border border-slate-200">
-                                      {nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                            return (
+                              <tr 
+                                key={seller.id} 
+                                className={`transition-all ${
+                                  isFiltered 
+                                    ? 'bg-emerald-50/40 border-l-4 border-emerald-600 font-semibold' 
+                                    : 'hover:bg-slate-50/60'
+                                }`}
+                              >
+                                <td className="px-5 py-3.5 flex items-center gap-3">
+                                  {/* Badge de Posição / Avatar */}
+                                  <div className="relative">
+                                    <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center border shadow-xs ${
+                                      idx === 0 ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                                      idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
+                                      idx === 2 ? 'bg-amber-50 text-amber-900 border-amber-200' :
+                                      'bg-slate-100 text-slate-600 border-slate-200'
+                                    }`}>
+                                      {seller.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                                     </div>
-                                    <div>
-                                      <span className="font-extrabold text-slate-800">{nome}</span>
-                                      <div className="text-[9px] uppercase tracking-wider font-black mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
-                                        <span className="text-blue-600">💰 Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(1) : 0}%</span>
-                                        <span className="text-emerald-600">📄 Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(1) : 0}%</span>
-                                      </div>
-                                    </div>
-                                  </td>
-                                  
-                                  <td className="px-5 py-4.5 text-center font-bold text-slate-500">
-                                    <div>{stats.count}</div>
-                                    <div className="text-[9px] text-slate-400 font-medium mt-0.5">
-                                      {totalPropostasCount > 0 ? ((stats.count / totalPropostasCount) * 100).toFixed(1) : 0}%
-                                    </div>
-                                  </td>
-                                  
-                                  <td className="px-5 py-4.5 text-right font-black text-slate-800">
-                                    <div>{formatCurrency(stats.totalAceito)}</div>
-                                    <div className="text-[9px] text-slate-400 font-medium mt-0.5">
-                                      {totalAceito > 0 ? `${((stats.totalAceito / totalAceito) * 100).toFixed(1)}% do total` : '0%'}
-                                    </div>
-                                  </td>
-                                  
-                                  <td className="px-5 py-4.5 text-right font-extrabold text-slate-600">
-                                    {editingUserId === seller.id ? (
-                                      <div className="flex items-center justify-end gap-1.5">
-                                        <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">R$</span>
-                                        <input
-                                          type="text"
-                                          className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none focus:border-[#1B4D3E]"
-                                          value={editGoalValue}
-                                          onChange={(e) => setEditGoalValue(e.target.value)}
-                                          onBlur={() => handleSaveInlineGoal(seller.id, nome)}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                              handleSaveInlineGoal(seller.id, nome);
-                                            } else if (e.key === 'Escape') {
-                                              setEditingUserId(null);
-                                            }
-                                          }}
-                                          autoFocus
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div 
-                                        className="flex items-center justify-end gap-1.5 group cursor-pointer" 
-                                        onClick={() => {
-                                          setEditingUserId(seller.id);
-                                          setEditGoalValue(metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
-                                        }}
-                                        title="Clique para editar a meta"
-                                      >
-                                        <span>{formatCurrency(metaVal)}</span>
-                                        <Edit2 size={12} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
-                                      </div>
-                                    )}
-                                  </td>
-                                  
-                                  <td className="px-5 py-4.5">
-                                    <div className="flex flex-col items-center justify-center">
-                                      <span className={`text-[10px] font-black ${
-                                        atingidoPct >= 100 
-                                          ? 'text-emerald-600' 
-                                          : atingidoPct >= 50 
-                                            ? 'text-indigo-600' 
-                                            : 'text-amber-500'
-                                      }`}>
-                                        {atingidoPct.toFixed(1)}%
+                                    {idx < 3 && (
+                                      <span className="absolute -top-1 -right-1 text-[10px]">
+                                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
                                       </span>
-                                      <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                        <div className={`h-1.5 rounded-full transition-all duration-500 ${
-                                          atingidoPct >= 100 
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <span className="font-extrabold text-slate-800 block text-xs">
+                                      {seller.nome}
+                                    </span>
+                                    <div className="text-[9px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-2 mt-0.5">
+                                      <span className="text-blue-600">Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(0) : 0}%</span>
+                                      <span>•</span>
+                                      <span className="text-emerald-600">Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(0) : 0}%</span>
+                                    </div>
+                                  </div>
+                                </td>
+                                
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-600">
+                                  <span>{stats.count}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium block">
+                                    {stats.totalAceitasCount} fechadas
+                                  </span>
+                                </td>
+                                
+                                <td className="px-4 py-3.5 text-right font-black text-slate-900">
+                                  <span>{formatCurrency(stats.totalAceito)}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium block">
+                                    Total: {formatCurrency(stats.totalVal)}
+                                  </span>
+                                </td>
+                                
+                                <td className="px-4 py-3.5 text-right font-bold text-slate-700">
+                                  {editingUserId === seller.id ? (
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <span className="text-slate-400 font-bold text-[10px]">R$</span>
+                                      <input
+                                        type="text"
+                                        className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none focus:border-[#1B4D3E]"
+                                        value={editGoalValue}
+                                        onChange={(e) => setEditGoalValue(e.target.value)}
+                                        onBlur={() => handleSaveInlineGoal(seller.id, seller.nome)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            handleSaveInlineGoal(seller.id, seller.nome);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingUserId(null);
+                                          }
+                                        }}
+                                        autoFocus
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="flex items-center justify-end gap-1.5 group cursor-pointer" 
+                                      onClick={() => {
+                                        setEditingUserId(seller.id);
+                                        setEditGoalValue(seller.metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
+                                      }}
+                                      title="Clique para editar a meta do vendedor"
+                                    >
+                                      <span>{formatCurrency(seller.metaVal)}</span>
+                                      <Edit2 size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity ml-1" />
+                                    </div>
+                                  )}
+                                </td>
+                                
+                                <td className="px-5 py-3.5">
+                                  <div className="flex flex-col items-center justify-center">
+                                    <span className={`text-[10px] font-black ${
+                                      seller.atingidoPct >= 100 
+                                        ? 'text-emerald-600' 
+                                        : seller.atingidoPct >= 60 
+                                          ? 'text-indigo-600' 
+                                          : 'text-amber-500'
+                                    }`}>
+                                      {seller.atingidoPct.toFixed(1)}%
+                                    </span>
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-500 ${
+                                          seller.atingidoPct >= 100 
                                             ? 'bg-emerald-500' 
-                                            : atingidoPct >= 50 
+                                            : seller.atingidoPct >= 60 
                                               ? 'bg-indigo-500' 
                                               : 'bg-amber-400'
-                                        }`} style={{ width: `${Math.min(100, atingidoPct)}%` }}></div>
-                                      </div>
+                                        }`} 
+                                        style={{ width: `${Math.min(100, seller.atingidoPct)}%` }} 
+                                      />
                                     </div>
-                                  </td>
-                                </tr>
-                              );
-                            })
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
                   </div>
                 </div>
 
-                {/* VOLUME POR TIPO DE SERVIÇOS */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                  <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center gap-2.5">
-                    <Briefcase size={16} className="text-[#1B4D3E]" />
-                    <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Volume por Tipo de Serviços</h2>
+                {/* VOLUME POR TIPO DE SERVIÇOS (FACILITIES, LIMPEZA, PORTARIA...) */}
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+                      <span className="p-2 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
+                        <Briefcase size={16} />
+                      </span>
+                      <div>
+                        <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                          Mix por Categoria
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Distribuição de volume por tipo de serviço
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3.5">
+                      {Object.keys(volumePorServico).length === 0 ? (
+                        <p className="text-slate-400 text-xs text-center py-6 italic">
+                          Nenhuma categoria registrada no período.
+                        </p>
+                      ) : (
+                        Object.entries(volumePorServico)
+                          .sort((a, b) => b[1].totalVal - a[1].totalVal)
+                          .map(([nome, data]) => {
+                            const pctTotal = totalVolume > 0 ? (data.totalVal / totalVolume) * 100 : 0;
+                            return (
+                              <div key={nome} className="space-y-1.5">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-extrabold text-slate-700 truncate max-w-[160px]">
+                                    {nome}
+                                  </span>
+                                  <span className="font-black text-slate-900">
+                                    {formatCurrency(data.totalVal)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div 
+                                      className="bg-[#1B4D3E] h-full rounded-full transition-all duration-500" 
+                                      style={{ width: `${Math.min(100, pctTotal)}%` }} 
+                                    />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-400 w-10 text-right">
+                                    {pctTotal.toFixed(0)}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                      )}
+                    </div>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-100 text-slate-500 uppercase text-[9px] font-black tracking-wider border-b border-slate-200/80">
-                          <th className="px-5 py-3.5">Categoria do Serviço</th>
-                          <th className="px-5 py-3.5 text-center">Propostas</th>
-                          <th className="px-5 py-3.5 text-right">Volume Total</th>
-                          <th className="px-5 py-3.5 text-right">Ticket Médio</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-xs divide-y divide-slate-100">
-                        {Object.keys(volumePorServico).length === 0 ? (
-                          <tr>
-                            <td colSpan={4} className="px-5 py-8 text-center text-slate-400 font-medium italic">Nenhuma proposta categorizada nesta consulta.</td>
-                          </tr>
-                        ) : (
-                          Object.entries(volumePorServico).map(([nome, data]) => (
-                            <tr key={nome} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-5 py-4">
-                                <span className="font-extrabold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl uppercase tracking-tighter text-[9px]">
-                                  {nome}
-                                </span>
-                              </td>
-                              <td className="px-5 py-4 text-center">
-                                <p className="font-bold text-slate-500">{data.count}</p>
-                                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">
-                                  {totalPropostasCount > 0 ? ((data.count / totalPropostasCount) * 100).toFixed(1) : 0}%
-                                </p>
-                              </td>
-                              <td className="px-5 py-4 text-right">
-                                <p className="font-black text-[#1B4D3E]">{formatCurrency(data.totalVal)}</p>
-                                <p className="text-[9px] text-slate-400 font-bold mt-0.5">
-                                  {totalVolume > 0 ? ((data.totalVal / totalVolume) * 100).toFixed(1) : 0}% do total
-                                </p>
-                              </td>
-                              <td className="px-5 py-4 text-right font-bold text-slate-500">
-                                {formatCurrency(data.count > 0 ? data.totalVal / data.count : 0)}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <span className="font-bold">Total Categorizado:</span>
+                    <span className="font-black text-slate-800">{formatCurrency(totalVolume)}</span>
                   </div>
                 </div>
 
               </div>
 
               {/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-8 flex flex-col hover:shadow-md transition-shadow">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-100 pb-5">
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-5">
                   <div>
-                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                       <BarChart2 size={16} className="text-[#1B4D3E]" /> Acompanhamento de Metas Mensais
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">
-                      Histórico de Meta (Previsto) vs Faturamento Aceito (Realizado) e Percentual de Atingimento (%)
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-wide">
+                      Meta Prevista (Barras Roxas) vs. Faturamento Aceito (Barras Verdes) e % de Atingimento (Linha Dourada)
                     </p>
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
-                      <button
-                        onClick={() => setChartViewMode('mensal')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                          chartViewMode === 'mensal'
-                            ? 'bg-[#1B4D3E] text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-750'
-                        }`}
-                      >
-                        📅 Mensal
-                      </button>
-                      <button
-                        onClick={() => setChartViewMode('acumulada')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                          chartViewMode === 'acumulada'
-                            ? 'bg-[#1B4D3E] text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-750'
-                        }`}
-                      >
-                        📈 Acumulada
-                      </button>
-                    </div>
+                  {/* Toggle Mensal / Acumulada */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+                    <button
+                      onClick={() => setChartViewMode('mensal')}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        chartViewMode === 'mensal'
+                          ? 'bg-[#1B4D3E] text-white shadow-xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      📅 Mensal
+                    </button>
+                    <button
+                      onClick={() => setChartViewMode('acumulada')}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        chartViewMode === 'acumulada'
+                          ? 'bg-[#1B4D3E] text-white shadow-xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      📈 Acumulada
+                    </button>
                   </div>
                 </div>
 
@@ -1056,7 +1057,7 @@ function RadarComercialDashboard() {
                               width="10"
                               height={Math.max(1, hPrevisto)}
                               fill="#6366F1"
-                              rx="1.5"
+                              rx="2"
                               className="transition-all duration-300 hover:fill-indigo-600 cursor-pointer"
                             />
                             <text
@@ -1074,7 +1075,7 @@ function RadarComercialDashboard() {
                               width="10"
                               height={Math.max(1, hRealizado)}
                               fill="#10B981"
-                              rx="1.5"
+                              rx="2"
                               className="transition-all duration-300 hover:fill-emerald-600 cursor-pointer"
                             />
                             <text
@@ -1090,7 +1091,7 @@ function RadarComercialDashboard() {
                               x={xCenter} 
                               y="218" 
                               textAnchor="middle" 
-                              className="fill-slate-500 text-[9px] font-black uppercase tracking-wider"
+                              className="fill-slate-600 text-[9px] font-black uppercase tracking-wider"
                             >
                               {getShortMonthName(d.monthKey)}
                             </text>
@@ -1120,7 +1121,7 @@ function RadarComercialDashboard() {
                             <polyline
                               fill="none"
                               stroke="#F59E0B"
-                              strokeWidth="2"
+                              strokeWidth="2.5"
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               points={points.join(' ')}
@@ -1137,17 +1138,17 @@ function RadarComercialDashboard() {
                                   <circle
                                     cx={xCenter}
                                     cy={yCoord}
-                                    r="3.5"
+                                    r="4"
                                     fill="#F59E0B"
                                     stroke="#FFFFFF"
-                                    strokeWidth="1.5"
-                                    className="transition-all duration-300 group-hover:r-4.5 group-hover:stroke-amber-600"
+                                    strokeWidth="2"
+                                    className="transition-all duration-300 group-hover:r-5 group-hover:stroke-amber-600"
                                   />
                                   <text
                                     x={xCenter}
                                     y={yCoord - 8}
                                     textAnchor="middle"
-                                    className="fill-amber-600 text-[7px] font-black bg-white"
+                                    className="fill-amber-600 text-[7px] font-black"
                                     style={{ filter: 'drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.9))' }}
                                   >
                                     {d.atingidoPct.toFixed(1)}%
@@ -1162,24 +1163,26 @@ function RadarComercialDashboard() {
                   </div>
                 </div>
 
+                {/* LEGENDA DO GRÁFICO */}
                 <div className="flex justify-center mt-5 select-none border-t border-slate-100 pt-5">
-                  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[9px] font-black uppercase tracking-wider bg-slate-50 border border-slate-200/60 px-5 py-2.5 rounded-2xl shadow-sm">
+                  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[9px] font-black uppercase tracking-wider bg-slate-50 border border-slate-200/60 px-5 py-2.5 rounded-2xl shadow-xs">
                     <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 bg-[#6366F1] rounded-md block shadow-sm shadow-indigo-500/20"></span>
-                      <span className="text-slate-500">Previsto (Meta)</span>
+                      <span className="w-3.5 h-3.5 bg-[#6366F1] rounded-md block shadow-xs shadow-indigo-500/20"></span>
+                      <span className="text-slate-600">Previsto (Meta)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 bg-[#10B981] rounded-md block shadow-sm shadow-emerald-500/20"></span>
-                      <span className="text-slate-500">Realizado (Aceito)</span>
+                      <span className="w-3.5 h-3.5 bg-[#10B981] rounded-md block shadow-xs shadow-emerald-500/20"></span>
+                      <span className="text-slate-600">Realizado (Aceito)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-7 h-1 bg-[#F59E0B] relative flex items-center justify-center rounded">
+                      <span className="w-6 h-1 bg-[#F59E0B] relative flex items-center justify-center rounded">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] absolute border border-white"></span>
                       </span>
-                      <span className="text-slate-500">Atingimento (%)</span>
+                      <span className="text-slate-600">Atingimento (%)</span>
                     </div>
                   </div>
                 </div>
+
               </div>
 
             </>
@@ -1245,7 +1248,6 @@ export default function Page() {
                 router.push('/entrega/entregador');
                 return;
               } else {
-                // Vendedor / Outros usuários comuns
                 router.push('/leads/mobile');
                 return;
               }
@@ -1255,7 +1257,6 @@ export default function Page() {
             }
           }
 
-          // Checa se o usuário logado é técnico ou logística e redireciona no desktop
           if (user) {
             if (user.role === 'LOGISTICA') {
               router.push('/entrega');
@@ -1298,12 +1299,10 @@ export default function Page() {
     if (showMobileHub) {
       return (
         <div className="min-h-screen bg-[#0B0F19] text-white flex flex-col justify-between p-6 relative overflow-hidden font-sans select-none">
-          {/* Fundo com gradiente e blur premium */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25 z-0">
             <div className="w-[450px] h-[450px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[120px] animate-pulse" />
           </div>
 
-          {/* Topo / Header do Hub */}
           <div className="relative z-10 w-full max-w-md mx-auto pt-6 flex flex-col items-center">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-10 h-10 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/40 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.15)]">
@@ -1317,7 +1316,6 @@ export default function Page() {
               Painel Multisseletor
             </p>
 
-            {/* Identificação do Usuário */}
             <div className="w-full bg-white/[0.03] border border-white/5 rounded-3xl p-4 flex items-center gap-3.5 backdrop-blur-md mb-8">
               {loggedUser?.avatarUrl ? (
                 <img 
@@ -1340,13 +1338,11 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Grid de Cards de Navegação */}
             <div className="w-full space-y-4">
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-left pl-1 mb-1">
                 Selecione a área para acessar
               </h4>
 
-              {/* CARD 1: CRM */}
               <button
                 onClick={() => router.push('/leads/mobile')}
                 className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#0F241F] hover:to-[#0A1714] border border-white/5 hover:border-emerald-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
@@ -1367,7 +1363,6 @@ export default function Page() {
                 <ArrowUpRight size={18} className="text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
               </button>
 
-              {/* CARD 2: Área do Técnico */}
               <button
                 onClick={() => router.push('/ativos/tecnico')}
                 className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#0E1E2C] hover:to-[#0A141F] border border-white/5 hover:border-blue-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
@@ -1388,7 +1383,6 @@ export default function Page() {
                 <ArrowUpRight size={18} className="text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
               </button>
 
-              {/* CARD 3: Entrega */}
               <button
                 onClick={() => router.push('/entrega/entregador')}
                 className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#241710] hover:to-[#170E0A] border border-white/5 hover:border-amber-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
@@ -1411,14 +1405,13 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Rodapé com Logout e opção de forçar versão desktop */}
           <div className="relative z-10 w-full max-w-md mx-auto pt-6 border-t border-white/5 flex justify-between items-center text-xs text-slate-500 select-none pb-2">
             <button
               onClick={() => {
                 sessionStorage.setItem('sb_mobile_mode', 'desktop');
                 window.location.reload();
               }}
-              className="bg-transparent border-none text-[10px] font-black uppercase tracking-wider text-slate-550 hover:text-white cursor-pointer"
+              className="bg-transparent border-none text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-white cursor-pointer"
             >
               Versão Desktop
             </button>
