@@ -1047,9 +1047,7 @@ const Sidebar = () => {
 
           if (!hasCheckedPendingOnMountRef.current) {
             hasCheckedPendingOnMountRef.current = true;
-            if (res.pendingLeads.length > 0) {
-              setShowPendingModal(true);
-            }
+            // Notificação modal automática de pendências desativada
           }
         }
       } catch (err) {
