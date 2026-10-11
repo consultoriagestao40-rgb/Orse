@@ -158,13 +158,14 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-5">
             <a href="/login" className="text-[14px] hover:text-[#111418] transition-colors" style={{ color: C.muted }}>Entrar</a>
-            <button
-              onClick={() => openDemoWithPlan('Demonstração 20 Min')}
-              className="text-[14px] font-medium text-white px-4 py-2 rounded-full transition-colors cursor-pointer hover:bg-black"
-              style={{ background: C.ink }}
+            <a
+              id="header-teste-gratis"
+              href="/cadastro"
+              className="text-[14px] font-semibold text-white px-4 py-2 rounded-full transition-opacity hover:opacity-90"
+              style={{ background: C.green }}
             >
-              Agendar demonstração
-            </button>
+              Testar grátis por 7 dias
+            </a>
           </div>
 
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 cursor-pointer" aria-label="Menu">
@@ -181,13 +182,13 @@ export default function LandingPage() {
             ))}
             <div className="flex gap-3 pt-4">
               <a href="/login" className="flex-1 text-center py-2.5 rounded-full border text-[14px]" style={{ borderColor: C.line }}>Entrar</a>
-              <button
-                onClick={() => { setMobileMenuOpen(false); openDemoWithPlan('Demonstração Mobile'); }}
-                className="flex-1 py-2.5 rounded-full text-white text-[14px] font-medium"
-                style={{ background: C.ink }}
+              <a
+                href="/cadastro"
+                className="flex-1 text-center py-2.5 rounded-full text-white text-[14px] font-semibold"
+                style={{ background: C.green }}
               >
-                Agendar demonstração
-              </button>
+                Teste grátis
+              </a>
             </div>
           </div>
         )}
@@ -217,26 +218,24 @@ export default function LandingPage() {
                 Da prospecção de grandes contas à blindagem de margem e reajustes automáticos. Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[15px] font-semibold px-6 py-3.5 rounded-xl cursor-pointer transition-transform hover:-translate-y-0.5"
+                <a
+                  id="hero-teste-gratis"
+                  href="/cadastro"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[15px] font-semibold px-6 py-3.5 rounded-xl transition-transform hover:-translate-y-0.5"
                   style={{ color: C.green }}
                 >
-                  Quero ver o SmartBid em ação
+                  Começar teste grátis de 7 dias
                   <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
-                </button>
+                </a>
                 <button
-                  onClick={() => {
-                    setHeroTab('dre');
-                    document.getElementById('produto')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
+                  onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
                   className="w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-6 py-3.5 rounded-xl border border-white/40 text-white cursor-pointer transition-colors hover:bg-white/10"
                 >
-                  Simular DRE do projeto
+                  Agendar demonstração
                 </button>
               </div>
-              <p className="mt-5 text-[13px] text-white/55">
-                Demonstração de 20 minutos · sem cartão de crédito · configuramos a sua CCT ao vivo
+              <p className="mt-5 text-[13px] text-white/60">
+                Crie a conta em 2 minutos · sem cartão de crédito · acesso completo durante o teste
               </p>
             </div>
           </div>
@@ -634,7 +633,7 @@ export default function LandingPage() {
               ['R$ 1,2 bi', 'em propostas gerenciadas'],
               ['100%', 'das CCTs parametrizadas'],
               ['127×', 'acessos rastreados numa proposta'],
-              ['14 dias', 'de garantia incondicional'],
+              ['7 dias', 'grátis para testar tudo'],
             ].map(([n, l], i) => (
               <div key={n} className={`text-center px-4 ${i > 0 ? 'lg:border-l' : ''} ${i % 2 === 1 ? 'border-l lg:border-l' : ''}`} style={{ borderColor: C.line }}>
                 <p className="text-[44px] md:text-[52px] leading-none tabular-nums" style={{ ...serif, fontWeight: 800, color: C.ink }}>{n}</p>
@@ -1010,13 +1009,16 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <button
-                  onClick={() => openDemoWithPlan(`Plano ${p.nome} (R$ ${p.preco}/mês)`)}
-                  className="mt-10 w-full py-3 rounded-full text-[14px] font-medium cursor-pointer transition-opacity hover:opacity-90"
-                  style={p.destaque ? { background: '#fff', color: C.ink } : { border: `1px solid ${C.ink}` }}
+                <a
+                  href={`/cadastro?plano=${encodeURIComponent(p.nome)}`}
+                  className="mt-10 w-full py-3 rounded-full text-[14px] font-semibold text-center transition-opacity hover:opacity-90"
+                  style={p.destaque ? { background: '#fff', color: C.ink } : { border: `1px solid ${C.ink}`, color: C.ink }}
                 >
-                  {p.cta}
-                </button>
+                  Testar 7 dias grátis
+                </a>
+                <p className="text-[12px] text-center mt-2.5" style={{ color: p.destaque ? 'rgba(255,255,255,0.55)' : C.muted }}>
+                  Sem cartão. Escolha o plano no fim do teste.
+                </p>
               </div>
             ))}
           </div>
@@ -1051,6 +1053,10 @@ export default function LandingPage() {
           <h2 className="lg:col-span-4 text-[40px] md:text-[48px] leading-[1.05]" style={serif}>Perguntas frequentes</h2>
           <div className="lg:col-span-8 border-t" style={{ borderColor: C.line }}>
             {[
+              {
+                pergunta: 'Como funciona o teste grátis de 7 dias?',
+                resposta: 'Você cria a conta sozinho em 2 minutos, sem cartão de crédito, e usa a plataforma completa por 7 dias. No fim do teste você escolhe o plano para continuar. Se não escolher, a conta fica pausada e nada é cobrado.'
+              },
               {
                 pergunta: 'Consigo cadastrar convenções de estados diferentes?',
                 resposta: 'Sim. O gerenciador de CCT aceita vários sindicatos, cada um com seus pisos, encargos e benefícios, para cada região onde você opera.'
@@ -1098,15 +1104,22 @@ export default function LandingPage() {
           </h2>
           <div className="lg:col-span-4">
             <p className="text-[15px] text-white/70 leading-[1.6]">
-              Veja como montar orçamentos seguros, fechar mais rápido e proteger o caixa da sua prestadora.
+              Teste por 7 dias, monte a primeira proposta e veja a DRE do projeto antes de enviar. Sem cartão de crédito.
             </p>
-            <button
-              onClick={() => openDemoWithPlan('Solicitar Demonstração Gratuita Final')}
-              className="group mt-6 inline-flex items-center gap-2 bg-white text-[15px] font-medium pl-5 pr-4 py-3 rounded-full cursor-pointer"
+            <a
+              id="final-teste-gratis"
+              href="/cadastro"
+              className="group mt-6 inline-flex items-center gap-2 bg-white text-[15px] font-semibold pl-5 pr-4 py-3 rounded-full"
               style={{ color: C.ink }}
             >
-              Agendar demonstração gratuita
+              Criar conta grátis
               <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </a>
+            <button
+              onClick={() => openDemoWithPlan('Solicitar Demonstração Gratuita Final')}
+              className="block mt-4 text-[14px] text-white/75 underline underline-offset-4 cursor-pointer hover:text-white"
+            >
+              Prefere uma demonstração guiada?
             </button>
           </div>
         </div>

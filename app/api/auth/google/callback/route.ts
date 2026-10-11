@@ -49,41 +49,46 @@ export async function GET(request: Request) {
       return new NextResponse('Erro: E-mail não fornecido pela conta Google.', { status: 400 })
     }
 
-    // 3. Buscar ou criar o Tenant "Silva Consultoria Empresarial LTDA" como tenant padrão
-    let defaultTenant = await prisma.tenant.findUnique({
-      where: { cnpj: '40.180.983/0001-00' }
-    })
-
-    if (!defaultTenant) {
-      defaultTenant = await prisma.tenant.create({
-        data: {
-          nomeFantasia: 'Silva Consultoria Empresarial LTDA',
-          cnpj: '40.180.983/0001-00'
-        }
-      })
-    }
-
-    // 4. Buscar o usuário no banco de dados local pelo e-mail
+    // 3. Buscar o usuário no banco de dados local pelo e-mail
     let user = await prisma.user.findUnique({
       where: { email: googleUser.email }
     })
 
+    // Novos usuários (ou usuários sem empresa) recebem SEMPRE uma empresa isolada em teste de 7 dias.
+    // Nunca vincular a um tenant existente: isso exporia dados de outra empresa.
+    const createTrialTenant = () => {
+      const domain = String(googleUser.email).split('@')[1] || ''
+      const isPersonal = /^(gmail|hotmail|outlook|yahoo|icloud|live|bol|uol)\./i.test(domain)
+      const nomeEmpresa = !isPersonal && domain
+        ? domain.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+        : `Empresa de ${googleUser.name || String(googleUser.email).split('@')[0]}`
+      return prisma.tenant.create({
+        data: {
+          nomeFantasia: nomeEmpresa,
+          cnpj: `TEMP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          plano: 'TESTE',
+          trialStartedAt: new Date(),
+          limiteUsuarios: 3,
+        }
+      })
+    }
+
     if (!user) {
-      // Se não existir, criamos o usuário automaticamente sob o tenant do "Grupo JVS"
+      const tenant = await createTrialTenant()
       user = await prisma.user.create({
         data: {
           email: googleUser.email,
           nome: googleUser.name || googleUser.email.split('@')[0],
-          role: 'USER',
+          role: 'ADMIN',
           password: Math.random().toString(36).slice(-8), // senha aleatória inacessível por segurança
-          tenantId: defaultTenant.id
+          tenantId: tenant.id
         }
       })
     } else if (!user.tenantId) {
-      // Se o usuário existir mas não tiver tenantId associado, vinculamos ele ao Grupo JVS
+      const tenant = await createTrialTenant()
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { tenantId: defaultTenant.id }
+        data: { tenantId: tenant.id }
       })
     }
 

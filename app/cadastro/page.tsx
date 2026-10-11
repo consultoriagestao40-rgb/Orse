@@ -1,27 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
-import { TrendingUp, Mail, Lock, User, Building2, ArrowRight, Chrome, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import { ArrowRight, Eye, EyeOff, Check } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { textFont } from '@/components/lp/fonts';
 
-export default function CadastroPage() {
-  const router = useRouter();
-  const [step, setStep] = useState<'choose' | 'form'>('choose');
+const C = {
+  paper: '#FBFAF7',
+  ink: '#111418',
+  muted: '#5B6470',
+  line: '#E6E2DA',
+  green: '#1B4D3E',
+  greenSoft: '#EAF1ED',
+};
+
+const title: React.CSSProperties = {
+  fontFamily: 'var(--font-lp-text)',
+  fontWeight: 800,
+  letterSpacing: '-0.035em',
+};
+
+function maskPhone(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 2) return d.length ? `(${d}` : '';
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function Field({
+  label, children,
+}: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-[13px] font-semibold mb-1.5" style={{ color: C.ink }}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const inputCls =
+  'w-full h-12 px-4 rounded-xl bg-white border text-[15px] outline-none transition-shadow focus:shadow-[0_0_0_4px_rgba(27,77,62,0.12)]';
+
+function CadastroForm() {
+  const params = useSearchParams();
+  const plano = params.get('plano');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ nome: '', email: '', password: '', empresa: '' });
+  const [form, setForm] = useState({ nome: '', empresa: '', email: '', celular: '', password: '' });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = k === 'celular' ? maskPhone(e.target.value) : e.target.value;
+    setForm(prev => ({ ...prev, [k]: v }));
     setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nome.trim() || !form.email.trim() || !form.password.trim()) {
-      setError('Preencha todos os campos obrigatórios.');
+    if (!form.nome.trim() || !form.empresa.trim() || !form.email.trim() || !form.password) {
+      setError('Preencha todos os campos.');
+      return;
+    }
+    if (form.celular.replace(/\D/g, '').length < 10) {
+      setError('Informe um WhatsApp válido com DDD.');
       return;
     }
     if (form.password.length < 6) {
@@ -34,13 +77,13 @@ export default function CadastroPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, plano }),
       });
       const data = await res.json();
       if (res.ok) {
         window.location.href = '/';
       } else {
-        setError(data.error || 'Erro ao criar conta.');
+        setError(data.error || 'Não foi possível criar a conta.');
       }
     } catch {
       setError('Erro de conexão. Tente novamente.');
@@ -49,260 +92,179 @@ export default function CadastroPage() {
     }
   };
 
-  const benefits = [
-    'Radar Comercial com KPIs em tempo real',
-    'Prospecção inteligente de leads B2B',
-    'Engenharia de custos com tabelas CCT',
-    'CRM com pipeline visual e WhatsApp',
-    'Geração de propostas e contratos',
-  ];
-
   return (
-    <div className="min-h-screen bg-[#070B19] flex items-stretch relative overflow-hidden font-sans">
-
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#10B981]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#1B4D3E]/20 rounded-full blur-[100px]" />
-      </div>
-
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex flex-col justify-between w-[480px] shrink-0 p-12 bg-gradient-to-b from-[#0D1A14] to-[#070B19] border-r border-white/5 relative z-10">
-        {/* Logo */}
-        <div>
-          <Link href="/" className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-[#10B981]/10 border border-[#10B981]/30 rounded-xl flex items-center justify-center">
-              <TrendingUp className="text-[#10B981]" size={22} />
-            </div>
-            <div>
-              <p className="text-lg font-black tracking-tight text-white uppercase leading-none">
-                Smart<span className="text-[#10B981]">Bid</span>
-              </p>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Facilities & CLM</p>
-            </div>
+    <div
+      className={`${textFont.variable} min-h-screen antialiased`}
+      style={{ background: C.paper, color: C.ink, fontFamily: 'var(--font-lp-text)' }}
+    >
+      {/* Topo */}
+      <header className="max-w-[1200px] mx-auto px-6 h-[76px] flex items-center justify-between">
+        <Link href="/" className="text-[20px]" style={title}>
+          Smart<span style={{ color: C.green }}>Bid</span>
+        </Link>
+        <p className="text-[14px]" style={{ color: C.muted }}>
+          Já tem conta?{' '}
+          <Link href="/login" className="font-semibold underline-offset-4 hover:underline" style={{ color: C.green }}>
+            Entrar
           </Link>
+        </p>
+      </header>
 
-          <h2 className="text-3xl font-black text-white leading-tight mb-4">
-            Inteligência Comercial<br />
-            <span className="text-[#10B981]">para Facilities</span>
-          </h2>
-          <p className="text-slate-400 text-sm leading-relaxed mb-10">
-            A plataforma que elimina planilhas e transforma a operação comercial da sua empresa em um sistema previsível e escalável.
+      <main className="max-w-[1200px] mx-auto px-6 pb-20 pt-6 lg:pt-12 grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        {/* Coluna de valor */}
+        <section className="lg:col-span-6 lg:pt-6">
+          <p className="text-[14px] font-semibold mb-5" style={{ color: C.green }}>
+            Teste grátis por 7 dias
+          </p>
+          <h1 className="text-[36px] sm:text-[46px] leading-[1.05]" style={title}>
+            Crie a sua conta e monte a primeira proposta hoje.
+          </h1>
+          <p className="mt-5 text-[17px] leading-[1.6] max-w-[520px]" style={{ color: C.muted }}>
+            Acesso completo à plataforma durante o teste. Sem cartão de crédito e sem falar com vendedor.
           </p>
 
-          {/* Benefits */}
-          <div className="space-y-3">
-            {benefits.map((b, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#10B981]/10 border border-[#10B981]/30 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={11} className="text-[#10B981]" />
+          <ul className="mt-10 space-y-5 max-w-[520px]">
+            {[
+              ['Custos por CCT', 'Encargos, benefícios e insumos calculados por posto.'],
+              ['DRE do projeto', 'Receita, tributos, custo operacional e margem antes de enviar.'],
+              ['Proposta por link', 'Saiba quando o cliente abriu, quanto tempo leu e o que viu.'],
+              ['Radar comercial', 'Pipeline, prospecção e reajustes anuais no mesmo lugar.'],
+            ].map(([t, d]) => (
+              <li key={t} className="flex gap-4">
+                <span
+                  className="mt-0.5 w-6 h-6 shrink-0 rounded-full flex items-center justify-center"
+                  style={{ background: C.greenSoft, color: C.green }}
+                >
+                  <Check size={14} strokeWidth={3} />
+                </span>
+                <div>
+                  <p className="text-[16px] font-semibold">{t}</p>
+                  <p className="text-[15px] mt-0.5" style={{ color: C.muted }}>{d}</p>
                 </div>
-                <span className="text-sm text-slate-300">{b}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-12 pt-8 border-t grid grid-cols-3 gap-6 max-w-[520px]" style={{ borderColor: C.line }}>
+            {[
+              ['7 dias', 'de acesso completo'],
+              ['2 min', 'para criar a conta'],
+              ['R$ 0', 'durante o teste'],
+            ].map(([n, l]) => (
+              <div key={n}>
+                <p className="text-[28px] leading-none tabular-nums" style={title}>{n}</p>
+                <p className="text-[13px] mt-2" style={{ color: C.muted }}>{l}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Trial badge */}
-        <div className="bg-[#10B981]/5 border border-[#10B981]/20 rounded-2xl p-5">
-          <p className="text-[#10B981] text-xs font-black uppercase tracking-widest mb-1">14 dias grátis</p>
-          <p className="text-white text-sm font-bold">Sem cartão de crédito</p>
-          <p className="text-slate-500 text-xs mt-1">Cancele quando quiser, sem burocracia.</p>
-        </div>
-      </div>
-
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md">
-
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-9 h-9 bg-[#10B981]/10 border border-[#10B981]/30 rounded-xl flex items-center justify-center">
-              <TrendingUp className="text-[#10B981]" size={18} />
-            </div>
-            <p className="text-xl font-black tracking-tight text-white uppercase">
-              Smart<span className="text-[#10B981]">Bid</span>
+        {/* Formulário */}
+        <section className="lg:col-span-6">
+          <div
+            className="bg-white rounded-[22px] border p-7 sm:p-9 shadow-[0_30px_60px_-35px_rgba(17,20,24,0.3)]"
+            style={{ borderColor: C.line }}
+          >
+            <h2 className="text-[24px]" style={title}>Comece o seu teste grátis</h2>
+            <p className="text-[14px] mt-1.5 mb-7" style={{ color: C.muted }}>
+              {plano ? `Plano escolhido: ${plano}. ` : ''}Você só escolhe o plano depois dos 7 dias.
             </p>
-          </div>
 
-          {step === 'choose' ? (
-            /* ── STEP 1: Escolha o método ── */
-            <div className="bg-white/[0.03] border border-white/8 rounded-3xl p-8 backdrop-blur-sm shadow-2xl">
-              <div className="mb-8 text-center">
-                <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Criar Conta Grátis</h1>
-                <p className="text-slate-400 text-sm">14 dias de teste. Sem cartão de crédito.</p>
-              </div>
+            <a
+              href="/api/auth/google"
+              className="flex items-center justify-center gap-3 w-full h-12 rounded-xl border text-[15px] font-semibold transition-colors hover:bg-[#F6F5F1]"
+              style={{ borderColor: C.line }}
+            >
+              <svg viewBox="0 0 48 48" className="w-5 h-5 shrink-0" aria-hidden>
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+              </svg>
+              Continuar com Google
+            </a>
 
-              {/* Google button */}
-              <a
-                href="/api/auth/google"
-                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm rounded-2xl transition-all shadow-lg mb-4 group"
-              >
-                <svg viewBox="0 0 48 48" className="w-5 h-5 shrink-0">
-                  <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                  <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                  <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                  <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-                </svg>
-                Continuar com o Google
-                <ArrowRight size={14} className="ml-auto group-hover:translate-x-1 transition-transform" />
-              </a>
-
-              {/* Divider */}
-              <div className="flex items-center gap-4 my-5">
-                <div className="flex-1 h-px bg-white/8" />
-                <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">ou</span>
-                <div className="flex-1 h-px bg-white/8" />
-              </div>
-
-              {/* Email button */}
-              <button
-                onClick={() => setStep('form')}
-                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 bg-[#10B981] hover:bg-[#059669] text-slate-950 font-black text-sm rounded-2xl transition-all shadow-lg shadow-emerald-500/20 group"
-              >
-                <Mail size={16} />
-                Criar conta com E-mail
-                <ArrowRight size={14} className="ml-auto group-hover:translate-x-1 transition-transform" />
-              </button>
-
-              <p className="text-center text-slate-500 text-xs mt-6">
-                Já tem uma conta?{' '}
-                <Link href="/login" className="text-[#10B981] font-bold hover:underline">
-                  Entrar
-                </Link>
-              </p>
-
-              <p className="text-center text-slate-600 text-[11px] mt-4 leading-relaxed">
-                Ao criar sua conta você concorda com os{' '}
-                <span className="text-slate-500">Termos de Uso</span> e a{' '}
-                <span className="text-slate-500">Política de Privacidade</span> do SmartBidHub.
-              </p>
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px" style={{ background: C.line }} />
+              <span className="text-[13px]" style={{ color: C.muted }}>ou com e-mail</span>
+              <div className="flex-1 h-px" style={{ background: C.line }} />
             </div>
-          ) : (
-            /* ── STEP 2: Formulário de cadastro ── */
-            <div className="bg-white/[0.03] border border-white/8 rounded-3xl p-8 backdrop-blur-sm shadow-2xl">
-              <button
-                onClick={() => setStep('choose')}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-wider mb-6 transition-colors"
-              >
-                ← Voltar
-              </button>
 
-              <div className="mb-7">
-                <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Criar Conta</h1>
-                <p className="text-slate-400 text-sm">Preencha os dados abaixo para começar.</p>
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Seu nome">
+                  <input id="cadastro-nome" className={inputCls} style={{ borderColor: C.line }} value={form.nome} onChange={set('nome')} autoComplete="name" placeholder="Maria Souza" />
+                </Field>
+                <Field label="Empresa">
+                  <input id="cadastro-empresa" className={inputCls} style={{ borderColor: C.line }} value={form.empresa} onChange={set('empresa')} autoComplete="organization" placeholder="Sua empresa Ltda." />
+                </Field>
               </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Nome */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome completo *</label>
-                  <div className="relative">
-                    <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                    <input
-                      name="nome"
-                      type="text"
-                      value={form.nome}
-                      onChange={handleChange}
-                      placeholder="Seu nome"
-                      className="w-full pl-9 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none focus:border-[#10B981]/50 focus:bg-white/8 transition-all"
-                      autoComplete="name"
-                    />
-                  </div>
+              <Field label="E-mail corporativo">
+                <input id="cadastro-email" type="email" className={inputCls} style={{ borderColor: C.line }} value={form.email} onChange={set('email')} autoComplete="email" placeholder="voce@empresa.com.br" />
+              </Field>
+              <Field label="WhatsApp">
+                <input id="cadastro-whatsapp" type="tel" inputMode="numeric" className={inputCls} style={{ borderColor: C.line }} value={form.celular} onChange={set('celular')} autoComplete="tel" placeholder="(11) 99999-9999" />
+              </Field>
+              <Field label="Senha">
+                <div className="relative">
+                  <input
+                    id="cadastro-senha"
+                    type={showPassword ? 'text' : 'password'}
+                    className={`${inputCls} pr-12`}
+                    style={{ borderColor: C.line }}
+                    value={form.password}
+                    onChange={set('password')}
+                    autoComplete="new-password"
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 cursor-pointer"
+                    style={{ color: C.muted }}
+                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
                 </div>
+              </Field>
 
-                {/* Email */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-mail corporativo *</label>
-                  <div className="relative">
-                    <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="voce@empresa.com.br"
-                      className="w-full pl-9 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none focus:border-[#10B981]/50 focus:bg-white/8 transition-all"
-                      autoComplete="email"
-                    />
-                  </div>
-                </div>
+              {error && (
+                <p className="text-[14px] rounded-xl px-4 py-3" style={{ background: '#FDF0EE', color: '#9B2C1F' }}>
+                  {error}
+                </p>
+              )}
 
-                {/* Empresa */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome da empresa</label>
-                  <div className="relative">
-                    <Building2 size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                    <input
-                      name="empresa"
-                      type="text"
-                      value={form.empresa}
-                      onChange={handleChange}
-                      placeholder="Sua empresa Ltda."
-                      className="w-full pl-9 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none focus:border-[#10B981]/50 focus:bg-white/8 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Senha */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Senha *</label>
-                  <div className="relative">
-                    <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                    <input
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={form.password}
-                      onChange={handleChange}
-                      placeholder="Mínimo 6 caracteres"
-                      className="w-full pl-9 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none focus:border-[#10B981]/50 focus:bg-white/8 transition-all"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-medium">
-                    {error}
-                  </div>
+              <button
+                id="cadastro-submit"
+                type="submit"
+                disabled={loading}
+                className="group w-full h-[52px] rounded-xl text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+                style={{ background: C.green }}
+              >
+                {loading ? 'Criando a sua conta…' : (
+                  <>
+                    Criar conta e começar o teste
+                    <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
+                  </>
                 )}
+              </button>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-black text-sm rounded-2xl transition-all shadow-lg shadow-emerald-500/20 mt-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
-                      Criando conta...
-                    </>
-                  ) : (
-                    <>
-                      Criar Conta Grátis
-                      <ArrowRight size={14} />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              <p className="text-center text-slate-500 text-xs mt-5">
-                Já tem uma conta?{' '}
-                <Link href="/login" className="text-[#10B981] font-bold hover:underline">
-                  Entrar
-                </Link>
+              <p className="text-[12px] leading-relaxed text-center pt-1" style={{ color: C.muted }}>
+                Ao criar a conta você concorda com os Termos de Uso e a Política de Privacidade do SmartBid.
               </p>
-            </div>
-          )}
-        </div>
-      </div>
+            </form>
+          </div>
+        </section>
+      </main>
     </div>
+  );
+}
+
+export default function CadastroPage() {
+  return (
+    <Suspense fallback={null}>
+      <CadastroForm />
+    </Suspense>
   );
 }
