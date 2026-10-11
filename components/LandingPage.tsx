@@ -194,45 +194,57 @@ export default function LandingPage() {
       </header>
 
       {/* HERO */}
-      <section className="pt-[128px] md:pt-[150px] pb-16">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-end">
-            <div className="lg:col-span-7">
-              <p className="flex items-center gap-3 text-[14px] mb-7" style={{ color: C.muted }}>
-                <span className="w-6 h-px" style={{ background: C.green }} />
-                Para prestadoras de serviços terceirizados
+      <section className="pt-[76px]">
+        {/* Faixa verde de autoridade */}
+        <div className="px-3 sm:px-5">
+          <div
+            className="relative overflow-hidden rounded-[28px] text-white text-center px-6 pt-20 md:pt-24 pb-[220px] md:pb-[300px]"
+            style={{ background: C.green }}
+          >
+            {/* textura sutil de linhas para dar profundidade */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-[0.07]"
+              style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'linear-gradient(to bottom, black, transparent 85%)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 85%)' }}
+            />
+            <div className="relative max-w-[980px] mx-auto">
+              <p className="text-[14px] font-medium text-white/70 mb-6">
+                Plataforma para prestadoras de serviços terceirizados
               </p>
-              <h1 className="text-[40px] sm:text-[52px] lg:text-[62px] leading-[1.04]" style={serif}>
+              <h1 className="text-[38px] sm:text-[52px] lg:text-[64px] leading-[1.03]" style={{ ...serif, fontWeight: 800 }}>
                 Transforme a sua prestadora de serviços numa máquina de contratos previsíveis
-                <span style={{ color: C.green }}> Da prospecção de grandes contas à blindagem de margem e reajustes automáticos.</span>
               </h1>
-            </div>
-
-            <div className="lg:col-span-5 lg:pb-2">
-              <p className="text-[17px] leading-[1.6]" style={{ color: C.muted }}>
-                Esqueça as planilhas com fórmulas quebradas e o silêncio depois de enviar a proposta em PDF. O SmartBid junta prospecção de decisores, custos por CCT, rastreio de leitura do cliente e reajustes anuais numa só plataforma.
+              <p className="mt-6 text-[17px] md:text-[19px] leading-[1.55] text-white/75 max-w-[760px] mx-auto">
+                Da prospecção de grandes contas à blindagem de margem e reajustes automáticos. Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
-                  className="group inline-flex items-center gap-2 text-white text-[15px] font-medium pl-5 pr-4 py-3 rounded-full transition-colors cursor-pointer hover:opacity-95"
-                  style={{ background: C.green }}
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[15px] font-semibold px-6 py-3.5 rounded-xl cursor-pointer transition-transform hover:-translate-y-0.5"
+                  style={{ color: C.green }}
                 >
                   Quero ver o SmartBid em ação
-                  <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
-                <a href="#proposta-interativa" className="text-[15px] underline underline-offset-4 decoration-1" style={{ textDecorationColor: C.line }}>
-                  Ver a proposta por link
-                </a>
+                <button
+                  onClick={() => {
+                    setHeroTab('dre');
+                    document.getElementById('produto')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-6 py-3.5 rounded-xl border border-white/40 text-white cursor-pointer transition-colors hover:bg-white/10"
+                >
+                  Simular DRE do projeto
+                </button>
               </div>
-              <p className="mt-5 text-[13px]" style={{ color: C.muted }}>
+              <p className="mt-5 text-[13px] text-white/55">
                 Demonstração de 20 minutos · sem cartão de crédito · configuramos a sua CCT ao vivo
               </p>
             </div>
           </div>
+        </div>
 
+        <div className="max-w-[1140px] mx-auto px-6 -mt-[180px] md:-mt-[250px] relative z-10">
           {/* PRODUTO */}
-          <div className="mt-16 rounded-[28px] p-3 sm:p-5 md:p-8" style={{ background: C.greenSoft }}>
+          <div id="produto" className="rounded-[22px] p-2 sm:p-2.5 bg-white/60 backdrop-blur-sm border border-white/70 shadow-[0_40px_80px_-30px_rgba(17,20,24,0.35)]">
             <div className="bg-white rounded-[18px] border overflow-hidden shadow-[0_1px_0_rgba(17,20,24,0.04),0_30px_60px_-30px_rgba(27,77,62,0.35)]" style={{ borderColor: '#DCE5DF' }}>
               {/* Barra do app */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b" style={{ borderColor: C.line }}>
@@ -612,19 +624,24 @@ export default function LandingPage() {
       </section>
 
       {/* NÚMEROS */}
-      <section className="border-y" style={{ borderColor: C.line }}>
-        <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-2 lg:grid-cols-4">
-          {[
-            ['R$ 1,2 bi', 'em propostas gerenciadas por prestadoras de serviços'],
-            ['100%', 'das CCTs parametrizadas, com encargos e benefícios'],
-            ['127×', 'acessos rastreados numa única proposta'],
-            ['14 dias', 'de garantia incondicional'],
-          ].map(([n, l], i) => (
-            <div key={n} className={`py-9 px-2 lg:px-6 ${i % 2 === 1 ? 'pl-6' : ''} ${i > 0 ? 'lg:border-l' : ''} ${i >= 2 ? 'border-t lg:border-t-0' : ''}`} style={{ borderColor: C.line }}>
-              <p className="text-[40px] leading-none tabular-nums" style={serif}>{n}</p>
-              <p className="text-[13px] mt-2 max-w-[220px]" style={{ color: C.muted }}>{l}</p>
-            </div>
-          ))}
+      <section className="pt-20 md:pt-24 pb-4">
+        <div className="max-w-[1140px] mx-auto px-6">
+          <p className="text-center text-[15px] font-medium mb-10" style={{ color: C.muted }}>
+            Usado por prestadoras de serviços de limpeza, portaria, vigilância e manutenção
+          </p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10">
+            {[
+              ['R$ 1,2 bi', 'em propostas gerenciadas'],
+              ['100%', 'das CCTs parametrizadas'],
+              ['127×', 'acessos rastreados numa proposta'],
+              ['14 dias', 'de garantia incondicional'],
+            ].map(([n, l], i) => (
+              <div key={n} className={`text-center px-4 ${i > 0 ? 'lg:border-l' : ''} ${i % 2 === 1 ? 'border-l lg:border-l' : ''}`} style={{ borderColor: C.line }}>
+                <p className="text-[44px] md:text-[52px] leading-none tabular-nums" style={{ ...serif, fontWeight: 800, color: C.ink }}>{n}</p>
+                <p className="text-[14px] mt-3 font-medium" style={{ color: C.muted }}>{l}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
