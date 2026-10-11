@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Building2, Users, FileText, ClipboardList, Plus, 
   Search, ShieldAlert, Edit2, Trash2, X, RefreshCw, 
-  ArrowLeft, CheckCircle2, Lock, Unlock 
+  ArrowLeft, CheckCircle2, Lock, Unlock, Layers 
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { 
@@ -351,7 +351,13 @@ export default function TenantManagerDashboard() {
               </h1>
               <p className="text-slate-500 text-sm mt-1">Super Admin Panel • Controle de Clientes Inquilinos (Tenants)</p>
             </div>
-            <div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/admin/modulos')}
+                className="bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold py-2.5 px-5 rounded-xl text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+              >
+                <Layers size={18} className="text-[#1B4D3E]" /> Precificação & Módulos
+              </button>
               <button
                 onClick={handleOpenCreateModal}
                 className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors cursor-pointer bell-header-spacing"

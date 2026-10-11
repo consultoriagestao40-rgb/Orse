@@ -1346,11 +1346,11 @@ const Sidebar = () => {
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Link, label: 'Integração ERPFlex', href: '/integracoes/erpflex', roles: ['ADMIN', 'MANAGER', 'USER'] },
-    { icon: Layers, label: 'Gestão de Módulos', href: '/admin/modulos', roles: ['ADMIN', 'SUPER_ADMIN'] },
+    { icon: Layers, label: 'Gestão de Módulos', href: '/admin/modulos', roles: ['SUPER_ADMIN'] },
     { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
   ];
 
-  const isSaaSArea = pathname.startsWith('/admin/empresas');
+  const isSaaSArea = pathname.startsWith('/admin/empresas') || pathname.startsWith('/admin/modulos');
   const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
   const isPlatformAccountGlobally = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
   const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && !isPlatformAccountGlobally;
@@ -1359,10 +1359,12 @@ const Sidebar = () => {
     ? isPlatformAccountGlobally
       ? [
           { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
         ]
       : [
           { icon: Home, label: 'Voltar ao CRM', href: '/' },
           { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
         ]
     : menuItems.filter(item => {
         const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
@@ -1444,10 +1446,12 @@ const Sidebar = () => {
       ? isPlatformAccountGlobally
         ? [
             { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+            { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
           ]
         : [
             { icon: Home, label: 'Voltar ao CRM', href: '/' },
             { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+            { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
           ]
       : menuItems.filter(item => {
           const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
