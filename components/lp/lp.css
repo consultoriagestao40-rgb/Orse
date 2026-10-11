@@ -642,18 +642,74 @@
 
 /* =========================================================
    V4 — verdes em camadas (mesh) e textura que preenche
+/* =========================================================
+   HERO CLEAN FINTECH — Visual Limpo, Moderno e Iluminado
    ========================================================= */
-/* paleta: pinho #0B2A21 · floresta #134436 · esmeralda #1E6A52 · petróleo #1B5F5B · sálvia #6FAE8C · menta #A9DCC0 */
-.lp-hero-band,
-.lp-cta-band {
+.lp-hero-clean {
+  position: relative;
   background:
-    radial-gradient(55% 60% at 12% 8%, rgba(46, 125, 99, 0.95) 0%, rgba(46, 125, 99, 0) 62%),
-    radial-gradient(45% 55% at 88% 12%, rgba(27, 95, 91, 0.95) 0%, rgba(27, 95, 91, 0) 62%),
-    radial-gradient(35% 40% at 72% 52%, rgba(111, 174, 140, 0.32) 0%, rgba(111, 174, 140, 0) 70%),
-    radial-gradient(40% 45% at 24% 62%, rgba(169, 220, 192, 0.16) 0%, rgba(169, 220, 192, 0) 70%),
-    radial-gradient(80% 60% at 50% 115%, #081F18 0%, rgba(8, 31, 24, 0) 70%),
-    linear-gradient(165deg, #17503F 0%, #134436 40%, #0F3A2E 70%, #0B2A21 100%);
+    radial-gradient(ellipse 950px 520px at 50% -40px, rgba(234, 88, 12, 0.08) 0%, rgba(255, 122, 47, 0.03) 42%, transparent 75%),
+    radial-gradient(circle 700px at 10% 15%, rgba(27, 77, 62, 0.04) 0%, transparent 65%),
+    radial-gradient(circle 700px at 90% 20%, rgba(234, 88, 12, 0.04) 0%, transparent 65%),
+    linear-gradient(180deg, #FFFFFF 0%, #FAF9F5 45%, #F4F2EB 100%);
+  border: 1px solid rgba(230, 226, 218, 0.85);
+  box-shadow: 0 30px 80px -35px rgba(17, 20, 24, 0.07);
 }
+
+/* Malha sutil de pontos de precisão para o fundo claro */
+.lp-clean-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(17, 20, 24, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 85% 65% at 50% 30%, black 15%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% 30%, black 15%, transparent 80%);
+}
+
+/* Anéis sutis de radar em cinza/champagne para fundo claro */
+.lp-rings-clean {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 900px;
+  height: 900px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.lp-rings-clean span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(17, 20, 24, 0.045);
+}
+.lp-rings-clean span:nth-child(1) { inset: 0; }
+.lp-rings-clean span:nth-child(2) { inset: 130px; border-color: rgba(234, 88, 12, 0.06); }
+.lp-rings-clean span:nth-child(3) { inset: 260px; }
+.lp-rings-clean span:nth-child(4) { inset: 390px; border-color: rgba(27, 77, 62, 0.05); }
+
+/* Glow ambiente suave de nascer do sol no fundo claro */
+.lp-sunrise-clean {
+  position: absolute;
+  left: 50%;
+  bottom: -180px;
+  width: min(1100px, 120%);
+  height: 480px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(234, 88, 12, 0.12), rgba(255, 122, 47, 0.05) 50%, transparent 80%);
+  filter: blur(28px);
+}
+
+/* Faixa escura refinada para a seção 'O que é o SmartBid' */
+.lp-solucao-band {
+  background:
+    radial-gradient(60% 70% at 20% 10%, rgba(27, 77, 62, 0.8) 0%, transparent 65%),
+    radial-gradient(50% 60% at 85% 85%, rgba(234, 88, 12, 0.22) 0%, transparent 65%),
+    linear-gradient(160deg, #0F1A15 0%, #0A130F 50%, #060D0A 100%);
+}
+
 .lp-cta-band {
   background:
     radial-gradient(50% 70% at 0% 0%, rgba(46, 125, 99, 0.95) 0%, rgba(46, 125, 99, 0) 65%),
