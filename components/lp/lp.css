@@ -619,3 +619,103 @@
   .lp-float, .lp-reveal-clip { opacity: 1 !important; clip-path: none !important; transform: none !important; }
   .lp-mark path { stroke-dashoffset: 0 !important; }
 }
+
+/* =========================================================
+   V4 — verdes em camadas (mesh) e textura que preenche
+   ========================================================= */
+/* paleta: pinho #0B2A21 · floresta #134436 · esmeralda #1E6A52 · petróleo #1B5F5B · sálvia #6FAE8C · menta #A9DCC0 */
+.lp-hero-band,
+.lp-cta-band {
+  background:
+    radial-gradient(55% 60% at 12% 8%, rgba(46, 125, 99, 0.95) 0%, rgba(46, 125, 99, 0) 62%),
+    radial-gradient(45% 55% at 88% 12%, rgba(27, 95, 91, 0.95) 0%, rgba(27, 95, 91, 0) 62%),
+    radial-gradient(35% 40% at 72% 52%, rgba(111, 174, 140, 0.32) 0%, rgba(111, 174, 140, 0) 70%),
+    radial-gradient(40% 45% at 24% 62%, rgba(169, 220, 192, 0.16) 0%, rgba(169, 220, 192, 0) 70%),
+    radial-gradient(80% 60% at 50% 115%, #081F18 0%, rgba(8, 31, 24, 0) 70%),
+    linear-gradient(165deg, #17503F 0%, #134436 40%, #0F3A2E 70%, #0B2A21 100%);
+}
+.lp-cta-band {
+  background:
+    radial-gradient(50% 70% at 0% 0%, rgba(46, 125, 99, 0.95) 0%, rgba(46, 125, 99, 0) 65%),
+    radial-gradient(45% 60% at 100% 100%, rgba(234, 88, 12, 0.28) 0%, rgba(234, 88, 12, 0) 65%),
+    radial-gradient(40% 50% at 70% 20%, rgba(27, 95, 91, 0.9) 0%, rgba(27, 95, 91, 0) 65%),
+    radial-gradient(35% 40% at 35% 80%, rgba(111, 174, 140, 0.25) 0%, rgba(111, 174, 140, 0) 70%),
+    linear-gradient(150deg, #17503F 0%, #134436 45%, #0B2A21 100%);
+}
+
+/* anéis concêntricos atrás do título: preenchem o vazio sem poluir */
+.lp-rings {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.lp-rings span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(169, 220, 192, 0.14);
+  transform: translate(-50%, -50%);
+  animation: lp-ring-breathe 9s ease-in-out infinite;
+}
+.lp-rings span:nth-child(1) { width: 520px; height: 520px; animation-delay: 0s; }
+.lp-rings span:nth-child(2) { width: 820px; height: 820px; animation-delay: 0.8s; border-color: rgba(169, 220, 192, 0.11); }
+.lp-rings span:nth-child(3) { width: 1140px; height: 1140px; animation-delay: 1.6s; border-color: rgba(169, 220, 192, 0.08); }
+.lp-rings span:nth-child(4) { width: 1480px; height: 1480px; animation-delay: 2.4s; border-color: rgba(169, 220, 192, 0.05); }
+/* um ponto de luz percorrendo o anel do meio */
+.lp-rings span:nth-child(2)::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #FF9A5C;
+  box-shadow: 0 0 14px 4px rgba(255, 122, 47, 0.55);
+}
+.lp-rings span:nth-child(2) { animation: lp-ring-breathe 9s ease-in-out 0.8s infinite, lp-orbit 28s linear infinite; }
+.lp-rings span:nth-child(3)::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 30%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #A9DCC0;
+  box-shadow: 0 0 12px 3px rgba(169, 220, 192, 0.5);
+}
+.lp-rings span:nth-child(3) { animation: lp-ring-breathe 9s ease-in-out 1.6s infinite, lp-orbit 46s linear infinite reverse; }
+@keyframes lp-ring-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+@keyframes lp-orbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.lp-rings-cta { left: 18%; top: 50%; }
+
+/* malha de pontos (substitui o quadriculado) */
+.lp-dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(169, 220, 192, 0.22) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, #000 10%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, #000 10%, transparent 75%);
+}
+
+/* aurora com tons de verde diferentes */
+.lp-aurora-a { background: radial-gradient(circle, rgba(111, 191, 150, 0.45), transparent 65%); }
+.lp-aurora-c { background: radial-gradient(ellipse, rgba(6, 26, 20, 0.75), transparent 70%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-rings span { animation: none !important; }
+}

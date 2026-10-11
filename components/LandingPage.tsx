@@ -160,15 +160,26 @@ export default function LandingPage() {
         targets.push(child);
       });
     });
+    // Títulos com máscara (clip-path) têm área visível zero antes de revelar, e o
+    // IntersectionObserver nunca os detectaria. Por isso observamos o elemento pai.
+    const proxyFor = new Map<Element, Element[]>();
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) {
-          e.target.classList.add('is-in');
+          (proxyFor.get(e.target) || [e.target]).forEach(t => t.classList.add('is-in'));
           io.unobserve(e.target);
         }
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-    targets.forEach(t => io.observe(t));
+    targets.forEach(t => {
+      if (t.classList.contains('lp-reveal-clip') && t.parentElement) {
+        const parent = t.parentElement;
+        proxyFor.set(parent, [...(proxyFor.get(parent) || [parent].filter(x => targets.includes(x))), t]);
+        io.observe(parent);
+      } else {
+        io.observe(t);
+      }
+    });
 
     // 3) Spotlight que segue o mouse em cartões e na faixa verde
     const onMove = (e: PointerEvent) => {
@@ -333,11 +344,10 @@ export default function LandingPage() {
               <div className="lp-sunrise" />
             </div>
             <div className="lp-band-spot" aria-hidden />
-            {/* textura sutil de linhas para dar profundidade */}
-            <div
-              className="absolute inset-0 pointer-events-none opacity-[0.06]"
-              style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent 80%)', WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent 80%)' }}
-            />
+            <div className="lp-rings" aria-hidden>
+              <span /><span /><span /><span />
+            </div>
+            <div className="lp-dots" aria-hidden />
             <div className="lp-grain" aria-hidden />
             <div className="relative max-w-[980px] mx-auto">
               <p className="lp-enter lp-eyebrow inline-flex items-center gap-2.5 text-[13.5px] font-medium text-white/90 mb-7 pl-3 pr-4 py-1.5 rounded-full" style={{ '--d': '0ms' } as React.CSSProperties}>
@@ -1305,9 +1315,13 @@ export default function LandingPage() {
 
       {/* CTA FINAL */}
       <section className="px-4 sm:px-6 pb-6">
-        <div data-spot data-reveal data-reveal-scale className="relative overflow-hidden max-w-[1200px] mx-auto rounded-[28px] px-8 py-16 md:px-16 md:py-24 text-white grid lg:grid-cols-12 gap-10 items-end" style={{ background: C.green }}>
+        <div data-spot data-reveal data-reveal-scale className="lp-cta-band relative overflow-hidden max-w-[1200px] mx-auto rounded-[28px] px-8 py-16 md:px-16 md:py-24 text-white grid lg:grid-cols-12 gap-10 items-end">
           <div className="lp-aurora lp-aurora-a" aria-hidden />
-          <div className="lp-aurora lp-aurora-b" aria-hidden />
+          <div className="lp-rings lp-rings-cta" aria-hidden>
+            <span /><span /><span /><span />
+          </div>
+          <div className="lp-dots" aria-hidden />
+          <div className="lp-grain" aria-hidden />
           <div className="lp-band-spot" aria-hidden />
           <h2 className="relative lg:col-span-8 text-[40px] md:text-[56px] leading-[1.03]" style={serif}>
             Pare de deixar margem na mesa e assuma o controle da sua esteira comercial.
