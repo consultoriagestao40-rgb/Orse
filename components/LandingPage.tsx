@@ -8,7 +8,8 @@ import {
   Fingerprint, FileText, Check, ChevronRight, ChevronDown, Menu, X,
   MapPin, Phone, AlertTriangle, RefreshCw, BarChart2,
   Clock, Building2, Eye, HelpCircle, Laptop, Settings, Globe,
-  Percent, DollarSign, Award, Flame, MessageSquare, AlertCircle, XCircle
+  Percent, DollarSign, Award, Flame, MessageSquare, AlertCircle, XCircle,
+  FileSpreadsheet, Target, CheckSquare, Layers
 } from 'lucide-react';
 import { getPlanConfigs } from '@/app/admin/empresas/actions';
 import Link from 'next/link';
@@ -70,7 +71,7 @@ export default function LandingPage() {
     e.preventDefault();
     setDemoSuccess(true);
     const msg = encodeURIComponent(
-      `Olá! Tenho interesse no SmartBid (${demoPlanName}).\nNome: ${demoForm.nome}\nEmpresa: ${demoForm.empresa}\nWhatsApp: ${demoForm.whatsapp}\nPorte: ${demoForm.postos}`
+      `Olá! Gostaria de agendar uma demonstração prática do SmartBid (${demoPlanName}).\nNome: ${demoForm.nome}\nEmpresa: ${demoForm.empresa}\nWhatsApp: ${demoForm.whatsapp}\nPorte: ${demoForm.postos}`
     );
     setTimeout(() => {
       window.open(`https://wa.me/5541999999999?text=${msg}`, '_blank');
@@ -89,88 +90,81 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B19] text-slate-100 selection:bg-[#10B981] selection:text-[#070B19] relative overflow-x-hidden font-sans antialiased">
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
       
-      {/* GRID DECORATIVO DE FUNDO */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
-
-      {/* BACKGROUND GLOWS SUTIS */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none opacity-40 z-0">
-        <div className="absolute top-[-10%] left-[10%] w-[600px] h-[600px] bg-gradient-to-br from-[#10B981]/15 to-transparent rounded-full blur-[150px]" />
-        <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-gradient-to-bl from-blue-500/15 to-transparent rounded-full blur-[130px]" />
-      </div>
-
-      {/* HEADER / NAVBAR */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      {/* HEADER / NAVBAR CORPORATIVO */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
         scrolled 
-          ? 'bg-[#070B19]/90 backdrop-blur-md border-b border-white/5 py-3 shadow-lg shadow-black/20' 
-          : 'bg-transparent py-5'
+          ? 'bg-white/95 backdrop-blur-md border-b border-slate-200/80 py-3.5 shadow-xs' 
+          : 'bg-white border-b border-slate-100 py-4.5'
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="w-10 h-10 bg-[#0A1A2E] rounded-xl flex items-center justify-center border border-[#10B981]/30 shadow-lg shadow-emerald-950/20">
-              <TrendingUp className="text-[#10B981]" size={20} />
+            <div className="w-10 h-10 bg-emerald-700 rounded-xl flex items-center justify-center shadow-xs">
+              <TrendingUp className="text-white" size={20} />
             </div>
             <div>
-              <span className="text-xl font-black tracking-tighter uppercase text-white block">
-                Smart<span className="text-[#10B981]">Bid</span>
+              <span className="text-xl font-extrabold tracking-tight text-slate-900 block leading-tight">
+                Smart<span className="text-emerald-600">Bid</span>
               </span>
-              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.25em] block">Facilities & CLM</span>
+              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                Gestão & Custos de Facilities
+              </span>
             </div>
           </div>
 
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#problema" className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-[#10B981] transition-colors">A Trincheira</a>
-            <a href="#solucao" className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-[#10B981] transition-colors">Solução</a>
-            <a href="#beneficios" className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-[#10B981] transition-colors">Funcionalidades</a>
-            <a href="#planos" className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-[#10B981] transition-colors">Planos</a>
-            <a href="#faq" className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-[#10B981] transition-colors">FAQ</a>
+            <a href="#solucao" className="text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-emerald-700 transition-colors">A Solução</a>
+            <a href="#funcionalidades" className="text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-emerald-700 transition-colors">Funcionalidades</a>
+            <a href="#qualificacao" className="text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-emerald-700 transition-colors">Para Quem É</a>
+            <a href="#planos" className="text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-emerald-700 transition-colors">Planos</a>
+            <a href="#faq" className="text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-emerald-700 transition-colors">Dúvidas</a>
           </nav>
 
           {/* CTA Buttons in top right */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3.5">
             <a 
               href="/login" 
-              className="text-xs font-black uppercase tracking-widest text-slate-300 hover:text-white px-5 py-2.5 border border-white/5 hover:border-white/10 bg-white/5 rounded-xl transition-all"
+              className="text-xs font-bold uppercase tracking-wider text-slate-700 hover:text-slate-950 px-4 py-2.5 transition-colors"
             >
-              Login
+              Acessar Conta
             </a>
             <button 
               onClick={() => openDemoWithPlan('Demonstração 20 Min')}
-              className="text-xs font-black uppercase tracking-widest text-slate-950 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 group cursor-pointer"
+              className="text-xs font-bold uppercase tracking-wider text-white px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-sm flex items-center gap-2 group cursor-pointer"
             >
               Ver em Ação
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-slate-400 hover:text-white transition-colors cursor-pointer">
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-[#070B19]/95 border-b border-white/5 shadow-2xl backdrop-blur-lg flex flex-col p-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-200">
-            <a href="#problema" onClick={() => setMobileMenuOpen(false)} className="text-xs font-black uppercase tracking-widest text-slate-300 py-2 border-b border-white/5">A Trincheira</a>
-            <a href="#solucao" onClick={() => setMobileMenuOpen(false)} className="text-xs font-black uppercase tracking-widest text-slate-300 py-2 border-b border-white/5">Solução</a>
-            <a href="#beneficios" onClick={() => setMobileMenuOpen(false)} className="text-xs font-black uppercase tracking-widest text-slate-300 py-2 border-b border-white/5">Funcionalidades</a>
-            <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="text-xs font-black uppercase tracking-widest text-slate-300 py-2 border-b border-white/5">Planos</a>
-            <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-xs font-black uppercase tracking-widest text-slate-300 py-2 border-b border-white/5">FAQ</a>
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-xl flex flex-col p-6 space-y-4 animate-in fade-in duration-150">
+            <a href="#solucao" onClick={() => setMobileMenuOpen(false)} className="text-xs font-bold uppercase tracking-wider text-slate-700 py-2 border-b border-slate-100">A Solução</a>
+            <a href="#funcionalidades" onClick={() => setMobileMenuOpen(false)} className="text-xs font-bold uppercase tracking-wider text-slate-700 py-2 border-b border-slate-100">Funcionalidades</a>
+            <a href="#qualificacao" onClick={() => setMobileMenuOpen(false)} className="text-xs font-bold uppercase tracking-wider text-slate-700 py-2 border-b border-slate-100">Para Quem É</a>
+            <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="text-xs font-bold uppercase tracking-wider text-slate-700 py-2 border-b border-slate-100">Planos</a>
+            <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-xs font-bold uppercase tracking-wider text-slate-700 py-2 border-b border-slate-100">Dúvidas</a>
             
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-3 pt-3">
               <a 
                 href="/login" 
-                className="flex-1 text-center text-xs font-black uppercase tracking-wider text-slate-300 py-3 border border-white/10 rounded-xl bg-white/5"
+                className="flex-1 text-center text-xs font-bold uppercase tracking-wider text-slate-700 py-3 border border-slate-200 rounded-xl bg-slate-50"
               >
-                Login
+                Acessar Conta
               </a>
               <button 
                 onClick={() => { setMobileMenuOpen(false); openDemoWithPlan('Demonstração Mobile'); }}
-                className="flex-1 text-center text-xs font-black uppercase tracking-wider text-slate-950 py-3 bg-[#10B981] rounded-xl"
+                className="flex-1 text-center text-xs font-bold uppercase tracking-wider text-white py-3 bg-emerald-700 rounded-xl"
               >
                 Ver em Ação
               </button>
@@ -179,98 +173,85 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* 1. & 2. & 4. HERO SECTION (Headline, Sub-headline, CTA Principal) */}
-      <section className="relative pt-32 pb-16 md:pt-44 md:pb-24 z-10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* 1. & 2. & 4. HERO SECTION CORPORATIVO */}
+      <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-6">
           
-          {/* Hero Left Content */}
-          <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-[#10B981]/30 text-[10px] font-black uppercase tracking-wider text-[#10B981]">
-              <Sparkles size={12} className="animate-pulse" />
-              SaaS Comercial & Engenharia de Custos para Facilities
+          <div className="max-w-4xl mx-auto text-center space-y-6 mb-12">
+            {/* Tag / Badge Corporativo Limpo */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
+              <Shield size={14} className="text-emerald-700" />
+              <span>SaaS Especializado para Empresas de Terceirização & Facilities</span>
             </div>
             
             {/* 1. HEADLINE */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] font-black leading-[1.12] text-white tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[46px] font-black leading-[1.18] text-slate-900 tracking-tight">
               Transforme a sua prestadora de Facilities numa máquina de contratos previsíveis: <br className="hidden sm:inline" />
-              <span className="bg-gradient-to-r from-[#10B981] via-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              <span className="text-emerald-700">
                 da prospeção de grandes contas à blindagem de margem e reajustes automáticos.
               </span>
             </h1>
             
             {/* 2. SUB-HEADLINE */}
-            <p className="text-slate-300 text-sm sm:text-base md:text-lg font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
+            <p className="text-slate-600 text-base sm:text-lg md:text-xl font-normal leading-relaxed max-w-3xl mx-auto">
               Esqueça as folhas de cálculo com fórmulas quebradas e o silêncio após o envio de propostas em PDF. O SmartBid centraliza a prospeção de decisores, a engenharia rigorosa de custos por CCT, o rastreio de leitura do cliente e a gestão de reajustes anuais na mesma plataforma.
             </p>
 
             {/* 4. CHAMADA PARA AÇÃO PRINCIPAL (CTA ACIMA DA DOBRA) */}
-            <div className="pt-2 flex flex-col items-center lg:items-start gap-3">
+            <div className="pt-3 flex flex-col items-center gap-3">
               <button 
                 onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
-                className="w-full sm:w-auto px-9 py-4 bg-[#10B981] hover:bg-[#059669] text-base font-black uppercase tracking-wider text-[#070B19] rounded-2xl transition-all shadow-2xl shadow-emerald-500/30 flex items-center justify-center gap-3 group cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                className="px-9 py-4 bg-emerald-700 hover:bg-emerald-800 text-white text-base font-bold uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-3 cursor-pointer hover:shadow-lg active:scale-[0.99]"
               >
                 <span>Quero Ver o SmartBid em Ação</span>
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={18} />
               </button>
               
               {/* Micro-texto abaixo do botão */}
-              <p className="text-[11px] text-slate-400 font-semibold tracking-wide flex items-center gap-2 justify-center lg:justify-start">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+              <p className="text-xs text-slate-500 font-medium">
                 Demonstração prática de 20 minutos • Sem necessidade de cartão de crédito • Configure a sua CCT ao vivo.
               </p>
             </div>
-
-            {/* Badges de Destaque */}
-            <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto lg:mx-0 pt-4 text-left border-t border-white/10">
-              {[
-                'Prospeção Direta no Google Places',
-                'Engenharia Multi-CCTs Integrada',
-                'Portal Interativo com Telemetria',
-                'Controle de Reajustes CLM Automático'
-              ].map((text, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                  <CheckCircle size={14} className="text-[#10B981] shrink-0" />
-                  <span>{text}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* 3. VÍDEO OU IMAGEM DE DESTAQUE (VISUAL HERO) */}
-          <div className="lg:col-span-6 relative">
-            <div className="relative z-10 w-full bg-[#0D1527]/95 border border-white/10 rounded-3xl p-5 shadow-2xl shadow-black/60 max-w-xl mx-auto backdrop-blur-xl group hover:border-[#10B981]/30 transition-all duration-300">
+          {/* 3. VÍDEO OU IMAGEM DE DESTAQUE (VISUAL HERO COM INTERFACE REAL) */}
+          <div className="max-w-5xl mx-auto">
+            {/* BROWSER WINDOW MOCKUP REALISTA */}
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-2xl overflow-hidden">
               
-              {/* Header do Mockup com 3 Abas Reais */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-3.5 mb-4 gap-2">
+              {/* Barra superior de janela de aplicativo */}
+              <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]/40" />
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider ml-1">Fluxo Real do Sistema</span>
+                  <div className="w-3 h-3 rounded-full bg-slate-300"></div>
+                  <div className="w-3 h-3 rounded-full bg-slate-300"></div>
+                  <div className="w-3 h-3 rounded-full bg-slate-300"></div>
+                  <span className="text-xs text-slate-600 font-mono font-medium ml-2 hidden sm:inline">
+                    https://app.smartbidhub.com.br
+                  </span>
                 </div>
-                
-                {/* Switcher de Abas */}
-                <div className="flex bg-[#070B19] p-1 rounded-xl border border-white/10">
-                  <button 
+
+                {/* Abas de Navegação do Mockup */}
+                <div className="flex bg-slate-200/80 p-1 rounded-xl gap-1">
+                  <button
                     onClick={() => setHeroTab('radar')}
-                    className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      heroTab === 'radar' ? 'bg-[#10B981] text-[#070B19]' : 'text-slate-400 hover:text-white'
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      heroTab === 'radar' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     1. Radar Comercial
                   </button>
-                  <button 
+                  <button
                     onClick={() => setHeroTab('telemetria')}
-                    className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      heroTab === 'telemetria' ? 'bg-[#10B981] text-[#070B19]' : 'text-slate-400 hover:text-white'
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      heroTab === 'telemetria' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    2. Telemetria 127x
+                    2. Telemetria (127 Acessos)
                   </button>
-                  <button 
+                  <button
                     onClick={() => setHeroTab('dre')}
-                    className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      heroTab === 'dre' ? 'bg-[#10B981] text-[#070B19]' : 'text-slate-400 hover:text-white'
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      heroTab === 'dre' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     3. DRE do Projeto
@@ -278,162 +259,238 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* ABA 1: RADAR COMERCIAL COM MÉTRICAS CONSOLIDADAS */}
-              {heroTab === 'radar' && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  <div className="flex justify-between items-center bg-[#070B19]/70 p-4 rounded-2xl border border-white/5">
-                    <div>
-                      <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">
-                        Faturamento Aceito • Setembro/2026
-                      </span>
-                      <p className="text-2xl font-black text-white">R$ 108.774,36</p>
-                      <span className="text-[10px] text-slate-400 font-bold mt-0.5 block">11 Contratos Fechados</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-black text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded-full border border-[#10B981]/20 inline-block">
-                        36.3% da Meta
-                      </span>
-                      <p className="text-[10px] text-slate-400 font-bold mt-1.5">Meta: R$ 300.000,00</p>
-                    </div>
-                  </div>
+              {/* CONTEÚDO DA TELA SELECIONADA */}
+              <div className="p-6 md:p-8 bg-slate-50 min-h-[380px]">
+                
+                {/* ABA 1: RADAR COMERCIAL COM MÉTRICAS CONSOLIDADAS */}
+                {heroTab === 'radar' && (
+                  <div className="space-y-6">
+                    {/* Top KPI Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">
+                          Faturamento Aceito (Setembro)
+                        </span>
+                        <p className="text-2xl font-black text-emerald-800">R$ 108.774,36</p>
+                        <span className="text-[11px] text-slate-500 font-semibold mt-1 block">
+                          11 contratos convertidos
+                        </span>
+                      </div>
 
-                  {/* Funil Visual em 5 Etapas */}
-                  <div className="bg-[#070B19]/50 p-3.5 rounded-2xl border border-white/5">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                      Funil Comercial de Conversão
-                    </span>
-                    <div className="grid grid-cols-5 gap-1.5 text-center">
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-white/5">
-                        <span className="text-[8px] text-slate-500 uppercase font-black block">Leads</span>
-                        <span className="text-xs font-black text-white">191</span>
+                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">
+                          Meta da Equipe Ativa
+                        </span>
+                        <div className="flex items-baseline justify-between">
+                          <p className="text-2xl font-black text-slate-900">R$ 300.000,00</p>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                            36.3% atingido
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+                          <div className="bg-emerald-600 h-full rounded-full" style={{ width: '36.3%' }}></div>
+                        </div>
                       </div>
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-white/5">
-                        <span className="text-[8px] text-slate-500 uppercase font-black block">Contatos</span>
-                        <span className="text-xs font-black text-white">39</span>
-                      </div>
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-white/5">
-                        <span className="text-[8px] text-slate-500 uppercase font-black block">Visitas</span>
-                        <span className="text-xs font-black text-white">23</span>
-                      </div>
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-white/5">
-                        <span className="text-[8px] text-slate-500 uppercase font-black block">Propostas</span>
-                        <span className="text-xs font-black text-white">75</span>
-                      </div>
-                      <div className="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/30">
-                        <span className="text-[8px] text-emerald-400 uppercase font-black block">Vendas</span>
-                        <span className="text-xs font-black text-emerald-300">11</span>
+
+                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">
+                          Volume Negociado em Radar
+                        </span>
+                        <p className="text-2xl font-black text-slate-900">R$ 1.029.000,00</p>
+                        <span className="text-[11px] text-slate-500 font-semibold mt-1 block">
+                          75 propostas mapeadas
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="p-3 bg-[#10B981]/10 rounded-xl border border-[#10B981]/20 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-300">Volume Total Mapeado:</span>
-                    <span className="font-black text-[#10B981]">R$ 1.029.000,00</span>
-                  </div>
-                </div>
-              )}
+                    {/* Funil Comercial em 5 Etapas */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+                      <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                          Funil de Vendas Comercial
+                        </span>
+                        <span className="text-xs text-slate-500 font-semibold">191 oportunidades rastreadas</span>
+                      </div>
 
-              {/* ABA 2: TELEMETRIA SILENCIOSA (MODAL COM 127 ACESSOS MONITORIZADOS) */}
-              {heroTab === 'telemetria' && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  <div className="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 p-4 rounded-2xl border border-blue-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
-                        <Eye size={13} /> Telemetria de Leitura Ativa
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-black border border-emerald-500/30 animate-pulse">
-                        ● Decisor no Link Agora
-                      </span>
-                    </div>
-                    <p className="text-sm font-black text-white">Hospital São Lucas de Curitiba</p>
-                    <p className="text-[11px] text-slate-400">Proposta Comercial #SB-2026-89 • 22 Postos de Asseio</p>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#070B19]/80 border border-white/5">
-                      <span className="text-slate-300 font-semibold flex items-center gap-2">
-                        <FileText size={14} className="text-[#10B981]" /> Planilha de Custos (FPV):
-                      </span>
-                      <span className="font-black text-white bg-slate-800 px-2 py-0.5 rounded">
-                        58 acessos (45 min)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#070B19]/80 border border-white/5">
-                      <span className="text-slate-300 font-semibold flex items-center gap-2">
-                        <Lock size={14} className="text-indigo-400" /> Minuta Contratual / Jurídico:
-                      </span>
-                      <span className="font-black text-white bg-slate-800 px-2 py-0.5 rounded">
-                        42 acessos (31 min)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#070B19]/80 border border-white/5">
-                      <span className="text-slate-300 font-semibold flex items-center gap-2">
-                        <Briefcase size={14} className="text-amber-400" /> Apresentação da Empresa:
-                      </span>
-                      <span className="font-black text-white bg-slate-800 px-2 py-0.5 rounded">
-                        27 acessos (18 min)
-                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">1. Leads</span>
+                          <span className="text-lg font-black text-slate-900">191</span>
+                          <span className="text-[9px] text-slate-400 block mt-0.5">Base Mapeada</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">2. Contatos</span>
+                          <span className="text-lg font-black text-slate-900">39</span>
+                          <span className="text-[9px] text-emerald-700 font-bold block mt-0.5">20.4% avanço</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">3. Visitas</span>
+                          <span className="text-lg font-black text-slate-900">23</span>
+                          <span className="text-[9px] text-emerald-700 font-bold block mt-0.5">59.0% avanço</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-center">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">4. Propostas</span>
+                          <span className="text-lg font-black text-slate-900">75</span>
+                          <span className="text-[9px] text-slate-500 font-bold block mt-0.5">Emitidas</span>
+                        </div>
+                        <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-center col-span-2 sm:col-span-1">
+                          <span className="text-[10px] uppercase font-bold text-emerald-800 block">5. Vendas</span>
+                          <span className="text-lg font-black text-emerald-900">11</span>
+                          <span className="text-[9px] text-emerald-700 font-bold block mt-0.5">14.7% fecho</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  <div className="p-3 bg-slate-900 rounded-xl border border-white/10 flex justify-between items-center text-xs">
-                    <span className="text-slate-400 font-bold">Total Acumulado de Leituras:</span>
-                    <span className="font-black text-emerald-400 text-sm">127 acessos monitorados</span>
+                {/* ABA 2: MODAL COM 127 ACESSOS MONITORIZADOS POR ABA */}
+                {heroTab === 'telemetria' && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                            Telemetria Ativa • Cliente Visualizando Proposta
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-black text-slate-900 mt-1">
+                          Hospital São Lucas • Proposta Comercial #SB-2026-89
+                        </h4>
+                        <p className="text-xs text-slate-500">22 Postos de Asseio e Conservação Hospitalar</p>
+                      </div>
+
+                      <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl text-right sm:text-center">
+                        <span className="text-2xl font-black text-emerald-800 block">127</span>
+                        <span className="text-[9px] uppercase font-bold text-emerald-700 tracking-wider">Acessos Monitorizados</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
+                        Detalhamento de Tempo e Leituras por Aba:
+                      </span>
+
+                      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                            FPV
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">Planilha de Formação de Preço (FPV)</p>
+                            <p className="text-[11px] text-slate-500">Composição de pisos, benefícios e encargos CCT</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-md">
+                            58 visualizações (45 min)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-xs">
+                            CLM
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">Minuta Contratual & Cláusulas Jurídicas</p>
+                            <p className="text-[11px] text-slate-500">Regras de repasse, rescisão e data-base do sindicato</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-md">
+                            42 visualizações (31 min)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                            DOC
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">Apresentação Técnica e Cronograma de Postos</p>
+                            <p className="text-[11px] text-slate-500">Escopo dos serviços e certificações operacionais</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-md">
+                            27 visualizações (18 min)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* ABA 3: TABELA DA DRE DO PROJETO COM MARGEM BRUTA CALCULADA AO CÊNTIMO */}
-              {heroTab === 'dre' && (
-                <div className="space-y-3.5 animate-in fade-in duration-200">
-                  <div className="flex justify-between items-center bg-[#070B19]/70 p-3.5 rounded-2xl border border-white/5">
-                    <div>
-                      <span className="text-[9px] text-slate-500 font-black uppercase tracking-wider block">Preço de Venda Mensal</span>
-                      <p className="text-xl font-black text-white">{formatCurrency(calcPrecoVenda)}</p>
+                {/* ABA 3: TABELA DA DRE DO PROJETO COM MARGEM BRUTA CALCULADA AO CÊNTIMO */}
+                {heroTab === 'dre' && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
+                      <div>
+                        <h4 className="text-base font-black text-slate-900">
+                          Demonstrativo de Resultado do Projeto (DRE Executiva)
+                        </h4>
+                        <p className="text-xs text-slate-500">Simulação de 12 meses • Escala 12x36 e 44h semanais</p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-600">Ajuste de Margem (BDI):</span>
+                        <span className="text-sm font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                          {interactiveBdi.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[9px] text-slate-500 font-black uppercase tracking-wider block">Margem Bruta (Cêntimo)</span>
-                      <p className="text-xl font-black text-[#10B981]">{formatCurrency(calcMargemBruta)}</p>
+
+                    {/* Slider de BDI */}
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                      <div className="flex justify-between text-xs text-slate-600">
+                        <span>Margem Mínima (8%)</span>
+                        <span className="font-bold text-slate-900">Deslize para recalcular impostos e preço final</span>
+                        <span>Margem Alta (25%)</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="8" 
+                        max="25" 
+                        step="0.5"
+                        value={interactiveBdi}
+                        onChange={(e) => setInteractiveBdi(parseFloat(e.target.value))}
+                        className="w-full accent-emerald-700 cursor-pointer"
+                      />
                     </div>
+
+                    {/* Tabela da DRE com Cêntimos */}
+                    <table className="w-full text-xs">
+                      <tbody>
+                        <tr className="border-b border-slate-100 py-2">
+                          <td className="py-2 text-slate-600 font-medium">(+) Custo Direto (Mão de Obra, Benefícios, CCT e Insumos)</td>
+                          <td className="py-2 text-right font-bold text-slate-900">{formatCurrency(baseCost)}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100 py-2">
+                          <td className="py-2 text-slate-600 font-medium">(-) Impostos sobre Faturamento (PIS/COFINS/ISS - 12.50%)</td>
+                          <td className="py-2 text-right font-bold text-amber-700">-{formatCurrency(calcTributos)}</td>
+                        </tr>
+                        <tr className="border-b border-slate-200 py-2.5 bg-slate-50/80 font-bold">
+                          <td className="py-2.5 px-2 text-slate-900 font-bold">(=) Faturamento Bruto Mensal Contratado</td>
+                          <td className="py-2.5 px-2 text-right font-black text-slate-900">{formatCurrency(calcPrecoVenda)}</td>
+                        </tr>
+                        <tr className="py-3 bg-emerald-50/80">
+                          <td className="py-3 px-2 text-emerald-950 font-black text-sm">
+                            (=) Lucro Bruto Operacional (Margem ao Cêntimo)
+                          </td>
+                          <td className="py-3 px-2 text-right font-black text-emerald-800 text-base">
+                            {formatCurrency(calcMargemBruta)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
+                )}
 
-                  {/* Slider de BDI Interativo */}
-                  <div className="bg-[#070B19]/60 p-3 rounded-xl border border-white/5 space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-bold text-slate-400">Simulador de BDI Desejado:</span>
-                      <span className="font-black text-[#10B981]">{interactiveBdi.toFixed(1)}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="8" 
-                      max="25" 
-                      step="0.5"
-                      value={interactiveBdi}
-                      onChange={(e) => setInteractiveBdi(parseFloat(e.target.value))}
-                      className="w-full accent-[#10B981] cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Resumo da DRE */}
-                  <div className="text-[11px] space-y-1.5 p-3 bg-slate-900/60 rounded-xl border border-white/5">
-                    <div className="flex justify-between text-slate-400">
-                      <span>(+) Custo Direto (Mão de Obra + CCT + Insumos):</span>
-                      <span className="font-bold text-white">{formatCurrency(baseCost)}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>(-) Impostos s/ Faturamento (12.5%):</span>
-                      <span className="font-bold text-amber-400">-{formatCurrency(calcTributos)}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-200 font-black pt-1.5 border-t border-white/10">
-                      <span>(=) Lucro Bruto Operacional:</span>
-                      <span className="text-[#10B981]">{formatCurrency(calcMargemBruta)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
+              </div>
             </div>
           </div>
 
@@ -441,31 +498,31 @@ export default function LandingPage() {
       </section>
 
       {/* 5. PROVA SOCIAL RÁPIDA (AUTORIDADE IMEDIATA) */}
-      <section className="py-12 bg-[#0A1022] border-y border-white/5 relative z-10">
+      <section className="py-12 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             
             <div className="lg:max-w-2xl text-center lg:text-left">
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981] block mb-2">
-                Autoridade de Mercado • Setor de Facilities
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 block mb-1">
+                Autoridade Imediata no Setor de Facilities
               </span>
-              <p className="text-xl md:text-2xl font-black text-white leading-snug">
-                Mais de <span className="text-[#10B981]">R$ 1.029.000 em volume negociado</span> monitorizados por prestadoras que abandonaram o improviso comercial e blindaram os seus contratos contra prejuízos operacionais.
+              <p className="text-xl sm:text-2xl font-extrabold leading-snug">
+                Mais de <span className="text-emerald-400">R$ 1.029.000 em volume negociado</span> monitorizados por prestadoras que abandonaram o improviso comercial e blindaram os seus contratos contra prejuízos operacionais.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full lg:w-auto">
-              <div className="bg-[#070B19] p-4 rounded-2xl border border-white/5 text-center">
-                <span className="text-2xl md:text-3xl font-black text-[#10B981] block">100%</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CCTs Parametrizadas</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full lg:w-auto">
+              <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center">
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400 block">100%</span>
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">CCTs Parametrizadas</span>
               </div>
-              <div className="bg-[#070B19] p-4 rounded-2xl border border-white/5 text-center">
-                <span className="text-2xl md:text-3xl font-black text-white block">127x</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Telemetria de Leitura</span>
+              <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center">
+                <span className="text-2xl sm:text-3xl font-black text-white block">127x</span>
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Telemetria de Leitura</span>
               </div>
-              <div className="bg-[#070B19] p-4 rounded-2xl border border-white/5 text-center col-span-2 sm:col-span-1">
-                <span className="text-2xl md:text-3xl font-black text-emerald-400 block">14 Dias</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Garantia Blindada</span>
+              <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center col-span-2 sm:col-span-1">
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400 block">14 Dias</span>
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Garantia Blindada</span>
               </div>
             </div>
 
@@ -474,94 +531,92 @@ export default function LandingPage() {
       </section>
 
       {/* 6. AGITAÇÃO DO PROBLEMA (A DOR REAL DA TRINCHEIRA) */}
-      <section id="problema" className="py-20 md:py-28 relative z-10">
+      <section className="py-20 md:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] font-black uppercase tracking-wider text-red-400">
-              <AlertTriangle size={12} />
-              A Realidade das Prestadoras de Serviços
-            </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight uppercase">
-              Se gere uma empresa de prestação de serviços ou mão de obra terceirizada, <br />
-              <span className="text-red-400">reconhece este cenário:</span>
+          <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-red-700 bg-red-50 border border-red-200 px-3.5 py-1 rounded-full">
+              A Dor Real da Trincheira
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+              Se gere uma empresa de prestação de serviços ou mão de obra terceirizada, reconhece este cenário:
             </h2>
-            <p className="text-slate-400 text-sm md:text-base font-medium">
-              A maioria das prestadoras não fecha por falta de clientes, mas pela hemorragia de margem invisível nas propostas e no pós-venda.
+            <p className="text-slate-600 text-base font-normal">
+              O modelo tradicional de planilhas e PDFs consome a margem de lucro de forma invisível.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             
             {/* Dor 1 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527]/90 border border-red-500/20 hover:border-red-500/40 transition-all flex flex-col justify-between group">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                  <Phone size={22} />
+                <div className="w-11 h-11 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                  <Phone size={20} />
                 </div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                <h3 className="text-lg font-bold text-slate-900">
                   O comercial perde horas à procura de contactos
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  O vendedor passa o dia a telefonar para receções gerais sem conseguir chegar a quem decide, queimando tempo valioso em listas frias e sem contexto.
+                <p className="text-slate-600 text-sm leading-relaxed">
+                  O vendedor passa o dia a telefonar para receções gerais sem conseguir chegar a quem decide, queimando energia em listas frias e sem contexto.
                 </p>
               </div>
-              <span className="text-[10px] font-black uppercase text-red-400/80 tracking-widest mt-6 block">
-                Gargalo: Prospeção Ineficiente
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-700 mt-6 block">
+                Impacto: Prospeção lenta e sem previsibilidade
               </span>
             </div>
 
             {/* Dor 2 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527]/90 border border-red-500/20 hover:border-red-500/40 transition-all flex flex-col justify-between group">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                  <AlertCircle size={22} />
+                <div className="w-11 h-11 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                  <FileSpreadsheet size={20} />
                 </div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                <h3 className="text-lg font-bold text-slate-900">
                   A folha de cálculo é um perigo silencioso
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  Qualquer erro de fórmula nos encargos de CCT ou esquecimento na provisão reflexa de benefícios consome meses de margem de lucro sem que ninguém perceba a tempo.
+                <p className="text-slate-600 text-sm leading-relaxed">
+                  Qualquer erro de fórmula nos encargos de CCT ou esquecimento na provisão reflexa de benefícios consome meses de margem de lucro.
                 </p>
               </div>
-              <span className="text-[10px] font-black uppercase text-red-400/80 tracking-widest mt-6 block">
-                Gargalo: Erros de Precificação
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-700 mt-6 block">
+                Impacto: Prejuízo oculto em contratos vigentes
               </span>
             </div>
 
             {/* Dor 3 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527]/90 border border-red-500/20 hover:border-red-500/40 transition-all flex flex-col justify-between group">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                  <Eye size={22} />
+                <div className="w-11 h-11 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                  <Eye size={20} />
                 </div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                <h3 className="text-lg font-bold text-slate-900">
                   O "ponto cego" do envio
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  Envia a proposta comercial em PDF por e-mail e fica sem saber se o cliente abriu, se o setor financeiro avaliou ou se o documento foi simplesmente ignorado no lixo eletrônico.
+                <p className="text-slate-600 text-sm leading-relaxed">
+                  Envia a proposta comercial em PDF por e-mail e fica sem saber se o cliente abriu, se o setor financeiro avaliou ou se o documento foi simplesmente ignorado.
                 </p>
               </div>
-              <span className="text-[10px] font-black uppercase text-red-400/80 tracking-widest mt-6 block">
-                Gargalo: Ausência de Telemetria
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-700 mt-6 block">
+                Impacto: Follow-up no escuro e perda de timing
               </span>
             </div>
 
             {/* Dor 4 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527]/90 border border-red-500/20 hover:border-red-500/40 transition-all flex flex-col justify-between group">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                  <Clock size={22} />
+                <div className="w-11 h-11 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                  <Clock size={20} />
                 </div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                <h3 className="text-lg font-bold text-slate-900">
                   O prejuízo invisível no pós-venda
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   O contrato entra em operação, a data-base do sindicato vence e a sua empresa esquece-se de aplicar o reajuste inflacionário a tempo, pagando o dissídio do próprio bolso.
                 </p>
               </div>
-              <span className="text-[10px] font-black uppercase text-red-400/80 tracking-widest mt-6 block">
-                Gargalo: Perda de Repasse CCT
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-700 mt-6 block">
+                Impacto: Sangria de caixa por falta de repasse
               </span>
             </div>
 
@@ -571,25 +626,24 @@ export default function LandingPage() {
       </section>
 
       {/* 7. APRESENTAÇÃO DA SOLUÇÃO (O QUE É O SMARTBID) */}
-      <section id="solucao" className="py-16 md:py-24 bg-gradient-to-b from-[#0A1022] to-[#070B19] border-y border-white/5 relative z-10">
-        <div className="max-w-5xl mx-auto px-6 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/30 text-xs font-black uppercase tracking-wider text-[#10B981]">
-            <Shield size={14} />
-            Ecossistema Tudo-Em-Um de Facilities
-          </div>
+      <section id="solucao" className="py-20 bg-slate-50 border-y border-slate-200/80">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-6">
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-100/70 border border-emerald-300 px-3.5 py-1.5 rounded-full inline-block">
+            Apresentação da Solução
+          </span>
           
-          <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight uppercase leading-tight">
-            Não é um CRM genérico: é a esteira definitiva da sua operação comercial.
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+            O primeiro ecossistema tudo-em-um desenhado para a realidade de Facilities.
           </h2>
 
-          <p className="text-slate-300 text-base md:text-xl font-medium leading-relaxed max-w-4xl mx-auto">
-            O <strong className="text-white font-black">SmartBid</strong> é o primeiro ecossistema tudo-em-um desenhado especificamente para a realidade de empresas de Facilities, Limpeza, Portaria e Apoio Operacional. Ele não é um CRM genérico: é uma esteira que conduz a sua operação desde o primeiro contacto com o decisor até à cobrança do último aditivo contratual.
+          <p className="text-slate-700 text-lg md:text-xl font-normal leading-relaxed">
+            O <strong>SmartBid</strong> é o primeiro ecossistema tudo-em-um desenhado especificamente para a realidade de empresas de Facilities, Limpeza, Portaria e Apoio Operacional. Ele não é um CRM genérico: é uma esteira que conduz a sua operação desde o primeiro contacto com o decisor até à cobrança do último aditivo contratual.
           </p>
 
-          <div className="pt-6 flex flex-wrap items-center justify-center gap-4">
+          <div className="pt-4">
             <button 
-              onClick={() => openDemoWithPlan('Quero Conhecer o Ecossistema')}
-              className="px-8 py-3.5 bg-[#10B981] hover:bg-[#059669] text-xs font-black uppercase tracking-widest text-[#070B19] rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer"
+              onClick={() => openDemoWithPlan('Conhecer a Esteira Completa')}
+              className="px-8 py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm"
             >
               Conhecer a Esteira Completa
             </button>
@@ -598,212 +652,164 @@ export default function LandingPage() {
       </section>
 
       {/* 8. BENEFÍCIOS E FUNCIONALIDADES DETALHADAS (A JORNADA DO CLIENTE) */}
-      <section id="beneficios" className="py-20 md:py-28 relative z-10">
+      <section id="funcionalidades" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           
-          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981]">
-              A Jornada Completa do Contrato
+          <div className="max-w-3xl mx-auto text-center space-y-4 mb-20">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1 rounded-full">
+              A Jornada do Cliente
             </span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight">
-              Funcionalidades Desenhadas para a Trincheira
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+              Benefícios e Funcionalidades Detalhadas
             </h2>
-            <p className="text-slate-400 font-medium">
-              Da busca ativa por grandes contas corporativas até a blindagem da margem na virada da convenção coletiva.
+            <p className="text-slate-600 text-base font-normal">
+              Cinco pilares conectados para blindar seu faturamento e sua operação.
             </p>
           </div>
 
-          <div className="space-y-12">
+          <div className="space-y-12 max-w-5xl mx-auto">
             
-            {/* Feature 1: Prospecção */}
-            <div className="p-8 md:p-12 rounded-3xl bg-[#0D1527]/80 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-4">
-                <span className="p-3 rounded-2xl bg-emerald-500/10 text-[#10B981] border border-[#10B981]/20 inline-block">
-                  <Search size={24} />
+            {/* Módulo 1 */}
+            <div className="p-8 md:p-10 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div className="md:col-span-7 space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                  Etapa 01 • Prospecção de Decisores
                 </span>
-                <span className="text-xs font-black uppercase tracking-widest text-[#10B981] block">Etapa 1 • Inteligência Comercial</span>
-                <h3 className="text-2xl md:text-3xl font-black text-white uppercase">Máquina de Prospeção de Decisores</h3>
-                <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  Máquina de Prospeção de Decisores
+                </h3>
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                   Localize hospitais, condomínios e indústrias de grande porte diretamente no Google Places e injete os dados no funil de vendas num único clique. Encontre o contacto dos responsáveis por Compras e RH sem depender de listas frias.
                 </p>
-                <ul className="space-y-2 text-xs text-slate-400 pt-2 font-semibold">
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Busca automatizada com filtros por segmento e cidade</li>
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Injeção com 1 clique direto no Kanban do CRM</li>
-                </ul>
               </div>
-              <div className="lg:col-span-6 bg-[#070B19] p-6 rounded-2xl border border-white/5 space-y-3">
-                <div className="flex items-center justify-between text-xs pb-3 border-b border-white/10">
-                  <span className="font-black text-slate-300">Google Places API • Curitiba/PR</span>
-                  <span className="text-[10px] font-black text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded">Ativo</span>
+              <div className="md:col-span-5 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs space-y-2.5">
+                <div className="flex justify-between items-center font-bold text-slate-700 pb-2 border-b border-slate-200">
+                  <span>Google Places Integrado</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Ativo</span>
                 </div>
-                <div className="p-3 bg-slate-900/80 rounded-xl border border-white/5 flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-black text-white">Hospital Santa Cruz</p>
-                    <p className="text-[10px] text-slate-400">Av. Batel, 1889 • Facilities & Saúde</p>
-                  </div>
-                  <span className="px-3 py-1 bg-[#10B981] text-[#070B19] text-[9px] font-black rounded-lg uppercase">
-                    Injetado ✓
-                  </span>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <p className="font-bold text-slate-900">Hospital & Maternidade</p>
+                  <p className="text-[11px] text-slate-500">Telefone direto • E-mail de Compras</p>
                 </div>
-                <div className="p-3 bg-slate-900/80 rounded-xl border border-white/5 flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-black text-white">Condomínio Evolution Towers</p>
-                    <p className="text-[10px] text-slate-400">Centro Cívico • 48 Postos de Portaria</p>
-                  </div>
-                  <span className="px-3 py-1 bg-slate-800 text-slate-300 text-[9px] font-black rounded-lg uppercase">
-                    Mapeado
-                  </span>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <p className="font-bold text-slate-900">Condomínio Residencial</p>
+                  <p className="text-[11px] text-slate-500">Síndico Profissional • 32 Postos</p>
                 </div>
               </div>
             </div>
 
-            {/* Feature 2: Engenharia CCT */}
-            <div className="p-8 md:p-12 rounded-3xl bg-[#0D1527]/80 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-4 lg:order-2">
-                <span className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 inline-block">
-                  <Database size={24} />
+            {/* Módulo 2 */}
+            <div className="p-8 md:p-10 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div className="md:col-span-7 space-y-3 md:order-2">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                  Etapa 02 • Engenharia Trabalhista
                 </span>
-                <span className="text-xs font-black uppercase tracking-widest text-indigo-400 block">Etapa 2 • Precisão Cirúrgica</span>
-                <h3 className="text-2xl md:text-3xl font-black text-white uppercase">Engenharia Trabalhista e Multi-CCTs (V4.0 Enterprise)</h3>
-                <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  Engenharia Trabalhista e Multi-CCTs (V4.0 Enterprise)
+                </h3>
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                   Parametrize convenções coletivas por estado e região (como SIEMACO). Automatize vales, descontos legais de transporte, exames médicos e provisões sobre férias com precisão cirúrgica.
                 </p>
-                <ul className="space-y-2 text-xs text-slate-400 pt-2 font-semibold">
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Cálculo automático de encargos sociais e reflexos trabalhistas</li>
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Atualização instantânea em caso de novo dissídio sindical</li>
-                </ul>
               </div>
-              <div className="lg:col-span-6 bg-[#070B19] p-6 rounded-2xl border border-white/5 space-y-3 lg:order-1">
-                <div className="flex items-center justify-between text-xs pb-3 border-b border-white/10">
-                  <span className="font-black text-slate-300">Regras CCT SIEMACO 2026</span>
-                  <span className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">V4.0 Ativa</span>
+              <div className="md:col-span-5 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs space-y-2 md:order-1">
+                <div className="flex justify-between items-center font-bold text-slate-700 pb-2 border-b border-slate-200">
+                  <span>Convenção SIEMACO 2026</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">V4.0</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
-                    <span className="text-[9px] text-slate-500 block uppercase font-bold">Piso Salarial Asseio</span>
-                    <span className="text-sm font-black text-white">R$ 1.840,00</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-500 block">Piso CCT</span>
+                    <span className="font-black text-slate-900 text-sm">R$ 1.840,00</span>
                   </div>
-                  <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
-                    <span className="text-[9px] text-slate-500 block uppercase font-bold">Vale Alimentação / Dia</span>
-                    <span className="text-sm font-black text-white">R$ 29,50</span>
-                  </div>
-                  <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
-                    <span className="text-[9px] text-slate-500 block uppercase font-bold">Encargos Sociais Total</span>
-                    <span className="text-sm font-black text-emerald-400">71.80%</span>
-                  </div>
-                  <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
-                    <span className="text-[9px] text-slate-500 block uppercase font-bold">Provisão Reflexa Férias</span>
-                    <span className="text-sm font-black text-white">11.11%</span>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                    <span className="text-[10px] text-slate-500 block">Encargos Sociais</span>
+                    <span className="font-black text-emerald-700 text-sm">71.80%</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Feature 3: Orçamento Executivo e DRE */}
-            <div className="p-8 md:p-12 rounded-3xl bg-[#0D1527]/80 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-4">
-                <span className="p-3 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 inline-block">
-                  <BarChart3 size={24} />
+            {/* Módulo 3 */}
+            <div className="p-8 md:p-10 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div className="md:col-span-7 space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                  Etapa 03 • Viabilidade Financeira
                 </span>
-                <span className="text-xs font-black uppercase tracking-widest text-amber-400 block">Etapa 3 • Blindagem Financeira</span>
-                <h3 className="text-2xl md:text-3xl font-black text-white uppercase">Orçamento Executivo e DRE Projetada</h3>
-                <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  Orçamento Executivo e DRE Projetada
+                </h3>
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                   Avalie a viabilidade do contrato para os próximos 12 meses antes de assinar. O sistema deduz impostos sobre faturação, calcula os custos da escala e apresenta a margem bruta percentual exata do projeto.
                 </p>
-                <ul className="space-y-2 text-xs text-slate-400 pt-2 font-semibold">
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> DRE contratual mês a mês nos 12 meses de vigência</li>
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Simulação instantânea de impacto de impostos municipais e federais</li>
-                </ul>
               </div>
-              <div className="lg:col-span-6 bg-[#070B19] p-6 rounded-2xl border border-white/5 space-y-3">
-                <div className="flex items-center justify-between text-xs pb-2 border-b border-white/10">
-                  <span className="font-black text-slate-300">DRE Projetada 12 Meses • Escala 12x36</span>
-                  <span className="text-[10px] font-black text-amber-400">Margem Segura</span>
+              <div className="md:col-span-5 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs space-y-2">
+                <div className="flex justify-between items-center font-bold text-slate-700 pb-2 border-b border-slate-200">
+                  <span>DRE Projetada 12 Meses</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Viável</span>
                 </div>
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex justify-between py-1 border-b border-white/5 text-slate-300">
-                    <span>Faturamento Bruto Projetado:</span>
-                    <span className="font-bold text-white">R$ 48.900,00</span>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Faturamento Mensal:</span>
+                    <span className="font-bold text-slate-900">R$ 48.900,00</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-white/5 text-slate-400">
-                    <span>(-) Impostos (PIS/COFINS/ISS):</span>
-                    <span className="font-bold text-red-400">-R$ 6.112,50</span>
+                  <div className="flex justify-between text-slate-600">
+                    <span>(-) Custo Operacional:</span>
+                    <span className="font-bold text-slate-900">-R$ 29.800,00</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-white/5 text-slate-400">
-                    <span>(-) Custo Mão de Obra e Encargos:</span>
-                    <span className="font-bold text-red-400">-R$ 29.800,00</span>
-                  </div>
-                  <div className="flex justify-between py-2 text-white font-black text-sm bg-emerald-950/20 px-3 rounded-xl border border-emerald-500/20">
-                    <span>(=) Margem Bruta Contratual:</span>
-                    <span className="text-[#10B981]">R$ 8.987,50 (18.4%)</span>
+                  <div className="flex justify-between text-emerald-800 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                    <span>Margem Bruta (18.4%):</span>
+                    <span>R$ 8.987,50</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Feature 4: Telemetria */}
-            <div className="p-8 md:p-12 rounded-3xl bg-[#0D1527]/80 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-4 lg:order-2">
-                <span className="p-3 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/20 inline-block">
-                  <Eye size={24} />
+            {/* Módulo 4 */}
+            <div className="p-8 md:p-10 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div className="md:col-span-7 space-y-3 md:order-2">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                  Etapa 04 • Negociação com Dados
                 </span>
-                <span className="text-xs font-black uppercase tracking-widest text-teal-400 block">Etapa 4 • Fecho Certeiro</span>
-                <h3 className="text-2xl md:text-3xl font-black text-white uppercase">Proposta Interativa com Telemetria Silenciosa</h3>
-                <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  Proposta Interativa com Telemetria Silenciosa
+                </h3>
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                   O cliente recebe um portal exclusivo. Saiba exatamente quantas vezes ele reabriu a planilha de custos (FPV) e a minuta de contrato, descobrindo o momento perfeito para negociar.
                 </p>
-                <ul className="space-y-2 text-xs text-slate-400 pt-2 font-semibold">
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Alerta automático quando o tomador de decisão abre a proposta</li>
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Mapeamento de tempo de leitura por aba (Institucional, Preços, Contrato)</li>
-                </ul>
               </div>
-              <div className="lg:col-span-6 bg-[#070B19] p-6 rounded-2xl border border-white/5 space-y-3 lg:order-1">
-                <div className="p-3.5 bg-slate-900 rounded-xl border border-white/10 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-[#10B981]">
-                      <Zap size={16} />
-                    </div>
-                    <div>
-                      <p className="font-black text-white">Alerta de Acesso ao Vivo</p>
-                      <p className="text-[10px] text-slate-400">Diretoria do Cliente está na aba "Planilha de Custos"</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
-                    Agora
-                  </span>
+              <div className="md:col-span-5 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs space-y-2.5 md:order-1">
+                <div className="flex items-center gap-2 text-emerald-800 font-bold pb-2 border-b border-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                  <span>Notificação em Tempo Real</span>
+                </div>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <p className="font-bold text-slate-900">Cliente reabriu a proposta</p>
+                  <p className="text-[11px] text-slate-500">Visualizou "Planilha de Custos" há 2 minutos</p>
                 </div>
               </div>
             </div>
 
-            {/* Feature 5: Gestão de Contratos e Alertas de Reajuste */}
-            <div className="p-8 md:p-12 rounded-3xl bg-[#0D1527]/80 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-4">
-                <span className="p-3 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 inline-block">
-                  <RefreshCw size={24} />
+            {/* Módulo 5 */}
+            <div className="p-8 md:p-10 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              <div className="md:col-span-7 space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                  Etapa 05 • Blindagem no Pós-Venda
                 </span>
-                <span className="text-xs font-black uppercase tracking-widest text-blue-400 block">Etapa 5 • Pós-Venda Ativo</span>
-                <h3 className="text-2xl md:text-3xl font-black text-white uppercase">Gestão de Contratos e Alertas de Reajuste (CLM)</h3>
-                <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  Gestão de Contratos e Alertas de Reajuste (CLM)
+                </h3>
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                   Controle vigências, aditivos e o valor global da carteira ativa. O sistema sinaliza a coluna de "Reajuste Pendente" para garantir que nenhum repasse de CCT seja esquecido.
                 </p>
-                <ul className="space-y-2 text-xs text-slate-400 pt-2 font-semibold">
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Alerta com 60 e 30 dias de antecedência da data-base do sindicato</li>
-                  <li className="flex items-center gap-2"><Check size={14} className="text-[#10B981]" /> Emissão simplificada de aditivo contratual com repasse exato</li>
-                </ul>
               </div>
-              <div className="lg:col-span-6 bg-[#070B19] p-6 rounded-2xl border border-white/5 space-y-3">
-                <div className="flex items-center justify-between text-xs pb-3 border-b border-white/10">
-                  <span className="font-black text-slate-300">Radar de Reajustes Sindicais</span>
-                  <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">Atenção</span>
+              <div className="md:col-span-5 bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs space-y-2">
+                <div className="flex justify-between items-center font-bold text-slate-700 pb-2 border-b border-slate-200">
+                  <span>Alerta de Reajuste Sindical</span>
+                  <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-bold">Pendente</span>
                 </div>
-                <div className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-xl flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-black text-white">Contrato #CT-2024-12 • Condomínio Palladium</p>
-                    <p className="text-[10px] text-slate-400">Data-Base SIEMACO em 18 dias • Repasse estimado: +6.8%</p>
-                  </div>
-                  <span className="px-2.5 py-1 bg-amber-500 text-slate-950 text-[9px] font-black rounded-lg uppercase">
-                    Reajuste Pendente
-                  </span>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <p className="font-bold text-slate-900">Contrato #CT-2024-12</p>
+                  <p className="text-[11px] text-amber-700 font-semibold">Data-base em 30 dias • Aplicar repasse inflacionário</p>
                 </div>
               </div>
             </div>
@@ -813,89 +819,77 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 9. & 10. PARA QUEM É vs. PARA QUEM NÃO É */}
-      <section className="py-20 md:py-28 bg-[#0A1022] border-y border-white/5 relative z-10">
+      {/* 9. & 10. QUALIFICAÇÃO & DESQUALIFICAÇÃO (PARA QUEM É / NÃO É) */}
+      <section id="qualificacao" className="py-20 bg-slate-50 border-y border-slate-200/80">
         <div className="max-w-7xl mx-auto px-6">
           
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight">
+          <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               O SmartBid é Feito Para Você?
             </h2>
-            <p className="text-slate-400 font-medium">
-              Alinhamos as expectativas com total transparência para garantir resultados concretos.
+            <p className="text-slate-600 text-base font-normal">
+              Alinhamos expectativas para garantir retorno real no seu investimento.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             
             {/* 9. PARA QUEM É */}
-            <div className="p-8 rounded-3xl bg-[#0D1527] border border-[#10B981]/30 flex flex-col justify-between shadow-xl shadow-emerald-950/20">
+            <div className="p-8 rounded-2xl bg-white border border-emerald-200 shadow-sm flex flex-col justify-between">
               <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#10B981]/20 flex items-center justify-center text-[#10B981]">
+                <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
                     <CheckCircle size={22} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase">Para Quem É</h3>
-                    <span className="text-[10px] text-[#10B981] font-bold uppercase tracking-wider">Qualificação de Público</span>
+                    <h3 className="text-xl font-bold text-slate-900">Para Quem É</h3>
+                    <span className="text-xs text-emerald-700 font-semibold">Qualificação de Público</span>
                   </div>
                 </div>
 
-                <div className="space-y-4 text-sm text-slate-300">
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-[#070B19]/50 border border-white/5">
-                    <Check size={18} className="text-[#10B981] shrink-0 mt-0.5" />
+                <div className="space-y-4 text-sm text-slate-700">
+                  <div className="flex items-start gap-3">
+                    <Check size={18} className="text-emerald-700 shrink-0 mt-0.5" />
                     <span><strong>Empresas de Facilities e Limpeza Profissional</strong> que necessitam de agilidade para montar orçamentos sem riscos de passivo trabalhista.</span>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-[#070B19]/50 border border-white/5">
-                    <Check size={18} className="text-[#10B981] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3">
+                    <Check size={18} className="text-emerald-700 shrink-0 mt-0.5" />
                     <span><strong>Prestadoras de Segurança, Portaria e Apoio</strong> com dezenas de postos alocados e necessidade de acompanhar reajustes de convenção coletiva rigorosos.</span>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-[#070B19]/50 border border-white/5">
-                    <Check size={18} className="text-[#10B981] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3">
+                    <Check size={18} className="text-emerald-700 shrink-0 mt-0.5" />
                     <span><strong>Diretores Comerciais e CEOs</strong> que exigem controlo total de indicadores: metas corporativas, ciclo médio de fecho e taxa de conversão.</span>
                   </div>
                 </div>
               </div>
-
-              <div className="mt-8 pt-4 border-t border-white/5 text-center">
-                <span className="text-xs font-black text-[#10B981] uppercase tracking-wider">
-                  ✓ Ideal para operações que buscam escala rentável
-                </span>
-              </div>
             </div>
 
             {/* 10. PARA QUEM NÃO É */}
-            <div className="p-8 rounded-3xl bg-[#0D1527] border border-red-500/20 flex flex-col justify-between shadow-xl shadow-red-950/10">
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
               <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400">
+                <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
                     <XCircle size={22} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase">Para Quem NÃO É</h3>
-                    <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Desqualificação Firme</span>
+                    <h3 className="text-xl font-bold text-slate-900">Para Quem NÃO É</h3>
+                    <span className="text-xs text-red-700 font-semibold">Desqualificação Firme</span>
                   </div>
                 </div>
 
-                <div className="space-y-4 text-sm text-slate-400">
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-[#070B19]/50 border border-white/5">
-                    <X size={18} className="text-red-400 shrink-0 mt-0.5" />
+                <div className="space-y-4 text-sm text-slate-600">
+                  <div className="flex items-start gap-3">
+                    <X size={18} className="text-red-700 shrink-0 mt-0.5" />
                     <span><strong>Empresas à procura apenas de um bloco de notas digital</strong> ou chat genérico para trocar mensagens sem engenharia de custos.</span>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-[#070B19]/50 border border-white/5">
-                    <X size={18} className="text-red-400 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3">
+                    <X size={18} className="text-red-700 shrink-0 mt-0.5" />
                     <span><strong>Quem prefere continuar a correr o risco</strong> de perder dezenas de milhares de reais por ano com fórmulas manuais e desatualizadas de Excel.</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-8 pt-4 border-t border-white/5 text-center">
-                <span className="text-xs font-black text-red-400/80 uppercase tracking-wider">
-                  ✗ Não recomendamos para quem busca soluções genéricas
-                </span>
               </div>
             </div>
 
@@ -905,118 +899,103 @@ export default function LandingPage() {
       </section>
 
       {/* 11. QUEBRA DE OBJEÇÕES (O CONFRONTO COM O MERCADO) */}
-      <section className="py-20 md:py-28 relative z-10">
+      <section className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-6">
           
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981]">
-              Transparência e Diferenciais
+          <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1 rounded-full">
+              Comparativo de Mercado
             </span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               O Confronto com as Alternativas de Mercado
             </h2>
-            <p className="text-slate-400 font-medium">
-              Por que ferramentas comuns falham no dia a dia da terceirização de serviços.
+            <p className="text-slate-600 text-base font-normal">
+              Entenda os limites das ferramentas genéricas quando aplicadas à terceirização.
             </p>
           </div>
 
           <div className="space-y-6">
-            
-            {/* Objeção 1 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527] border border-white/5 hover:border-[#10B981]/30 transition-all space-y-3">
-              <div className="flex items-center gap-2 text-[#10B981] text-xs font-black uppercase tracking-wider">
-                <HelpCircle size={16} /> Objeção Comum #1
-              </div>
-              <h3 className="text-lg md:text-xl font-black text-white">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <h3 className="text-lg font-bold text-slate-900">
                 "Eu já uso um CRM comum (como Bitrix24 ou Pipedrive)"
               </h3>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              <p className="text-slate-600 text-sm leading-relaxed">
                 Um CRM comum move cartões, mas não calcula encargos sindicais A/B/C/D, não gera DRE de projeto nem avisa quando a convenção coletiva de um posto venceu. O SmartBid resolve a engenharia e o pós-venda que os outros sistemas ignoram.
               </p>
             </div>
 
-            {/* Objeção 2 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527] border border-white/5 hover:border-[#10B981]/30 transition-all space-y-3">
-              <div className="flex items-center gap-2 text-[#10B981] text-xs font-black uppercase tracking-wider">
-                <HelpCircle size={16} /> Objeção Comum #2
-              </div>
-              <h3 className="text-lg md:text-xl font-black text-white">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <h3 className="text-lg font-bold text-slate-900">
                 "O meu orçamentista calcula o per capita de cabeça no Excel"
               </h3>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              <p className="text-slate-600 text-sm leading-relaxed">
                 A conta mental deteta erros gritantes, mas não identifica a provisão reflexa de benefícios esquecida nem avisa que o cliente abriu a minuta de contrato 11 vezes no escritório dele.
               </p>
             </div>
 
-            {/* Objeção 3 */}
-            <div className="p-7 rounded-3xl bg-[#0D1527] border border-white/5 hover:border-[#10B981]/30 transition-all space-y-3">
-              <div className="flex items-center gap-2 text-[#10B981] text-xs font-black uppercase tracking-wider">
-                <HelpCircle size={16} /> Objeção Comum #3
-              </div>
-              <h3 className="text-lg md:text-xl font-black text-white">
+            <div className="p-7 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <h3 className="text-lg font-bold text-slate-900">
                 "A implementação é demorada?"
               </h3>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              <p className="text-slate-600 text-sm leading-relaxed">
                 A parametrização das suas CCTs principais e o modelo de proposta são estruturados de forma direta, permitindo gerar cotações já nos primeiros dias de uso.
               </p>
             </div>
-
           </div>
 
         </div>
       </section>
 
       {/* 12. TABELA DE PLANOS E PREÇOS TRANSPARENTES */}
-      <section id="planos" className="py-20 md:py-28 bg-[#0A1022] border-y border-white/5 relative z-10">
+      <section id="planos" className="py-24 bg-slate-50 border-y border-slate-200/80">
         <div className="max-w-7xl mx-auto px-6">
           
-          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981]">
-              Investimento Claro e Direto
+          <div className="max-w-3xl mx-auto text-center space-y-4 mb-20">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-100/70 border border-emerald-300 px-3.5 py-1 rounded-full">
+              Tabela de Planos
             </span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight">
-              Tabela de Planos e Preços Transparentes
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+              Planos Transparentes e Diretos
             </h2>
-            <p className="text-slate-400 font-medium">
-              Escolha a escala ideal para a sua empresa de Facilities. Cancelamento flexível a qualquer momento.
+            <p className="text-slate-600 text-base font-normal">
+              Escolha a escala ideal para a sua empresa. Sem taxas ocultas.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
             
             {/* PLANO BÁSICO */}
-            <div className="p-8 rounded-3xl bg-[#0D1527] border border-white/10 flex flex-col justify-between transition-all hover:border-white/20">
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
               <div className="space-y-6">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">
-                    Prestadores em Fase Inicial
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                    Prestadores em fase inicial
                   </span>
-                  <h3 className="text-2xl font-black text-white uppercase">BÁSICO</h3>
+                  <h3 className="text-2xl font-black text-slate-900">BÁSICO</h3>
                 </div>
 
-                <div className="py-4 border-y border-white/10">
+                <div className="py-4 border-y border-slate-100">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-white">R$ 149</span>
-                    <span className="text-xs text-slate-400 font-bold uppercase">/ mês</span>
+                    <span className="text-4xl font-black text-slate-900">R$ 149</span>
+                    <span className="text-xs text-slate-500 font-bold">/ mês</span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2 font-medium">Ideal para operações enxutas montando seus primeiros postos.</p>
                 </div>
 
-                <ul className="space-y-3.5 text-xs text-slate-300 font-semibold">
+                <ul className="space-y-3.5 text-xs text-slate-700 font-medium">
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span><strong>Até 3 utilizadores</strong> ativos</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span><strong>30 buscas novas/mês</strong> no Google Places</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>FPVs e CCTs: <strong>Limitado</strong></span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>Histórico e Telemetria: <strong>Básico</strong></span>
                   </li>
                 </ul>
@@ -1025,57 +1004,56 @@ export default function LandingPage() {
               <div className="pt-8">
                 <button 
                   onClick={() => openDemoWithPlan('Plano Básico (R$ 149/mês)')}
-                  className="w-full py-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white cursor-pointer"
+                  className="w-full py-3.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-slate-300 hover:bg-slate-100 text-slate-800 cursor-pointer"
                 >
                   Escolher Básico
                 </button>
               </div>
             </div>
 
-            {/* PLANO PROFISSIONAL (PRO) - DESTAQUE */}
-            <div className="p-8 rounded-3xl bg-gradient-to-b from-[#0D1527] to-[#070B19] border-2 border-[#10B981] flex flex-col justify-between relative shadow-2xl shadow-emerald-500/10 scale-[1.03] z-10">
-              <div className="absolute top-0 right-8 -translate-y-1/2 px-3.5 py-1 bg-[#10B981] text-[#070B19] text-[9px] font-black uppercase tracking-widest rounded-full shadow-md">
-                Mais Popular • Expansão
+            {/* PLANO PROFISSIONAL (PRO) */}
+            <div className="p-8 rounded-2xl bg-white border-2 border-emerald-600 shadow-xl flex flex-col justify-between relative">
+              <div className="absolute top-0 right-6 -translate-y-1/2 px-3 py-1 bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-xs">
+                Mais Escolhido
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981] block mb-1">
-                    Empresas de Facilities em Expansão
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 block mb-1">
+                    Empresas de Facilities em expansão
                   </span>
-                  <h3 className="text-2xl font-black text-white uppercase">PROFISSIONAL (PRO)</h3>
+                  <h3 className="text-2xl font-black text-slate-900">PROFISSIONAL (PRO)</h3>
                 </div>
 
-                <div className="py-4 border-y border-white/10">
+                <div className="py-4 border-y border-slate-100">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-white">R$ 299</span>
-                    <span className="text-xs text-slate-400 font-bold uppercase">/ mês</span>
+                    <span className="text-4xl font-black text-slate-900">R$ 299</span>
+                    <span className="text-xs text-slate-500 font-bold">/ mês</span>
                   </div>
-                  <span className="text-[11px] text-[#10B981] font-bold block mt-1">
-                    (R$ 429 /mês com WhatsApp integrado)
+                  <span className="text-xs text-emerald-800 font-semibold block mt-1">
+                    (R$ 429 /mês c/ WhatsApp integrado)
                   </span>
-                  <p className="text-xs text-slate-400 mt-2 font-medium">Controle total de força de vendas e orçamentos ilimitados.</p>
                 </div>
 
-                <ul className="space-y-3.5 text-xs text-slate-200 font-semibold">
+                <ul className="space-y-3.5 text-xs text-slate-800 font-medium">
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span><strong>Até 10 utilizadores</strong> ativos</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span><strong>150 buscas novas/mês</strong> no Google Places</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>FPVs e CCTs: <strong>Acesso Ilimitado</strong></span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>Histórico e Telemetria: <strong>Auditoria Completa de Logs</strong></span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>Alertas automáticos de <strong>Reajuste CLM</strong></span>
                   </li>
                 </ul>
@@ -1084,7 +1062,7 @@ export default function LandingPage() {
               <div className="pt-8">
                 <button 
                   onClick={() => openDemoWithPlan('Plano Profissional PRO (R$ 299/mês)')}
-                  className="w-full py-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all bg-[#10B981] hover:bg-[#059669] text-[#070B19] shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer font-extrabold"
+                  className="w-full py-3.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   Começar no Plano PRO
                   <ArrowRight size={14} />
@@ -1093,38 +1071,37 @@ export default function LandingPage() {
             </div>
 
             {/* PLANO ENTERPRISE */}
-            <div className="p-8 rounded-3xl bg-[#0D1527] border border-white/10 flex flex-col justify-between transition-all hover:border-white/20">
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
               <div className="space-y-6">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">
-                    Grandes Operações e Filiais
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                    Grandes operações e filiais
                   </span>
-                  <h3 className="text-2xl font-black text-white uppercase">ENTERPRISE</h3>
+                  <h3 className="text-2xl font-black text-slate-900">ENTERPRISE</h3>
                 </div>
 
-                <div className="py-4 border-y border-white/10">
+                <div className="py-4 border-y border-slate-100">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-white">R$ 599</span>
-                    <span className="text-xs text-slate-400 font-bold uppercase">/ mês</span>
+                    <span className="text-4xl font-black text-slate-900">R$ 599</span>
+                    <span className="text-xs text-slate-500 font-bold">/ mês</span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2 font-medium">Poder máximo para redes e empresas multi-regionais.</p>
                 </div>
 
-                <ul className="space-y-3.5 text-xs text-slate-300 font-semibold">
+                <ul className="space-y-3.5 text-xs text-slate-700 font-medium">
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span><strong>Até 100 utilizadores</strong> ativos</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span><strong>400 buscas novas/mês</strong> no Google Places</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>FPVs e CCTs: <strong>Ilimitado + APIs liberadas</strong></span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={14} className="text-[#10B981] shrink-0" />
+                    <Check size={16} className="text-emerald-700 shrink-0" />
                     <span>Histórico e Telemetria: <strong>SLA Avançado e suporte 24/7</strong></span>
                   </li>
                 </ul>
@@ -1133,7 +1110,7 @@ export default function LandingPage() {
               <div className="pt-8">
                 <button 
                   onClick={() => openDemoWithPlan('Plano Enterprise (R$ 599/mês)')}
-                  className="w-full py-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white cursor-pointer"
+                  className="w-full py-3.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-slate-300 hover:bg-slate-100 text-slate-800 cursor-pointer"
                 >
                   Falar com Consultor
                 </button>
@@ -1146,20 +1123,17 @@ export default function LandingPage() {
       </section>
 
       {/* 13. GARANTIA INCONDICIONAL */}
-      <section className="py-16 md:py-24 relative z-10">
+      <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="p-8 md:p-12 rounded-3xl bg-gradient-to-r from-emerald-950/30 via-[#0D1527] to-slate-900 border border-[#10B981]/30 flex flex-col sm:flex-row items-center gap-8 shadow-2xl">
-            <div className="w-24 h-24 rounded-3xl bg-[#10B981]/20 border border-[#10B981]/40 flex items-center justify-center text-[#10B981] shrink-0">
-              <Shield size={48} />
+          <div className="p-8 md:p-10 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-700 text-white flex items-center justify-center shrink-0">
+              <Shield size={36} />
             </div>
-            <div className="space-y-3 text-center sm:text-left">
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981] block">
-                Risco Zero Para Sua Empresa
-              </span>
-              <h3 className="text-2xl md:text-3xl font-black text-white uppercase">
+            <div className="space-y-2 text-center sm:text-left">
+              <h3 className="text-xl font-bold text-slate-900">
                 Garantia de Adaptação de 14 Dias
               </h3>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              <p className="text-slate-700 text-sm leading-relaxed">
                 Se durante os primeiros 14 dias notar que o SmartBid não acelerou a montagem das suas propostas e não simplificou a leitura dos seus custos operacionais, basta solicitar o cancelamento. Devolvemos 100% do valor da assinatura, sem letras pequenas.
               </p>
             </div>
@@ -1168,46 +1142,37 @@ export default function LandingPage() {
       </section>
 
       {/* 14. DEPOIMENTOS E ESTUDOS DE CASO (PROVA SOCIAL PROFUNDA) */}
-      <section className="py-20 md:py-24 bg-[#0A1022] border-y border-white/5 relative z-10">
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981]">
-            Voz de Quem Está na Operação
+      <section className="py-20 bg-slate-50 border-y border-slate-200/80">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-6">
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+            Prova Social no Mercado
           </span>
-          <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-            Prova Social Profunda
-          </h2>
 
-          <div className="p-8 md:p-12 rounded-3xl bg-[#070B19] border border-white/10 relative shadow-2xl">
-            <span className="text-5xl font-black text-[#10B981]/30 absolute top-4 left-6">“</span>
-            <p className="text-slate-200 text-lg md:text-xl font-medium leading-relaxed italic relative z-10 pt-2">
+          <div className="p-8 md:p-12 rounded-2xl bg-white border border-slate-200 shadow-sm relative">
+            <p className="text-slate-800 text-lg md:text-xl font-medium leading-relaxed italic">
               "Antes do SmartBid, precisávamos de um dia inteiro para cruzar os benefícios do sindicato com a planilha de insumos. Hoje colocamos uma proposta completa de 50 postos na rua em menos de meia hora e com a certeza absoluta da margem de lucro."
             </p>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#10B981]/20 flex items-center justify-center font-black text-[#10B981] text-xs">
-                DC
-              </div>
-              <div className="text-left">
-                <p className="font-black text-white text-sm">Direção Comercial</p>
-                <p className="text-xs text-slate-400 font-semibold">Setor de Asseio, Conservação e Facilities</p>
-              </div>
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <p className="font-bold text-slate-900 text-sm">Direção Comercial</p>
+              <p className="text-xs text-slate-500 font-medium">Setor de Asseio, Conservação e Facilities</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* 15. PERGUNTAS FREQUENTES (FAQ ESTRATÉGICO) */}
-      <section id="faq" className="py-20 md:py-28 relative z-10">
+      <section id="faq" className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-6">
           
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#10B981]">
-              Tire as Suas Dúvidas
+          <div className="max-w-2xl mx-auto text-center space-y-4 mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1 rounded-full">
+              Dúvidas Comuns
             </span>
-            <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               Perguntas Frequentes
             </h2>
-            <p className="text-slate-400 font-medium">
-              Respostas diretas sobre implementação, CCTs e o funcionamento do sistema.
+            <p className="text-slate-600 text-base font-normal">
+              Respostas diretas sobre o funcionamento do SmartBid.
             </p>
           </div>
 
@@ -1234,17 +1199,17 @@ export default function LandingPage() {
               return (
                 <div 
                   key={idx}
-                  className="rounded-2xl bg-[#0D1527] border border-white/5 overflow-hidden transition-all"
+                  className="rounded-xl bg-slate-50 border border-slate-200 overflow-hidden"
                 >
                   <button
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/5 transition-colors"
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-100/60 transition-colors"
                   >
-                    <span className="font-black text-white text-sm md:text-base">{faq.pergunta}</span>
-                    <ChevronDown size={18} className={`text-[#10B981] transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                    <span className="font-bold text-slate-900 text-sm md:text-base">{faq.pergunta}</span>
+                    <ChevronDown size={18} className={`text-slate-600 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isOpen && (
-                    <div className="px-6 pb-6 text-slate-300 text-sm leading-relaxed border-t border-white/5 pt-4">
+                    <div className="px-5 pb-5 text-slate-600 text-sm leading-relaxed border-t border-slate-200/80 pt-3.5">
                       {faq.resposta}
                     </div>
                   )}
@@ -1257,79 +1222,64 @@ export default function LandingPage() {
       </section>
 
       {/* 16. CHAMADA PARA AÇÃO FINAL (URGÊNCIA E FECHO) */}
-      <section className="py-20 md:py-28 bg-gradient-to-b from-[#0A1022] to-[#070B19] border-t border-white/10 relative z-10 overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25 z-0">
-          <div className="w-[700px] h-[350px] bg-gradient-to-r from-blue-500/20 via-[#10B981]/25 to-teal-400/20 rounded-full blur-[120px]" />
-        </div>
-
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-6 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-[#10B981]/30 text-xs font-black uppercase tracking-wider text-[#10B981]">
-            <Flame size={14} />
-            Proteja a Saúde Financeira da Sua Empresa
-          </div>
-
-          <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight leading-tight">
+      <section className="py-24 bg-slate-900 text-white text-center">
+        <div className="max-w-4xl mx-auto px-6 space-y-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
             Pare de deixar margem de lucro na mesa e assuma o controlo total da sua esteira comercial.
           </h2>
           
-          <p className="text-slate-300 text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-slate-300 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             Descubra como estruturar orçamentos seguros, fechar contratos mais rápido e proteger a saúde financeira da sua prestadora de serviços.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="pt-4">
             <button 
               onClick={() => openDemoWithPlan('Solicitar Demonstração Gratuita Final')}
-              className="px-10 py-5 bg-[#10B981] hover:bg-[#059669] text-[#070B19] text-sm md:text-base font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-emerald-500/30 flex items-center justify-center gap-3 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+              className="px-9 py-4 bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold uppercase tracking-wider rounded-xl transition-all shadow-md inline-flex items-center gap-3 cursor-pointer"
             >
               Solicitar Demonstração Gratuita do SmartBid
               <ArrowRight size={18} />
             </button>
           </div>
-
-          <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider pt-2">
-            Demonstração prática ao vivo • Sem compromisso • Adaptada à sua convenção sindical
-          </p>
         </div>
       </section>
 
       {/* 17. RODAPÉ CORPORATIVO E INFORMAÇÕES LEGAIS */}
-      <footer className="py-14 bg-[#050812] border-t border-white/5 relative z-10 text-slate-500">
+      <footer className="py-12 bg-white border-t border-slate-200 text-slate-600 text-xs">
         <div className="max-w-7xl mx-auto px-6 space-y-8">
           
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo */}
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-[#0D1527] rounded-xl flex items-center justify-center border border-[#10B981]/20">
-                <TrendingUp className="text-[#10B981]" size={18} />
+              <div className="w-8 h-8 bg-emerald-700 rounded-lg flex items-center justify-center">
+                <TrendingUp className="text-white" size={16} />
               </div>
               <div>
-                <span className="text-base font-black tracking-tighter uppercase text-slate-200 block">
-                  Smart<span className="text-[#10B981]">Bid</span>
+                <span className="text-base font-bold text-slate-900 block leading-tight">
+                  Smart<span className="text-emerald-700">Bid</span>
                 </span>
-                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.2em] block">
+                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
                   Powered by Intelligence
                 </span>
               </div>
             </div>
 
-            {/* Informações de Contato */}
-            <div className="text-center md:text-right text-xs space-y-1">
-              <p className="font-bold text-slate-300">Suporte técnico corporativo • Curitiba/PR • Brasil</p>
+            <div className="text-center md:text-right space-y-1">
+              <p className="font-semibold text-slate-800">Suporte técnico corporativo • Curitiba/PR • Brasil</p>
               <p className="text-slate-500">Gestão analítica e formação de preço para o setor de Facilities.</p>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
-            <p className="font-medium text-slate-500">
+          <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-slate-500">
               © {new Date().getFullYear()} SmartBid • Todos os direitos reservados.
             </p>
 
-            <div className="flex items-center gap-6 font-bold uppercase tracking-widest text-[11px]">
-              <a href="#" className="hover:text-slate-300 transition-colors">Termos de Uso</a>
+            <div className="flex items-center gap-6 font-semibold uppercase tracking-wider text-[11px]">
+              <a href="#" className="hover:text-slate-900 transition-colors">Termos de Uso</a>
               <span>•</span>
-              <a href="#" className="hover:text-slate-300 transition-colors">Políticas de Privacidade</a>
+              <a href="#" className="hover:text-slate-900 transition-colors">Políticas de Privacidade</a>
               <span>•</span>
-              <a href="mailto:suporte@smartbidhub.com.br" className="hover:text-slate-300 transition-colors">Central de Ajuda</a>
+              <a href="mailto:suporte@smartbidhub.com.br" className="hover:text-slate-900 transition-colors">Central de Ajuda</a>
             </div>
           </div>
 
@@ -1338,11 +1288,11 @@ export default function LandingPage() {
 
       {/* MODAL DE AGENDAMENTO / DEMONSTRAÇÃO PRÁTICA */}
       {demoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-[#0D1527] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-2xl">
             <button 
               onClick={() => setDemoModalOpen(false)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
             >
               <X size={18} />
             </button>
@@ -1350,34 +1300,34 @@ export default function LandingPage() {
             {!demoSuccess ? (
               <form onSubmit={handleDemoSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
                     Demonstração Personalizada • 20 Minutos
                   </span>
-                  <h3 className="text-xl font-black text-white uppercase">
+                  <h3 className="text-xl font-bold text-slate-900 mt-2">
                     Ver o SmartBid em Ação
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    Interesse: <strong className="text-white">{demoPlanName}</strong>
+                  <p className="text-xs text-slate-500">
+                    Interesse: <strong className="text-slate-800">{demoPlanName}</strong>
                   </p>
                 </div>
 
                 <div className="space-y-3 pt-2">
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                       Seu Nome Completo *
                     </label>
                     <input 
                       type="text" 
                       required
-                      placeholder="Ex: João da Silva"
+                      placeholder="Ex: Cristiano Silva"
                       value={demoForm.nome}
                       onChange={(e) => setDemoForm({ ...demoForm, nome: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#070B19] border border-white/10 text-white text-xs outline-none focus:border-[#10B981]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-700"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                       E-mail Corporativo *
                     </label>
                     <input 
@@ -1386,13 +1336,13 @@ export default function LandingPage() {
                       placeholder="seuemail@suaempresa.com.br"
                       value={demoForm.email}
                       onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#070B19] border border-white/10 text-white text-xs outline-none focus:border-[#10B981]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-700"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                         WhatsApp com DDD *
                       </label>
                       <input 
@@ -1401,11 +1351,11 @@ export default function LandingPage() {
                         placeholder="(41) 99999-9999"
                         value={demoForm.whatsapp}
                         onChange={(e) => setDemoForm({ ...demoForm, whatsapp: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-[#070B19] border border-white/10 text-white text-xs outline-none focus:border-[#10B981]"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-700"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                         Nome da Empresa *
                       </label>
                       <input 
@@ -1414,19 +1364,19 @@ export default function LandingPage() {
                         placeholder="Ex: Prime Facilities"
                         value={demoForm.empresa}
                         onChange={(e) => setDemoForm({ ...demoForm, empresa: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-[#070B19] border border-white/10 text-white text-xs outline-none focus:border-[#10B981]"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-700"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                       Porte da Operação
                     </label>
                     <select
                       value={demoForm.postos}
                       onChange={(e) => setDemoForm({ ...demoForm, postos: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-[#070B19] border border-white/10 text-white text-xs outline-none focus:border-[#10B981]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-700 bg-white"
                     >
                       <option value="1 a 10 postos">1 a 10 postos alocados</option>
                       <option value="10 a 50 postos">10 a 50 postos alocados</option>
@@ -1439,27 +1389,27 @@ export default function LandingPage() {
                 <div className="pt-2">
                   <button 
                     type="submit"
-                    className="w-full py-4 bg-[#10B981] hover:bg-[#059669] text-[#070B19] text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer"
+                    className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
                   >
                     Confirmar e Agendar Demonstração
                   </button>
-                  <p className="text-[10px] text-slate-500 text-center mt-2">
-                    Sem necessidade de cartão de crédito. Resposta em minutos.
+                  <p className="text-[11px] text-slate-500 text-center mt-2">
+                    Sem necessidade de cartão de crédito. Resposta imediata.
                   </p>
                 </div>
               </form>
             ) : (
-              <div className="py-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-[#10B981] flex items-center justify-center mx-auto">
-                  <CheckCircle size={32} />
+              <div className="py-6 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+                  <CheckCircle size={30} />
                 </div>
-                <h4 className="text-xl font-black text-white uppercase">Solicitação Recebida!</h4>
-                <p className="text-sm text-slate-300 max-w-sm mx-auto">
-                  Encaminhando para o nosso canal executivo no WhatsApp para configurar a sua demonstração com CCT ao vivo.
+                <h4 className="text-lg font-bold text-slate-900">Solicitação Recebida!</h4>
+                <p className="text-xs text-slate-600 max-w-sm mx-auto">
+                  Redirecionando para o WhatsApp do nosso consultor executivo para alinhar a sua convenção coletiva ao vivo.
                 </p>
                 <button
                   onClick={() => setDemoModalOpen(false)}
-                  className="px-6 py-2.5 bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+                  className="px-5 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold"
                 >
                   Fechar
                 </button>
