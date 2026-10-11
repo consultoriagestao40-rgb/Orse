@@ -1,15 +1,11 @@
-import { Instrument_Serif, Inter_Tight } from 'next/font/google';
+import { Inter_Tight } from 'next/font/google';
 
-// Fonte editorial para títulos (dá personalidade e foge do visual "template")
-export const displayFont = Instrument_Serif({
-  subsets: ['latin'],
-  weight: '400',
-  style: ['normal', 'italic'],
-  variable: '--font-lp-display',
-});
-
-// Fonte de texto com desenho mais firme que a padrão
+// Fonte única da LP: sans-serif firme, usada em negrito nos títulos
 export const textFont = Inter_Tight({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
   variable: '--font-lp-text',
 });
+
+// Mantido por compatibilidade com o import existente (mesma fonte)
+export const displayFont = textFont;

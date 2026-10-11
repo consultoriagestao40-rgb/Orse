@@ -18,7 +18,8 @@ const C = {
   greenSoft: '#EAF1ED',
 };
 
-const serif: React.CSSProperties = { fontFamily: 'var(--font-lp-display)', fontWeight: 400 };
+// Títulos: sans-serif firme, negrito e com espaçamento justo (autoridade, sem itálico)
+const serif: React.CSSProperties = { fontFamily: 'var(--font-lp-text)', fontWeight: 700, letterSpacing: '-0.035em' };
 
 export default function LandingPage() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -201,9 +202,9 @@ export default function LandingPage() {
                 <span className="w-6 h-px" style={{ background: C.green }} />
                 Para prestadoras de serviços terceirizados
               </p>
-              <h1 className="text-[44px] sm:text-[56px] lg:text-[68px] leading-[1.02] tracking-[-0.015em]" style={serif}>
+              <h1 className="text-[40px] sm:text-[52px] lg:text-[62px] leading-[1.04]" style={serif}>
                 Transforme a sua prestadora de serviços numa máquina de contratos previsíveis
-                <span className="italic" style={{ color: C.green }}> — da prospecção de grandes contas à blindagem de margem e reajustes automáticos.</span>
+                <span style={{ color: C.green }}> Da prospecção de grandes contas à blindagem de margem e reajustes automáticos.</span>
               </h1>
             </div>
 
@@ -634,7 +635,7 @@ export default function LandingPage() {
             <div className="lg:sticky lg:top-28">
               <p className="text-[14px] mb-4" style={{ color: C.muted }}>O dia a dia de quem vende terceirização</p>
               <h2 className="text-[40px] md:text-[48px] leading-[1.05]" style={serif}>
-                Se você toca uma prestadora de serviços, já viveu <span className="italic">pelo menos três</span> destas situações.
+                Se você toca uma prestadora de serviços, já viveu pelo menos três destas situações.
               </h2>
             </div>
           </div>
@@ -678,7 +679,7 @@ export default function LandingPage() {
       <section id="solucao" className="py-24 md:py-28 text-white" style={{ background: C.green }}>
         <div className="max-w-[1200px] mx-auto px-6">
           <p className="text-[14px] text-white/60 mb-6">O que é o SmartBid</p>
-          <p className="text-[32px] md:text-[44px] leading-[1.15] max-w-[980px]" style={serif}>
+          <p className="text-[30px] md:text-[40px] leading-[1.18] max-w-[980px]" style={{ ...serif, fontWeight: 600, letterSpacing: '-0.025em' }}>
             Uma esteira única, feita para a realidade de prestadoras de limpeza, portaria, segurança e apoio operacional.
             <span className="text-white/55"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
           </p>
@@ -840,7 +841,7 @@ export default function LandingPage() {
             <div className="lg:col-span-7">
               <p className="text-[14px] mb-4" style={{ color: C.muted }}>Proposta por link</p>
               <h2 className="text-[40px] md:text-[52px] leading-[1.05]" style={serif}>
-                O fim do PDF que vai por e-mail e <span className="italic">nunca mais volta.</span>
+                O fim do PDF que vai por e-mail e <span style={{ color: C.green }}>nunca mais volta.</span>
               </h2>
             </div>
             <p className="lg:col-span-5 text-[16px] leading-[1.65] lg:pt-10" style={{ color: C.muted }}>
@@ -1016,7 +1017,7 @@ export default function LandingPage() {
             </p>
           </div>
           <figure className="lg:col-span-7 lg:border-l lg:pl-12" style={{ borderColor: C.line }}>
-            <blockquote className="text-[28px] md:text-[34px] leading-[1.25]" style={serif}>
+            <blockquote className="text-[24px] md:text-[30px] leading-[1.3]" style={{ ...serif, fontWeight: 500, letterSpacing: '-0.02em' }}>
               “Antes a gente levava um dia inteiro cruzando benefício do sindicato com planilha de insumos. Hoje uma proposta de 50 postos sai em menos de meia hora, e com a margem garantida.”
             </blockquote>
             <figcaption className="mt-6 text-[14px]">
