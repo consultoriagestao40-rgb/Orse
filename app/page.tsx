@@ -334,9 +334,18 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
     };
   }, [filteredLeads, totalPropostasCount, totalAceitasCount]);
 
-  // Cálculo de meta da empresa (com fallback padrão de R$ 100.000 / vendedor caso não haja meta configurada)
+  // Filtra apenas consultores com atividade comercial real ou metas atribuídas
+  const commercialSellers = useMemo(() => {
+    const list = totalSellers.filter((s: any) => {
+      const stats = volumePorUsuario[s.nome];
+      return (stats && stats.count > 0) || (s.meta && s.meta > 0);
+    });
+    return list.length > 0 ? list : totalSellers;
+  }, [totalSellers, volumePorUsuario]);
+
+  // Cálculo de meta da empresa (com base nos consultores comerciais ativos)
   const totalMetasEmpresa = useMemo(() => {
-    return totalSellers.reduce((acc: number, seller: any) => {
+    return commercialSellers.reduce((acc: number, seller: any) => {
       const nome = seller.nome;
       if (userFilter !== 'ALL' && nome !== userFilter) return acc;
       
@@ -357,7 +366,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
       }
       return acc + individualMeta;
     }, 0);
-  }, [totalSellers, userFilter, metas, currentMonthKey, period]);
+  }, [commercialSellers, userFilter, metas, currentMonthKey, period]);
 
   const atingidoGeralPct = totalMetasEmpresa > 0 ? (totalAceito / totalMetasEmpresa) * 100 : 0;
 
@@ -416,7 +425,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
     if (userFilter !== 'ALL') {
       const key = `${userFilter}_${mKey}`;
       const keyDef = `${userFilter}_default`;
-      const seller = totalSellers.find((u: any) => u.nome === userFilter);
+      const seller = commercialSellers.find((u: any) => u.nome === userFilter);
       if (metas[key] !== undefined && metas[key] > 0) {
         previsto = metas[key];
       } else if (metas[keyDef] !== undefined && metas[keyDef] > 0) {
@@ -427,7 +436,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
         previsto = 100000;
       }
     } else {
-      totalSellers.forEach((seller: any) => {
+      commercialSellers.forEach((seller: any) => {
         const nome = seller.nome;
         const key = `${nome}_${mKey}`;
         const keyDef = `${nome}_default`;
@@ -469,9 +478,9 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
   }
 
   const maxFaturamento = Math.max(...chartData.map(d => Math.max(d.previsto, d.realizado)), 50000);
-  const maxValY = maxFaturamento * 1.15;
+  const maxValY = maxFaturamento * 1.35;
   const maxPct = Math.max(...chartData.map(d => d.atingidoPct), 100);
-  const maxPctY = maxPct * 1.15;
+  const maxPctY = maxPct * 1.30;
 
   const formatShortCurrency = (val: number) => {
     if (val >= 1000000) return `R$ ${(val / 1000000).toFixed(1)}M`;
@@ -480,7 +489,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
   };
 
   const rankedSellers = useMemo(() => {
-    return totalSellers
+    return commercialSellers
       .filter((seller: any) => userFilter === 'ALL' || seller.nome === userFilter)
       .map((seller: any) => {
         const nome = seller.nome;
@@ -509,7 +518,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
         };
       })
       .sort((a: any, b: any) => b.stats.totalAceito - a.stats.totalAceito);
-  }, [totalSellers, volumePorUsuario, metas, currentMonthKey, userFilter, period]);
+  }, [commercialSellers, volumePorUsuario, metas, currentMonthKey, userFilter, period]);
 
   // Título e subtítulo dinâmico do hero banner
   const heroSubtitle = useMemo(() => {
@@ -1442,8 +1451,8 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                     </div>
                   )}
 
-                  <div className="min-w-[920px] h-[260px] relative px-2">
-                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 240">
+                  <div className="min-w-[920px] h-[280px] relative px-2">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 250">
                       {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
                         const yCoord = 200 - (ratio * 180);
                         const leftVal = ratio * maxFaturamento;
@@ -1519,6 +1528,20 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                               className="transition-all duration-200"
                             />
 
+                            {/* NÚMERO VERTICAL NO TOPO: META PREVISTA */}
+                            {d.previsto > 0 && (
+                              <text
+                                x={xCenter - 6}
+                                y={yPrevisto - 5}
+                                transform={`rotate(-90, ${xCenter - 6}, ${yPrevisto - 5})`}
+                                textAnchor="start"
+                                className="fill-[#6366F1] text-[8px] font-black tracking-tight pointer-events-none select-none"
+                                style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(255, 255, 255, 0.95))' }}
+                              >
+                                {formatShortCurrency(d.previsto)}
+                              </text>
+                            )}
+
                             {/* BARRA REALIZADO (ACEITO) */}
                             <rect
                               x={xCenter + 1}
@@ -1532,6 +1555,20 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                                 filter: isHovered ? `drop-shadow(0 2px 6px ${hexToRgba(brandColor, 0.4)})` : 'none'
                               }}
                             />
+
+                            {/* NÚMERO VERTICAL NO TOPO: REALIZADO (ACEITO) */}
+                            <text
+                              x={xCenter + 6}
+                              y={d.realizado > 0 ? yRealizado - 5 : 195}
+                              transform={`rotate(-90, ${xCenter + 6}, ${d.realizado > 0 ? yRealizado - 5 : 195})`}
+                              textAnchor="start"
+                              className={`text-[8px] font-black tracking-tight pointer-events-none select-none ${
+                                d.realizado > 0 ? 'fill-blue-900' : 'fill-slate-400'
+                              }`}
+                              style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(255, 255, 255, 0.95))' }}
+                            >
+                              {d.realizado > 0 ? formatShortCurrency(d.realizado) : 'R$ 0'}
+                            </text>
                             
                             {/* RÓTULO DO MÊS */}
                             <text 
@@ -1609,6 +1646,15 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                                     strokeWidth={isHovered ? 2.5 : 2}
                                     className="transition-all duration-150"
                                   />
+                                  <text
+                                    x={xCenter}
+                                    y={yCoord - 8}
+                                    textAnchor="middle"
+                                    className="fill-amber-600 text-[8px] font-black pointer-events-none select-none"
+                                    style={{ filter: 'drop-shadow(0px 1px 2px rgba(255, 255, 255, 0.95))' }}
+                                  >
+                                    {d.atingidoPct.toFixed(1)}%
+                                  </text>
                                 </g>
                               );
                             })}
