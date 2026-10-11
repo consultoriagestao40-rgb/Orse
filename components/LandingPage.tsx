@@ -8,6 +8,9 @@ import {
 import { getPlanConfigs } from '@/app/admin/empresas/actions';
 import { displayFont, textFont } from '@/components/lp/fonts';
 import '@/components/lp/lp.css';
+import ProposalJourney from '@/components/lp/ProposalJourney';
+import ModulesSection from '@/components/lp/ModulesSection';
+import SpreadsheetCompare from '@/components/lp/SpreadsheetCompare';
 
 // Paleta: papel quente, tinta escura e um único verde (o mesmo do sistema)
 const C = {
@@ -224,7 +227,8 @@ export default function LandingPage() {
 
   const navLinks = [
     { href: '#proposta-interativa', label: 'Proposta por link' },
-    { href: '#funcionalidades', label: 'Funcionalidades' },
+    { href: '#modulos', label: 'Módulos' },
+    { href: '#vs-planilhas', label: 'x Planilhas' },
     { href: '#qualificacao', label: 'Para quem é' },
     { href: '#planos', label: 'Planos' },
     { href: '#faq', label: 'Dúvidas' },
@@ -514,15 +518,12 @@ export default function LandingPage() {
                         >
                           {clientAccepted ? 'Proposta aprovada ✓' : 'Aprovar proposta'}
                         </button>
-                        <a
-                          href="https://wa.me/5541999999999"
-                          target="_blank"
-                          rel="noreferrer"
+                        <span
                           className="w-full py-2.5 rounded-lg text-[14px] border flex items-center justify-center gap-2"
                           style={{ borderColor: C.line }}
                         >
-                          <MessageSquare size={14} /> Falar no WhatsApp
-                        </a>
+                          <MessageSquare size={14} /> Pedir ajuste na proposta
+                        </span>
                         <p className="text-[11px] leading-snug pt-1" style={{ color: C.muted }}>
                           {clientAccepted
                             ? 'Aceite registrado com IP, data e horário. O contrato já entra na esteira de implantação.'
@@ -539,7 +540,7 @@ export default function LandingPage() {
                     <div className="lg:col-span-4">
                       <p className="text-[12px] flex items-center gap-2" style={{ color: C.green }}>
                         <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.green }} />
-                        Cliente visualizando agora
+                        Último acesso há 4 min
                       </p>
                       <h4 className="text-[26px] leading-tight mt-2" style={serif}>Hospital São Lucas</h4>
                       <p className="text-[13px]" style={{ color: C.muted }}>Proposta #SB-2026-89 · 22 postos</p>
@@ -549,7 +550,7 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="lg:col-span-8">
-                      <p className="text-[12px] mb-3" style={{ color: C.muted }}>Tempo e leituras por seção</p>
+                      <p className="text-[12px] mb-3" style={{ color: C.muted }}>Visualizações por seção</p>
                       <div className="space-y-5">
                         {[
                           { s: 'Planilha de custos (FPV)', d: 'Pisos, benefícios e encargos da CCT', v: 58, t: '45 min' },
@@ -559,7 +560,7 @@ export default function LandingPage() {
                           <div key={r.s}>
                             <div className="flex justify-between text-[13px]">
                               <span className="font-medium">{r.s}</span>
-                              <span className="tabular-nums" style={{ color: C.muted }}>{r.v} visualizações · {r.t}</span>
+                              <span className="tabular-nums" style={{ color: C.muted }}>{r.v} visualizações</span>
                             </div>
                             <div className="h-2 rounded-full mt-2" style={{ background: '#EFEDE8' }}>
                               <div className="h-2 rounded-full" style={{ width: `${(r.v / 58) * 100}%`, background: C.green }} />
@@ -997,6 +998,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* MÓDULOS */}
+      <ModulesSection />
+
       {/* PROPOSTA POR LINK vs PROVELO */}
       <section id="proposta-interativa" className="py-24 md:py-32 bg-white border-y" style={{ borderColor: C.line }}>
         <div className="max-w-[1200px] mx-auto px-6">
@@ -1012,6 +1016,11 @@ export default function LandingPage() {
             </p>
           </div>
 
+          <ProposalJourney />
+
+          <div className="max-w-[720px] mt-24 mb-8">
+            <h3 className="text-[30px] md:text-[38px] leading-[1.1]" style={serif}>Link de proposta todo mundo tem. Proposta com custo de CCT, não.</h3>
+          </div>
           <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: C.line }}>
             <table className="w-full min-w-[720px] text-[14px]">
               <thead>
@@ -1026,7 +1035,7 @@ export default function LandingPage() {
                 {[
                   ['Proposta em página web com a sua marca', 0, 1, 1],
                   ['Aviso quando o cliente abre', 0, 1, 1],
-                  ['Tempo de leitura por seção (custos, minuta, escopo)', 0, 2, 1],
+                  ['Visualizações por seção (custos, minuta, escopo)', 0, 2, 1],
                   ['Aceite online em um clique', 0, 1, 1],
                   ['Preço calculado pela CCT, com encargos e benefícios', 0, 0, 1],
                   ['DRE e margem do contrato', 0, 0, 1],
@@ -1051,7 +1060,7 @@ export default function LandingPage() {
             {[
               ['Rastreio silencioso', 'Saiba se o decisor abriu às 22h ou mandou o link para o diretor financeiro.'],
               ['Aceite na hora', 'O cliente clica em "Aprovar" e o contrato entra direto na implantação.'],
-              ['WhatsApp no rodapé', 'Botão para falar com o seu vendedor sem sair da proposta.'],
+              ['Pedido de ajuste', 'O cliente pede alteração pelo próprio link e o vendedor é avisado na hora.'],
               ['Registro jurídico', 'IP, data, horário e versão de cada aceite guardados.'],
             ].map(([t, d]) => (
               <div key={t} className="border-t pt-5" style={{ borderColor: C.ink }}>
@@ -1062,6 +1071,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* SMARTBID x PLANILHAS */}
+      <SpreadsheetCompare />
 
       {/* PARA QUEM É / NÃO É */}
       <section id="qualificacao" className="py-24 md:py-32">
@@ -1210,7 +1222,7 @@ export default function LandingPage() {
               },
               {
                 pergunta: 'Como funciona o rastreio da proposta enviada ao cliente?',
-                resposta: 'O sistema gera um link exclusivo. Quando o cliente abre, o SmartBid registra o tempo e o número de visitas em cada parte: apresentação, proposta, planilha de custos (FPV) e minuta.'
+                resposta: 'O sistema gera um link exclusivo. Quando o cliente abre, o SmartBid registra cada acesso, com data e hora, e quantas vezes ele abriu cada parte: apresentação, proposta, planilha de custos (FPV) e minuta. Você é avisado no sistema a cada abertura e no WhatsApp quando ele aprova ou recusa.'
               },
               {
                 pergunta: 'O sistema calcula a DRE do contrato sozinho?',

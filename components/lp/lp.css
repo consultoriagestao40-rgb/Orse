@@ -407,6 +407,23 @@
   animation: lp-live 1.6s ease-in-out infinite;
 }
 
+/* ---------- Jornada da proposta por link ---------- */
+@keyframes lp-swap-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+.lp-swap { animation: lp-swap-in 0.55s var(--ease-out, ease-out); }
+@keyframes lp-pop-in { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+.lp-pop { animation: lp-pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) both; display: flex; }
+@keyframes lp-typing-dot { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+.lp-typing { animation: lp-typing-dot 1s ease-in-out infinite; }
+@keyframes lp-msg-in { from { opacity: 0; transform: translateY(16px) scale(0.96); transform-origin: left bottom; } to { opacity: 1; transform: none; } }
+.lp-msg { animation: lp-msg-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+.lp-sign { stroke-dasharray: 520; stroke-dashoffset: 520; animation: lp-sign-draw 1.3s ease-out 0.2s forwards; }
+@keyframes lp-sign-draw { to { stroke-dashoffset: 0; } }
+
+/* ---------- Módulos ---------- */
+@keyframes lp-mod-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.lp-mod { animation: lp-mod-in 0.55s var(--ease-out, ease-out) both; }
+.lp-mod:hover > span:first-child { transform: rotate(-6deg) scale(1.08); }
+
 /* ---------- Acessibilidade ---------- */
 @media (prefers-reduced-motion: reduce) {
   .lp-root *,
