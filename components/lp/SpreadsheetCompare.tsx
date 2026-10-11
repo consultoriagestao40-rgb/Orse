@@ -66,7 +66,7 @@ export default function SpreadsheetCompare() {
                 <div key={a} className="grid grid-cols-[34px_1fr_110px] border-b last:border-b-0" style={{ borderColor: '#EFEDE8' }}>
                   <span className="px-2 py-2 border-r text-center" style={{ borderColor: C.line, color: '#9A958B', background: '#FAFAF8' }}>{i + 2}</span>
                   <span className="px-2 py-2 border-r truncate" style={{ borderColor: '#EFEDE8' }}>{a}</span>
-                  <span className="px-2 py-2 text-right font-medium" style={s === 'err' ? { background: C.redSoft, color: C.red } : s === 'warn' ? { background: '#FBF4DF', color: '#7A5410' } : undefined}>{b}</span>
+                  <span className={`px-2 py-2 text-right font-medium rounded ${s === 'err' ? 'lp-cell-err font-bold' : s === 'warn' ? 'lp-cell-warn' : ''}`}>{b}</span>
                 </div>
               ))}
             </div>
@@ -98,7 +98,7 @@ export default function SpreadsheetCompare() {
               ))}
               <div className="flex justify-between items-baseline px-4 py-3">
                 <span className="font-semibold">Preço por posto</span>
-                <span className="text-[20px]" style={{ ...title, color: C.green }}>R$ 6.385,00</span>
+                <span className="text-[20px] lp-beacon-green inline-block px-2.5 py-0.5 rounded-lg" style={{ ...title, color: C.green, background: C.greenSoft }}>R$ 6.385,00</span>
               </div>
             </div>
             <div className="flex items-start gap-2 px-4 py-3 border-t text-[12.5px]" style={{ borderColor: C.line, background: C.greenSoft, color: C.green }}>
@@ -109,7 +109,7 @@ export default function SpreadsheetCompare() {
         </div>
 
         {/* Tabela linha a linha */}
-        <div data-reveal className="rounded-[22px] border overflow-hidden bg-white" style={{ borderColor: C.line }}>
+        <div data-reveal className="rounded-[22px] border overflow-hidden bg-white shadow-sm" style={{ borderColor: C.line }}>
           <div className="hidden md:grid grid-cols-[1.1fr_1.4fr_1.4fr] text-[13px] font-semibold border-b" style={{ borderColor: C.line }}>
             <span className="px-6 py-4" style={{ color: C.muted }}>No dia a dia</span>
             <span className="px-6 py-4 flex items-center gap-2"><FileSpreadsheet size={15} style={{ color: '#1D6F42' }} /> Planilha</span>
@@ -120,7 +120,7 @@ export default function SpreadsheetCompare() {
               key={k}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
-              className="grid md:grid-cols-[1.1fr_1.4fr_1.4fr] border-b last:border-b-0 transition-colors duration-200"
+              className="lp-compare-row grid md:grid-cols-[1.1fr_1.4fr_1.4fr] border-b last:border-b-0 cursor-pointer"
               style={{ borderColor: C.line, background: hover === i ? '#FAF9F6' : '#fff' }}
             >
               <p className="px-6 pt-5 md:py-5 text-[15px] font-semibold">{k}</p>
@@ -129,7 +129,7 @@ export default function SpreadsheetCompare() {
                 {a}
               </p>
               <p className="px-6 pb-5 pt-2 md:py-5 text-[14px] leading-[1.55] flex gap-2.5 transition-colors duration-200" style={{ background: hover === i ? '#E3EDE7' : C.greenSoft }}>
-                <Check size={16} className="shrink-0 mt-0.5" style={{ color: C.green }} strokeWidth={2.5} />
+                <Check size={16} className="lp-compare-check shrink-0 mt-0.5" style={{ color: C.green }} strokeWidth={2.5} />
                 {b}
               </p>
             </div>

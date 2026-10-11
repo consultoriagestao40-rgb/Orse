@@ -281,9 +281,9 @@ export default function LandingPage() {
             <span className="text-[17px] font-semibold tracking-tight">SmartBid</span>
           </button>
 
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-2">
             {navLinks.map(l => (
-              <a key={l.href} href={l.href} className="lp-navlink text-[14px] hover:text-[#111418] transition-colors" style={{ color: C.muted }}>
+              <a key={l.href} href={l.href} className="lp-navlink text-[14px] hover:text-[#111418] hover:bg-black/[0.04] px-3.5 py-1.5 rounded-full transition-all duration-300" style={{ color: C.muted }}>
                 {l.label}
               </a>
             ))}
@@ -402,7 +402,7 @@ export default function LandingPage() {
         <div className="lp-stage lp-enter max-w-[1140px] mx-auto px-6 -mt-[180px] md:-mt-[250px] relative z-10" style={{ '--d': '1100ms' } as React.CSSProperties}>
           {/* cartões flutuantes: o que acontece enquanto você trabalha */}
           <div className="lp-float -left-[70px] top-[90px]" style={{ '--d': '2.0s' } as React.CSSProperties} aria-hidden>
-            <div className="lp-float-card rounded-2xl pl-3 pr-4 py-3 flex items-center gap-3 w-[250px]">
+            <div className="lp-float-card rounded-2xl pl-3 pr-4 py-3 flex items-center gap-3 w-[250px] shadow-lg cursor-pointer">
               <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FFF1E8' }}>
                 <Check size={18} style={{ color: '#EA580C' }} strokeWidth={3} />
               </span>
@@ -413,7 +413,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="lp-float -right-[64px] top-[150px]" style={{ '--d': '2.4s' } as React.CSSProperties} aria-hidden>
-            <div className="lp-float-card rounded-2xl px-4 py-3 w-[210px] text-left">
+            <div className="lp-float-card rounded-2xl px-4 py-3 w-[210px] text-left shadow-lg cursor-pointer">
               <p className="text-[11.5px]" style={{ color: C.muted }}>Margem bruta do contrato</p>
               <p className="text-[22px] leading-tight tabular-nums" style={{ ...serif, color: C.green }}>R$ 8.987<span className="text-[13px]" style={{ color: C.muted }}>/mês</span></p>
               <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: '#EFEDE8' }}>
@@ -422,7 +422,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="lp-float -right-[40px] top-[380px]" style={{ '--d': '2.8s' } as React.CSSProperties} aria-hidden>
-            <div className="lp-float-card rounded-full pl-2 pr-4 py-2 flex items-center gap-2">
+            <div className="lp-float-card rounded-full pl-2 pr-4 py-2 flex items-center gap-2 shadow-lg cursor-pointer">
               <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: C.greenSoft }}>
                 <Eye size={14} style={{ color: C.green }} />
               </span>
@@ -467,7 +467,7 @@ export default function LandingPage() {
 
                 {/* ABA: LINK DA PROPOSTA (o que o cliente vê) */}
                 {heroTab === 'propostaLink' && (
-                  <div className="grid lg:grid-cols-12 gap-6">
+                  <div key="propostaLink" className="lp-tab-content-enter grid lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-8 space-y-5">
                       <div className="flex items-center justify-between gap-3 text-[12px] px-3 py-2 rounded-lg border bg-white" style={{ borderColor: C.line }}>
                         <span className="truncate" style={{ color: C.muted }}>
@@ -569,10 +569,10 @@ export default function LandingPage() {
                       <div className="mt-6 space-y-2.5">
                         <button
                           onClick={() => setClientAccepted(!clientAccepted)}
-                          className="w-full py-2.5 rounded-lg text-[14px] font-medium text-white cursor-pointer transition-colors"
-                          style={{ background: clientAccepted ? C.ink : C.green }}
+                          className={`w-full py-2.5 rounded-lg text-[14px] font-medium text-white cursor-pointer transition-all duration-300 shadow-sm ${clientAccepted ? 'lp-accepted-anim' : 'hover:scale-[1.02]'}`}
+                          style={{ background: clientAccepted ? '#1B4D3E' : '#EA580C', boxShadow: clientAccepted ? '0 10px 24px -10px rgba(27,77,62,0.6)' : '0 10px 24px -10px rgba(234,88,12,0.6)' }}
                         >
-                          {clientAccepted ? 'Proposta aprovada ✓' : 'Aprovar proposta'}
+                          {clientAccepted ? '✓ Proposta aprovada online' : 'Aprovar proposta'}
                         </button>
                         <span
                           className="w-full py-2.5 rounded-lg text-[14px] border flex items-center justify-center gap-2"
@@ -592,7 +592,7 @@ export default function LandingPage() {
 
                 {/* ABA: RASTREIO DE LEITURA */}
                 {heroTab === 'telemetria' && (
-                  <div className="grid lg:grid-cols-12 gap-8">
+                  <div key="telemetria" className="lp-tab-content-enter grid lg:grid-cols-12 gap-8">
                     <div className="lg:col-span-4">
                       <p className="text-[12px] flex items-center gap-2" style={{ color: C.green }}>
                         <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.green }} />
@@ -635,7 +635,7 @@ export default function LandingPage() {
 
                 {/* ABA: RADAR COMERCIAL */}
                 {heroTab === 'radar' && (
-                  <div>
+                  <div key="radar" className="lp-tab-content-enter">
                     <div className="grid sm:grid-cols-3 gap-px rounded-xl overflow-hidden border" style={{ background: C.line, borderColor: C.line }}>
                       <div className="bg-white p-5">
                         <p className="text-[12px]" style={{ color: C.muted }}>Faturamento aceito em setembro</p>
@@ -683,7 +683,7 @@ export default function LandingPage() {
 
                 {/* ABA: DRE DO PROJETO (mesma estrutura do sistema) */}
                 {heroTab === 'dre' && (
-                  <div>
+                  <div key="dre" className="lp-tab-content-enter">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-5">
                       <div>
                         <p className="text-[12px]" style={{ color: C.muted }}>DRE do projeto · Hospital Geral São Lucas · 22 postos</p>
@@ -701,7 +701,7 @@ export default function LandingPage() {
                           type="range" min="8" max="25" step="0.5"
                           value={interactiveBdi}
                           onChange={(e) => setInteractiveBdi(parseFloat(e.target.value))}
-                          className="w-full cursor-pointer accent-[#1B4D3E]"
+                          className="lp-slider w-full cursor-pointer"
                           aria-label="Margem desejada"
                         />
                         <p className="text-[11px] mt-1" style={{ color: C.muted }}>Arraste para recalcular preço, tributos e margem.</p>
@@ -823,8 +823,8 @@ export default function LandingPage() {
               ['127×', 'acessos rastreados numa proposta'],
               ['7 dias', 'grátis para testar tudo'],
             ].map(([n, l], i) => (
-              <div key={n} className={`text-center px-4 ${i > 0 ? 'lg:border-l' : ''} ${i % 2 === 1 ? 'border-l lg:border-l' : ''}`} style={{ borderColor: C.line }}>
-                <p className="text-[44px] md:text-[52px] leading-none tabular-nums" style={{ ...serif, fontWeight: 800, color: C.ink }}><CountUp value={n} /></p>
+              <div key={n} className={`lp-stat-card text-center px-4 cursor-default ${i > 0 ? 'lg:border-l' : ''} ${i % 2 === 1 ? 'border-l lg:border-l' : ''}`} style={{ borderColor: C.line }}>
+                <p className="text-[44px] md:text-[52px] leading-none tabular-nums transition-transform duration-300 hover:scale-105" style={{ ...serif, fontWeight: 800, color: C.ink }}><CountUp value={n} /></p>
                 <p className="text-[14px] mt-3 font-medium" style={{ color: C.muted }}>{l}</p>
               </div>
             ))}
@@ -837,7 +837,7 @@ export default function LandingPage() {
             {[0, 1].map(k => (
               <div key={k} className="flex items-center shrink-0">
                 {['Asseio e conservação', 'Portaria', 'Vigilância patrimonial', 'Limpeza hospitalar', 'Manutenção predial', 'Jardinagem', 'Recepção', 'Copeiragem', 'Apoio operacional', 'Facilities industrial'].map(s => (
-                  <span key={s} className="flex items-center gap-10 pr-10 text-[20px] md:text-[24px] whitespace-nowrap" style={{ ...serif, fontWeight: 700, color: '#B9B3A8' }}>
+                  <span key={s} className="flex items-center gap-10 pr-10 text-[20px] md:text-[24px] whitespace-nowrap hover:scale-105 hover:text-[#111418] cursor-pointer transition-all duration-300" style={{ ...serif, fontWeight: 700, color: '#B9B3A8' }}>
                     {s}
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#EA580C' }} />
                   </span>
@@ -882,12 +882,12 @@ export default function LandingPage() {
                 i: 'Margem perdida por falta de repasse',
               },
             ].map((p, idx) => (
-              <div key={p.t} data-reveal className="lp-problem grid grid-cols-[48px_1fr] gap-4 py-8 border-t first:border-t-0 first:pt-0" style={{ borderColor: C.line }}>
+              <div key={p.t} data-reveal className="lp-problem grid grid-cols-[48px_1fr] gap-4 py-8 border-t first:border-t-0 first:pt-0 cursor-pointer" style={{ borderColor: C.line }}>
                 <span className="lp-problem-n text-[13px] tabular-nums pt-1.5 font-semibold" style={{ color: C.muted }}>0{idx + 1}</span>
                 <div>
                   <h3 className="text-[22px] font-semibold tracking-tight leading-snug">{p.t}</h3>
                   <p className="text-[16px] leading-[1.65] mt-2" style={{ color: C.muted }}>{p.d}</p>
-                  <p className="text-[13px] mt-3 text-[#9A3B2E]">→ {p.i}</p>
+                  <p className="lp-problem-arrow text-[13px] mt-3 font-medium text-[#9A3B2E]">→ {p.i}</p>
                 </div>
               </div>
             ))}
@@ -1009,7 +1009,7 @@ export default function LandingPage() {
                     ))}
                     <div className="flex justify-between items-baseline pt-3 mt-1 border-t" style={{ borderColor: C.line }}>
                       <span className="font-medium">Margem bruta</span>
-                      <span className="text-[26px] tabular-nums" style={{ ...serif, color: C.green }}>R$ 8.987,50</span>
+                      <span className="text-[26px] tabular-nums lp-beacon-green inline-block px-2.5 py-0.5 rounded-lg" style={{ ...serif, color: C.green, background: C.greenSoft }}>R$ 8.987,50</span>
                     </div>
                   </div>
                 ),

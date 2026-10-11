@@ -126,13 +126,13 @@ export default function ModulesSection() {
               {group.mods.map((m, i) => (
                 <div
                   key={m.t}
-                  className="lp-mod lp-card bg-white rounded-2xl border p-5 shadow-sm"
-                  style={{ borderColor: C.line, animationDelay: `${i * 70}ms` }}
+                  className="lp-mod lp-card lp-mod-interactive bg-white rounded-2xl border p-5 shadow-sm cursor-pointer group"
+                  style={{ borderColor: C.line, animationDelay: `${i * 60}ms` }}
                 >
-                  <span className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-500" style={{ background: C.greenSoft }}>
+                  <span className="lp-mod-icon w-10 h-10 rounded-xl flex items-center justify-center shadow-sm" style={{ background: C.greenSoft }}>
                     <m.icon size={19} style={{ color: C.green }} strokeWidth={2} />
                   </span>
-                  <p className="text-[16px] font-semibold mt-4">{m.t}</p>
+                  <p className="text-[16px] font-semibold mt-4 transition-colors duration-300 group-hover:text-[#1B4D3E]">{m.t}</p>
                   <p className="text-[14px] leading-[1.55] mt-1" style={{ color: C.muted }}>{m.d}</p>
                 </div>
               ))}

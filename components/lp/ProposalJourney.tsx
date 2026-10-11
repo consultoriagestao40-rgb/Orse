@@ -95,7 +95,7 @@ function ScreenConfig({ active }: { active: boolean }) {
         <p className="text-[13px] font-semibold mt-5">O que o cliente vai ver no link?</p>
         <div className="mt-3 grid sm:grid-cols-2 gap-2">
           {items.map((it, i) => (
-            <div key={it.t} className="flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors duration-500" style={{ borderColor: on && it.v ? 'rgba(27,77,62,0.3)' : C.line, background: on && it.v ? '#F7FAF8' : '#fff', transitionDelay: `${i * 110}ms` }}>
+            <div key={it.t} className="flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-300 hover:scale-[1.015] hover:shadow-sm cursor-pointer" style={{ borderColor: on && it.v ? 'rgba(27,77,62,0.3)' : C.line, background: on && it.v ? '#F7FAF8' : '#fff', transitionDelay: `${i * 110}ms` }}>
               <it.icon size={16} style={{ color: on && it.v ? C.green : '#A8A296' }} className="shrink-0 transition-colors duration-500" />
               <div className="min-w-0 flex-1">
                 <p className="text-[12.5px] font-semibold truncate">{it.t}</p>
@@ -499,7 +499,7 @@ export default function ProposalJourney() {
             <button
               key={s.id}
               onClick={() => go(i)}
-              className="relative text-left rounded-2xl border p-4 cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-0.5"
+              className="relative text-left rounded-2xl border p-4 cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
               style={{ borderColor: on ? 'rgba(27,77,62,0.35)' : C.line, background: on ? '#fff' : 'transparent', boxShadow: on ? '0 18px 40px -26px rgba(17,20,24,0.35)' : 'none' }}
             >
               <div className="flex items-center gap-2.5">

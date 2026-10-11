@@ -875,3 +875,167 @@
   box-shadow: 0 25px 50px -20px rgba(27, 77, 62, 0.16), 0 8px 24px -10px rgba(17, 20, 24, 0.08);
 }
 
+/* =========================================================
+   V6 — Micro-efeitos de Elite & Interações Dinâmicas
+   ========================================================= */
+
+/* Transição fluida de abas e palcos */
+@keyframes lp-stage-fade-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.992); filter: blur(3px); }
+  100% { opacity: 1; transform: none; filter: blur(0); }
+}
+.lp-tab-content-enter {
+  animation: lp-stage-fade-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Pulso de erro para células de planilha quebradas */
+@keyframes lp-error-pulse {
+  0%, 100% { background-color: #FBEDEA; color: #9A3B2E; }
+  50% { background-color: #F8D2CC; color: #78261B; }
+}
+.lp-cell-err {
+  animation: lp-error-pulse 2.2s ease-in-out infinite;
+}
+
+/* Pulso de aviso para fórmulas desatualizadas */
+@keyframes lp-warn-pulse {
+  0%, 100% { background-color: #FBF4DF; color: #7A5410; }
+  50% { background-color: #F6E6B8; color: #5C3D06; }
+}
+.lp-cell-warn {
+  animation: lp-warn-pulse 2.6s ease-in-out infinite;
+}
+
+/* Brilho pulsante de margem/resultado no SmartBid */
+@keyframes lp-emerald-beacon {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 125, 99, 0.45); }
+  50% { box-shadow: 0 0 0 10px rgba(46, 125, 99, 0); }
+}
+.lp-beacon-green {
+  animation: lp-emerald-beacon 2.4s ease-in-out infinite;
+}
+
+/* Efeito magnético de hover nos itens de problema */
+.lp-problem {
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 16px;
+}
+.lp-problem:hover {
+  background: rgba(27, 77, 62, 0.035);
+  padding-left: 16px;
+  padding-right: 16px;
+  transform: translateX(4px);
+}
+.lp-problem .lp-problem-arrow {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s;
+}
+.lp-problem:hover .lp-problem-arrow {
+  transform: translateX(8px);
+  color: #EA580C !important;
+}
+
+/* Hover interativo nos módulos com rotação de ícone e elevação física */
+.lp-mod-interactive {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, background-color 0.3s;
+}
+.lp-mod-interactive:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px -16px rgba(27, 77, 62, 0.22);
+  border-color: rgba(27, 77, 62, 0.28) !important;
+}
+.lp-mod-interactive:hover .lp-mod-icon {
+  transform: scale(1.14) rotate(-8deg);
+  background: #1B4D3E !important;
+  color: #FFFFFF !important;
+}
+.lp-mod-icon {
+  transition: transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1), background-color 0.35s, color 0.35s;
+}
+
+/* Cartões flutuantes no Hero com hover reativo */
+.lp-float-card {
+  transition: transform 0.4s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.4s;
+  cursor: default;
+}
+.lp-float-card:hover {
+  transform: scale(1.06) translateY(-4px);
+  box-shadow: 0 30px 60px -20px rgba(17, 20, 24, 0.35), 0 0 20px rgba(255, 122, 47, 0.2);
+}
+
+/* Hover nos cards de métricas (números) */
+.lp-stat-card {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s, box-shadow 0.3s;
+  border-radius: 16px;
+  padding: 16px 12px;
+}
+.lp-stat-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 16px 36px -16px rgba(27, 77, 62, 0.14);
+}
+
+/* Chips interativos dentro dos previews de funcionalidades */
+.lp-chip-interactive {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s, border-color 0.3s;
+}
+.lp-chip-interactive:hover {
+  transform: translateX(6px) scale(1.01);
+  box-shadow: 0 10px 24px -10px rgba(17, 20, 24, 0.18);
+  border-color: rgba(27, 77, 62, 0.25) !important;
+}
+
+/* Linha da tabela interativa no SmartBid x Planilhas */
+.lp-compare-row {
+  transition: background-color 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp-compare-row:hover {
+  background: #F8FAF8 !important;
+}
+.lp-compare-row:hover .lp-compare-check {
+  transform: scale(1.25);
+  transition: transform 0.3s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+/* Botão de aceite online com celebração */
+@keyframes lp-success-pop {
+  0% { transform: scale(0.92); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+.lp-accepted-anim {
+  animation: lp-success-pop 0.4s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}
+
+/* Indicador de barra de progresso com animação */
+.lp-bar-fill {
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Range slider customizado com visual refinado */
+input[type="range"].lp-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #E5E2DC;
+  border-radius: 999px;
+  outline: none;
+  transition: background 0.3s;
+}
+input[type="range"].lp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1B4D3E;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 4px 12px rgba(27, 77, 62, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.2s;
+}
+input[type="range"].lp-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 6px 16px rgba(27, 77, 62, 0.6), 0 0 0 6px rgba(46, 125, 99, 0.15);
+}
+
