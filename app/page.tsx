@@ -8,25 +8,50 @@ import {
   ArrowUpRight, Award, Briefcase, Activity, Percent, Filter, 
   Calendar, CheckCircle, Edit2, Check, Target, Zap,
   Building, Wrench, Truck, Smartphone, LogOut, RefreshCw,
-  ChevronRight, Sparkles, Trophy, ArrowRight
+  ChevronRight, Sparkles, Trophy, ArrowRight, Shield, Layers, Flame
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
 
-function RadarComercialDashboard() {
+function hexToRgba(hex: string, alpha: number) {
+  if (!hex) return `rgba(30, 58, 138, ${alpha})`;
+  const clean = hex.replace('#', '').trim();
+  const r = parseInt(clean.substring(0, 2), 16) || 30;
+  const g = parseInt(clean.substring(2, 4), 16) || 58;
+  const b = parseInt(clean.substring(4, 6), 16) || 138;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: string }) {
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [kpis, setKpis] = useState<any>(null);
 
-  // Filtros
+  // Cor dinâmica da marca da empresa
+  const [brandColor, setBrandColor] = useState<string>(() => {
+    if (initialBrandColor) return initialBrandColor;
+    if (typeof window !== 'undefined') {
+      try {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+        if (cookie) {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          if (parsed.primaryColor) return parsed.primaryColor;
+        }
+      } catch {}
+    }
+    return '#1E3A8A';
+  });
+
+  // Filtros - Padrão 'all' para carregar todo o histórico e não zerar conversões
   const [userFilter, setUserFilter] = useState<string>('ALL');
-  const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('mes');
+  const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return new Date().toISOString().substring(0, 7); // Ex: "2026-10"
+    return new Date().toISOString().substring(0, 7);
   });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [chartViewMode, setChartViewMode] = useState<'mensal' | 'acumulada'>('mensal');
+  const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
 
   // Metas por vendedor
   const [metas, setMetas] = useState<Record<string, number>>({});
@@ -36,18 +61,24 @@ function RadarComercialDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [data] = await Promise.all([
+      const [data, freshUser] = await Promise.all([
         getKPIs(),
-        new Promise(resolve => setTimeout(resolve, 800))
+        getLoggedUser()
       ]);
       setKpis(data);
+
+      if (freshUser?.tenant?.primaryColor) {
+        setBrandColor(freshUser.tenant.primaryColor);
+      }
 
       if (data?.usuarios) {
         const dbMetas: Record<string, number> = {};
         const activeMonthKey = new Date().toISOString().substring(0, 7);
         data.usuarios.forEach((seller: any) => {
           const goalKey = `${seller.nome}_${activeMonthKey}`;
-          dbMetas[goalKey] = seller.meta || 0;
+          if (seller.meta > 0) {
+            dbMetas[goalKey] = seller.meta;
+          }
         });
         setMetas(prev => ({ ...prev, ...dbMetas }));
       }
@@ -102,7 +133,7 @@ function RadarComercialDashboard() {
     }
   }, [period, selectedMonth]);
 
-  // Carrega metas do localStorage e sincroniza com o banco de dados
+  // Carrega metas do localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sb_kpi_goals');
@@ -116,25 +147,17 @@ function RadarComercialDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    if (kpis?.usuarios) {
-      const dbMetas: Record<string, number> = {};
-      const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-      kpis.usuarios.forEach((seller: any) => {
-        const goalKey = `${seller.nome}_${activeMonthKey}`;
-        dbMetas[goalKey] = seller.meta || 0;
-      });
-      setMetas(prev => ({ ...prev, ...dbMetas }));
-    }
-  }, [kpis, startDate]);
-
   const handleSaveInlineGoal = async (userId: string, userName: string) => {
     const clean = editGoalValue.replace(/R\$/gi, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '.');
     const parsedNum = Number(clean);
     const val = isNaN(parsedNum) ? 0 : parsedNum;
 
-    const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-    const updatedMetas = { ...metas, [`${userName}_${activeMonthKey}`]: val };
+    const currentMonthKey = new Date().toISOString().substring(0, 7);
+    const updatedMetas = { 
+      ...metas, 
+      [`${userName}_${currentMonthKey}`]: val,
+      [`${userName}_default`]: val
+    };
     setMetas(updatedMetas);
     
     if (typeof window !== 'undefined') {
@@ -170,25 +193,41 @@ function RadarComercialDashboard() {
   const totalSellers = kpis?.usuarios || [];
 
   const filteredPropostas = propostasList.filter((p: any) => {
-    const d = new Date(p.dataCriacao);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const dataCriacaoStr = `${y}-${m}-${day}`;
+    const dCriacao = new Date(p.dataCriacao);
+    const yC = dCriacao.getFullYear();
+    const mC = String(dCriacao.getMonth() + 1).padStart(2, '0');
+    const dayC = String(dCriacao.getDate()).padStart(2, '0');
+    const dataCriacaoStr = `${yC}-${mC}-${dayC}`;
+
+    let dataAceitacaoStr = '';
+    if (p.dataAceitacao) {
+      const dAceite = new Date(p.dataAceitacao);
+      const yA = dAceite.getFullYear();
+      const mA = String(dAceite.getMonth() + 1).padStart(2, '0');
+      const dayA = String(dAceite.getDate()).padStart(2, '0');
+      dataAceitacaoStr = `${yA}-${mA}-${dayA}`;
+    }
     
-    if (userFilter !== 'ALL' && p.usuario !== userFilter) {
-      return false;
+    if (userFilter !== 'ALL' && p.usuario !== userFilter) return false;
+
+    // Se há filtro por data: entra se foi criada no período OU se foi aceita no período!
+    if (startDate) {
+      const criadaNoPeriodo = dataCriacaoStr >= startDate && (!endDate || dataCriacaoStr <= endDate);
+      const aceitaNoPeriodo = Boolean(dataAceitacaoStr && dataAceitacaoStr >= startDate && (!endDate || dataAceitacaoStr <= endDate));
+      if (!criadaNoPeriodo && !aceitaNoPeriodo) {
+        return false;
+      }
+    } else if (endDate) {
+      const criadaNoPeriodo = dataCriacaoStr <= endDate;
+      const aceitaNoPeriodo = Boolean(dataAceitacaoStr && dataAceitacaoStr <= endDate);
+      if (!criadaNoPeriodo && !aceitaNoPeriodo) {
+        return false;
+      }
     }
-    if (startDate && dataCriacaoStr < startDate) {
-      return false;
-    }
-    if (endDate && dataCriacaoStr > endDate) {
-      return false;
-    }
+
     return true;
   });
 
-  // Totais principais
   let totalVolume = 0;
   let totalAceito = 0;
   let totalPropostasCount = filteredPropostas.length;
@@ -243,7 +282,7 @@ function RadarComercialDashboard() {
   const conversaoQuantidade = totalPropostasCount > 0 ? (totalAceitasCount / totalPropostasCount) * 100 : 0;
   const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
 
-  const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+  const currentMonthKey = new Date().toISOString().substring(0, 7);
 
   const formatMonthYear = (monthKey: string) => {
     try {
@@ -255,35 +294,49 @@ function RadarComercialDashboard() {
     }
   };
 
-  const totalMetasEmpresa = totalSellers.reduce((acc: number, seller: any) => {
-    const nome = seller.nome;
-    if (userFilter !== 'ALL' && nome !== userFilter) return acc;
-    const key = `${nome}_${activeMonthKey}`;
-    const dbMeta = seller.meta > 0 ? seller.meta : 100000;
-    const m = metas[key] !== undefined ? metas[key] : dbMeta;
-    return acc + m;
-  }, 0);
+  // Cálculo de meta da empresa
+  const totalMetasEmpresa = useMemo(() => {
+    return totalSellers.reduce((acc: number, seller: any) => {
+      const nome = seller.nome;
+      if (userFilter !== 'ALL' && nome !== userFilter) return acc;
+      
+      const keyMonth = `${nome}_${currentMonthKey}`;
+      const keyDefault = `${nome}_default`;
+      
+      let individualMeta = 0;
+      if (metas[keyMonth] && metas[keyMonth] > 0) {
+        individualMeta = metas[keyMonth];
+      } else if (metas[keyDefault] && metas[keyDefault] > 0) {
+        individualMeta = metas[keyDefault];
+      } else if (seller.meta > 0) {
+        individualMeta = seller.meta;
+      }
+
+      if (period === 'ano') {
+        return acc + (individualMeta * 12);
+      }
+      return acc + individualMeta;
+    }, 0);
+  }, [totalSellers, userFilter, metas, currentMonthKey, period]);
 
   const atingidoGeralPct = totalMetasEmpresa > 0 ? (totalAceito / totalMetasEmpresa) * 100 : 0;
 
-  // Projeção de Fechamento (Run-Rate do Mês)
+  // Run-Rate Projeção
   const runRateProjection = useMemo(() => {
     const today = new Date();
     const currentDay = today.getDate();
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if (currentDay > 0 && totalAceito > 0) {
-      const projecao = (totalAceito / currentDay) * daysInMonth;
-      return projecao;
+      return (totalAceito / currentDay) * daysInMonth;
     }
     return totalAceito;
   }, [totalAceito]);
 
-  // Gráfico histórico
+  // Gráfico histórico mensal
   const currentYear = new Date().getFullYear();
   const chartMonths: string[] = [];
   for (let i = 0; i < 12; i++) {
-    const monthKey = `${currentYear}-${String(i + 1).padStart(2, '0')}`;
-    chartMonths.push(monthKey);
+    chartMonths.push(`${currentYear}-${String(i + 1).padStart(2, '0')}`);
   }
 
   const getShortMonthName = (monthKey: string) => {
@@ -298,17 +351,23 @@ function RadarComercialDashboard() {
   const monthlyData = chartMonths.map((mKey: string) => {
     let realizado = 0;
     propostasList.forEach((p: any) => {
-      if (p.dataCriacao) {
-        const d = new Date(p.dataCriacao);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const pKey = `${y}-${m}`;
-        
-        if (pKey === mKey) {
-          if (userFilter !== 'ALL' && p.usuario !== userFilter) return;
-          if (p.isAceito) {
-            realizado += p.valor || 0;
-          }
+      let matchMonth = false;
+      if (p.dataAceitacao) {
+        const dA = new Date(p.dataAceitacao);
+        const yA = dA.getFullYear();
+        const mA = String(dA.getMonth() + 1).padStart(2, '0');
+        if (`${yA}-${mA}` === mKey) matchMonth = true;
+      } else if (p.dataCriacao) {
+        const dC = new Date(p.dataCriacao);
+        const yC = dC.getFullYear();
+        const mC = String(dC.getMonth() + 1).padStart(2, '0');
+        if (`${yC}-${mC}` === mKey) matchMonth = true;
+      }
+
+      if (matchMonth) {
+        if (userFilter !== 'ALL' && p.usuario !== userFilter) return;
+        if (p.isAceito) {
+          realizado += p.valor || 0;
         }
       }
     });
@@ -316,15 +375,27 @@ function RadarComercialDashboard() {
     let previsto = 0;
     if (userFilter !== 'ALL') {
       const key = `${userFilter}_${mKey}`;
+      const keyDef = `${userFilter}_default`;
       const seller = totalSellers.find((u: any) => u.nome === userFilter);
-      const dbMeta = seller?.meta > 0 ? seller.meta : 100000;
-      previsto = metas[key] !== undefined ? metas[key] : dbMeta;
+      if (metas[key] && metas[key] > 0) {
+        previsto = metas[key];
+      } else if (metas[keyDef] && metas[keyDef] > 0) {
+        previsto = metas[keyDef];
+      } else if (seller?.meta > 0) {
+        previsto = seller.meta;
+      }
     } else {
       totalSellers.forEach((seller: any) => {
         const nome = seller.nome;
         const key = `${nome}_${mKey}`;
-        const dbMeta = seller.meta > 0 ? seller.meta : 100000;
-        previsto += metas[key] !== undefined ? metas[key] : dbMeta;
+        const keyDef = `${nome}_default`;
+        if (metas[key] && metas[key] > 0) {
+          previsto += metas[key];
+        } else if (metas[keyDef] && metas[keyDef] > 0) {
+          previsto += metas[keyDef];
+        } else if (seller.meta > 0) {
+          previsto += seller.meta;
+        }
       });
     }
 
@@ -344,12 +415,11 @@ function RadarComercialDashboard() {
     chartData = monthlyData.map((d) => {
       accPrevisto += d.previsto;
       accRealizado += d.realizado;
-      const atingidoPct = accPrevisto > 0 ? (accRealizado / accPrevisto) * 100 : 0;
       return {
         ...d,
         previsto: accPrevisto,
         realizado: accRealizado,
-        atingidoPct
+        atingidoPct: accPrevisto > 0 ? (accRealizado / accPrevisto) * 100 : 0
       };
     });
   }
@@ -365,38 +435,64 @@ function RadarComercialDashboard() {
     return `R$ ${val}`;
   };
 
-  // Ranking de vendedores ordenados por faturamento aceito
   const rankedSellers = useMemo(() => {
     return totalSellers
       .filter((seller: any) => userFilter === 'ALL' || seller.nome === userFilter)
       .map((seller: any) => {
         const nome = seller.nome;
         const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
-        const goalKey = `${nome}_${activeMonthKey}`;
-        const dbMeta = seller.meta > 0 ? seller.meta : 100000;
-        const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : dbMeta;
-        const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
+        const goalKey = `${nome}_${currentMonthKey}`;
+        const keyDef = `${nome}_default`;
+        
+        let metaVal = 0;
+        if (metas[goalKey] && metas[goalKey] > 0) {
+          metaVal = metas[goalKey];
+        } else if (metas[keyDef] && metas[keyDef] > 0) {
+          metaVal = metas[keyDef];
+        } else if (seller.meta > 0) {
+          metaVal = seller.meta;
+        }
+
+        const effectiveGoal = period === 'ano' ? metaVal * 12 : metaVal;
+        const atingidoPct = effectiveGoal > 0 ? (stats.totalAceito / effectiveGoal) * 100 : 0;
+        const conversaoPct = stats.totalVal > 0 ? (stats.totalAceito / stats.totalVal) * 100 : 0;
         return {
           ...seller,
           stats,
-          metaVal,
-          atingidoPct
+          metaVal: effectiveGoal,
+          atingidoPct,
+          conversaoPct
         };
       })
       .sort((a: any, b: any) => b.stats.totalAceito - a.stats.totalAceito);
-  }, [totalSellers, volumePorUsuario, metas, activeMonthKey, userFilter]);
+  }, [totalSellers, volumePorUsuario, metas, currentMonthKey, userFilter, period]);
+
+  // Título e subtítulo dinâmico do hero banner
+  const heroSubtitle = useMemo(() => {
+    if (period === 'all') return 'Histórico Consolidado da Plataforma';
+    if (period === 'ano') return `Ano Vigente de ${currentYear}`;
+    if (period === 'mes') return formatMonthYear(selectedMonth);
+    if (period === '7') return 'Últimos 7 dias';
+    if (period === '30') return 'Últimos 30 dias';
+    return 'Período Personalizado';
+  }, [period, selectedMonth, currentYear]);
 
   if (!hasLoadedOnce) {
     return (
       <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex items-center justify-center overflow-hidden font-sans">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
-          <div className="w-[400px] h-[400px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[100px] animate-pulse" />
-        </div>
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
-            <TrendingUp className="text-[#10B981]" size={32} />
+          <div 
+            className="w-16 h-16 rounded-2xl flex items-center justify-center animate-spin"
+            style={{ 
+              backgroundColor: hexToRgba(brandColor, 0.2),
+              border: `1px solid ${hexToRgba(brandColor, 0.4)}`
+            }}
+          >
+            <TrendingUp size={30} style={{ color: brandColor }} />
           </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando Radar Comercial...</span>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-white animate-pulse">
+            Carregando Radar Comercial...
+          </span>
         </div>
       </div>
     );
@@ -409,30 +505,34 @@ function RadarComercialDashboard() {
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           
-          {/* HEADER EXECUTIVO COM FILTROS EM PILLS */}
-          <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200/90 pb-5">
+          {/* HEADER EXECUTIVO INTEGRADO COM A COR DA MARCA */}
+          <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-5">
             <div>
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 bg-[#1B4D3E] text-white rounded-xl shadow-sm shadow-[#1B4D3E]/20">
-                  <BarChart2 size={22} />
+              <div className="flex items-center gap-3">
+                <span 
+                  className="p-2.5 rounded-2xl text-white shadow-md flex items-center justify-center"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <BarChart2 size={24} />
                 </span>
                 <div>
-                  <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                     Radar Comercial & KPIs
                   </h1>
-                  <p className="text-slate-500 text-xs font-medium mt-0.5">
-                    Cockpit executivo de conversão, metas corporativas e inteligência comercial
+                  <p className="text-slate-500 text-xs font-semibold mt-0.5">
+                    Cockpit executivo de conversão, metas da equipe e inteligência de mercado
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* SELETORES E BOTÃO ATUALIZAR */}
-            <div className="flex flex-wrap items-center gap-3">
+            {/* SELETORES E ATUALIZAÇÃO */}
+            <div className="flex flex-wrap items-center gap-2.5">
               
               {/* FILTRO DE VENDEDOR */}
               <select 
-                className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#1B4D3E] shadow-xs cursor-pointer"
+                className="bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 outline-none shadow-xs cursor-pointer focus:ring-2"
+                style={{ outlineColor: brandColor }}
                 value={userFilter}
                 onChange={e => setUserFilter(e.target.value)}
               >
@@ -442,11 +542,11 @@ function RadarComercialDashboard() {
                 ))}
               </select>
 
-              {/* SELETOR DE MÊS (SE ESTIVER EM MENSAL) */}
+              {/* SELETOR DE MÊS */}
               {period === 'mes' && (
                 <input 
                   type="month"
-                  className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#1B4D3E] shadow-xs cursor-pointer"
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 outline-none shadow-xs cursor-pointer focus:ring-2"
                   value={selectedMonth}
                   onChange={e => setSelectedMonth(e.target.value)}
                 />
@@ -459,7 +559,7 @@ function RadarComercialDashboard() {
                 title="Sincronizar indicadores"
                 className="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-extrabold py-2 px-3.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer active:scale-95"
               >
-                <RefreshCw size={14} className={loading ? 'animate-spin text-[#1B4D3E]' : ''} />
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} style={{ color: brandColor }} />
                 <span>Atualizar</span>
               </button>
             </div>
@@ -472,29 +572,32 @@ function RadarComercialDashboard() {
                 <Filter size={12} /> Período:
               </span>
               {[
-                { id: 'mes', label: '📅 Este Mês' },
-                { id: '7', label: '7 Dias' },
-                { id: '30', label: '30 Dias' },
-                { id: 'ano', label: 'Ano Vigente' },
                 { id: 'all', label: 'Todo o Histórico' },
+                { id: 'ano', label: `Ano Vigente (${currentYear})` },
+                { id: 'mes', label: '📅 Este Mês' },
+                { id: '30', label: '30 Dias' },
+                { id: '7', label: '7 Dias' },
                 { id: 'custom', label: '⚙️ Personalizado' }
-              ].map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => setPeriod(item.id as any)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    period === item.id 
-                      ? 'bg-[#1B4D3E] text-white shadow-xs' 
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
+              ].map(item => {
+                const isActive = period === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setPeriod(item.id as any)}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: isActive ? brandColor : '#F1F5F9',
+                      color: isActive ? '#FFFFFF' : '#475569',
+                      boxShadow: isActive ? `0 2px 8px ${hexToRgba(brandColor, 0.25)}` : 'none'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Range de Datas Ativo */}
-            <div className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
+            <div className="text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
               {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início'} 
               <span className="mx-1 text-slate-400">até</span> 
               {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Hoje'}
@@ -503,7 +606,10 @@ function RadarComercialDashboard() {
 
           {loading ? (
             <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1B4D3E] mx-auto mb-4"></div>
+              <div 
+                className="animate-spin rounded-full h-10 w-10 border-b-2 mx-auto mb-4"
+                style={{ borderColor: brandColor, borderTopColor: 'transparent' }}
+              />
               <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Processando indicadores comerciais...</p>
             </div>
           ) : (propostasList.length === 0 && totalSellers.length === 0) ? (
@@ -513,20 +619,25 @@ function RadarComercialDashboard() {
             </div>
           ) : (
             <>
-              {/* CARD HERO CORPORATIVO: META GLOBAL DA EMPRESA */}
-              <div className="bg-gradient-to-br from-[#0B251E] via-[#12362B] to-[#1B4D3E] rounded-3xl p-6 md:p-8 text-white shadow-xl border border-emerald-950/40 relative overflow-hidden">
-                <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+              {/* CARD DE DESTAQUE: META GLOBAL CORPORATIVA (NA COR DA MARCA) */}
+              <div 
+                className="rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden"
+                style={{ 
+                  background: `linear-gradient(135deg, ${brandColor} 0%, ${hexToRgba(brandColor, 0.88)} 50%, #0F172A 100%)`
+                }}
+              >
+                <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
                   
-                  {/* Lado Esquerdo: Identificação da Meta */}
+                  {/* Informações da Meta */}
                   <div className="space-y-3 max-w-xl">
                     <div className="flex items-center gap-2">
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                        <Target size={12} className="text-emerald-400" /> Meta Global Corporativa
+                      <span className="bg-white/15 text-white border border-white/20 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                        <Target size={12} /> Meta Corporativa
                       </span>
-                      <span className="text-xs text-slate-300 font-medium">
-                        {formatMonthYear(activeMonthKey)}
+                      <span className="text-xs text-white/90 font-semibold">
+                        {heroSubtitle}
                       </span>
                     </div>
 
@@ -534,64 +645,78 @@ function RadarComercialDashboard() {
                       Desempenho Comercial & Metas
                     </h2>
 
-                    <p className="text-xs text-emerald-100/80 leading-relaxed font-normal">
-                      Acompanhamento em tempo real do faturamento convertido pela equipe comercial vs. a meta estipulada para a carteira.
+                    <p className="text-xs text-white/80 leading-relaxed font-normal">
+                      Acompanhamento em tempo real do faturamento convertido pela equipe comercial vs. a meta corporativa estipulada.
                     </p>
 
-                    {/* Projeção / Run Rate */}
-                    <div className="flex flex-wrap items-center gap-4 pt-2">
-                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs">
-                        <span className="text-[10px] text-emerald-200 block uppercase font-black">Projeção do Mês (Run-Rate)</span>
-                        <span className="font-extrabold text-white">{formatCurrency(runRateProjection)}</span>
+                    {/* Projeção e Pipeline Quente */}
+                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-xs">
+                        <span className="text-[10px] text-white/70 block uppercase font-black">Projeção Mensal (Run-Rate)</span>
+                        <span className="font-extrabold text-white text-sm">{formatCurrency(runRateProjection)}</span>
                       </div>
 
-                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs">
-                        <span className="text-[10px] text-emerald-200 block uppercase font-black">Pipeline Quente (Aberto)</span>
-                        <span className="font-extrabold text-emerald-300">{formatCurrency(Math.max(0, totalVolume - totalAceito))}</span>
+                      <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-xs">
+                        <span className="text-[10px] text-white/70 block uppercase font-black">Pipeline em Negociação</span>
+                        <span className="font-extrabold text-white text-sm">{formatCurrency(Math.max(0, totalVolume - totalAceito))}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Lado Direito: Velocímetro SVG & Valores */}
-                  <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-10 border-t lg:border-t-0 lg:border-l border-emerald-800/80 pt-6 lg:pt-0 lg:pl-10">
+                  {/* Faturamento e Progresso / Taxa de Conversão */}
+                  <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-10 border-t lg:border-t-0 lg:border-l border-white/20 pt-6 lg:pt-0 lg:pl-10">
                     
                     <div className="text-center sm:text-right">
-                      <span className="text-[10px] uppercase font-black tracking-wider text-emerald-300 block">
-                        Faturamento Aceito / Meta
+                      <span className="text-[10px] uppercase font-black tracking-wider text-white/75 block">
+                        {totalMetasEmpresa > 0 ? 'Faturamento Aceito / Meta' : 'Faturamento Convertido'}
                       </span>
                       <p className="text-2xl md:text-3xl font-black text-white mt-1">
                         {formatCurrency(totalAceito)}
                       </p>
-                      <p className="text-xs text-emerald-200/80 font-bold mt-0.5">
-                        Meta: {formatCurrency(totalMetasEmpresa)}
-                      </p>
+                      {totalMetasEmpresa > 0 ? (
+                        <p className="text-xs text-white/80 font-bold mt-0.5">
+                          Meta: {formatCurrency(totalMetasEmpresa)}
+                        </p>
+                      ) : (
+                        <div className="mt-1 flex flex-col items-center sm:items-end">
+                          <span className="text-[11px] text-white/90 font-bold">
+                            {totalAceitasCount} {totalAceitasCount === 1 ? 'contrato convertido' : 'contratos convertidos'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const el = document.getElementById('secao-equipe-metas');
+                              el?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="text-[10px] font-black uppercase text-amber-300 hover:text-amber-200 underline mt-1 cursor-pointer"
+                          >
+                            + Definir metas da equipe
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Velocímetro Precision SVG */}
+                    {/* Gauge de Progresso ou Conversão */}
                     <div className="flex flex-col items-center shrink-0">
                       <div className="w-36 h-20 overflow-hidden relative">
                         <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
-                          {/* Trilho de Fundo */}
                           <path
                             d="M 10 50 A 40 40 0 0 1 90 50"
                             fill="none"
-                            stroke="#06211A"
+                            stroke="rgba(255, 255, 255, 0.2)"
                             strokeWidth="9"
                             strokeLinecap="round"
                           />
-                          {/* Arco de Progresso com Gradiente */}
                           <path
                             d="M 10 50 A 40 40 0 0 1 90 50"
                             fill="none"
-                            stroke="#10B981"
+                            stroke="#FFFFFF"
                             strokeWidth="9"
                             strokeLinecap="round"
                             strokeDasharray="125.66"
-                            strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
+                            strokeDashoffset={125.66 - (125.66 * Math.min(100, totalMetasEmpresa > 0 ? atingidoGeralPct : taxaConversao)) / 100}
                             className="transition-all duration-1000 ease-out"
-                            style={{ filter: 'drop-shadow(0px 2px 6px rgba(16, 185, 129, 0.4))' }}
                           />
-                          {/* Ponteiro */}
                           <line
                             x1="50"
                             y1="50"
@@ -600,7 +725,7 @@ function RadarComercialDashboard() {
                             stroke="#F59E0B"
                             strokeWidth="2.5"
                             strokeLinecap="round"
-                            transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
+                            transform={`rotate(${((Math.min(100, totalMetasEmpresa > 0 ? atingidoGeralPct : taxaConversao) / 100) * 180) - 90} 50 50)`}
                           />
                           <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
                           <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
@@ -609,12 +734,12 @@ function RadarComercialDashboard() {
 
                       <div className="text-center mt-2">
                         <span className="text-2xl font-black text-white leading-none">
-                          {atingidoGeralPct.toFixed(1)}%
+                          {totalMetasEmpresa > 0 ? `${atingidoGeralPct.toFixed(1)}%` : `${taxaConversao.toFixed(1)}%`}
                         </span>
-                        <span className={`text-[9px] uppercase font-black tracking-wider block mt-1 ${
-                          atingidoGeralPct >= 100 ? 'text-emerald-300' : atingidoGeralPct >= 70 ? 'text-amber-300' : 'text-slate-300'
-                        }`}>
-                          {atingidoGeralPct >= 100 ? '🏆 Meta Batida!' : atingidoGeralPct >= 70 ? '⚡ Ritmo Forte' : 'Em Andamento'}
+                        <span className="text-[9px] uppercase font-black tracking-wider block mt-1 text-white/80">
+                          {totalMetasEmpresa > 0 
+                            ? (atingidoGeralPct >= 100 ? '🏆 Meta Batida!' : atingidoGeralPct >= 70 ? '⚡ Ritmo Forte' : 'Em Andamento')
+                            : 'Taxa de Conversão'}
                         </span>
                       </div>
                     </div>
@@ -627,11 +752,14 @@ function RadarComercialDashboard() {
               {/* GRID DE KPIS EXECUTIVOS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 
-                {/* 1. VOLUME TOTAL */}
+                {/* 1. PIPELINE TOTAL */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="flex items-start justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pipeline Total</span>
-                    <span className="p-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
+                    <span 
+                      className="p-2 rounded-xl text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
                       <TrendingUp size={16} />
                     </span>
                   </div>
@@ -645,16 +773,22 @@ function RadarComercialDashboard() {
                   </div>
                 </div>
 
-                {/* 2. VOLUME FECHADO */}
+                {/* 2. VENDAS FECHADAS */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="flex items-start justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Vendas Fechadas</span>
-                    <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+                    <span 
+                      className="p-2 rounded-xl"
+                      style={{ 
+                        backgroundColor: hexToRgba(brandColor, 0.12),
+                        color: brandColor 
+                      }}
+                    >
                       <CheckCircle size={16} />
                     </span>
                   </div>
                   <div className="mt-3">
-                    <p className="text-xl font-black text-emerald-700 tracking-tight">
+                    <p className="text-xl font-black tracking-tight" style={{ color: brandColor }}>
                       {formatCurrency(totalAceito)}
                     </p>
                     <p className="text-[10px] text-slate-500 font-bold mt-1">
@@ -667,7 +801,13 @@ function RadarComercialDashboard() {
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="flex items-start justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Conversão (R$)</span>
-                    <span className="p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                    <span 
+                      className="p-2 rounded-xl"
+                      style={{ 
+                        backgroundColor: hexToRgba(brandColor, 0.12),
+                        color: brandColor 
+                      }}
+                    >
                       <Percent size={16} />
                     </span>
                   </div>
@@ -676,13 +816,15 @@ function RadarComercialDashboard() {
                       <p className="text-xl font-black text-slate-900 tracking-tight">
                         {taxaConversao.toFixed(1)}%
                       </p>
-                      <span className="text-[10px] text-blue-600 font-black">Volume</span>
+                      <span className="text-[10px] font-black" style={{ color: brandColor }}>Volume</span>
                     </div>
-                    {/* Progress mini bar */}
                     <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
                       <div 
-                        className="bg-blue-600 h-full rounded-full transition-all duration-500" 
-                        style={{ width: `${Math.min(100, taxaConversao)}%` }} 
+                        className="h-full rounded-full transition-all duration-500" 
+                        style={{ 
+                          width: `${Math.min(100, taxaConversao)}%`,
+                          backgroundColor: brandColor 
+                        }} 
                       />
                     </div>
                   </div>
@@ -692,7 +834,13 @@ function RadarComercialDashboard() {
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="flex items-start justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ticket Médio</span>
-                    <span className="p-2 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
+                    <span 
+                      className="p-2 rounded-xl"
+                      style={{ 
+                        backgroundColor: hexToRgba(brandColor, 0.12),
+                        color: brandColor 
+                      }}
+                    >
                       <DollarSign size={16} />
                     </span>
                   </div>
@@ -726,15 +874,21 @@ function RadarComercialDashboard() {
 
               </div>
 
-              {/* SEÇÃO PRINCIPAL DE ANÁLISE: RANKING DE VENDEDORES & SERVIÇOS */}
+              {/* SEÇÃO PRINCIPAL: RANKING DOS VENDEDORES & MIX DE SERVIÇOS */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 
                 {/* TABELA DE DESEMPENHO DOS VENDEDORES (LEADERBOARD) */}
-                <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div id="secao-equipe-metas" className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col scroll-mt-6">
                   
                   <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="p-2 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
+                      <span 
+                        className="p-2 rounded-xl"
+                        style={{ 
+                          backgroundColor: hexToRgba(brandColor, 0.12),
+                          color: brandColor 
+                        }}
+                      >
                         <Users size={16} />
                       </span>
                       <div>
@@ -742,7 +896,7 @@ function RadarComercialDashboard() {
                           Desempenho da Equipe Comercial
                         </h2>
                         <p className="text-[10px] text-slate-400 font-medium">
-                          Ranking por faturamento convertido e acompanhamento de metas individuais
+                          Ranking por faturamento aceito e acompanhamento de metas individuais
                         </p>
                       </div>
                     </div>
@@ -780,19 +934,23 @@ function RadarComercialDashboard() {
                                 key={seller.id} 
                                 className={`transition-all ${
                                   isFiltered 
-                                    ? 'bg-emerald-50/40 border-l-4 border-emerald-600 font-semibold' 
+                                    ? 'bg-blue-50/40 border-l-4 font-semibold' 
                                     : 'hover:bg-slate-50/60'
                                 }`}
+                                style={{
+                                  borderLeftColor: isFiltered ? brandColor : 'transparent'
+                                }}
                               >
                                 <td className="px-5 py-3.5 flex items-center gap-3">
-                                  {/* Badge de Posição / Avatar */}
                                   <div className="relative">
-                                    <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center border shadow-xs ${
-                                      idx === 0 ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                                      idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
-                                      idx === 2 ? 'bg-amber-50 text-amber-900 border-amber-200' :
-                                      'bg-slate-100 text-slate-600 border-slate-200'
-                                    }`}>
+                                    <div 
+                                      className="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center border shadow-xs"
+                                      style={{
+                                        backgroundColor: idx === 0 ? hexToRgba(brandColor, 0.15) : '#F1F5F9',
+                                        color: idx === 0 ? brandColor : '#475569',
+                                        borderColor: idx === 0 ? hexToRgba(brandColor, 0.3) : '#E2E8F0'
+                                      }}
+                                    >
                                       {seller.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                                     </div>
                                     {idx < 3 && (
@@ -807,9 +965,9 @@ function RadarComercialDashboard() {
                                       {seller.nome}
                                     </span>
                                     <div className="text-[9px] uppercase tracking-wider font-bold text-slate-400 flex items-center gap-2 mt-0.5">
-                                      <span className="text-blue-600">Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(0) : 0}%</span>
+                                      <span style={{ color: brandColor }}>Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(0) : 0}%</span>
                                       <span>•</span>
-                                      <span className="text-emerald-600">Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(0) : 0}%</span>
+                                      <span className="text-slate-600">Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(0) : 0}%</span>
                                     </div>
                                   </div>
                                 </td>
@@ -834,7 +992,8 @@ function RadarComercialDashboard() {
                                       <span className="text-slate-400 font-bold text-[10px]">R$</span>
                                       <input
                                         type="text"
-                                        className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none focus:border-[#1B4D3E]"
+                                        className="w-24 px-2 py-1 border border-slate-300 rounded font-black text-slate-800 text-right outline-none"
+                                        style={{ borderColor: brandColor }}
                                         value={editGoalValue}
                                         onChange={(e) => setEditGoalValue(e.target.value)}
                                         onBlur={() => handleSaveInlineGoal(seller.id, seller.nome)}
@@ -855,9 +1014,9 @@ function RadarComercialDashboard() {
                                         setEditingUserId(seller.id);
                                         setEditGoalValue(seller.metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
                                       }}
-                                      title="Clique para editar a meta do vendedor"
+                                      title="Clique para editar a meta individual"
                                     >
-                                      <span>{formatCurrency(seller.metaVal)}</span>
+                                      <span>{seller.metaVal > 0 ? formatCurrency(seller.metaVal) : 'Definir Meta'}</span>
                                       <Edit2 size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity ml-1" />
                                     </div>
                                   )}
@@ -865,25 +1024,32 @@ function RadarComercialDashboard() {
                                 
                                 <td className="px-5 py-3.5">
                                   <div className="flex flex-col items-center justify-center">
-                                    <span className={`text-[10px] font-black ${
-                                      seller.atingidoPct >= 100 
-                                        ? 'text-emerald-600' 
-                                        : seller.atingidoPct >= 60 
-                                          ? 'text-indigo-600' 
-                                          : 'text-amber-500'
-                                    }`}>
-                                      {seller.atingidoPct.toFixed(1)}%
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span 
+                                        className="text-[10px] font-black"
+                                        style={{ 
+                                          color: seller.metaVal > 0 
+                                            ? (seller.atingidoPct >= 100 ? '#10B981' : brandColor) 
+                                            : (seller.conversaoPct > 0 ? '#10B981' : '#94A3B8') 
+                                        }}
+                                      >
+                                        {seller.metaVal > 0 
+                                          ? `${seller.atingidoPct.toFixed(1)}%` 
+                                          : seller.stats.totalVal > 0 
+                                            ? `${seller.conversaoPct.toFixed(1)}%` 
+                                            : '--'}
+                                      </span>
+                                      <span className="text-[8px] font-bold text-slate-400 uppercase">
+                                        {seller.metaVal > 0 ? 'meta' : seller.stats.totalVal > 0 ? 'conv.' : ''}
+                                      </span>
+                                    </div>
                                     <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
                                       <div 
-                                        className={`h-full rounded-full transition-all duration-500 ${
-                                          seller.atingidoPct >= 100 
-                                            ? 'bg-emerald-500' 
-                                            : seller.atingidoPct >= 60 
-                                              ? 'bg-indigo-500' 
-                                              : 'bg-amber-400'
-                                        }`} 
-                                        style={{ width: `${Math.min(100, seller.atingidoPct)}%` }} 
+                                        className="h-full rounded-full transition-all duration-500" 
+                                        style={{ 
+                                          width: `${Math.min(100, seller.metaVal > 0 ? seller.atingidoPct : seller.conversaoPct)}%`,
+                                          backgroundColor: (seller.metaVal > 0 ? seller.atingidoPct : seller.conversaoPct) >= 100 ? '#10B981' : brandColor
+                                        }} 
                                       />
                                     </div>
                                   </div>
@@ -897,11 +1063,17 @@ function RadarComercialDashboard() {
                   </div>
                 </div>
 
-                {/* VOLUME POR TIPO DE SERVIÇOS (FACILITIES, LIMPEZA, PORTARIA...) */}
+                {/* MIX POR CATEGORIA DE SERVIÇOS */}
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-                      <span className="p-2 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
+                      <span 
+                        className="p-2 rounded-xl"
+                        style={{ 
+                          backgroundColor: hexToRgba(brandColor, 0.12),
+                          color: brandColor 
+                        }}
+                      >
                         <Briefcase size={16} />
                       </span>
                       <div>
@@ -937,8 +1109,11 @@ function RadarComercialDashboard() {
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
                                     <div 
-                                      className="bg-[#1B4D3E] h-full rounded-full transition-all duration-500" 
-                                      style={{ width: `${Math.min(100, pctTotal)}%` }} 
+                                      className="h-full rounded-full transition-all duration-500" 
+                                      style={{ 
+                                        width: `${Math.min(100, pctTotal)}%`,
+                                        backgroundColor: brandColor
+                                      }} 
                                     />
                                   </div>
                                   <span className="text-[10px] font-bold text-slate-400 w-10 text-right">
@@ -960,46 +1135,107 @@ function RadarComercialDashboard() {
 
               </div>
 
-              {/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              {/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL COM TOOLTIP INTERATIVO NO HOVER */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow relative">
                 
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-5">
                   <div>
                     <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                      <BarChart2 size={16} className="text-[#1B4D3E]" /> Acompanhamento de Metas Mensais
+                      <BarChart2 size={16} style={{ color: brandColor }} /> Acompanhamento de Metas Mensais
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-wide">
-                      Meta Prevista (Barras Roxas) vs. Faturamento Aceito (Barras Verdes) e % de Atingimento (Linha Dourada)
+                      Aponte o cursor sobre as barras para ver os detalhes completos de cada mês
                     </p>
                   </div>
                   
-                  {/* Toggle Mensal / Acumulada */}
                   <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
                     <button
                       onClick={() => setChartViewMode('mensal')}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                        chartViewMode === 'mensal'
-                          ? 'bg-[#1B4D3E] text-white shadow-xs'
-                          : 'text-slate-500 hover:text-slate-800'
-                      }`}
+                      className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: chartViewMode === 'mensal' ? brandColor : 'transparent',
+                        color: chartViewMode === 'mensal' ? '#FFFFFF' : '#64748B'
+                      }}
                     >
                       📅 Mensal
                     </button>
                     <button
                       onClick={() => setChartViewMode('acumulada')}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                        chartViewMode === 'acumulada'
-                          ? 'bg-[#1B4D3E] text-white shadow-xs'
-                          : 'text-slate-500 hover:text-slate-800'
-                      }`}
+                      className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: chartViewMode === 'acumulada' ? brandColor : 'transparent',
+                        color: chartViewMode === 'acumulada' ? '#FFFFFF' : '#64748B'
+                      }}
                     >
                       📈 Acumulada
                     </button>
                   </div>
                 </div>
 
-                {/* SVG Combo Chart Canvas */}
-                <div className="w-full overflow-x-auto select-none">
+                {/* CANVAS DO GRÁFICO COM TOOLTIP FLUTUANTE */}
+                <div className="w-full overflow-x-auto select-none relative" onMouseLeave={() => setHoveredChartIndex(null)}>
+                  
+                  {/* FLOATING TOOLTIP CARD */}
+                  {hoveredChartIndex !== null && chartData[hoveredChartIndex] && (
+                    <div 
+                      className="absolute pointer-events-none z-30 bg-slate-900/95 text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md transition-all duration-150 min-w-[220px]"
+                      style={{
+                        left: `${Math.min(Math.max(12, ((hoveredChartIndex + 0.5) / chartData.length) * 100), 85)}%`,
+                        top: '12px',
+                        transform: 'translateX(-50%)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-200">
+                          📅 {formatMonthYear(chartData[hoveredChartIndex].monthKey)}
+                        </span>
+                        <span 
+                          className="text-[10px] font-black px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: chartData[hoveredChartIndex].atingidoPct >= 100 ? '#10B981' : hexToRgba(brandColor, 0.6),
+                            color: '#FFFFFF'
+                          }}
+                        >
+                          {chartData[hoveredChartIndex].atingidoPct.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400 font-medium flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: hexToRgba(brandColor, 0.4) }} />
+                            Meta Prevista:
+                          </span>
+                          <span className="font-bold text-white">
+                            {formatCurrency(chartData[hoveredChartIndex].previsto)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400 font-medium flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: brandColor }} />
+                            Realizado (Aceito):
+                          </span>
+                          <span className="font-bold text-emerald-400">
+                            {formatCurrency(chartData[hoveredChartIndex].realizado)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-1.5 border-t border-slate-800 text-[11px]">
+                          <span className="text-slate-400 font-medium">Saldo / Gap:</span>
+                          <span className={`font-black ${
+                            chartData[hoveredChartIndex].realizado >= chartData[hoveredChartIndex].previsto 
+                              ? 'text-emerald-400' 
+                              : 'text-amber-400'
+                          }`}>
+                            {chartData[hoveredChartIndex].realizado >= chartData[hoveredChartIndex].previsto ? '+' : ''}
+                            {formatCurrency(chartData[hoveredChartIndex].realizado - chartData[hoveredChartIndex].previsto)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="min-w-[920px] h-[260px] relative px-2">
                     <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 240">
                       {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
@@ -1042,6 +1278,7 @@ function RadarComercialDashboard() {
                       {chartData.map((d, i) => {
                         const gap = 860 / chartData.length;
                         const xCenter = 70 + (i * gap) + (gap / 2);
+                        const isHovered = hoveredChartIndex === i;
                         
                         const hPrevisto = (d.previsto / maxValY) * 180;
                         const yPrevisto = 200 - hPrevisto;
@@ -1050,48 +1287,54 @@ function RadarComercialDashboard() {
                         const yRealizado = 200 - hRealizado;
 
                         return (
-                          <g key={`bar-${i}`} className="group">
+                          <g key={`bar-${i}`} className="group cursor-pointer">
+                            
+                            {/* COLUNA DE DESTAQUE NO HOVER */}
+                            {isHovered && (
+                              <rect
+                                x={xCenter - (gap / 2) + 2}
+                                y="20"
+                                width={gap - 4}
+                                height="180"
+                                rx="8"
+                                fill={hexToRgba(brandColor, 0.08)}
+                                className="transition-all"
+                              />
+                            )}
+
+                            {/* BARRA PREVISTO (META) */}
                             <rect
                               x={xCenter - 11}
                               y={yPrevisto}
                               width="10"
-                              height={Math.max(1, hPrevisto)}
-                              fill="#6366F1"
-                              rx="2"
-                              className="transition-all duration-300 hover:fill-indigo-600 cursor-pointer"
+                              height={Math.max(2, hPrevisto)}
+                              fill={isHovered ? hexToRgba(brandColor, 0.45) : hexToRgba(brandColor, 0.25)}
+                              rx="3"
+                              className="transition-all duration-200"
                             />
-                            <text
-                              x={xCenter - 6}
-                              y={yPrevisto - 6}
-                              textAnchor="middle"
-                              className="fill-indigo-600 text-[7px] font-black"
-                            >
-                              {formatShortCurrency(d.previsto)}
-                            </text>
 
+                            {/* BARRA REALIZADO (ACEITO) */}
                             <rect
                               x={xCenter + 1}
                               y={yRealizado}
                               width="10"
-                              height={Math.max(1, hRealizado)}
-                              fill="#10B981"
-                              rx="2"
-                              className="transition-all duration-300 hover:fill-emerald-600 cursor-pointer"
+                              height={Math.max(2, hRealizado)}
+                              fill={brandColor}
+                              rx="3"
+                              className="transition-all duration-200"
+                              style={{
+                                filter: isHovered ? `drop-shadow(0 2px 6px ${hexToRgba(brandColor, 0.4)})` : 'none'
+                              }}
                             />
-                            <text
-                              x={xCenter + 6}
-                              y={yRealizado - 6}
-                              textAnchor="middle"
-                              className="fill-emerald-600 text-[7px] font-black"
-                            >
-                              {formatShortCurrency(d.realizado)}
-                            </text>
                             
+                            {/* RÓTULO DO MÊS */}
                             <text 
                               x={xCenter} 
                               y="218" 
                               textAnchor="middle" 
-                              className="fill-slate-600 text-[9px] font-black uppercase tracking-wider"
+                              className={`text-[9px] font-black uppercase tracking-wider transition-colors ${
+                                isHovered ? 'fill-slate-900 font-extrabold' : 'fill-slate-600'
+                              }`}
                             >
                               {getShortMonthName(d.monthKey)}
                             </text>
@@ -1103,10 +1346,21 @@ function RadarComercialDashboard() {
                             >
                               {d.monthKey.split('-')[0]}
                             </text>
+
+                            {/* OVERLAY INVISÍVEL PARA CAPTURAR HOVER EM TODA A ALTURA DA COLUNA */}
+                            <rect
+                              x={xCenter - (gap / 2)}
+                              y="0"
+                              width={gap}
+                              height="240"
+                              fill="transparent"
+                              onMouseEnter={() => setHoveredChartIndex(i)}
+                            />
                           </g>
                         );
                       })}
 
+                      {/* LINHA DE TENDÊNCIA (% ATINGIMENTO) */}
                       {(() => {
                         const gap = 860 / chartData.length;
                         const points = chartData.map((d, i) => {
@@ -1125,34 +1379,30 @@ function RadarComercialDashboard() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               points={points.join(' ')}
-                              style={{ filter: 'drop-shadow(0px 2px 4px rgba(245, 158, 11, 0.4))' }}
                             />
                             
                             {chartData.map((d, i) => {
+                              const gap = 860 / chartData.length;
                               const xCenter = 70 + (i * gap) + (gap / 2);
                               const hPct = (d.atingidoPct / maxPctY) * 180;
                               const yCoord = 200 - hPct;
+                              const isHovered = hoveredChartIndex === i;
                               
                               return (
-                                <g key={`dot-${i}`} className="group cursor-pointer">
+                                <g 
+                                  key={`dot-${i}`} 
+                                  className="group cursor-pointer"
+                                  onMouseEnter={() => setHoveredChartIndex(i)}
+                                >
                                   <circle
                                     cx={xCenter}
                                     cy={yCoord}
-                                    r="4"
+                                    r={isHovered ? 6 : 4}
                                     fill="#F59E0B"
                                     stroke="#FFFFFF"
-                                    strokeWidth="2"
-                                    className="transition-all duration-300 group-hover:r-5 group-hover:stroke-amber-600"
+                                    strokeWidth={isHovered ? 2.5 : 2}
+                                    className="transition-all duration-150"
                                   />
-                                  <text
-                                    x={xCenter}
-                                    y={yCoord - 8}
-                                    textAnchor="middle"
-                                    className="fill-amber-600 text-[7px] font-black"
-                                    style={{ filter: 'drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.9))' }}
-                                  >
-                                    {d.atingidoPct.toFixed(1)}%
-                                  </text>
                                 </g>
                               );
                             })}
@@ -1167,11 +1417,17 @@ function RadarComercialDashboard() {
                 <div className="flex justify-center mt-5 select-none border-t border-slate-100 pt-5">
                   <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[9px] font-black uppercase tracking-wider bg-slate-50 border border-slate-200/60 px-5 py-2.5 rounded-2xl shadow-xs">
                     <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 bg-[#6366F1] rounded-md block shadow-xs shadow-indigo-500/20"></span>
+                      <span 
+                        className="w-3.5 h-3.5 rounded-md block shadow-xs"
+                        style={{ backgroundColor: hexToRgba(brandColor, 0.3) }}
+                      />
                       <span className="text-slate-600">Previsto (Meta)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 bg-[#10B981] rounded-md block shadow-xs shadow-emerald-500/20"></span>
+                      <span 
+                        className="w-3.5 h-3.5 rounded-md block shadow-xs"
+                        style={{ backgroundColor: brandColor }}
+                      />
                       <span className="text-slate-600">Realizado (Aceito)</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1213,7 +1469,6 @@ export default function Page() {
             return;
           }
 
-          // Busca dados completos do usuário logado
           let user: any = null;
           try {
             user = await getLoggedUser();
@@ -1282,14 +1537,11 @@ export default function Page() {
   if (isLoggedIn === null) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center relative overflow-hidden font-sans">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
-          <div className="w-[400px] h-[400px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[100px] animate-pulse" />
-        </div>
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
-            <TrendingUp className="text-[#10B981]" size={32} />
+          <div className="w-16 h-16 bg-blue-900/30 rounded-2xl border border-blue-400/30 flex items-center justify-center animate-spin">
+            <TrendingUp className="text-blue-400" size={32} />
           </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando SmartBidHub...</span>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-blue-400 animate-pulse">Carregando SmartBidHub...</span>
         </div>
       </div>
     );
@@ -1299,20 +1551,16 @@ export default function Page() {
     if (showMobileHub) {
       return (
         <div className="min-h-screen bg-[#0B0F19] text-white flex flex-col justify-between p-6 relative overflow-hidden font-sans select-none">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25 z-0">
-            <div className="w-[450px] h-[450px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[120px] animate-pulse" />
-          </div>
-
           <div className="relative z-10 w-full max-w-md mx-auto pt-6 flex flex-col items-center">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/40 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-                <TrendingUp className="text-[#10B981]" size={22} />
+              <div className="w-10 h-10 bg-blue-500/20 rounded-2xl border border-blue-400/30 flex items-center justify-center shadow-lg">
+                <TrendingUp className="text-blue-400" size={22} />
               </div>
               <span className="text-lg font-black tracking-widest uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
                 SmartBidHub
               </span>
             </div>
-            <p className="text-[10px] text-emerald-400 uppercase font-black tracking-[0.25em] mb-8">
+            <p className="text-[10px] text-blue-400 uppercase font-black tracking-[0.25em] mb-8">
               Painel Multisseletor
             </p>
 
@@ -1324,7 +1572,7 @@ export default function Page() {
                   className="w-11 h-11 rounded-full object-cover border border-white/10 shadow-md"
                 />
               ) : (
-                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1B4D3E] to-[#10B981] text-white flex items-center justify-center font-black text-sm border border-white/10 shadow-md">
+                <div className="w-11 h-11 rounded-full bg-blue-700 text-white flex items-center justify-center font-black text-sm border border-white/10 shadow-md">
                   {loggedUser?.nome ? loggedUser.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'G'}
                 </div>
               )}
@@ -1332,7 +1580,7 @@ export default function Page() {
                 <h3 className="text-sm font-black uppercase text-white tracking-wide leading-tight">
                   {loggedUser?.nome || 'Carregando Gestor...'}
                 </h3>
-                <span className="text-[9px] text-[#10B981] uppercase font-black tracking-widest block leading-none mt-1">
+                <span className="text-[9px] text-blue-400 uppercase font-black tracking-widest block leading-none mt-1">
                   {loggedUser?.cargo || 'Administrador'}
                 </span>
               </div>
@@ -1345,10 +1593,10 @@ export default function Page() {
 
               <button
                 onClick={() => router.push('/leads/mobile')}
-                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#0F241F] hover:to-[#0A1714] border border-white/5 hover:border-emerald-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
+                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-blue-950/40 hover:to-slate-900 border border-white/5 hover:border-blue-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-[#10B981] group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
                     <Building size={24} className="stroke-[2]" />
                   </div>
                   <div>
@@ -1360,12 +1608,12 @@ export default function Page() {
                     </p>
                   </div>
                 </div>
-                <ArrowUpRight size={18} className="text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                <ArrowUpRight size={18} className="text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
               </button>
 
               <button
                 onClick={() => router.push('/ativos/tecnico')}
-                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#0E1E2C] hover:to-[#0A141F] border border-white/5 hover:border-blue-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
+                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-blue-950/40 hover:to-slate-900 border border-white/5 hover:border-blue-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
@@ -1385,7 +1633,7 @@ export default function Page() {
 
               <button
                 onClick={() => router.push('/entrega/entregador')}
-                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#241710] hover:to-[#170E0A] border border-white/5 hover:border-amber-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
+                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-amber-950/40 hover:to-slate-900 border border-white/5 hover:border-amber-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
@@ -1426,7 +1674,7 @@ export default function Page() {
         </div>
       );
     }
-    return <RadarComercialDashboard />;
+    return <RadarComercialDashboard initialBrandColor={loggedUser?.tenant?.primaryColor} />;
   }
 
   return <LandingPage />;
