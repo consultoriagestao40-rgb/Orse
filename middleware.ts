@@ -14,6 +14,7 @@ export function middleware(request: NextRequest) {
 
   const isPublicRoute =
     pathname === '/' ||
+    pathname === '/lp' ||
     pathname === '/login' ||
     pathname === '/cadastro' ||
     pathname === '/manifest.json' ||
