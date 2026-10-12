@@ -326,81 +326,83 @@ export default function LandingPage() {
       </header>
 
       {/* HERO */}
-      <section className="pt-[76px] pb-12 md:pb-20">
-        {/* Faixa Clean Fintech de Autoridade */}
+      <section className="pt-[76px]">
+        {/* Faixa verde de autoridade */}
         <div className="px-3 sm:px-5">
           <div
             data-spot
-            className="lp-hero-clean relative overflow-hidden rounded-[32px] text-center px-6 pt-16 md:pt-20 pb-[150px] md:pb-[210px]"
+            className="lp-hero-band relative overflow-hidden rounded-[28px] text-white text-center px-6 pt-20 md:pt-24 pb-[220px] md:pb-[300px]"
           >
-            {/* malha sutil e iluminação ambiente clara */}
-            <div className="lp-clean-grid" aria-hidden />
-            <div className="lp-rings-clean" aria-hidden>
+            {/* iluminação em camadas */}
+            <div className="lp-beam" aria-hidden />
+            <div className="lp-par absolute inset-0" style={{ '--depth': '-40px' } as React.CSSProperties} aria-hidden>
+              <div className="lp-aurora lp-aurora-a" />
+              <div className="lp-aurora lp-aurora-b" />
+            </div>
+            <div className="lp-aurora lp-aurora-c" aria-hidden />
+            <div className="lp-par absolute inset-0" style={{ '--depth': '24px' } as React.CSSProperties} aria-hidden>
+              <div className="lp-sunrise" />
+            </div>
+            <div className="lp-band-spot" aria-hidden />
+            <div className="lp-rings" aria-hidden>
               <span /><span /><span /><span />
             </div>
-            <div className="lp-sunrise-clean" aria-hidden />
-
-            <div className="relative max-w-[980px] mx-auto z-10">
-              <p className="lp-enter inline-flex items-center gap-2.5 text-[13px] font-medium text-[#111418] mb-6 pl-3.5 pr-4 py-1.5 rounded-full border border-[#E6E2DA] bg-white/95 backdrop-blur-sm shadow-xs" style={{ '--d': '0ms' } as React.CSSProperties}>
+            <div className="lp-dots" aria-hidden />
+            <div className="lp-grain" aria-hidden />
+            <div className="relative max-w-[980px] mx-auto">
+              <p className="lp-enter lp-eyebrow inline-flex items-center gap-2.5 text-[13.5px] font-medium text-white/90 mb-7 pl-3 pr-4 py-1.5 rounded-full" style={{ '--d': '0ms' } as React.CSSProperties}>
                 <span className="relative flex w-2 h-2">
-                  <span className="absolute inset-0 rounded-full animate-ping bg-[#EA580C] opacity-75" />
-                  <span className="relative w-2 h-2 rounded-full bg-[#EA580C]" />
+                  <span className="absolute inset-0 rounded-full animate-ping" style={{ background: '#FF7A2F', opacity: 0.6 }} />
+                  <span className="relative w-2 h-2 rounded-full" style={{ background: '#FF7A2F' }} />
                 </span>
                 Plataforma para prestadoras de serviços terceirizados
               </p>
-
-              <h1 className="text-[38px] sm:text-[54px] lg:text-[68px] leading-[1.02] text-[#111418]" style={{ ...serif, fontWeight: 800, letterSpacing: '-0.04em' }}>
+              <h1 className="text-[38px] sm:text-[54px] lg:text-[68px] leading-[1.02]" style={{ ...serif, fontWeight: 800, letterSpacing: '-0.04em', textShadow: '0 2px 30px rgba(0,0,0,0.18)' }}>
                 {'Transforme a sua prestadora de serviços numa máquina de'.split(' ').map((w, i) => (
                   <React.Fragment key={i}>
                     <span className="lp-word" style={{ '--d': `${120 + i * 55}ms` } as React.CSSProperties}>{w}</span>{' '}
                   </React.Fragment>
                 ))}
                 <span className="lp-mark">
-                  <span className="lp-word text-[#111418]" style={{ '--d': '620ms' } as React.CSSProperties}>contratos</span>{' '}
-                  <span className="lp-word text-[#111418]" style={{ '--d': '675ms' } as React.CSSProperties}>previsíveis</span>
+                  <span className="lp-word" style={{ '--d': '620ms' } as React.CSSProperties}>contratos</span>{' '}
+                  <span className="lp-word" style={{ '--d': '675ms' } as React.CSSProperties}>previsíveis</span>
                   <svg viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden>
                     <path d="M4 14 C 60 4, 120 4, 170 9 S 260 16, 296 6" />
                   </svg>
                 </span>
               </h1>
-
-              <p className="lp-enter mt-6 text-[17px] md:text-[19.5px] leading-[1.55] text-[#5B6470] max-w-[720px] mx-auto" style={{ '--d': '750ms' } as React.CSSProperties}>
+              <p className="lp-enter mt-7 text-[17px] md:text-[19px] leading-[1.55] text-white/75 max-w-[720px] mx-auto" style={{ '--d': '750ms' } as React.CSSProperties}>
                 Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma. Da primeira ligação à blindagem de margem.
               </p>
-
-              <div className="lp-enter mt-9 flex flex-col sm:flex-row items-center justify-center gap-3.5" style={{ '--d': '900ms' } as React.CSSProperties}>
+              <div className="lp-enter mt-10 flex flex-col sm:flex-row items-center justify-center gap-3" style={{ '--d': '900ms' } as React.CSSProperties}>
                 <a
                   id="hero-teste-gratis"
                   href="/cadastro"
-                  className="lp-btn lp-btn-orange lp-pulse-orange group w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[15.5px] font-bold px-8 py-4 rounded-xl shadow-[0_14px_30px_-10px_rgba(234,88,12,0.55)] transition-all duration-300 hover:scale-[1.02]"
+                  className="lp-btn lp-btn-orange lp-pulse-orange group w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[15px] font-bold px-7 py-4 rounded-xl"
                 >
                   Começar teste grátis de 7 dias
                   <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </a>
                 <button
                   onClick={() => openDemoWithPlan('Demonstração Prática 20 Min')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-7 py-4 rounded-xl border border-[#DCD8CF] bg-white text-[#111418] cursor-pointer hover:bg-[#F7F5F0] hover:border-[#111418]/30 shadow-xs transition-all duration-300"
+                  className="lp-btn lp-btn-dark lp-btn-ghost w-full sm:w-auto inline-flex items-center justify-center text-[15px] font-semibold px-7 py-4 rounded-xl border border-white/25 bg-white/[0.06] text-white cursor-pointer hover:bg-white/[0.12] backdrop-blur-sm"
                 >
                   Agendar demonstração
                 </button>
               </div>
-
-              <p className="lp-enter mt-6 text-[13px] text-[#5B6470] flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5" style={{ '--d': '1050ms' } as React.CSSProperties}>
+              <p className="lp-enter mt-6 text-[13px] text-white/60 flex flex-wrap items-center justify-center gap-x-5 gap-y-1" style={{ '--d': '1050ms' } as React.CSSProperties}>
                 {['Conta pronta em 2 minutos', 'Sem cartão de crédito', 'Acesso completo no teste'].map(t => (
-                  <span key={t} className="inline-flex items-center gap-1.5 font-medium">
-                    <Check size={14} className="text-[#EA580C]" strokeWidth={3} />
-                    {t}
-                  </span>
+                  <span key={t} className="inline-flex items-center gap-1.5"><Check size={13} style={{ color: '#FF9A5C' }} strokeWidth={3} />{t}</span>
                 ))}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="lp-stage lp-enter max-w-[1140px] mx-auto px-6 -mt-[110px] md:-mt-[150px] relative z-20" style={{ '--d': '1100ms' } as React.CSSProperties}>
+        <div className="lp-stage lp-enter max-w-[1140px] mx-auto px-6 -mt-[180px] md:-mt-[250px] relative z-10" style={{ '--d': '1100ms' } as React.CSSProperties}>
           {/* cartões flutuantes: o que acontece enquanto você trabalha */}
           <div className="lp-float -left-[70px] top-[90px]" style={{ '--d': '2.0s' } as React.CSSProperties} aria-hidden>
-            <div className="lp-float-card rounded-2xl pl-3 pr-4 py-3 flex items-center gap-3 w-[250px] bg-white border border-[#E6E2DA] shadow-[0_20px_45px_-15px_rgba(17,20,24,0.12)] cursor-pointer">
+            <div className="lp-float-card rounded-2xl pl-3 pr-4 py-3 flex items-center gap-3 w-[250px] shadow-lg cursor-pointer">
               <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FFF1E8' }}>
                 <Check size={18} style={{ color: '#EA580C' }} strokeWidth={3} />
               </span>
@@ -411,16 +413,16 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="lp-float -right-[64px] top-[150px]" style={{ '--d': '2.4s' } as React.CSSProperties} aria-hidden>
-            <div className="lp-float-card rounded-2xl px-4 py-3 w-[210px] text-left bg-white border border-[#E6E2DA] shadow-[0_20px_45px_-15px_rgba(17,20,24,0.12)] cursor-pointer">
+            <div className="lp-float-card rounded-2xl px-4 py-3 w-[210px] text-left shadow-lg cursor-pointer">
               <p className="text-[11.5px]" style={{ color: C.muted }}>Margem bruta do contrato</p>
-              <p className="text-[22px] leading-tight tabular-nums font-bold" style={{ ...serif, color: '#1B4D3E' }}>R$ 8.987<span className="text-[13px] font-normal" style={{ color: C.muted }}>/mês</span></p>
+              <p className="text-[22px] leading-tight tabular-nums" style={{ ...serif, color: C.green }}>R$ 8.987<span className="text-[13px]" style={{ color: C.muted }}>/mês</span></p>
               <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: '#EFEDE8' }}>
                 <div className="h-full rounded-full" style={{ width: '62%', background: 'linear-gradient(90deg, #1B4D3E, #EA580C)' }} />
               </div>
             </div>
           </div>
           <div className="lp-float -right-[40px] top-[380px]" style={{ '--d': '2.8s' } as React.CSSProperties} aria-hidden>
-            <div className="lp-float-card rounded-full pl-2 pr-4 py-2 flex items-center gap-2 bg-white border border-[#E6E2DA] shadow-[0_20px_45px_-15px_rgba(17,20,24,0.12)] cursor-pointer">
+            <div className="lp-float-card rounded-full pl-2 pr-4 py-2 flex items-center gap-2 shadow-lg cursor-pointer">
               <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: C.greenSoft }}>
                 <Eye size={14} style={{ color: C.green }} />
               </span>
@@ -428,7 +430,7 @@ export default function LandingPage() {
             </div>
           </div>
           {/* PRODUTO */}
-          <div id="produto" className="lp-tilt rounded-[22px] p-2 sm:p-2.5 bg-white/80 backdrop-blur-md border border-[#E6E2DA] shadow-[0_35px_80px_-25px_rgba(17,20,24,0.14)]">
+          <div id="produto" className="lp-tilt rounded-[22px] p-2 sm:p-2.5 bg-white/60 backdrop-blur-sm border border-white/70 shadow-[0_40px_80px_-30px_rgba(17,20,24,0.35)]">
             <div className="bg-white rounded-[18px] border overflow-hidden shadow-[0_1px_0_rgba(17,20,24,0.04),0_30px_60px_-30px_rgba(27,77,62,0.35)]" style={{ borderColor: '#DCE5DF' }}>
               {/* Barra do app */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b" style={{ borderColor: C.line }}>
@@ -911,7 +913,7 @@ export default function LandingPage() {
       </section>
 
       {/* SOLUÇÃO */}
-      <section id="solucao" className="lp-solucao-band relative overflow-hidden py-24 md:py-28 text-white">
+      <section id="solucao" className="lp-hero-band relative overflow-hidden py-24 md:py-28 text-white">
         <div className="lp-dots" aria-hidden />
         <div className="lp-grain" aria-hidden />
         <div className="relative max-w-[1200px] mx-auto px-6">
