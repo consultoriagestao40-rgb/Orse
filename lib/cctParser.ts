@@ -1,4 +1,4 @@
-import { PDFParse } from 'pdf-parse';
+import { getDocumentProxy, extractText } from 'unpdf';
 
 export interface ExtractedCargo {
   nome: string;
@@ -41,10 +41,10 @@ export interface ExtractedCctData {
  */
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
-    const parser = new PDFParse({ data: buffer });
-    const textResult = await parser.getText();
-    await parser.destroy();
-    return textResult.text || '';
+    const uint8Array = new Uint8Array(buffer);
+    const pdf = await getDocumentProxy(uint8Array);
+    const { text } = await extractText(pdf, { mergePages: true });
+    return text || '';
   } catch (err: any) {
     console.error('Erro ao ler PDF:', err);
     throw new Error('Não foi possível ler o arquivo PDF: ' + err.message);

@@ -312,9 +312,14 @@ export default function CCTEditorPage() {
         body: fData,
       });
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Erro ao processar PDF da CCT.');
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Falha ao processar o PDF no servidor. Tente novamente.');
+      }
+      if (!res.ok || data?.error) {
+        throw new Error(data?.error || 'Erro ao processar PDF da CCT.');
       }
 
       const p = data.parsed || {};

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getLoggedUser } from '@/app/propostas/actions';
+import { getSessionUser } from '@/lib/sessionUser';
 import { askCctAI } from '@/lib/cctParser';
 
 export const runtime = 'nodejs';
@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getLoggedUser();
+    const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
     }

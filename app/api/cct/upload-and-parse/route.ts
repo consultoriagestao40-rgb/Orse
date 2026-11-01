@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractTextFromPdf, parseCCT } from '@/lib/cctParser';
-import { getLoggedUser } from '@/app/propostas/actions';
+import { getSessionUser } from '@/lib/sessionUser';
 import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getLoggedUser();
+    const user = await getSessionUser();
     if (!user) {
-      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Sessão expirada. Faça login novamente.' }, { status: 401 });
     }
 
     const formData = await req.formData();
-    const file = formData.get('file') as File | null;
+    const file = (formData.get('file') || formData.get('pdf')) as File | null;
+    const nomeSindicatoParam = formData.get('nomeSindicato') as string | null;
     const autoSave = formData.get('autoSave') === 'true';
 
     if (!file) {
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
 
     // Processamento dos dados estruturados via IA / Parser
     const parsedData = await parseCCT(textoBruto, file.name);
+    if (nomeSindicatoParam && nomeSindicatoParam.trim()) {
+      parsedData.nome = nomeSindicatoParam.trim();
+    }
 
     // Se o usuário solicitou salvar direto no banco de dados
     if (autoSave) {

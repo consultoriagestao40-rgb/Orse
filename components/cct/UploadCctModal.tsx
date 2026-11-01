@@ -94,10 +94,15 @@ export default function UploadCctModal({ isOpen, onClose, onSuccess }: UploadCct
       clearTimeout(timer1);
       clearTimeout(timer2);
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Falha ao processar o PDF. O arquivo pode estar corrompido ou exceder o limite suportado.');
+      }
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Falha ao processar a Convenção Coletiva.');
+      if (!res.ok || data?.error) {
+        throw new Error(data?.error || 'Falha ao processar a Convenção Coletiva.');
       }
 
       setStepStatus('CCT publicada com sucesso! Redirecionando...');
