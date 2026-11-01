@@ -88,6 +88,8 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     ? salarioBase 
     : (Number(cctEfetiva.salarioMinimo) || 1518);
 
+  const adicionalInsalubridade = baseInsalubridade * (pctInsalubridade / 100);
+
   // Adicional Extra específico do posto/contrato desta proposta
   const adicionalExtraValor = Number(param.adicionalExtraValor || colab.adicionalExtraValor || 0) || 0;
   const adicionalExtraIncideEncargos = param.adicionalExtraIncideEncargos !== undefined 
