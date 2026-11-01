@@ -531,27 +531,6 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
     return 'Período Personalizado';
   }, [period, selectedMonth, currentYear]);
 
-  if (!hasLoadedOnce) {
-    return (
-      <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex items-center justify-center overflow-hidden font-sans">
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <div 
-            className="w-16 h-16 rounded-2xl flex items-center justify-center animate-spin"
-            style={{ 
-              backgroundColor: hexToRgba(brandColor, 0.2),
-              border: `1px solid ${hexToRgba(brandColor, 0.4)}`
-            }}
-          >
-            <TrendingUp size={30} style={{ color: brandColor }} />
-          </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-white animate-pulse">
-            Carregando Radar Comercial...
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
