@@ -323,3 +323,127 @@ export async function disconnectWhatsAppInstance() {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 4. Listar colaboradores e suas permissões de WhatsApp e fila de atendimento
+ */
+export async function getWhatsAppTeamPermissions() {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Usuário não autenticado.' };
+  }
+
+  try {
+    const users = await prisma.user.findMany({
+      where: { tenantId: user.tenantId },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        cargo: true,
+        avatarUrl: true,
+        role: true,
+        acessoWhatsTipo: true,
+        podeAtenderNovosWhats: true,
+      },
+      orderBy: { nome: 'asc' }
+    });
+
+    return { success: true, users };
+  } catch (error: any) {
+    console.error('Erro ao buscar permissões de equipe do WhatsApp:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 5. Atualizar permissões de WhatsApp de um colaborador (Visualização e Fila de Atendimento)
+ */
+export async function updateWhatsAppUserPermission(
+  targetUserId: string,
+  data: { acessoWhatsTipo?: string; podeAtenderNovosWhats?: boolean }
+) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Usuário não autenticado.' };
+  }
+
+  // Apenas ADMIN ou MANAGER podem alterar permissões
+  if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+    return { success: false, error: 'Você não tem permissão para alterar permissões de equipe.' };
+  }
+
+  try {
+    // Garante que o targetUser pertence ao mesmo tenant
+    const targetUser = await prisma.user.findFirst({
+      where: { id: targetUserId, tenantId: user.tenantId }
+    });
+
+    if (!targetUser) {
+      return { success: false, error: 'Colaborador não encontrado nesta empresa.' };
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        acessoWhatsTipo: data.acessoWhatsTipo !== undefined ? data.acessoWhatsTipo : undefined,
+        podeAtenderNovosWhats: data.podeAtenderNovosWhats !== undefined ? Boolean(data.podeAtenderNovosWhats) : undefined
+      }
+    });
+
+    revalidatePath('/admin/settings');
+    revalidatePath('/admin/usuarios');
+    return { success: true, user: updated };
+  } catch (error: any) {
+    console.error('Erro ao atualizar permissão de WhatsApp:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 6. Assumir atendimento de uma conversa/lead sem responsável
+ */
+export async function assignLeadToMe(leadId: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Usuário não autenticado.' };
+  }
+
+  try {
+    const lead = await prisma.lead.findFirst({
+      where: { id: leadId, tenantId: user.tenantId }
+    });
+
+    if (!lead) {
+      return { success: false, error: 'Lead/Conversa não encontrada.' };
+    }
+
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        assignedToId: user.id,
+      },
+      include: {
+        assignedTo: true,
+        stage: true,
+        contacts: true,
+      }
+    });
+
+    // Registra no histórico do lead
+    await prisma.leadHistory.create({
+      data: {
+        leadId: lead.id,
+        tipo: 'TRANSFERENCIA',
+        descricao: `${user.nome} assumiu o atendimento da conversa via WhatsApp.`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, lead: updatedLead };
+  } catch (error: any) {
+    console.error('Erro ao assumir atendimento:', error);
+    return { success: false, error: error.message };
+  }
+}
+

@@ -32,7 +32,8 @@ import {
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 import { 
   getWhatsAppConnectionStatus, connectWhatsAppInstance, 
-  getWhatsAppQrCode, disconnectWhatsAppInstance 
+  getWhatsAppQrCode, disconnectWhatsAppInstance,
+  getWhatsAppTeamPermissions, updateWhatsAppUserPermission
 } from './zapi-actions';
 import { 
   getTenantBillingInfo, paySubscriptionAction, getPlanConfigs,
@@ -233,6 +234,25 @@ export default function SettingsPage() {
   const [waQrCode, setWaQrCode] = useState<string | null>(null);
   const [waLoading, setWaLoading] = useState(false);
   const [waStatusMsg, setWaStatusMsg] = useState('Verificando status...');
+
+  // Equipe de Atendimento WhatsApp
+  const [waTeamUsers, setWaTeamUsers] = useState<any[]>([]);
+  const [waTeamLoading, setWaTeamLoading] = useState(false);
+  const [waTeamSuccessMsg, setWaTeamSuccessMsg] = useState('');
+
+  const loadWaTeamUsers = async () => {
+    setWaTeamLoading(true);
+    try {
+      const res = await getWhatsAppTeamPermissions();
+      if (res.success && res.users) {
+        setWaTeamUsers(res.users);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar equipe de WhatsApp:', err);
+    } finally {
+      setWaTeamLoading(false);
+    }
+  };
 
   // Billing & SaaS Monets States
   const [billingInfo, setBillingInfo] = useState<any>(null);
@@ -578,6 +598,7 @@ export default function SettingsPage() {
         if (res.connected) {
           setWaQrCode(null);
           setWaStatusMsg('WhatsApp Conectado com sucesso!');
+          loadWaTeamUsers();
         } else {
           setWaStatusMsg('WhatsApp Desconectado. Pronto para escanear.');
         }
@@ -887,6 +908,7 @@ export default function SettingsPage() {
       } else if (activeTab === 'whatsapp') {
         await checkWhatsAppStatus();
         await loadBillingData();
+        await loadWaTeamUsers();
       } else if (activeTab === 'faturamento') {
         await loadBillingData();
       } else if (activeTab === 'marca') {
@@ -2045,7 +2067,8 @@ export default function SettingsPage() {
                   </div>
 
                   {waConnected ? (
-                    /* ESTADO: CONECTADO (PREMIUM CARD) */
+                    <>
+                    {/* ESTADO: CONECTADO (PREMIUM CARD) */}
                     <div className="bg-gradient-to-br from-emerald-50/40 to-teal-50/20 border border-emerald-200 rounded-3xl p-8 space-y-6 text-center flex flex-col items-center shadow-xs animate-in zoom-in-95 duration-300 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
                       
@@ -2086,6 +2109,122 @@ export default function SettingsPage() {
                         </button>
                       </div>
                     </div>
+
+                    {/* GESTÃO DE EQUIPE DE ATENDIMENTO WHATSAPP & FILA DE PLANTÃO */}
+                    <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                        <div>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                            Equipe & Fila de Plantão
+                          </span>
+                          <h3 className="text-lg font-black text-slate-800 tracking-tight mt-1.5 font-display flex items-center gap-2">
+                            <Users size={18} className="text-[#10B981]" />
+                            Acesso às Conversas & Atendimento de Novos Leads
+                          </h3>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                            Defina quais colaboradores podem ver as conversas e quem está habilitado para atender novas mensagens que chegam no número corporativo.
+                          </p>
+                        </div>
+
+                        {waTeamSuccessMsg && (
+                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl animate-in fade-in flex items-center gap-1.5">
+                            <Check size={14} /> {waTeamSuccessMsg}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                              <th className="pb-3 pl-2">Colaborador</th>
+                              <th className="pb-3 text-center">Visualização de Conversas</th>
+                              <th className="pb-3 text-center">Pode Atender Novas Conversas</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {waTeamUsers.length === 0 ? (
+                              <tr>
+                                <td colSpan={3} className="py-8 text-center text-xs text-slate-400">
+                                  Carregando colaboradores da empresa...
+                                </td>
+                              </tr>
+                            ) : (
+                              waTeamUsers.map((u) => {
+                                const whatsTipo = u.acessoWhatsTipo || 'PROPRIOS';
+                                const canAttend = Boolean(u.podeAtenderNovosWhats);
+
+                                return (
+                                  <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
+                                    <td className="py-3.5 pl-2">
+                                      <div className="flex items-center gap-3">
+                                        {u.avatarUrl ? (
+                                          <img src={u.avatarUrl} alt={u.nome} className="w-9 h-9 rounded-xl object-cover border border-slate-200" />
+                                        ) : (
+                                          <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-[#1B4D3E] font-black text-xs flex items-center justify-center">
+                                            {u.nome.slice(0, 2).toUpperCase()}
+                                          </div>
+                                        )}
+                                        <div>
+                                          <p className="font-bold text-slate-900 text-xs uppercase">{u.nome}</p>
+                                          <p className="text-[10px] text-slate-400 font-medium">{u.cargo || 'Colaborador'} • {u.email}</p>
+                                        </div>
+                                      </div>
+                                    </td>
+
+                                    <td className="py-3.5 text-center">
+                                      <select
+                                        value={whatsTipo}
+                                        onChange={async (e) => {
+                                          const newTipo = e.target.value;
+                                          setWaTeamUsers(prev => prev.map(usr => usr.id === u.id ? { ...usr, acessoWhatsTipo: newTipo } : usr));
+                                          await updateWhatsAppUserPermission(u.id, { acessoWhatsTipo: newTipo });
+                                          setWaTeamSuccessMsg(`Acesso de ${u.nome.split(' ')[0]} atualizado!`);
+                                          setTimeout(() => setWaTeamSuccessMsg(''), 2500);
+                                        }}
+                                        className={`text-xs font-bold rounded-xl px-3 py-2 border outline-none cursor-pointer transition-all ${
+                                          whatsTipo === 'TODOS'
+                                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                            : whatsTipo === 'PROPRIOS'
+                                            ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                            : 'bg-rose-50 text-rose-700 border-rose-300'
+                                        }`}
+                                      >
+                                        <option value="TODOS">🟢 Todas as Conversas (Acompanhar tudo)</option>
+                                        <option value="PROPRIOS">🟡 Apenas Próprias (Leads atribuídos)</option>
+                                        <option value="NENHUM">🔴 Sem Acesso (Bloqueado)</option>
+                                      </select>
+                                    </td>
+
+                                    <td className="py-3.5 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          const nextVal = !canAttend;
+                                          setWaTeamUsers(prev => prev.map(usr => usr.id === u.id ? { ...usr, podeAtenderNovosWhats: nextVal } : usr));
+                                          await updateWhatsAppUserPermission(u.id, { podeAtenderNovosWhats: nextVal });
+                                          setWaTeamSuccessMsg(`Fila de atendimento de ${u.nome.split(' ')[0]} atualizada!`);
+                                          setTimeout(() => setWaTeamSuccessMsg(''), 2500);
+                                        }}
+                                        className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                                          canAttend
+                                            ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
+                                            : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                        }`}
+                                      >
+                                        <span className={`w-2 h-2 rounded-full ${canAttend ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></span>
+                                        {canAttend ? '✓ Pode Atender (Na Fila)' : '✕ Não Atende Novos'}
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    </>
                   ) : (
                     /* ESTADO: DESCONECTADO (CONNECTION PANEL) */
                     <div className="space-y-8 animate-in fade-in duration-300">

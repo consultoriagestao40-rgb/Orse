@@ -858,7 +858,6 @@ export default function LeadsKanban() {
       getLeadStages(pipeId || undefined),
       getSegmentos(),
       getUsersForFilter(),
-      !silent ? new Promise(resolve => setTimeout(resolve, 2000)) : Promise.resolve()
     ]);
     if (stagesRes.success) setStages(stagesRes.stages);
     if (Array.isArray(segmentosRes)) setSegmentos(segmentosRes);

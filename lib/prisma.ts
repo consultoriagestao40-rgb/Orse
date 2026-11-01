@@ -21,6 +21,11 @@ function createPrismaClient() {
   })
 }
 
-export const prisma = globalForPrisma.prisma || createPrismaClient()
+declare global {
+  // eslint-disable-next-line no-var
+  var prismaInstance: PrismaClient | undefined
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+export const prisma = globalThis.prismaInstance || createPrismaClient()
+
+globalThis.prismaInstance = prisma

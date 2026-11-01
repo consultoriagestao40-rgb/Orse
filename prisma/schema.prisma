@@ -134,6 +134,7 @@ model User {
 
   // Níveis e Permissões de Acesso Granulares
   acessoWhatsTipo        String   @default("PROPRIOS") // "TODOS" | "PROPRIOS" | "NENHUM"
+  podeAtenderNovosWhats  Boolean  @default(false)      // Se pode atender/puxar novas conversas de WhatsApp
   acessoLeadsTipo        String   @default("ATRIBUIDOS") // "TODOS" | "ATRIBUIDOS"
   acessoContratos        Boolean  @default(true)
   acessoPic              Boolean  @default(true)

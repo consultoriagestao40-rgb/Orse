@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers, UserCheck } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
+import { assignLeadToMe } from '@/app/admin/settings/zapi-actions';
 import { getLeads, getAllUsers, updateLeadData, changeLeadOwner, getPendingUnansweredLeads, updateLeadStage, getLeadStages, createLeadStage, updateLeadStageName, updateLeadStageColor, deleteLeadStage, reorderStages } from '@/app/leads/actions';
 import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, updateLeadTags, syncZApiContactProfile } from '@/app/leads/whatsapp-actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -2846,9 +2847,20 @@ const Sidebar = () => {
 
                   {/* Tabs Abertas vs Encerradas */}
                   {(() => {
-                    const allWhatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
-                    const openCount = allWhatsappLeads.filter(l => (l.chatStatus || 'OPEN') === 'OPEN').length;
-                    const closedCount = allWhatsappLeads.filter(l => l.chatStatus === 'CLOSED').length;
+                    const userWhatsTipo = user?.acessoWhatsTipo || (user?.role === 'ADMIN' ? 'TODOS' : 'PROPRIOS');
+                    const canAttendNew = Boolean((user as any)?.podeAtenderNovosWhats || user?.role === 'ADMIN');
+
+                    const accessibleLeads = widgetLeads.filter(l => {
+                      if (!l.telefone || (!l.whatsappMessages?.length && !l.latestMsg)) return false;
+                      if (user?.role === 'ADMIN' || userWhatsTipo === 'TODOS') return true;
+                      if (userWhatsTipo === 'NENHUM') return false;
+                      const isMine = l.assignedToId === user?.id || (l.shares && l.shares.some((s: any) => s.userId === user?.id));
+                      const isUnassigned = !l.assignedToId && canAttendNew;
+                      return isMine || isUnassigned;
+                    });
+
+                    const openCount = accessibleLeads.filter(l => (l.chatStatus || 'OPEN') === 'OPEN').length;
+                    const closedCount = accessibleLeads.filter(l => l.chatStatus === 'CLOSED').length;
                     return (
                       <div className="flex border-b border-slate-100 bg-slate-50/60 p-1.5 gap-1 shrink-0">
                         <button
@@ -2878,8 +2890,28 @@ const Sidebar = () => {
                   {/* Lista */}
                   <div className="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white">
                     {(() => {
-                      const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
-                      const filtered = whatsappLeads.filter(l => {
+                      const userWhatsTipo = user?.acessoWhatsTipo || (user?.role === 'ADMIN' ? 'TODOS' : 'PROPRIOS');
+                      const canAttendNew = Boolean((user as any)?.podeAtenderNovosWhats || user?.role === 'ADMIN');
+
+                      if (user?.role !== 'ADMIN' && userWhatsTipo === 'NENHUM') {
+                        return (
+                          <div className="p-8 text-center text-rose-500 text-xs font-semibold space-y-2">
+                            <p className="font-bold text-sm">🔒 Acesso Bloqueado</p>
+                            <p className="text-slate-400 text-[11px]">Seu usuário não possui permissão para visualizar o canal de WhatsApp da empresa.</p>
+                          </div>
+                        );
+                      }
+
+                      const accessibleLeads = widgetLeads.filter(l => {
+                        if (!l.telefone || (!l.whatsappMessages?.length && !l.latestMsg)) return false;
+                        if (user?.role === 'ADMIN' || userWhatsTipo === 'TODOS') return true;
+                        if (userWhatsTipo === 'NENHUM') return false;
+                        const isMine = l.assignedToId === user?.id || (l.shares && l.shares.some((s: any) => s.userId === user?.id));
+                        const isUnassigned = !l.assignedToId && canAttendNew;
+                        return isMine || isUnassigned;
+                      });
+
+                      const filtered = accessibleLeads.filter(l => {
                         const matchesSearch = l.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
                                               l.telefone.includes(widgetSearchTerm);
                         const status = l.chatStatus || 'OPEN';
@@ -3413,6 +3445,32 @@ const Sidebar = () => {
                             </div>
 
                             <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none max-w-full">
+                              {/* Botão de Assumir Atendimento quando não tem atendente */}
+                              {!activeWidgetLead.assignedToId && (Boolean((user as any)?.podeAtenderNovosWhats || user?.role === 'ADMIN')) && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const res = await assignLeadToMe(activeWidgetLead.id);
+                                    if (res.success && res.lead) {
+                                      setActiveWidgetLead((prev: any) => ({ ...prev, ...res.lead }));
+                                      setWidgetLeads((prev: any[]) => prev.map(l => l.id === res.lead.id ? { ...l, ...res.lead } : l));
+                                    }
+                                  }}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10.5px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer shrink-0 whitespace-nowrap animate-pulse"
+                                  title="Assumir o atendimento desta conversa agora"
+                                >
+                                  <UserCheck size={13} />
+                                  <span>Assumir Atendimento</span>
+                                </button>
+                              )}
+
+                              {/* Responsável atual */}
+                              {activeWidgetLead.assignedTo && (
+                                <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 flex items-center gap-1">
+                                  <span>👤</span> {activeWidgetLead.assignedTo.nome.split(' ')[0]}
+                                </span>
+                              )}
+
                               {/* Botão de Adicionar Participantes ao Chat */}
                               <div className="relative shrink-0">
                                 <button
