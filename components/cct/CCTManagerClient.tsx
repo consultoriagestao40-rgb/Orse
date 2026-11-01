@@ -223,9 +223,9 @@ export default function CCTManagerClient({ initialCcts }: CCTManagerClientProps)
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Botão de Chat com IA */}
                           <Link 
-                            href={`/admin/ccts/${cct.id}`}
+                            href={`/admin/ccts/${cct.id}?chat=open`}
                             className="px-3 py-1.5 rounded-lg bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
-                            title="Abrir CCT Publicada e Consultar IA"
+                            title="Abrir CCT e Iniciar Chat com IA"
                           >
                             <MessageSquare size={13} />
                             <span>Abrir & Chat IA</span>

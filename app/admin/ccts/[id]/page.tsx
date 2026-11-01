@@ -138,6 +138,26 @@ export default function PublishedCCTPage() {
   };
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Auto-abrir o chat se a URL contiver ?chat=open
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get('chat') === 'open' || sp.get('chat') === 'true') {
+        setIsChatOpen(true);
+      }
+    }
+  }, []);
+
+  // Focar o campo de texto quando o chat for aberto
+  useEffect(() => {
+    if (isChatOpen) {
+      setTimeout(() => {
+        chatInputRef.current?.focus();
+      }, 150);
+    }
+  }, [isChatOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -857,6 +877,7 @@ export default function PublishedCCTPage() {
                   className="flex items-center gap-2"
                 >
                   <input
+                    ref={chatInputRef}
                     type="text"
                     placeholder="Faça uma pergunta sobre esta CCT..."
                     value={inputQuery}
