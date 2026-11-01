@@ -78,6 +78,10 @@ export async function createCCT(data: any) {
         outrosBeneficios: Number(cctData.outrosBeneficios) || 0,
         insalubridadeBase: cctData.insalubridadeBase || 'MINIMO',
         salarioMinimo: Number(cctData.salarioMinimo) || 1412,
+        pdfUrl: cctData.pdfUrl || null,
+        pdfNome: cctData.pdfNome || null,
+        textoCompleto: cctData.textoCompleto || null,
+        resumoClausulas: cctData.resumoClausulas || null,
 
         cargos: {
           create: (cargos || []).filter((c: any) => c.nome?.trim() !== '').map((c: any) => ({
@@ -99,8 +103,23 @@ export async function createCCT(data: any) {
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao criar CCT:', error);
-    // Retornamos o objeto de erro para evitar que o Next.js ofusque em produção
     return { error: error?.message || String(error) || 'Erro interno no banco de dados' };
+  }
+}
+
+export async function getCCTById(id: string) {
+  noStore();
+  try {
+    const data = await prisma.cCT.findUnique({
+      where: { id },
+      include: {
+        cargos: true
+      }
+    });
+    return data ? JSON.parse(JSON.stringify(data)) : null;
+  } catch (error) {
+    console.error('Erro ao buscar CCT por ID:', error);
+    return null;
   }
 }
 
@@ -156,6 +175,10 @@ export async function updateCCT(id: string, data: any) {
         outrosBeneficios: Number(cctData.outrosBeneficios) || 0,
         insalubridadeBase: cctData.insalubridadeBase || 'MINIMO',
         salarioMinimo: Number(cctData.salarioMinimo) || 1412,
+        ...(cctData.pdfUrl ? { pdfUrl: cctData.pdfUrl } : {}),
+        ...(cctData.pdfNome ? { pdfNome: cctData.pdfNome } : {}),
+        ...(cctData.textoCompleto ? { textoCompleto: cctData.textoCompleto } : {}),
+        ...(cctData.resumoClausulas ? { resumoClausulas: cctData.resumoClausulas } : {}),
 
         cargos: {
           create: (cargos || []).filter((c: any) => c.nome?.trim() !== '').map((c: any) => ({
@@ -171,6 +194,7 @@ export async function updateCCT(id: string, data: any) {
       }
     });
     revalidatePath('/admin/ccts');
+    revalidatePath(`/admin/ccts/${id}`);
     revalidatePath('/propostas/nova');
     revalidatePath('/');
     return { success: true };

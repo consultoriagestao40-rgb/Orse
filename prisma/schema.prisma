@@ -193,6 +193,10 @@ model CCT {
   reservaTecnica         Float    @default(0)
   insalubridadeBase      String   @default("MINIMO") // "SALARIO" ou "MINIMO"
   salarioMinimo          Float    @default(1412)
+  pdfUrl                 String?  @db.Text
+  pdfNome                String?
+  textoCompleto          String?  @db.Text
+  resumoClausulas        Json?
   cargos                 Cargo[]
   tenantId               String?
   tenant                 Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)

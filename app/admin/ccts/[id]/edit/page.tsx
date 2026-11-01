@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   ArrowLeft, Save, Plus, Trash2, 
-  MapPin, Briefcase, HeartPulse, Calendar, Settings, Search, X
+  MapPin, Briefcase, HeartPulse, Calendar, Settings, Search, X,
+  Sparkles, FileUp, Loader2, Download, FileText, CheckCircle2
 } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { getCCTs, createCCT, updateCCT } from '@/app/ccts/actions';
@@ -85,17 +86,28 @@ export default function CCTEditorPage() {
     custosSindicato: 0,
     insalubridadeBase: 'MINIMO',
     salarioMinimo: 1412,
-    outrosBeneficios: 0
+    outrosBeneficios: 0,
+    pdfUrl: '',
+    pdfNome: '',
+    textoCompleto: '',
+    resumoClausulas: null
   });
 
   const [cargos, setCargos] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   
+  // Estados para Leitura de PDF com IA
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfStatus, setPdfStatus] = useState('');
+  const [pdfSuccess, setPdfSuccess] = useState<string | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+
   // Estados para Modal de EPI
   const [allEpis, setAllEpis] = useState<any[]>([]);
   const [showEpiModal, setShowEpiModal] = useState(false);
   const [activeCargoIdx, setActiveCargoIdx] = useState<number | null>(null);
   const [epiSearch, setEpiSearch] = useState('');
+
   
   // Pesquisa de Cargos
   const [searchTermCargos, setSearchTermCargos] = useState('');
@@ -278,6 +290,66 @@ export default function CCTEditorPage() {
     }, 0);
   };
 
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Por favor, selecione um arquivo em formato PDF.');
+      return;
+    }
+
+    try {
+      setPdfLoading(true);
+      setPdfStatus('Lendo documento PDF e extraindo cláusulas com IA...');
+      setPdfSuccess(null);
+
+      const fData = new FormData();
+      fData.append('pdf', file);
+      fData.append('autoSave', 'false');
+
+      const res = await fetch('/api/cct/upload-and-parse', {
+        method: 'POST',
+        body: fData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Erro ao processar PDF da CCT.');
+      }
+
+      const p = data.parsed || {};
+      setFormData((prev: any) => ({
+        ...prev,
+        nome: p.nomeSindicato || prev.nome || file.name.replace(/\.pdf$/i, ''),
+        uf: p.uf || prev.uf,
+        cidade: p.cidade || prev.cidade,
+        vigenciaInicio: p.vigenciaInicio || prev.vigenciaInicio,
+        vigenciaFim: p.vigenciaFim || prev.vigenciaFim,
+        vaValor: p.vaValor !== undefined && p.vaValor > 0 ? p.vaValor : prev.vaValor,
+        vtValor: p.vtValor !== undefined && p.vtValor > 0 ? p.vtValor : prev.vtValor,
+        seguroVida: p.seguroVida !== undefined && p.seguroVida > 0 ? p.seguroVida : prev.seguroVida,
+        cestaBasica: p.cestaBasica !== undefined && p.cestaBasica > 0 ? p.cestaBasica : prev.cestaBasica,
+        salarioMinimo: p.salarioMinimo || prev.salarioMinimo,
+        pdfUrl: data.pdfUrl || prev.pdfUrl,
+        pdfNome: data.pdfNome || file.name,
+        textoCompleto: data.textoCompleto || prev.textoCompleto,
+        resumoClausulas: data.resumoClausulas || prev.resumoClausulas,
+      }));
+
+      if (data.cargos && data.cargos.length > 0) {
+        setCargos(data.cargos);
+      }
+
+      setPdfSuccess(`CCT processada com sucesso! ${data.cargos?.length || 0} funções identificadas e valores preenchidos.`);
+    } catch (err: any) {
+      alert('Erro na leitura do PDF: ' + (err?.message || 'Tente novamente'));
+    } finally {
+      setPdfLoading(false);
+      setPdfStatus('');
+      if (pdfInputRef.current) pdfInputRef.current.value = '';
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.nome?.trim()) return alert('Informe o nome da regra técnica.');
     try {
@@ -353,6 +425,72 @@ export default function CCTEditorPage() {
         </div>
 
         <div className="max-w-5xl mx-auto p-8 space-y-6 pb-32">
+
+          {/* Card Especial de Importação e Leitura por IA */}
+          <div className="bg-gradient-to-r from-emerald-900 to-[#1B4D3E] text-white rounded-xl p-6 shadow-md border border-emerald-700/50">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="bg-emerald-400/20 text-emerald-200 border border-emerald-300/30 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                  <Sparkles size={11} /> Captura Inteligente com IA
+                </span>
+                <h3 className="text-base font-black uppercase tracking-tight">
+                  Preencher dados automaticamente via PDF da CCT
+                </h3>
+                <p className="text-xs text-emerald-100/80 max-w-xl">
+                  Selecione o arquivo PDF da Convenção Coletiva. O sistema lerá os pisos salariais, benefícios e cláusulas, preenchendo o formulário e vinculando o documento para download e Chat com IA.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                <input 
+                  ref={pdfInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  className="hidden"
+                  onChange={handlePdfUpload}
+                  disabled={pdfLoading}
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => pdfInputRef.current?.click()}
+                  disabled={pdfLoading}
+                  className="w-full sm:w-auto bg-white hover:bg-emerald-50 text-[#1B4D3E] font-black text-xs px-5 py-3 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {pdfLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin text-[#1B4D3E]" />
+                      <span>{pdfStatus || 'Processando PDF...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileUp size={16} />
+                      <span>Selecionar PDF da CCT</span>
+                    </>
+                  )}
+                </button>
+
+                {formData.pdfUrl && (
+                  <a
+                    href={formData.pdfUrl}
+                    download={formData.pdfNome || 'CCT.pdf'}
+                    className="w-full sm:w-auto bg-emerald-800/80 hover:bg-emerald-800 text-emerald-100 border border-emerald-600/50 text-xs font-bold px-3.5 py-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                    title="Baixar PDF anexado"
+                  >
+                    <Download size={14} />
+                    <span className="truncate max-w-[130px]">{formData.pdfNome || 'Baixar PDF'}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {pdfSuccess && (
+              <div className="mt-4 p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-100 text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 size={15} className="text-emerald-300 shrink-0" />
+                <span>{pdfSuccess}</span>
+              </div>
+            )}
+          </div>
 
           {/* Bloco 1: Identificação Regional */}
           <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
