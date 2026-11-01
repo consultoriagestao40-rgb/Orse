@@ -14,7 +14,7 @@ import ClientTrackingModal from '@/components/ClientTrackingModal';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 import { Building } from 'lucide-react';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 import { 
   createDocumentoProposta, 
   updateDocumentoStatus, 
@@ -1101,11 +1101,10 @@ export default function PropostasComerciaisDashboard() {
     }
   };
 
-  if (!hasLoadedOnce || !viewModeMounted) {
+  if (!hasLoadedOnce || !viewModeMounted || loading) {
     return (
-      <FinancialLoadingTransition
-        title="Sincronizando Propostas Comerciais"
-        subtitle="Carregando documentos comerciais, clientes vinculados e versões..."
+      <ContextualModuleTransition
+        module="propostas"
         variant="fullscreen"
       />
     );

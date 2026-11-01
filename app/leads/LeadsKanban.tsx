@@ -10,7 +10,7 @@ import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
 import WhatsAppChat from './components/WhatsAppChat';
 import UserSelectPopover from '@/components/UserSelectPopover';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 import { parseDateUTC, formatTimeBrasilia, getUserTimezone } from '@/lib/timezone';
 
 const safeDate = (val: any) => {
@@ -1771,11 +1771,10 @@ export default function LeadsKanban() {
     ).length;
   }, 0);
 
-  if (!hasLoadedOnce || (loading && leads.length === 0)) {
+  if (!hasLoadedOnce || loading) {
     return (
-      <FinancialLoadingTransition
-        title="Sincronizando Funil Comercial & Leads"
-        subtitle="Carregando oportunidades, cotações e estágios do pipeline..."
+      <ContextualModuleTransition
+        module="leads"
         variant="fullscreen"
       />
     );

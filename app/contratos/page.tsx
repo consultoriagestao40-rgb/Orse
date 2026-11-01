@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { getContratos, updateContratoStatus, deleteContrato, renameContratoStatus } from './actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 // ─── Helpers de módulo ────────────────────────────────────────────────────────
 const tailwindColorMap: { [key: string]: string } = {
@@ -926,11 +926,10 @@ export default function ContratosDashboard() {
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
-  if (!hasLoadedOnce || !viewModeMounted) {
+  if (!hasLoadedOnce || !viewModeMounted || loading) {
     return (
-      <FinancialLoadingTransition
-        title="Sincronizando Gestão de Contratos"
-        subtitle="Carregando vigências, faturamentos e documentações contratuais..."
+      <ContextualModuleTransition
+        module="contratos"
         variant="fullscreen"
       />
     );

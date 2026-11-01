@@ -14,6 +14,7 @@ import {
 } from './actions';
 import TaskMetrics from './components/TaskMetrics';
 import TaskDetailsModal from './components/TaskDetailsModal';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 const tailwindColorMap: { [key: string]: string } = {
   sky: '#0284c7',
@@ -617,6 +618,15 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
       alert(res.error || 'Erro ao criar tarefa');
     }
   };
+
+  if (loading) {
+    return (
+      <ContextualModuleTransition
+        module="tasks"
+        variant="fullscreen"
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">

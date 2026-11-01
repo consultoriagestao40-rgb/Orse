@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 function hexToRgba(hex: string, alpha: number) {
   if (!hex) return `rgba(30, 58, 138, ${alpha})`;
@@ -671,7 +671,8 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
           </div>
 
           {loading ? (
-            <FinancialLoadingTransition
+            <ContextualModuleTransition
+              module="radar"
               title="Calculando KPIs do Radar Comercial"
               subtitle="Sincronizando faturamento, propostas emitidas e metas corporativas..."
               variant="inline"

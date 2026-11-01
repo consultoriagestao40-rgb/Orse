@@ -22,7 +22,7 @@ import {
 import UserSelectPopover from '@/components/UserSelectPopover';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import { Building } from 'lucide-react';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
 
@@ -1243,11 +1243,10 @@ function ProposalsDashboard() {
     );
   };
 
-  if (!hasLoadedOnce || !viewModeMounted) {
+  if (!hasLoadedOnce || !viewModeMounted || loading) {
     return (
-      <FinancialLoadingTransition
-        title="Sincronizando Pipeline de FVP"
-        subtitle="Calculando propostas, versões de engenharia e métricas financeiras..."
+      <ContextualModuleTransition
+        module="fvp"
         variant="fullscreen"
       />
     );
@@ -2396,9 +2395,8 @@ export default function Page() {
 
   if (isLoggedIn === null) {
     return (
-      <FinancialLoadingTransition
-        title="Sincronizando Sessão & Pipeline FVP"
-        subtitle="Validando credenciais e carregando métricas de engenharia..."
+      <ContextualModuleTransition
+        module="fvp"
         variant="fullscreen"
       />
     );

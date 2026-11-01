@@ -15,6 +15,7 @@ import {
   CalendarEventItem 
 } from './actions';
 import Sidebar from '@/components/Sidebar';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 type ViewMode = 'mes' | 'semana' | 'agenda';
 type CategoryFilter = 'TODOS' | 'ATA' | 'LEAD' | 'TAREFA' | 'CONTRATO';
@@ -253,6 +254,17 @@ export default function CalendarPage() {
         return { label: 'Evento', bg: 'bg-slate-100 text-slate-800 border-slate-200', dot: 'bg-slate-500' };
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 overflow-hidden">
+          <ContextualModuleTransition module="calendar" variant="fullscreen" />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
