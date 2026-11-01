@@ -1,12 +1,6 @@
 import React from 'react';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 export default function RootLoading() {
-  return (
-    <FinancialLoadingTransition
-      title="Sincronizando Sistema SmartBidHub"
-      subtitle="Conectando mercado financeiro, módulos corporativos e base de dados..."
-      variant="fullscreen"
-    />
-  );
+  return <ContextualModuleTransition module="radar" variant="fullscreen" />;
 }

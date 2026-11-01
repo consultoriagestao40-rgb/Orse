@@ -575,34 +575,9 @@ const Sidebar = () => {
   const prevUnreadChatRef = useRef(-1);
   const prevUnreadNotifRef = useRef(-1);
 
-  // Play chime helper using Web Audio API
+  // Play chime helper using Web Audio API (silenciado a pedido do usuário)
   const playNotificationChime = () => {
-    try {
-      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtxClass) return;
-      const ctx = new AudioCtxClass();
-      
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-      
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      gainNode.gain.setValueAtTime(0, ctx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch (e) {
-      console.warn("Chime play blocked or unsupported:", e);
-    }
+    return;
   };
 
   useEffect(() => {
@@ -1050,14 +1025,11 @@ const Sidebar = () => {
 
           const totalUnread = res.pendingLeads.reduce((acc, l) => acc + (l.unreadCount || 0), 0);
 
-          if (prevUnreadWhatsAppRef.current !== -1 && totalUnread > prevUnreadWhatsAppRef.current) {
-            playWhatsAppChime();
-          }
+          // Silencioso: atualiza contador sem emitir bips ou travar tela
           prevUnreadWhatsAppRef.current = totalUnread;
 
           if (!hasCheckedPendingOnMountRef.current) {
             hasCheckedPendingOnMountRef.current = true;
-            // Notificação modal automática de pendências desativada
           }
         }
       } catch (err) {
@@ -1066,7 +1038,7 @@ const Sidebar = () => {
     };
 
     checkWhatsAppGlobalStatus();
-    const interval = setInterval(checkWhatsAppGlobalStatus, 6000);
+    const interval = setInterval(checkWhatsAppGlobalStatus, 30000);
     return () => clearInterval(interval);
   }, [user]);
 

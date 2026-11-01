@@ -1,12 +1,6 @@
 import React from 'react';
-import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
+import ContextualModuleTransition from '@/components/ContextualModuleTransition';
 
 export default function PipelineLoading() {
-  return (
-    <FinancialLoadingTransition
-      title="Sincronizando Pipeline de FVP"
-      subtitle="Calculando propostas, versões de engenharia e métricas financeiras..."
-      variant="fullscreen"
-    />
-  );
+  return <ContextualModuleTransition module="fvp" variant="fullscreen" />;
 }
