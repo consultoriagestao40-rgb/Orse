@@ -2755,7 +2755,7 @@ function PropostaEditor() {
                   const adicionalPericulosidade = temPericulosidade ? salarioBase * 0.3 : 0;
                   
                   const pctInsalubridade = param.insalubridadePercent !== undefined ? param.insalubridadePercent : (cargo.insalubridadePercent || 0);
-                  const baseInsalubridade = cctEfetiva.insalubridadeBase === 'SALARIO' ? salarioBase : (Number(cctEfetiva.salarioMinimo) || 1412);
+                  const baseInsalubridade = cctEfetiva.insalubridadeBase === 'SALARIO' ? salarioBase : (Number(cctEfetiva.salarioMinimo) || 1518);
                   const adicionalInsalubridade = baseInsalubridade * (pctInsalubridade / 100);
                   
                   let adicionalNoturno = 0;

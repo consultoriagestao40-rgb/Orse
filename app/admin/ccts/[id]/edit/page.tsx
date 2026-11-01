@@ -85,7 +85,7 @@ export default function CCTEditorPage() {
     taxaAdm: 5,
     custosSindicato: 0,
     insalubridadeBase: 'MINIMO',
-    salarioMinimo: 1412,
+    salarioMinimo: 1518,
     outrosBeneficios: 0,
     pdfUrl: '',
     pdfNome: '',

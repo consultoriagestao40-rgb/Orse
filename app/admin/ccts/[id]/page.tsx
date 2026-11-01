@@ -6,7 +6,7 @@ import {
   ArrowLeft, Download, FileText, Bot, Send, Sparkles, 
   CheckCircle2, AlertCircle, Edit2, Calendar, MapPin, 
   Users, DollarSign, Shield, RefreshCw, BookOpen, Search,
-  ChevronDown, ChevronUp, Copy, Check
+  ChevronDown, ChevronUp, Copy, Check, Maximize2, Minimize2, X
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { getCCTById } from '@/app/ccts/actions';
@@ -128,6 +128,12 @@ export default function PublishedCCTPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedClausulaId, setExpandedClausulaId] = useState<string | null>(null);
   const [clausulaSearch, setClausulaSearch] = useState('');
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [expandedTrechos, setExpandedTrechos] = useState<Record<string, boolean>>({});
+
+  const toggleTrecho = (id: string) => {
+    setExpandedTrechos(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -400,8 +406,8 @@ export default function PublishedCCTPage() {
           {/* GRID: DETALHES TÉCNICOS (ESQUERDA) + CHAT COM IA (DIREITA) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            {/* COLUNA ESQUERDA: CONTEÚDO DA CCT (7 COLUNAS) */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* COLUNA ESQUERDA: CONTEÚDO DA CCT (6 COLUNAS) */}
+            <div className="lg:col-span-6 space-y-6">
 
               {/* ABA 1: FUNÇÕES E PISOS SALARIAIS */}
               {activeTab === 'funcoes' && (
@@ -569,11 +575,23 @@ export default function PublishedCCTPage() {
 
             </div>
 
-            {/* COLUNA DIREITA: CHAT INTELIGENTE COM IA (5 COLUNAS) */}
-            <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-md flex flex-col h-[700px] sticky top-6 overflow-hidden">
+            {/* BACKDROP QUANDO O CHAT ESTIVER EXPANDIDO */}
+            {isChatExpanded && (
+              <div 
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity"
+                onClick={() => setIsChatExpanded(false)}
+              />
+            )}
+
+            {/* COLUNA DIREITA: CHAT INTELIGENTE COM IA (6 COLUNAS OU MODO TELA CHEIA EXPANDIDO) */}
+            <div className={`bg-white rounded-3xl border border-slate-200 shadow-md flex flex-col transition-all duration-200 overflow-hidden ${
+              isChatExpanded 
+                ? 'fixed inset-4 md:inset-8 z-50 shadow-2xl border-slate-300' 
+                : 'lg:col-span-6 h-[720px] sticky top-6'
+            }`}>
               
               {/* CABEÇALHO DO CHAT */}
-              <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 to-[#1B4D3E] text-white flex items-center justify-between">
+              <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 to-[#1B4D3E] text-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-emerald-300 border border-white/10">
                     <Bot size={18} />
@@ -583,16 +601,63 @@ export default function PublishedCCTPage() {
                     <p className="text-[10px] text-emerald-200">Tire dúvidas sobre cláusulas desta convenção</p>
                   </div>
                 </div>
-                <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                  Online
-                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsChatExpanded(!isChatExpanded)}
+                    title={isChatExpanded ? "Reduzir para painel lateral" : "Expandir chat para leitura ampla"}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 text-xs font-bold transition-colors cursor-pointer border border-white/15"
+                  >
+                    {isChatExpanded ? (
+                      <>
+                        <Minimize2 size={13} />
+                        <span className="hidden sm:inline">Reduzir</span>
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 size={13} />
+                        <span className="hidden sm:inline">Expandir Chat</span>
+                      </>
+                    )}
+                  </button>
+
+                  <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    Online
+                  </span>
+
+                  {isChatExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => setIsChatExpanded(false)}
+                      title="Fechar modo expandido"
+                      className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* SUGESTÕES RÁPIDAS DE PERGUNTAS */}
-              <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px] select-none">
+              <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px] select-none shrink-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                   <Sparkles size={11} className="text-amber-500" /> Dúvidas:
                 </span>
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage('Quais funções preveem adicional de insalubridade e quais os percentuais?')}
+                  className="bg-white hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg text-slate-700 font-bold shrink-0 transition-all cursor-pointer shadow-2xs"
+                >
+                  Funções com insalubridade?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage('Qual o piso salarial e gratificação do Cozinheiro e Copeiro?')}
+                  className="bg-white hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg text-slate-700 font-bold shrink-0 transition-all cursor-pointer shadow-2xs"
+                >
+                  Piso de Cozinheiro e Copeiro?
+                </button>
                 <button
                   type="button"
                   onClick={() => handleSendMessage('Na CCT prevê pagamento de Vale alimentação quando o funcionário está de atestado médico?')}
@@ -602,22 +667,15 @@ export default function PublishedCCTPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleSendMessage('Qual o piso salarial e adicional de insalubridade de Auxiliar de Limpeza?')}
+                  onClick={() => handleSendMessage('Como funciona a jornada 12x36 e regras de horas extras?')}
                   className="bg-white hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg text-slate-700 font-bold shrink-0 transition-all cursor-pointer shadow-2xs"
                 >
-                  Piso de Auxiliar de Limpeza?
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSendMessage('Como funciona a jornada 12x36 e intervalo de refeição?')}
-                  className="bg-white hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg text-slate-700 font-bold shrink-0 transition-all cursor-pointer shadow-2xs"
-                >
-                  Jornada 12x36?
+                  Jornada 12x36 e Horas Extras?
                 </button>
               </div>
 
               {/* ÁREA DE MENSAGENS */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/40">
+              <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4 bg-slate-50/40">
                 {messages.map(m => {
                   const isUser = m.sender === 'user';
                   return (
@@ -626,7 +684,7 @@ export default function PublishedCCTPage() {
                       className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
                     >
                       <div
-                        className={`max-w-[90%] p-3.5 rounded-2xl text-xs leading-relaxed ${
+                        className={`max-w-[95%] md:max-w-[85%] p-4 rounded-2xl text-[13px] leading-relaxed ${
                           isUser
                             ? 'bg-[#1B4D3E] text-white rounded-br-none shadow-sm'
                             : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-xs'
@@ -636,18 +694,18 @@ export default function PublishedCCTPage() {
 
                         {/* CLÁUSULA CITADA */}
                         {m.clausulaCitada && (
-                          <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-emerald-900 bg-emerald-50/90 border border-emerald-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
+                          <div className="mt-3 flex items-center justify-between text-xs font-bold text-emerald-900 bg-emerald-50/90 border border-emerald-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs">📌</span>
                               <span>{m.clausulaCitada}</span>
                             </div>
                             <button
                               onClick={() => handleCopyText(m.id, `${m.clausulaCitada}\n\n${m.trechoOriginal || m.text}`)}
-                              title="Copiar trecho"
+                              title="Copiar citação"
                               className="p-1 text-slate-400 hover:text-emerald-800 hover:bg-emerald-100/60 rounded-lg transition-colors cursor-pointer"
                             >
                               {copiedId === m.id ? (
-                                <span className="flex items-center gap-1 text-[10px] text-emerald-700 font-bold">
+                                <span className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold">
                                   <Check size={12} /> Copiado
                                 </span>
                               ) : (
@@ -657,16 +715,48 @@ export default function PublishedCCTPage() {
                           </div>
                         )}
 
-                        {/* TRECHO ORIGINAL DA CCT */}
+                        {/* TRECHO ORIGINAL DA CCT (OPCIONAL E RETRÁTIL) */}
                         {m.trechoOriginal && (
-                          <div className="mt-2.5 p-3 rounded-xl bg-slate-50 border-l-4 border-[#1B4D3E] border border-slate-200/80 text-[11px] text-slate-600 leading-relaxed max-h-36 overflow-y-auto">
-                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                          <div className="mt-2.5 pt-2 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => toggleTrecho(m.id)}
+                              className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#1B4D3E] bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/80 hover:border-emerald-200 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+                            >
                               <FileText size={12} className="text-[#1B4D3E]" />
-                              <span>Trecho Original da Convenção</span>
-                            </div>
-                            <blockquote className="italic text-slate-700 font-sans leading-relaxed">
-                              &ldquo;{m.trechoOriginal}&rdquo;
-                            </blockquote>
+                              <span>{expandedTrechos[m.id] ? 'Ocultar redação original da CCT' : 'Ver redação oficial da CCT (opcional)'}</span>
+                              {expandedTrechos[m.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+
+                            {expandedTrechos[m.id] && (
+                              <div className="mt-2 p-3.5 rounded-xl bg-slate-50 border-l-4 border-[#1B4D3E] border border-slate-200/90 text-xs text-slate-600 leading-relaxed max-h-48 overflow-y-auto">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                    Texto Oficial da Convenção Coletiva
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyText(`trecho-${m.id}`, m.trechoOriginal!)}
+                                    className="text-[11px] font-bold text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer"
+                                  >
+                                    {copiedId === `trecho-${m.id}` ? (
+                                      <>
+                                        <Check size={11} className="text-emerald-700" />
+                                        <span>Copiado</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy size={11} />
+                                        <span>Copiar texto oficial</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                                <blockquote className="italic text-slate-700 font-sans leading-relaxed whitespace-pre-wrap">
+                                  &ldquo;{m.trechoOriginal}&rdquo;
+                                </blockquote>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -689,7 +779,7 @@ export default function PublishedCCTPage() {
               </div>
 
               {/* INPUT DO CHAT */}
-              <div className="p-3 border-t border-slate-200 bg-white">
+              <div className="p-3.5 border-t border-slate-200 bg-white shrink-0">
                 <form
                   onSubmit={e => {
                     e.preventDefault();
@@ -703,14 +793,14 @@ export default function PublishedCCTPage() {
                     value={inputQuery}
                     onChange={e => setInputQuery(e.target.value)}
                     disabled={chatLoading}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-800 outline-none focus:bg-white focus:ring-1 focus:ring-[#1B4D3E]"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs md:text-sm font-medium text-slate-800 outline-none focus:bg-white focus:ring-1 focus:ring-[#1B4D3E]"
                   />
                   <button
                     type="submit"
                     disabled={!inputQuery.trim() || chatLoading}
-                    className="p-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl transition-all shadow-xs disabled:opacity-40 cursor-pointer"
+                    className="p-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl transition-all shadow-xs disabled:opacity-40 cursor-pointer"
                   >
-                    <Send size={15} />
+                    <Send size={16} />
                   </button>
                 </form>
               </div>

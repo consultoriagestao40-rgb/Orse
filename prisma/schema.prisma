@@ -213,7 +213,7 @@ model CCT {
   outrosBeneficios       Float    @default(0)
   reservaTecnica         Float    @default(0)
   insalubridadeBase      String   @default("MINIMO") // "SALARIO" ou "MINIMO"
-  salarioMinimo          Float    @default(1412)
+  salarioMinimo          Float    @default(1518)
   pdfUrl                 String?  @db.Text
   pdfNome                String?
   textoCompleto          String?  @db.Text

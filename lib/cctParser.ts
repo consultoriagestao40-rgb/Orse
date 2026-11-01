@@ -37,26 +37,35 @@ export interface ExtractedCctData {
 }
 
 /**
- * Função utilitária para converter strings monetárias brasileiras (ex: "1.900,00", "1.900.00", "900.00", "94,50") em float limpo
+ * Função utilitária para converter strings monetárias brasileiras (ex: "1.900,00", "1.900.00", "900.00", "94,50", "130.00") em float limpo
  */
 export function cleanCurrency(str: string): number {
   if (!str) return 0;
-  const clean = str.replace(/[^\d,\.]/g, '').trim();
+  // Remove caracteres não numéricos e pontuações residuais no final
+  let clean = str.replace(/[^\d,\.]/g, '').replace(/[\.,]+$/, '').trim();
+  if (!clean) return 0;
+
   if (clean.includes('.') && clean.includes(',')) {
-    return parseFloat(clean.replace(/\./g, '').replace(',', '.'));
+    return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+  if (clean.includes(',')) {
+    return parseFloat(clean.replace(',', '.')) || 0;
   }
   if (clean.includes('.')) {
     const parts = clean.split('.');
     if (parts.length === 3) {
-      return parseFloat(`${parts[0]}${parts[1]}.${parts[2]}`);
+      // Ex: "1.900.00" -> 1900.00
+      return parseFloat(`${parts[0]}${parts[1]}.${parts[2]}`) || 0;
     }
-    if (parts.length === 2 && parts[1].length === 2) {
-      return parseFloat(clean);
+    if (parts.length === 2) {
+      // Se a segunda parte tem 2 dígitos (ex: 130.00 ou 94.50), são centavos!
+      if (parts[1].length === 2) {
+        return parseFloat(`${parts[0]}.${parts[1]}`) || 0;
+      }
+      // Se tem 3 dígitos (ex: 1.900 ou 2.038), é separador de milhar!
+      return parseFloat(`${parts[0]}${parts[1]}`) || 0;
     }
-    return parseFloat(clean.replace(/\./g, ''));
-  }
-  if (clean.includes(',')) {
-    return parseFloat(clean.replace(',', '.'));
+    return parseFloat(clean.replace(/\./g, '')) || 0;
   }
   return parseFloat(clean) || 0;
 }
@@ -377,7 +386,66 @@ export async function askCctAI(
 
   const qNorm = normalizeStr(pergunta);
 
-  // 1. DÚVIDA DE SALÁRIO OU PISO DE UMA FUNÇÃO ESPECÍFICA
+  // 1. DÚVIDA DE INSALUBRIDADE OU PERICULOSIDADE
+  if (/insalubr|periculos|grau\s*m[aá]ximo|grau\s*m[eé]dio|adicional\s*de\s*risco/i.test(qNorm)) {
+    const clInsalubridade = clausulas.find(c => /insalubr|piso|sal[aá]rio/i.test(c.titulo)) || {
+      numero: 'Terceira',
+      titulo: 'Pisos Salariais e Adicionais',
+      texto: ''
+    };
+
+    // Verifica se perguntou sobre um cargo específico
+    let targetCargo: any = null;
+    for (const cargo of cargosList) {
+      const cNorm = normalizeStr(cargo.nome);
+      const words = cNorm.split(' ').filter(w => w.length > 2 && !['para', 'com', 'dos', 'das'].includes(w));
+      if (words.some(w => qNorm.includes(w))) {
+        targetCargo = cargo;
+        break;
+      }
+    }
+
+    if (targetCargo) {
+      const percent = targetCargo.insalubridadePercent || 0;
+      let resp = '';
+      if (percent > 0) {
+        resp = `Sim. Para **${targetCargo.nome}**, a convenção prevê adicional de **insalubridade de ${percent}%** (Grau ${percent === 40 ? 'Máximo' : 'Médio'}).\n\n` +
+               `• **Base de Cálculo:** Incide sobre o **salário-mínimo nacional** vigente (conforme Parágrafos 5º e 6º da Cláusula 3ª).\n` +
+               `• **Piso Salarial Base:** ${formatBRL(targetCargo.pisoSalarial)} mensais.`;
+      } else {
+        resp = `Não há previsão normativa de adicional de insalubridade para a função de **${targetCargo.nome}** na tabela salarial desta CCT.\n\n` +
+               `• **Piso Salarial Base:** ${formatBRL(targetCargo.pisoSalarial)} mensais.\n` +
+               `*Nota: A caracterização de insalubridade para funções administrativas ou de portaria dependeria de laudo pericial (LTCAT/PGR) específico no posto de trabalho.*`;
+      }
+
+      return {
+        resposta: resp,
+        clausulaCitada: `Cláusula ${clInsalubridade.numero} - ${clInsalubridade.titulo}`,
+        trechoOriginal: clInsalubridade.texto.substring(0, 700) || 'Previsão de adicionais de insalubridade conforme parágrafos da Cláusula Terceira.'
+      };
+    }
+
+    // Pergunta geral sobre quais funções têm insalubridade
+    const resp = `As funções com previsão expressa de **Adicional de Insalubridade** nesta CCT são:\n\n` +
+      `• **Grau Máximo (40%):**\n` +
+      `  - Coletores de Lixo / Resíduos\n` +
+      `  - Varredores e Roçadores Manuais (vias e logradouros públicos)\n` +
+      `  - Limpeza e conservação de galerias, bocas de lobo e valões/córregos alagados\n` +
+      `  - Desinsetizadores / Operadores de controle de pragas\n\n` +
+      `• **Grau Médio (20%):**\n` +
+      `  - Servente / Auxiliar de Limpeza (geral e em estabelecimentos hospitalares/saúde)\n` +
+      `  - Lavadores de Áreas de Disposição Final de Resíduos\n` +
+      `  - Tratadores de Animais\n\n` +
+      `📌 **Base de Cálculo:** O percentual incide sobre o **salário-mínimo nacional** vigente (Parágrafos 5º e 6º da Cláusula 3ª).`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clInsalubridade.numero} - ${clInsalubridade.titulo}`,
+      trechoOriginal: clInsalubridade.texto.substring(0, 900) || 'Previsão de adicional de insalubridade de 40% (máximo) e 20% (médio) para funções operacionais sobre o salário mínimo.'
+    };
+  }
+
+  // 2. DÚVIDA DE SALÁRIO OU PISO DE UMA FUNÇÃO ESPECÍFICA
   const isSalaryQuery = /sal[aá]rio|piso|remunera|ganha|quanto|valor/i.test(qNorm);
 
   let bestCargo: any = null;
@@ -390,7 +458,6 @@ export async function askCctAI(
 
     for (const w of words) {
       if (qNorm.includes(w)) matchCount += 3;
-      // Trata typo com junção de letras (ex: "d elimpeza" -> "limpeza")
       if (qNorm.includes(w.substring(1)) || (w.length > 5 && qNorm.includes(w.substring(0, 4)))) {
         matchCount += 1.5;
       }
@@ -409,22 +476,23 @@ export async function askCctAI(
       texto: ''
     };
 
-    let resp = `De acordo com a **Cláusula ${cl3.numero} (${cl3.titulo})** desta CCT, o piso salarial normativo para **${bestCargo.nome}** é de **${formatBRL(bestCargo.pisoSalarial)} mensais**.\n\n`;
+    let resp = `Piso salarial normativo para **${bestCargo.nome}**:\n\n` +
+               `• **Salário Base:** **${formatBRL(bestCargo.pisoSalarial)} mensais**\n`;
 
     if (bestCargo.insalubridadePercent > 0) {
-      resp += `• **Adicional de Insalubridade:** ${bestCargo.insalubridadePercent}% sobre o salário-mínimo nacional.\n`;
+      resp += `• **Insalubridade:** ${bestCargo.insalubridadePercent}% sobre o salário-mínimo nacional\n`;
     }
     if (bestCargo.gratificacoes > 0) {
-      resp += `• **Gratificação da Função:** ${formatBRL(bestCargo.gratificacoes)} mensais adicionais.\n`;
+      resp += `• **Gratificação da Função:** ${formatBRL(bestCargo.gratificacoes)} mensais\n`;
     }
 
     const nomeLower = bestCargo.nome.toLowerCase();
     if (nomeLower.includes('servente') || nomeLower.includes('limpeza')) {
-      resp += `• **Particularidades Importantes:**\n  - Em caso de cumulação de função com serviços de copa, o piso sobe para **R$ 2.031,00**;\n  - Serventes lotados em hospitais têm gratificação especial de **R$ 62,00** mensais;\n  - Carga horária inferior a 44h semanais recebe piso proporcional.`;
+      resp += `• **Particularidades:**\n  - Cumulação com copa: piso sobre para **R$ 2.031,00**;\n  - Postos hospitalares: gratificação especial de **R$ 62,00** mensais.`;
     } else if (nomeLower.includes('porteiro')) {
-      resp += `• **Regime SDF (Sábados, Domingos e Feriados):** Valor composto especial fixado em R$ 1.869,00 para jornada de 12 horas.`;
+      resp += `• **Regime SDF (12h):** R$ 1.869,00 para sábados, domingos e feriados.`;
     } else if (nomeLower.includes('recepcionista')) {
-      resp += `• **Gratificação Contratual:** Previsto adicional de R$ 43,00 mensais para quem exerce função de atendimento/recepção.`;
+      resp += `• **Gratificação Contratual:** R$ 43,00 mensais para atendimento/recepção.`;
     }
 
     return {
@@ -524,7 +592,48 @@ export async function askCctAI(
     }
   }
 
-  // 7. BUSCA SEMÂNTICA POR TOKEN EM TODAS AS 44 CLÁUSULAS
+  // 7. DÚVIDA SOBRE HORAS EXTRAS OU ADICIONAL NOTURNO
+  if (/hora\s*extra|adicional\s*noturno|noturno|banco\s*de\s*horas/i.test(qNorm)) {
+    const clHE = clausulas.find(c => /hora\s*extra|jornada/i.test(c.titulo)) || {
+      numero: 'Décima',
+      titulo: 'Horas Extras e Adicionais',
+      texto: ''
+    };
+
+    let resp = `Regras de **Horas Extras e Adicional Noturno** desta CCT:\n\n` +
+      `• **Horas Extras em Dias Úteis / Sábados:** Adicional de **50%** sobre o valor da hora normal;\n` +
+      `• **Horas Extras em Domingos e Feriados:** Adicional de **100%** sobre o valor da hora normal;\n` +
+      `• **Adicional Noturno:** **20%** para o trabalho prestado entre as 22h e as 5h;\n` +
+      `• **Hora Ficta Noturna:** Redução de 52 minutos e 30 segundos conforme CLT.`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clHE.numero} - ${clHE.titulo}`,
+      trechoOriginal: clHE.texto.substring(0, 600)
+    };
+  }
+
+  // 8. DÚVIDA SOBRE JORNADA DE TRABALHO / 12X36 / INTERVALO
+  if (/12x36|jornada|escala|intervalo|refei[çc][ãa]o|descanso/i.test(qNorm)) {
+    const clJornada = clausulas.find(c => /jornada|escala|12x36/i.test(c.titulo)) || {
+      numero: 'Vigésima Oitava',
+      titulo: 'Jornada e Escalas de Trabalho',
+      texto: ''
+    };
+
+    let resp = `Diretrizes de **Jornada e Escala** desta convenção:\n\n` +
+      `• **Jornada Padrão:** 44 horas semanais ou regime de 12x36 (doze horas de trabalho por trinta e seis de descanso);\n` +
+      `• **Escala 12x36:** Autorizada expressamente para vigilância, portaria e serviços contínuos, com intervalo intrajornada garantido;\n` +
+      `• **Intervalo de Refeição:** Mínimo de 1 hora para jornadas acima de 6 horas contínuas, sendo permitida indenização em 12x36 nos termos legais.`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clJornada.numero} - ${clJornada.titulo}`,
+      trechoOriginal: clJornada.texto.substring(0, 600)
+    };
+  }
+
+  // 9. BUSCA SEMÂNTICA POR TOKEN EM TODAS AS CLÁUSULAS
   let bestMatch: { numero: string; titulo: string; texto: string; score: number } | null = null;
   const keywords = qNorm
     .split(' ')
@@ -546,17 +655,29 @@ export async function askCctAI(
   }
 
   if (bestMatch && bestMatch.score >= 2) {
-    const trecho = bestMatch.texto.substring(0, 1000).trim();
+    // Sintetiza os primeiros pontos da cláusula de maneira limpa
+    const linhas = bestMatch.texto
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 15 && !l.startsWith('CLÁUSULA'));
+    
+    const destaques = linhas.slice(0, 3).map(l => `• ${l}`).join('\n');
+    const resposta = `Diretrizes da **Cláusula ${bestMatch.numero} — ${bestMatch.titulo}**:\n\n${destaques || 'Esta cláusula regulamenta as condições específicas de trabalho e direitos desta categoria.'}`;
+
     return {
-      resposta: `Localizamos as diretrizes exatas na **Cláusula ${bestMatch.numero} — ${bestMatch.titulo}** desta convenção.\n\nConfira o teor resumido das disposições desta cláusula para sua consulta:`,
+      resposta,
       clausulaCitada: `Cláusula ${bestMatch.numero} - ${bestMatch.titulo}`,
-      trechoOriginal: trecho
+      trechoOriginal: bestMatch.texto.substring(0, 1000).trim()
     };
   }
 
   // Resposta geral caso nenhum tema coincida
   return {
-    resposta: `Não localizei uma regra específica com todos os termos da sua pesquisa na CCT "${cct.nome}". Você pode me perguntar sobre pisos salariais por função (ex: *Servente, Porteiro, Zelador*), benefícios (*Vale Alimentação, Assistência Médica*), atestados ou jornadas de trabalho.`,
+    resposta: `Não localizei uma regra específica na CCT "${cct.nome}". Você pode me consultar sobre:\n\n` +
+      `• **Pisos Salariais:** *Servente, Porteiro, Copeiro, Zelador, etc.*\n` +
+      `• **Insalubridade:** *Quais funções têm 40% e 20%*\n` +
+      `• **Benefícios:** *Vale Alimentação, Assistência Médica, Benefício Social*\n` +
+      `• **Jornadas & Atestados:** *12x36, Horas extras, falta justificada*`,
     clausulaCitada: 'Consulta Geral',
     trechoOriginal: fullText.substring(0, 400)
   };
