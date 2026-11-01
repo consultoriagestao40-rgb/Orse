@@ -5,24 +5,21 @@ import dynamic from 'next/dynamic';
 import Sidebar from '@/components/Sidebar';
 import { 
   Search, MapPin, Target, Plus, CheckCircle2, Building2, Phone, 
-  Globe, Star, Sparkles, Compass, LayoutList, Map as MapIcon, 
-  Send, ExternalLink, ShieldCheck, ArrowRight, Zap, RefreshCw, Check
+  Star, Compass, LayoutList, Map as MapIcon, 
+  Send, ExternalLink, ShieldCheck, Check, Zap, AlertCircle
 } from 'lucide-react';
 import { createLead } from '@/app/leads/actions';
 import { useRouter } from 'next/navigation';
 
-// Importação dinâmica do mapa Leaflet sem SSR para evitar erros de renderização no servidor
+// Importação dinâmica do mapa Leaflet sem SSR para compatibilidade
 const ProspeccaoMap = dynamic(
   () => import('@/components/prospeccao/ProspeccaoMap'),
   { 
     ssr: false,
     loading: () => (
-      <div className="w-full h-[640px] bg-slate-950 rounded-2xl flex flex-col items-center justify-center border border-emerald-500/20 text-emerald-400 gap-3">
-        <div className="relative">
-          <div className="w-12 h-12 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin" />
-          <Compass className="w-6 h-6 absolute inset-0 m-auto text-emerald-400 animate-pulse" />
-        </div>
-        <p className="text-sm font-semibold tracking-wider uppercase text-emerald-300">Carregando Radar Cartográfico B2B...</p>
+      <div className="w-full h-[600px] bg-slate-100 rounded-2xl flex flex-col items-center justify-center border border-slate-200 text-slate-600 gap-3">
+        <div className="w-10 h-10 rounded-full border-3 border-emerald-600 border-t-transparent animate-spin" />
+        <p className="text-xs font-bold text-slate-600">Carregando Radar de Empresas...</p>
       </div>
     )
   }
@@ -111,7 +108,7 @@ export default function ProspeccaoPage() {
       if (data.success) {
         setResults(data.results || []);
         fetchLimits();
-        showNotification('success', `${data.results?.length || 0} oportunidades mapeadas com sucesso!`);
+        showNotification('success', `${data.results?.length || 0} empresas encontradas com sucesso!`);
       } else {
         showNotification('error', data.error || 'Não foi possível completar a busca.');
         fetchLimits();
@@ -161,9 +158,7 @@ export default function ProspeccaoPage() {
         if (res.success) injectedCount++;
       }
       
-      showNotification('success', `🔥 ${injectedCount} Leads injetados com sucesso no seu Pipeline de Vendas!`);
-      
-      // Remove da lista os que foram injetados
+      showNotification('success', `${injectedCount} Leads injetados com sucesso no seu Pipeline!`);
       setResults(prev => prev.filter((_, i) => !selected.has(i)));
       setSelected(new Set());
       
@@ -185,7 +180,7 @@ export default function ProspeccaoPage() {
         avaliacoes: lead.avaliacoes
       });
       if (res.success) {
-        showNotification('success', `Lead "${lead.nomeFantasia}" injetado no Funil de Vendas!`);
+        showNotification('success', `Lead "${lead.nomeFantasia}" injetado no Pipeline!`);
         setResults(prev => prev.filter(item => item.nomeFantasia !== lead.nomeFantasia));
       } else {
         showNotification('error', 'Não foi possível injetar o lead.');
@@ -203,62 +198,54 @@ export default function ProspeccaoPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0A0F1D] text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
       <Sidebar />
       
-      <main className="flex-1 overflow-y-auto relative pb-28">
-        {/* Glow de fundo futurista */}
-        <div className="absolute top-0 left-1/4 w-[700px] h-[350px] bg-gradient-to-r from-emerald-600/15 via-teal-500/10 to-cyan-500/10 blur-[120px] pointer-events-none" />
+      <main className="flex-1 overflow-y-auto p-6 md:p-8 relative pb-28">
         
-        {/* Toast de notificação flutuante */}
+        {/* Toast Notificação */}
         {notification && (
           <div className="fixed top-6 right-6 z-50 animate-bounce">
-            <div className={`px-5 py-3 rounded-xl shadow-2xl backdrop-blur-xl border flex items-center gap-3 text-sm font-semibold ${
+            <div className={`px-4 py-3 rounded-xl shadow-lg border flex items-center gap-2.5 text-xs font-bold ${
               notification.type === 'success' 
-                ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200' 
-                : 'bg-rose-950/90 border-rose-500/50 text-rose-200'
+                ? 'bg-white border-emerald-500 text-emerald-800' 
+                : 'bg-white border-rose-500 text-rose-800'
             }`}>
-              {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <ShieldCheck className="w-5 h-5 text-rose-400" />}
+              {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-rose-600" />}
               <span>{notification.message}</span>
             </div>
           </div>
         )}
 
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 relative z-10">
+        <div className="max-w-6xl mx-auto space-y-6">
           
-          {/* Top Header com Cota de Buscas */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-b border-slate-800/80 pb-6">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-wider uppercase">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                SmartBid AI B2B Hunter • Live Google Sync
-              </div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                Máquina de Prospecção B2B
-                <Sparkles className="w-7 h-7 text-amber-400 animate-pulse" />
+          {/* Header Superior idêntico ao padrão SmartBid */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                Máquina de Prospecção
               </h1>
-              <p className="text-slate-400 text-sm max-w-2xl">
-                Mapeie empresas, decisores e contatos corporativos em qualquer região do Brasil com visão de satélite e injeção direta no Funil de Vendas.
+              <p className="text-slate-500 text-sm mt-1">
+                Extraia empresas do Google e injete no seu Funil de Vendas.
               </p>
             </div>
 
             {/* Card de Cota de Buscas */}
             {limits && !limits.isSuperAdmin && (
-              <div className="bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-md min-w-[240px]">
-                <div className="flex justify-between items-center text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-                  <span>Cota Mensal</span>
-                  <span className="text-emerald-400 font-bold">{Math.round((limits.searchesCount / limits.limitCount) * 100)}%</span>
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-end shadow-xs shrink-0">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Cota de novas buscas este Mês
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-black text-slate-800">{limits.searchesCount}</span>
+                  <span className="text-xs text-slate-400">/ {limits.limitCount} buscas</span>
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black text-white">{limits.searchesCount}</span>
-                  <span className="text-xs text-slate-500">/ {limits.limitCount} buscas</span>
-                </div>
-                <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden mt-3 p-0.5 border border-slate-700/50">
+                <div className="w-44 bg-slate-100 h-2 rounded-full overflow-hidden mt-2 border border-slate-100">
                   <div 
-                    className={`h-full rounded-full transition-all duration-700 ${
-                      limits.searchesCount >= limits.limitCount ? 'bg-gradient-to-r from-rose-500 to-red-600' :
-                      limits.searchesCount > limits.limitCount * 0.8 ? 'bg-gradient-to-r from-amber-400 to-orange-500' :
-                      'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400'
+                    className={`h-full transition-all duration-500 ${
+                      limits.searchesCount >= limits.limitCount ? 'bg-rose-500' :
+                      limits.searchesCount > limits.limitCount * 0.8 ? 'bg-amber-500' :
+                      'bg-[#1B4D3E]'
                     }`}
                     style={{ width: `${Math.min((limits.searchesCount / limits.limitCount) * 100, 100)}%` }}
                   />
@@ -267,71 +254,67 @@ export default function ProspeccaoPage() {
             )}
           </div>
 
-          {/* Form de Busca e Filtros Rápidos */}
-          <div className="bg-gradient-to-b from-slate-900/95 to-slate-950/90 rounded-3xl p-6 lg:p-8 border border-slate-800 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
-            <form onSubmit={e => handleSearch(e)} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-              <div className="md:col-span-5 space-y-2">
-                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                  <Target className="w-4 h-4 text-emerald-400" />
+          {/* Card de Busca Principal */}
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
+            <form onSubmit={e => handleSearch(e)} className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                  <Target size={14} className="text-[#1B4D3E]" />
                   O que você procura?
                 </label>
                 <div className="relative">
-                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                  <Building2 size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     required
                     value={termo}
                     onChange={e => setTermo(e.target.value)}
-                    placeholder="Ex: Clínicas Médicas, Galpões, Condomínios..."
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-inner text-sm"
+                    placeholder="Ex: Clínicas Odontológicas, Condomínios, Hospitais..."
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1B4D3E] focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition-all text-xs font-medium text-slate-800"
                   />
                 </div>
               </div>
 
-              <div className="md:col-span-5 space-y-2">
-                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-emerald-400" />
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin size={14} className="text-[#1B4D3E]" />
                   Onde? (Bairro, Cidade ou Região)
                 </label>
                 <div className="relative">
-                  <Compass className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                  <Compass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     required
                     value={localizacao}
                     onChange={e => setLocalizacao(e.target.value)}
-                    placeholder="Ex: Batel Curitiba, Av. Paulista SP, Barra RJ..."
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-inner text-sm"
+                    placeholder="Ex: Bairro Batel Curitiba, Centro de São Paulo..."
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#1B4D3E] focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition-all text-xs font-medium text-slate-800"
                   />
                 </div>
               </div>
 
-              <div className="md:col-span-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-[52px] bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 disabled:opacity-50 text-white font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-emerald-950 hover:shadow-emerald-500/20 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span className="text-sm">Rastreando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-5 h-5" />
-                      <span className="text-sm">Buscar Leads</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full md:w-auto bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white h-[46px] px-8 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/10 cursor-pointer shrink-0"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Buscando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search size={16} />
+                    <span>Procurar</span>
+                  </>
+                )}
+              </button>
             </form>
 
-            {/* Presets Rápidos de Nicho B2B */}
-            <div className="mt-6 pt-5 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mr-2">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                Nichos em Alta:
+            {/* Presets de Nichos Rápidos */}
+            <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+                <Zap size={12} className="text-amber-500" />
+                Nichos:
               </span>
               {PRESET_NICHES.map((niche, idx) => (
                 <button
@@ -343,9 +326,9 @@ export default function ProspeccaoPage() {
                       handleSearch(undefined, niche.query);
                     }
                   }}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-slate-800/60 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-slate-700/60 hover:border-emerald-500/40 transition-all flex items-center gap-1.5"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-200 transition-all font-medium"
                 >
-                  <span>{niche.label}</span>
+                  {niche.label}
                 </button>
               ))}
             </div>
@@ -353,234 +336,193 @@ export default function ProspeccaoPage() {
 
           {/* Quando houver resultados */}
           {results.length > 0 && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-4 animate-fadeIn">
               
-              {/* Barra de Métricas dos Resultados */}
+              {/* Cards de Métricas Claros */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur-md">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-emerald-400" />
-                    Empresas Mapeadas
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Empresas Encontradas
                   </div>
-                  <div className="text-3xl font-black text-white">{results.length}</div>
+                  <div className="text-3xl font-black text-slate-800">{results.length}</div>
                 </div>
 
-                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur-md">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-                    Selecionadas
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Selecionadas p/ Injetar
                   </div>
-                  <div className="text-3xl font-black text-cyan-400">{selected.size}</div>
+                  <div className="text-3xl font-black text-[#1B4D3E]">{selected.size}</div>
                 </div>
 
-                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur-md">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <Phone className="w-4 h-4 text-teal-400" />
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Telefones Verificados
                   </div>
-                  <div className="text-3xl font-black text-teal-400">
+                  <div className="text-3xl font-black text-blue-600">
                     {results.filter(r => r.telefone && r.telefone !== 'Não informado').length}
                   </div>
                 </div>
 
-                <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur-md">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Média de Avaliações
                   </div>
-                  <div className="text-3xl font-black text-amber-400">
-                    {(results.reduce((acc, r) => acc + (r.rating || 4.5), 0) / results.length).toFixed(1)} ★
+                  <div className="text-3xl font-black text-amber-500 flex items-baseline gap-1">
+                    <span>{(results.reduce((acc, r) => acc + (r.rating || 4.5), 0) / results.length).toFixed(1)}</span>
+                    <span className="text-base text-amber-400">★</span>
                   </div>
                 </div>
               </div>
 
-              {/* Seletor de Abas Premium: Tabela vs Mapa */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/90 p-2.5 rounded-2xl border border-slate-800 shadow-md">
+              {/* Seletor de Abas Claro integrado ao Sistema */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs">
                 
-                {/* Abas */}
-                <div className="flex items-center gap-2 p-1 bg-slate-950/80 rounded-xl border border-slate-800/80">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setActiveTab('tabela')}
-                    className={`px-5 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all ${
+                    className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
                       activeTab === 'tabela'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                        ? 'bg-[#1B4D3E] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
-                    <LayoutList className="w-4 h-4" />
-                    <span>Aba 01: Tabela de Leads B2B</span>
-                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-black/30">
+                    <LayoutList size={15} />
+                    <span>Aba 01: Tabela de Leads</span>
+                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 text-white font-mono">
                       {results.length}
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('mapa')}
-                    className={`px-5 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all ${
+                    className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
                       activeTab === 'mapa'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                        ? 'bg-[#1B4D3E] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
-                    <MapIcon className="w-4 h-4 text-emerald-400" />
-                    <span>Aba 02: Radar B2B no Mapa (Ao Vivo)</span>
-                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
-                      HUD
+                    <MapIcon size={15} />
+                    <span>Aba 02: Radar B2B no Mapa</span>
+                    <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-[#1B4D3E] font-bold">
+                      AO VIVO
                     </span>
                   </button>
                 </div>
 
-                {/* Ações Rápidas */}
-                <div className="flex items-center gap-3">
+                {activeTab === 'tabela' && (
                   <button
                     onClick={selectAll}
-                    className="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-2"
+                    className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <Check size={14} className="text-[#1B4D3E]" />
                     {selected.size === results.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
                   </button>
-                </div>
+                )}
               </div>
 
-              {/* Renderização Condicional das Abas */}
+              {/* ABA 01: TABELA DE LEADS */}
               {activeTab === 'tabela' ? (
-                /* ABA 01: TABELA DE LEADS */
-                <div className="bg-slate-900/95 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                          <th className="py-4 px-5 w-12 text-center">
-                            <input
-                              type="checkbox"
-                              checked={selected.size === results.length && results.length > 0}
-                              onChange={selectAll}
-                              className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer w-4 h-4"
-                            />
-                          </th>
-                          <th className="py-4 px-5">Empresa & Decisor Sugerido</th>
-                          <th className="py-4 px-5">Localização / Endereço</th>
-                          <th className="py-4 px-5">Contato & WhatsApp</th>
-                          <th className="py-4 px-5 text-center">Porte & Rating</th>
-                          <th className="py-4 px-5 text-right">Ação Rápida</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/80 text-sm">
-                        {results.map((item, idx) => {
-                          const isSelected = selected.has(idx);
-                          return (
-                            <tr
-                              key={idx}
-                              onClick={() => toggleSelect(idx)}
-                              className={`transition-colors cursor-pointer group ${
-                                isSelected ? 'bg-emerald-950/30 hover:bg-emerald-950/40' : 'hover:bg-slate-800/40'
-                              }`}
-                            >
-                              {/* Checkbox */}
-                              <td className="py-4 px-5 text-center" onClick={e => e.stopPropagation()}>
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleSelect(idx)}
-                                  className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer w-4 h-4"
-                                />
-                              </td>
+                <div className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                  <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                      Lista de Empresas Encontradas
+                    </h3>
+                  </div>
 
-                              {/* Empresa & Decisor */}
-                              <td className="py-4 px-5">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600/30 to-teal-800/30 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-300 text-sm shrink-0">
-                                    {item.nomeFantasia.substring(0, 2).toUpperCase()}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="font-bold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-2">
-                                      <span>{item.nomeFantasia}</span>
-                                      {item.site && (
-                                        <a
-                                          href={item.site}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={e => e.stopPropagation()}
-                                          className="text-slate-400 hover:text-emerald-400 transition-colors"
-                                        >
-                                          <ExternalLink className="w-3.5 h-3.5" />
-                                        </a>
-                                      )}
-                                    </div>
-                                    <div className="text-xs text-emerald-400/90 font-medium flex items-center gap-1.5 mt-0.5">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                      Decisor: {item.decisorSugerido || 'Diretor de Operações / Facilities'}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
+                  <div className="divide-y divide-slate-100">
+                    {results.map((item, idx) => {
+                      const isSelected = selected.has(idx);
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => toggleSelect(idx)}
+                          className={`p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors ${
+                            isSelected ? 'bg-emerald-50/50' : ''
+                          }`}
+                        >
+                          {/* Checkbox */}
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white' : 'border-slate-300 bg-white'
+                          }`}>
+                            {isSelected && <Check size={13} strokeWidth={3} />}
+                          </div>
 
-                              {/* Endereço */}
-                              <td className="py-4 px-5">
-                                <div className="text-xs text-slate-300 line-clamp-2 max-w-xs flex items-start gap-1.5">
-                                  <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                                  <span>{item.endereco}</span>
-                                </div>
-                              </td>
-
-                              {/* Telefone & WhatsApp */}
-                              <td className="py-4 px-5">
-                                <div className="flex flex-col gap-1">
-                                  <div className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                                    <Phone className="w-3.5 h-3.5 text-slate-500" />
-                                    <span>{item.telefone}</span>
-                                  </div>
-                                  {item.telefone && item.telefone !== 'Não informado' && (
-                                    <a
-                                      href={formatWhatsAppUrl(item.telefone, item.nomeFantasia)}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      onClick={e => e.stopPropagation()}
-                                      className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
-                                    >
-                                      <Send className="w-3 h-3 text-emerald-400" />
-                                      <span>Abrir WhatsApp</span>
-                                    </a>
-                                  )}
-                                </div>
-                              </td>
-
-                              {/* Porte & Rating */}
-                              <td className="py-4 px-5 text-center">
-                                <div className="inline-flex flex-col items-center gap-1">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                                    Porte {item.porte}
-                                  </span>
-                                  <div className="flex items-center gap-1 text-xs text-amber-400">
-                                    <Star className="w-3 h-3 fill-amber-400" />
-                                    <span>{item.rating || 4.8}</span>
-                                    <span className="text-[10px] text-slate-500">({item.avaliacoes})</span>
-                                  </div>
-                                </div>
-                              </td>
-
-                              {/* Ação Individual */}
-                              <td className="py-4 px-5 text-right" onClick={e => e.stopPropagation()}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleInjectSingle(item)}
-                                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white text-xs font-bold transition-all border border-slate-700 hover:border-emerald-500 inline-flex items-center gap-1.5"
+                          {/* Info da Empresa */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-sm text-slate-800 truncate">
+                                {item.nomeFantasia}
+                              </h4>
+                              {item.site && (
+                                <a
+                                  href={item.site}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                                 >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  <span>Injetar Lead</span>
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                  <ExternalLink size={12} />
+                                  <span>Site</span>
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 truncate mt-0.5">{item.endereco}</p>
+                            <div className="text-[11px] text-[#1B4D3E] font-semibold mt-0.5">
+                              Decisor: {item.decisorSugerido || 'Diretor de Operações / Facilities'}
+                            </div>
+                          </div>
+
+                          {/* Contato & WhatsApp */}
+                          <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                            <div className="text-xs font-bold text-slate-700">{item.telefone}</div>
+                            
+                            {item.telefone && item.telefone !== 'Não informado' && (
+                              <a
+                                href={formatWhatsAppUrl(item.telefone, item.nomeFantasia)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#25D366] hover:underline"
+                              >
+                                <Send size={11} />
+                                <span>WhatsApp</span>
+                              </a>
+                            )}
+
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-[9px] font-bold uppercase text-white bg-slate-800 px-2 py-0.5 rounded">
+                                Porte {item.porte}
+                              </span>
+                              <span className="text-[9px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                {item.avaliacoes} avaliações
+                              </span>
+                              <span className="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-bold">
+                                {item.rating || 4.8} ★
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Botão Individual */}
+                          <div className="shrink-0" onClick={e => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => handleInjectSingle(item)}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#1B4D3E] text-slate-700 hover:text-white text-xs font-bold transition-all border border-slate-200 hover:border-[#1B4D3E] flex items-center gap-1 cursor-pointer"
+                              title="Injetar no Pipeline"
+                            >
+                              <Plus size={13} />
+                              <span>Injetar</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
-                /* ABA 02: RADAR B2B NO MAPA (AO VIVO) */
+                /* ABA 02: RADAR B2B NO MAPA */
                 <div className="animate-fadeIn">
-                  <ProspeccaoMap 
+                  <ProspeccaoMap
                     leads={results}
                     onInjectLead={handleInjectSingle}
                   />
@@ -590,43 +532,44 @@ export default function ProspeccaoPage() {
             </div>
           )}
 
-          {/* Empty State Inicial quando não buscou nada */}
+          {/* Empty State Inicial */}
           {results.length === 0 && !loading && (
-            <div className="bg-slate-900/60 rounded-3xl border border-slate-800/80 p-12 text-center max-w-2xl mx-auto space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-xl shadow-emerald-950">
-                <Compass className="w-8 h-8 animate-pulse" />
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-xl mx-auto space-y-3 shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-[#1B4D3E] flex items-center justify-center mx-auto">
+                <Compass size={24} />
               </div>
-              <h3 className="text-xl font-bold text-white">Pronto para rastrear novas contas corporativas?</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Digite o tipo de cliente que você quer atender (ex: Hospitais, Condomínios Comerciais) e a região. 
-                O sistema fará o escaneamento por satélite no Google Places e apresentará na tabela e no mapa holográfico.
+              <h3 className="text-base font-bold text-slate-800">
+                Pronto para rastrear novas contas corporativas?
+              </h3>
+              <p className="text-slate-500 text-xs leading-relaxed">
+                Digite o tipo de cliente que você procura e a cidade/bairro. O sistema buscará as empresas no Google com contatos e exibirá na tabela e no mapa.
               </p>
             </div>
           )}
 
         </div>
 
-        {/* Floating Action Bar fixa quando houver selecionados */}
+        {/* Floating Action Bar quando houver selecionados */}
         {selected.size > 0 && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-slideUp">
-            <div className="bg-slate-900/95 border border-emerald-500/40 rounded-2xl px-6 py-4 shadow-2xl backdrop-blur-xl flex items-center gap-6 text-white min-w-[420px] max-w-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center font-bold text-sm">
+            <div className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 shadow-2xl flex items-center gap-6 text-slate-800 min-w-[380px]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#1B4D3E] text-white flex items-center justify-center font-bold text-xs">
                   {selected.size}
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">Leads Selecionados</div>
-                  <div className="text-xs text-slate-400">Prontos para envio ao CRM</div>
+                  <div className="text-xs font-bold text-slate-800">Empresas Selecionadas</div>
+                  <div className="text-[11px] text-slate-500">Prontas para envio ao CRM</div>
                 </div>
               </div>
 
-              <div className="h-8 w-px bg-slate-800" />
+              <div className="h-6 w-px bg-slate-200" />
 
-              <div className="flex items-center gap-3 ml-auto">
+              <div className="flex items-center gap-2 ml-auto">
                 <button
                   type="button"
                   onClick={() => setSelected(new Set())}
-                  className="text-xs text-slate-400 hover:text-slate-200 font-semibold px-3 py-2"
+                  className="text-xs text-slate-500 hover:text-slate-800 font-bold px-2 py-1"
                 >
                   Cancelar
                 </button>
@@ -634,16 +577,16 @@ export default function ProspeccaoPage() {
                   type="button"
                   disabled={injecting}
                   onClick={handleInject}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-950 transition-all cursor-pointer"
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                 >
                   {injecting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>Injetando...</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-4 h-4" />
+                      <Plus size={14} />
                       <span>Injetar {selected.size} no Funil</span>
                     </>
                   )}
