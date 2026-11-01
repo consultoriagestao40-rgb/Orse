@@ -1406,7 +1406,8 @@ function PropostaEditor() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <>
+      <div className={`flex min-h-screen bg-slate-50 ${fpvExportMode ? 'print:hidden' : ''}`}>
       <Sidebar />
       <main className="flex-1 overflow-x-hidden p-8 flex flex-col items-center">
         
@@ -7801,20 +7802,22 @@ function PropostaEditor() {
 
                    </div>
 
-        {/* COMPONENTE DE EXPORTAÇÃO E IMPRESSÃO DO FPV EM PDF (TODAS AS TELAS OU TELA ESPECÍFICA) */}
-        {fpvExportMode && (
-          <FpvPdfDocument
-            mode={fpvExportMode}
-            proposta={proposta}
-            resultado={resultado}
-            empresaEmissora={empresasEmissoras.find((e: any) => e.id === selectedEmpresaId)}
-            companyLogo={companyLogo}
-            companyName={companyName}
-            escalasDb={escalasDb}
-          />
-        )}
       </main>
     </div>
+
+    {/* COMPONENTE DE EXPORTAÇÃO E IMPRESSÃO DO FPV EM PDF (FORA DO CONTAINER DO APP) */}
+    {fpvExportMode && (
+      <FpvPdfDocument
+        mode={fpvExportMode}
+        proposta={proposta}
+        resultado={resultado}
+        empresaEmissora={empresasEmissoras.find((e: any) => e.id === selectedEmpresaId)}
+        companyLogo={companyLogo}
+        companyName={companyName}
+        escalasDb={escalasDb}
+      />
+    )}
+  </>
   );
 }
 

@@ -62,21 +62,33 @@ export default function FpvPdfDocument({
         }
 
         @media print {
-          body * {
-            visibility: hidden !important;
+          /* 1. Esconde absolutamente tudo do layout do app para zerar a altura residual */
+          .print\\:hidden,
+          body > div:first-child,
+          aside,
+          nav,
+          header {
+            display: none !important;
           }
-          #fpv-pdf-export-root, #fpv-pdf-export-root * {
-            visibility: visible !important;
-          }
-          #fpv-pdf-export-root {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            background: white !important;
-            display: block !important;
-            padding: 0 !important;
+
+          html, body {
             margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            background: white !important;
+            overflow: visible !important;
+          }
+
+          /* 2. O documento FPV fica em position: static, determinando a altura REAL da impressão */
+          #fpv-pdf-export-root {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
           }
           @page {
             size: A4 portrait;
