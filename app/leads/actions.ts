@@ -229,7 +229,7 @@ export async function getLeadsPageInitData(params?: {
         : Promise.resolve([]),
       prisma.segmento.findMany({ where: { tenantId: user.tenantId }, orderBy: { nome: 'asc' } }),
       prisma.user.findMany({
-        where: { tenantId: user.tenantId, ativo: true },
+        where: { tenantId: user.tenantId },
         select: { id: true, nome: true, email: true, avatarUrl: true, role: true },
         orderBy: { nome: 'asc' }
       }),

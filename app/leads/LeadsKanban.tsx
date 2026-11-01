@@ -806,27 +806,37 @@ export default function LeadsKanban() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      const savedPipeId = typeof window !== 'undefined' ? localStorage.getItem('orse_active_pipeline_id') || undefined : undefined;
-      const res = await getLeadsPageInitData({
-        pipelineId: savedPipeId,
-        startDate: datePreset === 'all' ? undefined : startDate,
-        endDate: datePreset === 'all' ? undefined : endDate,
-        userId: userFilter !== 'all' ? userFilter : undefined
-      });
+      try {
+        const savedPipeId = typeof window !== 'undefined' ? localStorage.getItem('orse_active_pipeline_id') || undefined : undefined;
+        const res = await getLeadsPageInitData({
+          pipelineId: savedPipeId,
+          startDate: datePreset === 'all' ? undefined : startDate,
+          endDate: datePreset === 'all' ? undefined : endDate,
+          userId: userFilter !== 'all' ? userFilter : undefined
+        });
 
-      if (res.success) {
-        if (res.pipelines) setPipelines(res.pipelines);
-        if (res.activePipelineId) {
-          setActivePipelineId(res.activePipelineId);
-          localStorage.setItem('orse_active_pipeline_id', res.activePipelineId);
+        if (res.success) {
+          if (res.pipelines) setPipelines(res.pipelines);
+          if (res.activePipelineId) {
+            setActivePipelineId(res.activePipelineId);
+            localStorage.setItem('orse_active_pipeline_id', res.activePipelineId);
+          }
+          if (res.stages) setStages(res.stages);
+          if (res.segmentos) setSegmentos(res.segmentos);
+          if (res.filterUsers) setFilterUsers(res.filterUsers);
+          if (res.leads) setLeads(res.leads);
+        } else {
+          console.error("Init data failed, running fallback fetchData:", res.error);
+          await fetchData(true);
         }
-        if (res.stages) setStages(res.stages);
-        if (res.segmentos) setSegmentos(res.segmentos);
-        if (res.filterUsers) setFilterUsers(res.filterUsers);
-        if (res.leads) setLeads(res.leads);
+      } catch (err) {
+        console.error("Error in initData:", err);
+        await fetchData(true);
+      } finally {
+        setLoading(false);
+        setHasLoadedOnce(true);
+        isInitialMountRef.current = false;
       }
-      setLoading(false);
-      isInitialMountRef.current = false;
     };
 
     initData();
@@ -1761,19 +1771,13 @@ export default function LeadsKanban() {
     ).length;
   }, 0);
 
-  if (!hasLoadedOnce) {
+  if (!hasLoadedOnce || (loading && leads.length === 0)) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex items-center justify-center overflow-hidden font-sans">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
-          <div className="w-[400px] h-[400px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[100px] animate-pulse" />
-        </div>
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
-            <TrendingUp className="text-[#10B981]" size={32} />
-          </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando SmartBidHub...</span>
-        </div>
-      </div>
+      <FinancialLoadingTransition
+        title="Sincronizando Funil Comercial & Leads"
+        subtitle="Carregando oportunidades, cotações e estágios do pipeline..."
+        variant="fullscreen"
+      />
     );
   }
 
@@ -1793,16 +1797,6 @@ export default function LeadsKanban() {
           Criar Etapas Padrão (Descoberta, Reunião, etc)
         </button>
       </div>
-    );
-  }
-
-  if (loading && leads.length === 0) {
-    return (
-      <FinancialLoadingTransition
-        title="Sincronizando Funil Comercial & Leads"
-        subtitle="Carregando oportunidades, cotações e estágios do pipeline..."
-        variant="fullscreen"
-      />
     );
   }
 

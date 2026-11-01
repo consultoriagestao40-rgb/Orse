@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
+import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
 
 function hexToRgba(hex: string, alpha: number) {
   if (!hex) return `rgba(30, 58, 138, ${alpha})`;
@@ -636,7 +637,21 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setPeriod(item.id as any)}
+                    onClick={() => {
+                      if (item.id === 'custom') {
+                        setPeriod('custom');
+                        if (!startDate) {
+                          const d = new Date();
+                          d.setDate(d.getDate() - 30);
+                          setStartDate(d.toISOString().split('T')[0]);
+                        }
+                        if (!endDate) {
+                          setEndDate(new Date().toISOString().split('T')[0]);
+                        }
+                      } else {
+                        setPeriod(item.id as any);
+                      }
+                    }}
                     className="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer"
                     style={{
                       backgroundColor: isActive ? brandColor : '#F1F5F9',
@@ -650,21 +665,38 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
               })}
             </div>
 
-            <div className="text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
-              {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início'} 
-              <span className="mx-1 text-slate-400">até</span> 
-              {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Hoje'}
-            </div>
+            {period === 'custom' ? (
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-300 px-3 py-1.5 rounded-xl shadow-xs">
+                <span className="text-[10px] font-black uppercase text-emerald-800">De</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <span className="text-[10px] font-black uppercase text-emerald-800">Até</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            ) : (
+              <div className="text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
+                {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Início'} 
+                <span className="mx-1 text-slate-400">até</span> 
+                {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Hoje'}
+              </div>
+            )}
           </div>
 
           {loading ? (
-            <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
-              <div 
-                className="animate-spin rounded-full h-10 w-10 border-b-2 mx-auto mb-4"
-                style={{ borderColor: brandColor, borderTopColor: 'transparent' }}
-              />
-              <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Processando indicadores comerciais...</p>
-            </div>
+            <FinancialLoadingTransition
+              title="Calculando KPIs do Radar Comercial"
+              subtitle="Sincronizando faturamento, propostas emitidas e metas corporativas..."
+              variant="inline"
+            />
           ) : (propostasList.length === 0 && totalSellers.length === 0) ? (
             <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
               <p className="text-slate-500 font-bold uppercase tracking-wider">Nenhuma proposta encontrada para os filtros selecionados.</p>
