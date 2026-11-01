@@ -11,7 +11,8 @@ import {
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
   updatePropostaStatusParam, togglePropostaStatusParam,
   getDocumentoStatuses, createDocumentoStatus, deleteDocumentoStatus,
-  updateDocumentoStatusParam, toggleDocumentoStatusParam
+  updateDocumentoStatusParam, toggleDocumentoStatusParam,
+  changeMyPassword
 } from '@/app/propostas/actions';
 import { 
   getEscalas, createEscala, updateEscala, deleteEscala 
@@ -39,7 +40,7 @@ import {
   changeTenantLogo, changeTenantTheme
 } from '@/app/admin/empresas/actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias' | 'seguranca';
 
 const menuGroups = [
   {
@@ -52,7 +53,6 @@ const menuGroups = [
       { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'faq', label: 'Perguntas Frequentes (FAQ)', icon: HelpCircle, roles: ['ADMIN', 'MANAGER', 'USER'] },
-      { id: 'preferencias', label: 'Fuso Horário & Preferências', icon: Clock, roles: ['ADMIN', 'MANAGER', 'USER'] },
     ]
   },
   {
@@ -68,6 +68,13 @@ const menuGroups = [
     items: [
       { id: 'whatsapp', label: 'Integração WhatsApp', icon: MessageSquare, roles: ['ADMIN', 'MANAGER'] },
       { id: 'faturamento', label: 'Assinatura & Faturamento', icon: CreditCard, roles: ['ADMIN', 'MANAGER'] },
+    ]
+  },
+  {
+    title: 'Conta & Segurança',
+    items: [
+      { id: 'seguranca', label: 'Segurança & Senha', icon: Lock, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'preferencias', label: 'Fuso Horário & Preferências', icon: Clock, roles: ['ADMIN', 'MANAGER', 'USER'] },
     ]
   }
 ];
@@ -189,11 +196,20 @@ const getSuaveBgClassLocal = (colorClass: string = '') => {
 export default function SettingsPage() {
   // ── Estado principal ─────────────────────────────────────────────────────────
   const [userRole, setUserRole] = useState<string>('USER');
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('status');
   const [loading, setLoading] = useState(true);
   const [userTimezone, setUserTimezone] = useState('America/Sao_Paulo');
   const [timezoneSaveLoading, setTimezoneSaveLoading] = useState(false);
+
+  // Estados de Segurança e Alteração de Senha
+  const [secCurrentPassword, setSecCurrentPassword] = useState('');
+  const [secNewPassword, setSecNewPassword] = useState('');
+  const [secConfirmPassword, setSecConfirmPassword] = useState('');
+  const [secLoading, setSecLoading] = useState(false);
+  const [secError, setSecError] = useState('');
+  const [secSuccess, setSecSuccess] = useState('');
 
   // Status
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -754,6 +770,7 @@ export default function SettingsPage() {
 
         if (user) {
           setUserRole(user.role || 'USER');
+          setCurrentUser(user);
           setHasAccess(true);
           setUserTimezone(user.timezone || 'America/Sao_Paulo');
         } else {
@@ -2646,6 +2663,206 @@ export default function SettingsPage() {
                     {timezoneSaveLoading ? 'Salvando Preferências...' : 'Salvar Preferências'}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* ABA DE SEGURANÇA & ALTERAR SENHA */}
+            {activeTab === 'seguranca' && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-8 relative overflow-hidden">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                      Privacidade & Credenciais
+                    </span>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight mt-2 font-display">Segurança da Conta & Senha</h2>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      Gerencie sua chave de acesso e verifique as diretrizes de proteção ativa da sua conta
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status da Conta */}
+                <div className="grid sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <Lock size={14} className="text-[#10B981]" />
+                      <span>Proteção Força Bruta</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium">Bloqueio automático após 5 tentativas incorretas (15 min).</p>
+                    <span className="inline-block mt-1 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Ativa</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <CheckCircle2 size={14} className="text-[#10B981]" />
+                      <span>Criptografia de Senha</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium">Hash Bcrypt irreversível com salt criptográfico.</p>
+                    <span className="inline-block mt-1 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Bcrypt Ativo</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <Smartphone size={14} className="text-[#10B981]" />
+                      <span>Segundo Fator (2FA)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium">Código numérico temporário OTP enviado para seu e-mail.</p>
+                    <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      currentUser?.twoFactorEnabled 
+                        ? 'text-emerald-700 bg-emerald-100' 
+                        : 'text-slate-500 bg-slate-200'
+                    }`}>
+                      {currentUser?.twoFactorEnabled ? '2FA Habilitado' : '2FA Opcional'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Formulário de Alteração de Senha */}
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setSecLoading(true);
+                    setSecError('');
+                    setSecSuccess('');
+
+                    if (!secCurrentPassword || !secNewPassword || !secConfirmPassword) {
+                      setSecError('Preencha a senha atual e a nova senha para alterá-la.');
+                      setSecLoading(false);
+                      return;
+                    }
+
+                    if (secNewPassword !== secConfirmPassword) {
+                      setSecError('A confirmação da nova senha não confere.');
+                      setSecLoading(false);
+                      return;
+                    }
+
+                    if (secNewPassword.length < 8 || !/[A-Z]/.test(secNewPassword) || !/[a-z]/.test(secNewPassword) || !/[0-9]/.test(secNewPassword) || !/[^A-Za-z0-9]/.test(secNewPassword)) {
+                      setSecError('A nova senha deve possuir pelo menos 8 caracteres com letras maiúsculas, minúsculas, números e caracteres especiais.');
+                      setSecLoading(false);
+                      return;
+                    }
+
+                    try {
+                      const res = await changeMyPassword(secCurrentPassword, secNewPassword);
+                      if (res.success) {
+                        setSecSuccess('Sua senha foi alterada com sucesso!');
+                        setSecCurrentPassword('');
+                        setSecNewPassword('');
+                        setSecConfirmPassword('');
+                      } else {
+                        setSecError(res.error || 'Erro ao alterar a senha.');
+                      }
+                    } catch (err: any) {
+                      setSecError(err.message || 'Erro de comunicação com o servidor.');
+                    } finally {
+                      setSecLoading(false);
+                    }
+                  }} 
+                  className="pt-6 border-t border-slate-100 space-y-5 max-w-xl"
+                >
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Alterar Senha Corporativa</h3>
+
+                  {/* Senha Atual */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Senha Atual</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input 
+                        type="password"
+                        required
+                        placeholder="Digite sua senha atual"
+                        value={secCurrentPassword}
+                        onChange={(e) => setSecCurrentPassword(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:border-[#1B4D3E] focus:bg-white transition-all text-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nova Senha */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nova Senha</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input 
+                        type="password"
+                        required
+                        placeholder="Mínimo 8 caracteres (A, a, 1, !)"
+                        value={secNewPassword}
+                        onChange={(e) => setSecNewPassword(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:border-[#1B4D3E] focus:bg-white transition-all text-slate-700"
+                      />
+                    </div>
+
+                    {secNewPassword && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[
+                          { label: '8+ caracteres', valid: secNewPassword.length >= 8 },
+                          { label: 'Maiúscula', valid: /[A-Z]/.test(secNewPassword) },
+                          { label: 'Minúscula', valid: /[a-z]/.test(secNewPassword) },
+                          { label: 'Número', valid: /[0-9]/.test(secNewPassword) },
+                          { label: 'Símbolo (!@#...)', valid: /[^A-Za-z0-9]/.test(secNewPassword) },
+                        ].map((r, i) => (
+                          <span 
+                            key={i} 
+                            className={`text-[10px] px-2 py-0.5 rounded font-bold transition-colors ${
+                              r.valid 
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                : 'bg-slate-100 text-slate-400'
+                            }`}
+                          >
+                            {r.valid ? '✓ ' : '• '}{r.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirmar Nova Senha */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Confirmar Nova Senha</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input 
+                        type="password"
+                        required
+                        placeholder="Repita a nova senha exatamente"
+                        value={secConfirmPassword}
+                        onChange={(e) => setSecConfirmPassword(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none focus:border-[#1B4D3E] focus:bg-white transition-all text-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  {secSuccess && (
+                    <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-xl text-xs font-bold flex items-center gap-2">
+                      <CheckCircle2 size={16} />
+                      {secSuccess}
+                    </div>
+                  )}
+
+                  {secError && (
+                    <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl text-xs font-bold flex items-center gap-2">
+                      <X size={16} className="shrink-0" />
+                      {secError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={secLoading}
+                    className="w-full bg-[#1B4D3E] hover:bg-emerald-950 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#1B4D3E]/20 transition-all cursor-pointer text-center disabled:opacity-50 active:scale-[0.98] border-none flex items-center justify-center gap-2"
+                  >
+                    {secLoading ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <Lock size={14} />
+                        Atualizar Senha de Acesso
+                      </>
+                    )}
+                  </button>
+                </form>
               </div>
             )}
 

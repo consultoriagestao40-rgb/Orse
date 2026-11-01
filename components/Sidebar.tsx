@@ -256,8 +256,8 @@ const Sidebar = () => {
       return;
     }
 
-    if (newPassword.length < 4) {
-      setPasswordError('A nova senha deve possuir pelo menos 4 caracteres.');
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setPasswordError('A nova senha deve possuir pelo menos 8 caracteres com letras maiúsculas, minúsculas, números e caracteres especiais.');
       setPasswordLoading(false);
       return;
     }
@@ -2036,18 +2036,33 @@ const Sidebar = () => {
 
                 {/* Nova Senha */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Senha</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Senha Corporativa</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
                     <input 
                       type="password" 
-                      placeholder="Mínimo 4 caracteres"
+                      placeholder="Mínimo 8 caracteres (A, a, 1, !)"
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       disabled={passwordLoading}
                     />
                   </div>
+                  {newPassword && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {[
+                        { label: '8+ chars', valid: newPassword.length >= 8 },
+                        { label: 'Maiúscula', valid: /[A-Z]/.test(newPassword) },
+                        { label: 'Minúscula', valid: /[a-z]/.test(newPassword) },
+                        { label: 'Número', valid: /[0-9]/.test(newPassword) },
+                        { label: 'Símbolo', valid: /[^A-Za-z0-9]/.test(newPassword) },
+                      ].map((r, i) => (
+                        <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${r.valid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
+                          {r.valid ? '✓ ' : '• '}{r.label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Confirmar Nova Senha */}
