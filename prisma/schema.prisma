@@ -190,6 +190,7 @@ model CCT {
   vaTipo                 String   @default("DIARIO")
   vaProvisFerias         Boolean  @default(false)
   vaDescPercent          Float    @default(0)
+  vaRefeicaoLocal        Float    @default(0)
   vtValor                Float    @default(0)
   vtDescPercent          Float    @default(6)
   examesMedicos          Float    @default(0)

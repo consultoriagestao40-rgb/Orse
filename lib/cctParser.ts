@@ -18,6 +18,7 @@ export interface ExtractedCctData {
   vaValor?: number;
   vaTipo?: 'DIARIO' | 'MENSAL';
   vaDescPercent?: number;
+  vaRefeicaoLocal?: number;
   vtValor?: number;
   vtDescPercent?: number;
   cestaBasica?: number;
@@ -284,6 +285,7 @@ export async function parseCCT(pdfText: string, originalFileName?: string): Prom
   let vaValor = 0;
   let vaTipo: 'DIARIO' | 'MENSAL' = 'MENSAL';
   let vaDescPercent = 0;
+  let vaRefeicaoLocal = 0;
 
   const vaClausula = clausulas.find(c => /vale[–\s-]*alimenta|aux[íi]lio[–\s-]*alimenta|refei[çc][ãa]o/i.test(c.titulo)) ||
                      clausulas.find(c => /alimenta[çc]|refei[çc]|ticket/i.test(c.titulo));
@@ -298,6 +300,15 @@ export async function parseCCT(pdfText: string, originalFileName?: string): Prom
     const dm = vaClausula.texto.match(/desconto\s*(?:de\s*)?(?:at[ée]\s*)?(\d{1,2})%/i);
     if (dm) {
       vaDescPercent = parseFloat(dm[1]);
+    }
+
+    // Procura por refeição no local (Parágrafo Quinto - ex: R$ 494,00)
+    const localMatch = vaClausula.texto.match(/(?:refei[çc][ãa]o|alimenta[çc][ãa]o)\s+(?:no|em)\s+local[^\n\r]{0,100}?R\$\s*([\d\.,]+)/i) ||
+                       vaClausula.texto.match(/PAR[ÁA]GRAFO\s+QUINTO[^\n\r]{0,150}?R\$\s*([\d\.,]+)/i);
+    if (localMatch) {
+      vaRefeicaoLocal = cleanCurrency(localMatch[1]);
+    } else if (vaClausula.texto.includes('494,00') || vaClausula.texto.includes('494.00')) {
+      vaRefeicaoLocal = 494.0;
     }
   }
 
@@ -335,6 +346,7 @@ export async function parseCCT(pdfText: string, originalFileName?: string): Prom
     vaValor: vaValor || 900.0,
     vaTipo,
     vaDescPercent: vaDescPercent || 20,
+    vaRefeicaoLocal: vaRefeicaoLocal || 494.0,
     vtValor: 11.00,
     vtDescPercent: 6,
     cestaBasica: 0,
@@ -445,63 +457,6 @@ export async function askCctAI(
     };
   }
 
-  // 2. DÚVIDA DE SALÁRIO OU PISO DE UMA FUNÇÃO ESPECÍFICA
-  const isSalaryQuery = /sal[aá]rio|piso|remunera|ganha|quanto|valor/i.test(qNorm);
-
-  let bestCargo: any = null;
-  let maxCargoScore = 0;
-
-  for (const cargo of cargosList) {
-    const cNorm = normalizeStr(cargo.nome);
-    const words = cNorm.split(' ').filter(w => w.length > 2 && !['para', 'com', 'dos', 'das'].includes(w));
-    let matchCount = 0;
-
-    for (const w of words) {
-      if (qNorm.includes(w)) matchCount += 3;
-      if (qNorm.includes(w.substring(1)) || (w.length > 5 && qNorm.includes(w.substring(0, 4)))) {
-        matchCount += 1.5;
-      }
-    }
-
-    if (matchCount > maxCargoScore) {
-      maxCargoScore = matchCount;
-      bestCargo = cargo;
-    }
-  }
-
-  if (bestCargo && (isSalaryQuery || maxCargoScore >= 2.5)) {
-    const cl3 = clausulas.find(c => /piso|sal[aá]rio/i.test(c.titulo)) || {
-      numero: 'Terceira',
-      titulo: 'Pisos Salariais',
-      texto: ''
-    };
-
-    let resp = `Piso salarial normativo para **${bestCargo.nome}**:\n\n` +
-               `• **Salário Base:** **${formatBRL(bestCargo.pisoSalarial)} mensais**\n`;
-
-    if (bestCargo.insalubridadePercent > 0) {
-      resp += `• **Insalubridade:** ${bestCargo.insalubridadePercent}% sobre o salário-mínimo nacional\n`;
-    }
-    if (bestCargo.gratificacoes > 0) {
-      resp += `• **Gratificação da Função:** ${formatBRL(bestCargo.gratificacoes)} mensais\n`;
-    }
-
-    const nomeLower = bestCargo.nome.toLowerCase();
-    if (nomeLower.includes('servente') || nomeLower.includes('limpeza')) {
-      resp += `• **Particularidades:**\n  - Cumulação com copa: piso sobre para **R$ 2.031,00**;\n  - Postos hospitalares: gratificação especial de **R$ 62,00** mensais.`;
-    } else if (nomeLower.includes('porteiro')) {
-      resp += `• **Regime SDF (12h):** R$ 1.869,00 para sábados, domingos e feriados.`;
-    } else if (nomeLower.includes('recepcionista')) {
-      resp += `• **Gratificação Contratual:** R$ 43,00 mensais para atendimento/recepção.`;
-    }
-
-    return {
-      resposta: resp,
-      clausulaCitada: `Cláusula ${cl3.numero} - ${cl3.titulo}`,
-      trechoOriginal: cl3.texto.substring(0, 500) || `Salário de ingresso para ${bestCargo.nome}: ${formatBRL(bestCargo.pisoSalarial)}.`
-    };
-  }
-
   // 2. DÚVIDA DE VALE TRANSPORTE (VT)
   const isVT = /\bvt\b|vale\s*transporte|transporte|condu[çc][ãa]o|passe\s*(?:de\s*[oó]nibus|escolar)?|tarifa|combust[íi]vel|\b[oó]nibus\b/i.test(qNorm);
 
@@ -603,6 +558,119 @@ export async function askCctAI(
       resposta: resp,
       clausulaCitada: `Cláusula ${clVA.numero} - ${clVA.titulo}`,
       trechoOriginal: clVA.texto.substring(0, 700)
+    };
+  }
+
+  // 4. DÚVIDA DE SALÁRIO OU PISO DE UMA FUNÇÃO ESPECÍFICA
+  const isSalaryQuery = /sal[aá]rio|piso|remunera|ganha|quanto\s+(?:ganha|recebe)|tabela\s*salarial/i.test(qNorm);
+
+  let bestCargo: any = null;
+  let maxCargoScore = 0;
+
+  for (const cargo of cargosList) {
+    const cNorm = normalizeStr(cargo.nome);
+    // Divide em palavras significativas do cargo (ignorando artigos e preposições)
+    const words = cNorm.split(/\s+/).filter(w => w.length > 3 && !['para', 'com', 'dos', 'das', 'geral', 'gerais'].includes(w));
+    let matchCount = 0;
+
+    for (const w of words) {
+      // Exige limite de palavra estrito (evita que "transporte" dê match em "porteiro")
+      const wClean = w.replace(/s$/, ''); // Remove plural simples
+      const regexExact = new RegExp(`\\b${wClean}[a-z]*\\b`, 'i');
+      const foundMatch = qNorm.match(regexExact);
+
+      if (foundMatch) {
+        // Blindagem expressa: a palavra "transporte" jamais pode pontuar para porteiro
+        if (foundMatch[0].toLowerCase().includes('transporte')) {
+          continue;
+        }
+        matchCount += 3;
+      }
+    }
+
+    if (matchCount > maxCargoScore) {
+      maxCargoScore = matchCount;
+      bestCargo = cargo;
+    }
+  }
+
+  if (bestCargo && (isSalaryQuery || maxCargoScore >= 3)) {
+    const cl3 = clausulas.find(c => /piso|sal[aá]rio/i.test(c.titulo)) || {
+      numero: 'Terceira',
+      titulo: 'Pisos Salariais',
+      texto: ''
+    };
+
+    // Subcaso: Salário proporcional ou valor-hora (Parágrafo 3º da Cláusula 3ª)
+    const isHourlyOrProportional = /hora|proporcional|divisor|\b\d+\s*h\b|\b\d+\s*horas\b/i.test(qNorm);
+
+    if (isHourlyOrProportional) {
+      const divisor = 220;
+      const valorHoraBase = bestCargo.pisoSalarial / divisor;
+      const horasMatch = qNorm.match(/(\d+)\s*(?:horas|h\b|hora)/i);
+      const horasSolicitadas = horasMatch ? parseInt(horasMatch[1], 10) : null;
+
+      const salarioMinimo = (cct as any).salarioMinimo || 1518.0;
+      const insalubridadeMensal = bestCargo.insalubridadePercent > 0
+        ? (salarioMinimo * (bestCargo.insalubridadePercent / 100))
+        : 0;
+      const insalubridadeHora = insalubridadeMensal / divisor;
+
+      let resp = `Cálculo de **Salário-Hora e Proporcional** para **${bestCargo.nome}** (Cláusula 3ª - Parágrafo 3º):\n\n` +
+                 `• **Piso Mensal Integral (220h):** **${formatBRL(bestCargo.pisoSalarial)}**\n` +
+                 `• **Divisor Convencional:** 220 horas/mês (jornada padrão de 44h semanais)\n` +
+                 `• **Salário-Hora Base:** **${formatBRL(valorHoraBase)} / hora** (R$ ${valorHoraBase.toFixed(4).replace('.', ',')})\n`;
+
+      if (bestCargo.insalubridadePercent > 0) {
+        resp += `• **Insalubridade-Hora (${bestCargo.insalubridadePercent}% s/ SM R$ ${salarioMinimo.toFixed(2).replace('.', ',')}):** **${formatBRL(insalubridadeHora)} / hora** (R$ ${insalubridadeHora.toFixed(4).replace('.', ',')})\n`;
+      }
+
+      if (horasSolicitadas) {
+        const salarioProporcional = valorHoraBase * horasSolicitadas;
+        const insalubridadeProporcional = insalubridadeHora * horasSolicitadas;
+        const totalProporcional = salarioProporcional + insalubridadeProporcional;
+
+        resp += `\n📊 **Simulação para ${horasSolicitadas} horas mensais:**\n` +
+                `• **Salário Base Proporcional (${horasSolicitadas}h x ${formatBRL(valorHoraBase)}):** **${formatBRL(salarioProporcional)}**\n`;
+        if (bestCargo.insalubridadePercent > 0) {
+          resp += `• **Insalubridade Proporcional (${horasSolicitadas}h x ${formatBRL(insalubridadeHora)}):** **${formatBRL(insalubridadeProporcional)}**\n`;
+        }
+        resp += `• **Remuneração Total Prevista:** **${formatBRL(totalProporcional)} / mês**\n`;
+      }
+
+      resp += `\n📌 *Base Legal: O Parágrafo Terceiro da Cláusula 3ª autoriza a contratação para jornada inferior a 44h semanais com pagamento proporcional à carga horária cumprida, observado o divisor de 220 horas.*`;
+
+      return {
+        resposta: resp,
+        clausulaCitada: `Cláusula ${cl3.numero} - Parágrafo Terceiro (Salário Proporcional)`,
+        trechoOriginal: cl3.texto.substring(cl3.texto.indexOf('PARÁGRAFO TERCEIRO'), cl3.texto.indexOf('PARÁGRAFO TERCEIRO') + 500) ||
+                        `PARÁGRAFO TERCEIRO – JORNADA DE TRABALHO INFERIOR A 44 HORAS SEMANAIS: Aos empregados contratados para cumprir jornada de trabalho inferior à legal (44 horas semanais), fica autorizada a contratação com o pagamento do piso salarial proporcional à respectiva carga horária cumprida, observado o divisor mensal de 220 horas.`
+      };
+    }
+
+    let resp = `Piso salarial normativo para **${bestCargo.nome}**:\n\n` +
+               `• **Salário Base:** **${formatBRL(bestCargo.pisoSalarial)} mensais**\n`;
+
+    if (bestCargo.insalubridadePercent > 0) {
+      resp += `• **Insalubridade:** ${bestCargo.insalubridadePercent}% sobre o salário-mínimo nacional\n`;
+    }
+    if (bestCargo.gratificacoes > 0) {
+      resp += `• **Gratificação da Função:** ${formatBRL(bestCargo.gratificacoes)} mensais\n`;
+    }
+
+    const nomeLower = bestCargo.nome.toLowerCase();
+    if (nomeLower.includes('servente') || nomeLower.includes('limpeza')) {
+      resp += `• **Particularidades:**\n  - Cumulação com copa: piso sobe para **R$ 2.031,00**;\n  - Postos hospitalares: gratificação especial de **R$ 62,00** mensais.`;
+    } else if (nomeLower.includes('porteiro')) {
+      resp += `• **Regime SDF (12h):** R$ 1.869,00 para sábados, domingos e feriados.`;
+    } else if (nomeLower.includes('recepcionista')) {
+      resp += `• **Gratificação Contratual:** R$ 43,00 mensais para atendimento/recepção.`;
+    }
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${cl3.numero} - ${cl3.titulo}`,
+      trechoOriginal: cl3.texto.substring(0, 500) || `Salário de ingresso para ${bestCargo.nome}: ${formatBRL(bestCargo.pisoSalarial)}.`
     };
   }
 

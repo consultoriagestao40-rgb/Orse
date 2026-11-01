@@ -37,6 +37,7 @@ export interface CCTRule {
   vaTipo: 'FIXO' | 'DIARIO';
   vaProvisFerias: boolean;
   vaDescPercent: number;
+  vaRefeicaoLocal?: number;
   vtValor: number;
   vtDescPercent: number;
   

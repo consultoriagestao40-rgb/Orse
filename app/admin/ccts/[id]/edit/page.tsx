@@ -68,6 +68,7 @@ export default function CCTEditorPage() {
     vaValor: 0,
     vaTipo: 'DIARIO',
     vaDescPercent: 0,
+    vaRefeicaoLocal: 0,
     vaProvisFerias: false,
     vtValor: 0,
     vtDescPercent: 6,
@@ -331,6 +332,7 @@ export default function CCTEditorPage() {
         vigenciaInicio: p.vigenciaInicio || prev.vigenciaInicio,
         vigenciaFim: p.vigenciaFim || prev.vigenciaFim,
         vaValor: p.vaValor !== undefined && p.vaValor > 0 ? p.vaValor : prev.vaValor,
+        vaRefeicaoLocal: p.vaRefeicaoLocal !== undefined && p.vaRefeicaoLocal > 0 ? p.vaRefeicaoLocal : prev.vaRefeicaoLocal,
         vtValor: p.vtValor !== undefined && p.vtValor > 0 ? p.vtValor : prev.vtValor,
         seguroVida: p.seguroVida !== undefined && p.seguroVida > 0 ? p.seguroVida : prev.seguroVida,
         cestaBasica: p.cestaBasica !== undefined && p.cestaBasica > 0 ? p.cestaBasica : prev.cestaBasica,
@@ -576,6 +578,20 @@ export default function CCTEditorPage() {
                   />
                   Provisionar sobre Férias
                 </label>
+              </div>
+
+              {/* Vale Alimentação Reduzido (Refeição no Local - Parágrafo 5º) */}
+              <div className="border border-slate-200 rounded-md p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>VA Reduzido (Refeição no Local)</label>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Parágrafo 5º</span>
+                </div>
+                <CurrencyInput
+                  className={inputClass}
+                  value={formData.vaRefeicaoLocal || 0}
+                  onChange={(val: number) => setFormData({ ...formData, vaRefeicaoLocal: val })}
+                />
+                <p className="text-[10px] text-slate-400">Aplicado quando o tomador/posto fornece alimentação no local (CCT padrão: R$ 494,00/mês)</p>
               </div>
 
               {/* Vale Transporte */}

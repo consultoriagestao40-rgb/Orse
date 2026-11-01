@@ -52,6 +52,7 @@ export async function createCCT(data: any) {
         vaTipo: cctData.vaTipo || 'DIARIO',
         vaProvisFerias: Boolean(cctData.vaProvisFerias),
         vaDescPercent: Number(cctData.vaDescPercent) || 0,
+        vaRefeicaoLocal: Number(cctData.vaRefeicaoLocal) || 0,
         
         vtValor: Number(cctData.vtValor) || 0,
         vtDescPercent: Number(cctData.vtDescPercent) || 0,
@@ -148,6 +149,7 @@ export async function updateCCT(id: string, data: any) {
         vaTipo: cctData.vaTipo || 'DIARIO',
         vaProvisFerias: Boolean(cctData.vaProvisFerias),
         vaDescPercent: Number(cctData.vaDescPercent) || 0,
+        vaRefeicaoLocal: Number(cctData.vaRefeicaoLocal) || 0,
         
         vtValor: Number(cctData.vtValor) || 0,
         vtDescPercent: Number(cctData.vtDescPercent) || 0,

@@ -362,9 +362,16 @@ export default function PublishedCCTPage() {
                   {formatBRL(cct.vaValor)}
                   <span className="text-xs font-medium text-emerald-700"> /{cct.vaTipo === 'MENSAL' ? 'mês' : 'dia'}</span>
                 </p>
-                <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
-                  Desc. em folha: {cct.vaDescPercent || 0}%
-                </span>
+                <div className="flex items-center justify-end gap-2 mt-1">
+                  <span className="text-[10px] text-emerald-700 font-bold">
+                    Desc.: {cct.vaDescPercent || 0}%
+                  </span>
+                  {(cct.vaRefeicaoLocal && cct.vaRefeicaoLocal > 0) ? (
+                    <span className="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded font-black tracking-tight" title="Com refeição no local (Parágrafo 5º)">
+                      Local: {formatBRL(cct.vaRefeicaoLocal)}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -482,12 +489,25 @@ export default function PublishedCCTPage() {
               {activeTab === 'beneficios' && (
                 <div className="space-y-4">
                   <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
-                    <h3 className="text-sm font-black text-slate-800">Benefícios Normativos (CCT)</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-black text-slate-800">Benefícios Normativos (CCT)</h3>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Obrigações Convencionais</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                         <span className="text-[10px] font-black uppercase text-slate-400">Vale Alimentação</span>
                         <p className="text-base font-black text-[#1B4D3E] mt-1">{formatBRL(cct.vaValor)}/{cct.vaTipo === 'MENSAL' ? 'mês' : 'dia'}</p>
-                        <span className="text-[10px] text-slate-500">Desc. folha: {cct.vaDescPercent}%</span>
+                        <span className="text-[10px] text-slate-500">Desc. folha: {cct.vaDescPercent || 20}%</span>
+                      </div>
+                      <div className="p-3.5 bg-emerald-50/50 rounded-2xl border border-emerald-200/80">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase text-emerald-800">VA (Refeição Local)</span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Reduzido</span>
+                        </div>
+                        <p className="text-base font-black text-[#1B4D3E] mt-1">
+                          {formatBRL(cct.vaRefeicaoLocal && cct.vaRefeicaoLocal > 0 ? cct.vaRefeicaoLocal : 494)}/mês
+                        </p>
+                        <span className="text-[10px] text-slate-500">Desc. folha: 20% • Parágrafo 5º</span>
                       </div>
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                         <span className="text-[10px] font-black uppercase text-slate-400">Vale Transporte</span>
@@ -507,10 +527,12 @@ export default function PublishedCCTPage() {
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                         <span className="text-[10px] font-black uppercase text-slate-400">Cesta Básica</span>
                         <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.cestaBasica)}/mês</p>
+                        <span className="text-[10px] text-slate-400">Não previsto na CCT</span>
                       </div>
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                         <span className="text-[10px] font-black uppercase text-slate-400">Uniforme & EPI</span>
                         <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.uniformeEpi)}/mês</p>
+                        <span className="text-[10px] text-slate-400">Gratuito s/ desconto</span>
                       </div>
                     </div>
                   </div>
