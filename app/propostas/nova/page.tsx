@@ -49,6 +49,35 @@ function PropostaEditor() {
   const [activeTab, setActiveTab] = useState('dados');
   const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
   const [companyName, setCompanyName] = useState<string>('Silva Consultoria');
+  const [fpvExportMode, setFpvExportMode] = useState<string | null>(null);
+  const [showFpvExportMenu, setShowFpvExportMenu] = useState(false);
+
+  const handleExportFpv = (mode: 'ALL' | string) => {
+    const numRaw = proposta?.cliente?.numeroProposta;
+    const num = numRaw ? "FPV-" + String(numRaw).padStart(3, '0') : "FPV-XXX";
+    const rev = proposta?.cliente?.revisao || "R01";
+    const clientName = (proposta?.cliente?.cliente || proposta?.cliente?.razaoSocial || "Cliente").replace(/[/\\?%*:|"<>]/g, '-').trim();
+    
+    const oldTitle = document.title;
+    let fileName = ("FPV - " + num + "-" + rev + " - " + clientName).toUpperCase();
+    
+    if (mode !== 'ALL') {
+      const tabInfo = TABS.find(t => t.id === mode);
+      const tabName = tabInfo ? tabInfo.label.toUpperCase() : mode.toUpperCase();
+      fileName = ("FPV - " + num + "-" + rev + " - " + clientName + " - " + tabName).toUpperCase();
+    }
+    
+    setFpvExportMode(mode);
+    document.title = fileName;
+    
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.title = oldTitle;
+        setFpvExportMode(null);
+      }, 500);
+    }, 200);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1371,19 +1400,7 @@ function PropostaEditor() {
            <Sidebar />
            <main className="flex-1 flex items-center justify-center">
               <div className="text-[#1B4D3E] font-bold animate-pulse">Carregando Editor FPV...</div>
-                 {/* COMPONENTE DE EXPORTAÇÃO E IMPRESSÃO DO FPV EM PDF (TODAS AS TELAS OU TELA ESPECÍFICA) */}
-      {fpvExportMode && (
-        <FpvPdfDocument
-          mode={fpvExportMode}
-          proposta={proposta}
-          resultado={resultado}
-          empresaEmissora={empresasEmissoras.find((e: any) => e.id === selectedEmpresaId)}
-          companyLogo={companyLogo}
-          companyName={companyName}
-          escalasDb={escalasDb}
-        />
-      )}
-</main>
+           </main>
         </div>
      );
   }
@@ -7783,7 +7800,20 @@ function PropostaEditor() {
                       </div>
 
                    </div>
-</main>
+
+        {/* COMPONENTE DE EXPORTAÇÃO E IMPRESSÃO DO FPV EM PDF (TODAS AS TELAS OU TELA ESPECÍFICA) */}
+        {fpvExportMode && (
+          <FpvPdfDocument
+            mode={fpvExportMode}
+            proposta={proposta}
+            resultado={resultado}
+            empresaEmissora={empresasEmissoras.find((e: any) => e.id === selectedEmpresaId)}
+            companyLogo={companyLogo}
+            companyName={companyName}
+            escalasDb={escalasDb}
+          />
+        )}
+      </main>
     </div>
   );
 }
