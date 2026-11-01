@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import UploadCctModal from './UploadCctModal';
 import { deleteCCT } from '@/app/ccts/actions';
+import { formatVigenciaDate } from '@/lib/cctParser';
 import { useRouter } from 'next/navigation';
 
 interface CCTManagerClientProps {
@@ -166,8 +167,8 @@ export default function CCTManagerClient({ initialCcts }: CCTManagerClientProps)
                               {cct.vigenciaInicio && (
                                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                   <Calendar size={10} />
-                                  {new Date(cct.vigenciaInicio).toLocaleDateString('pt-BR')}
-                                  {cct.vigenciaFim && ` até ${new Date(cct.vigenciaFim).toLocaleDateString('pt-BR')}`}
+                                  {formatVigenciaDate(cct.vigenciaInicio)}
+                                  {cct.vigenciaFim && ` até ${formatVigenciaDate(cct.vigenciaFim)}`}
                                 </span>
                               )}
                             </div>

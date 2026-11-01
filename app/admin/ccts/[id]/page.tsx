@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { getCCTById } from '@/app/ccts/actions';
+import { formatVigenciaDate } from '@/lib/cctParser';
 import Link from 'next/link';
 
 interface Message {
@@ -252,6 +253,7 @@ export default function PublishedCCTPage() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   };
 
+
   if (loading) {
     return (
       <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -372,7 +374,7 @@ export default function PublishedCCTPage() {
                 <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500 mt-2">
                   <span className="flex items-center gap-1.5">
                     <Calendar size={14} className="text-[#1B4D3E]" />
-                    Vigência: <strong>{new Date(cct.vigenciaInicio).toLocaleDateString('pt-BR')}</strong> até <strong>{new Date(cct.vigenciaFim).toLocaleDateString('pt-BR')}</strong>
+                    Vigência: <strong>{formatVigenciaDate(cct.vigenciaInicio)}</strong> até <strong>{formatVigenciaDate(cct.vigenciaFim)}</strong>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Users size={14} className="text-[#1B4D3E]" />

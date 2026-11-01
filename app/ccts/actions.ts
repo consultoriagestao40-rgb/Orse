@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { unstable_noStore as noStore } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
+import { extractVigencia } from '@/lib/cctParser';
+
 
 export async function getCCTs() {
   noStore();
@@ -33,11 +35,26 @@ export async function createCCT(data: any) {
   try {
     const { cargos, ...cctData } = data;
     
-    // Tratamento ultra-seguro para datas
+    // Consulta e tratamento ultra-seguro para datas de vigência
+    let vigInicioStr = cctData.vigenciaInicio;
+    let vigFimStr = cctData.vigenciaFim;
+
+    if (!vigInicioStr && (cctData.textoCompleto || cctData.resumoClausulas)) {
+      const extracted = extractVigencia(cctData.textoCompleto || '', cctData.resumoClausulas || []);
+      vigInicioStr = extracted.vigenciaInicio;
+      vigFimStr = extracted.vigenciaFim;
+    }
+
     let vigInicio = new Date();
     let vigFim = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-    if (cctData.vigenciaInicio) vigInicio = new Date(cctData.vigenciaInicio);
-    if (cctData.vigenciaFim) vigFim = new Date(cctData.vigenciaFim);
+    if (vigInicioStr) {
+      const s = String(vigInicioStr).split('T')[0];
+      vigInicio = new Date(`${s}T12:00:00.000Z`);
+    }
+    if (vigFimStr) {
+      const s = String(vigFimStr).split('T')[0];
+      vigFim = new Date(`${s}T12:00:00.000Z`);
+    }
 
     const cct = await prisma.cCT.create({
       data: {
@@ -131,10 +148,26 @@ export async function updateCCT(id: string, data: any) {
     // Deleta os cargos antigos e cria os novos para garantir sincronia total
     await prisma.cargo.deleteMany({ where: { cctId: id } });
 
+    // Consulta e tratamento ultra-seguro para datas de vigência
+    let vigInicioStr = cctData.vigenciaInicio;
+    let vigFimStr = cctData.vigenciaFim;
+
+    if (!vigInicioStr && (cctData.textoCompleto || cctData.resumoClausulas)) {
+      const extracted = extractVigencia(cctData.textoCompleto || '', cctData.resumoClausulas || []);
+      vigInicioStr = extracted.vigenciaInicio;
+      vigFimStr = extracted.vigenciaFim;
+    }
+
     let vigInicio = new Date();
     let vigFim = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-    if (cctData.vigenciaInicio) vigInicio = new Date(cctData.vigenciaInicio);
-    if (cctData.vigenciaFim) vigFim = new Date(cctData.vigenciaFim);
+    if (vigInicioStr) {
+      const s = String(vigInicioStr).split('T')[0];
+      vigInicio = new Date(`${s}T12:00:00.000Z`);
+    }
+    if (vigFimStr) {
+      const s = String(vigFimStr).split('T')[0];
+      vigFim = new Date(`${s}T12:00:00.000Z`);
+    }
 
     const cct = await prisma.cCT.update({
       where: { id },

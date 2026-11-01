@@ -54,8 +54,14 @@ export async function POST(req: NextRequest) {
     if (autoSave) {
       let vigInicio = new Date();
       let vigFim = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
-      if (parsedData.vigenciaInicio) vigInicio = new Date(parsedData.vigenciaInicio);
-      if (parsedData.vigenciaFim) vigFim = new Date(parsedData.vigenciaFim);
+      if (parsedData.vigenciaInicio) {
+        const s = String(parsedData.vigenciaInicio).split('T')[0];
+        vigInicio = new Date(`${s}T12:00:00.000Z`);
+      }
+      if (parsedData.vigenciaFim) {
+        const s = String(parsedData.vigenciaFim).split('T')[0];
+        vigFim = new Date(`${s}T12:00:00.000Z`);
+      }
 
       const novaCct = await prisma.cCT.create({
         data: {

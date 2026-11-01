@@ -141,10 +141,151 @@ export function extractClausulas(texto: string): { numero: string; titulo: strin
   return clausulas;
 }
 
+const MESES_MAP: Record<string, string> = {
+  janeiro: '01',
+  fevereiro: '02',
+  marco: '03',
+  março: '03',
+  abril: '04',
+  maio: '05',
+  junho: '06',
+  julho: '07',
+  agosto: '08',
+  setembro: '09',
+  outubro: '10',
+  novembro: '11',
+  dezembro: '12'
+};
+
+/**
+ * Formata data de vigência para o padrão visual DD/MM/AAAA imune a qualquer shift de fuso horário.
+ */
+export function formatVigenciaDate(val: any): string {
+  if (!val) return '-';
+  if (typeof val === 'string') {
+    const match = val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    const matchBR = val.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (matchBR) {
+      return matchBR[0];
+    }
+  }
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return '-';
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const year = d.getUTCFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Consulta e extrai obrigatoriamente a vigência da CCT a partir da cláusula oficial de vigência
+ * (ex: Cláusula Primeira - Vigência e Data-Base do MTE) ou do cabeçalho da convenção.
+ */
+export function extractVigencia(
+  cleanedFullText: string,
+  clausulas: { numero: string; titulo: string; texto: string }[] = []
+): { vigenciaInicio: string; vigenciaFim: string; clausulaEncontrada?: string; textoOriginal?: string } {
+  const targetTexts: { text: string; label: string }[] = [];
+
+  // 1. Prioridade Absoluta: Cláusula cujo título contenha VIGÊNCIA, PRAZO ou DATA-BASE
+  const vigClausula = clausulas.find(c => 
+    /vig[êe]ncia|prazo|data[–\s-]*base/i.test(c.titulo || '') || 
+    /vig[êe]ncia/i.test(c.numero || '')
+  );
+  if (vigClausula) {
+    targetTexts.push({
+      text: `${vigClausula.titulo} ${vigClausula.texto}`,
+      label: `Cláusula ${vigClausula.numero} - ${vigClausula.titulo}`
+    });
+  }
+
+  // 2. Cláusula Primeira (onde o MTE registra a vigência nas CCTs por padrão)
+  const cl1 = clausulas.find(c => /primeira|^1[ªaºo]?$/i.test((c.numero || '').trim()));
+  if (cl1 && cl1 !== vigClausula) {
+    targetTexts.push({
+      text: `${cl1.titulo} ${cl1.texto}`,
+      label: `Cláusula ${cl1.numero} - ${cl1.titulo}`
+    });
+  }
+
+  // 3. Fallback: Cabeçalho geral do documento (primeiros 6.000 caracteres)
+  if (cleanedFullText) {
+    targetTexts.push({
+      text: cleanedFullText.substring(0, 6000),
+      label: 'Cabeçalho da CCT'
+    });
+  }
+
+  for (const item of targetTexts) {
+    if (!item.text) continue;
+    // Normalizar múltiplos espaços e quebras de linha
+    const norm = item.text.replace(/\s+/g, ' ');
+
+    // A) Regex Extenso padrão oficial MTE:
+    // Ex: "01º de fevereiro de 2026 a 31 de janeiro de 2028"
+    const regexExtenso = /(\d{1,2})[ºoª°]?\s*(?:de\s+)?([a-zç]+)\s*(?:de\s+)?(\d{4})\s*(?:a|at[ée]|à)\s*(\d{1,2})[ºoª°]?\s*(?:de\s+)?([a-zç]+)\s*(?:de\s+)?(\d{4})/i;
+    const matchExt = norm.match(regexExtenso);
+    if (matchExt) {
+      const d1 = matchExt[1].padStart(2, '0');
+      const mName1 = matchExt[2].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const m1 = MESES_MAP[mName1];
+      const y1 = matchExt[3];
+
+      const d2 = matchExt[4].padStart(2, '0');
+      const mName2 = matchExt[5].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const m2 = MESES_MAP[mName2];
+      const y2 = matchExt[6];
+
+      if (m1 && m2 && y1 && y2) {
+        return {
+          vigenciaInicio: `${y1}-${m1}-${d1}`,
+          vigenciaFim: `${y2}-${m2}-${d2}`,
+          clausulaEncontrada: item.label,
+          textoOriginal: matchExt[0]
+        };
+      }
+    }
+
+    // B) Regex Numérico DD/MM/AAAA a DD/MM/AAAA ou DD.MM.AAAA a DD.MM.AAAA
+    const regexNum = /(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})\s*(?:a|at[ée]|à)\s*(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})/i;
+    const matchNum = norm.match(regexNum);
+    if (matchNum) {
+      const d1 = matchNum[1].padStart(2, '0');
+      const m1 = matchNum[2].padStart(2, '0');
+      const y1 = matchNum[3];
+
+      const d2 = matchNum[4].padStart(2, '0');
+      const m2 = matchNum[5].padStart(2, '0');
+      const y2 = matchNum[6];
+
+      return {
+        vigenciaInicio: `${y1}-${m1}-${d1}`,
+        vigenciaFim: `${y2}-${m2}-${d2}`,
+        clausulaEncontrada: item.label,
+        textoOriginal: matchNum[0]
+      };
+    }
+  }
+
+  // Fallback padrão se nenhuma data for identificada no documento
+  const hoje = new Date().toISOString().split('T')[0];
+  const proximoAno = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0];
+  return {
+    vigenciaInicio: hoje,
+    vigenciaFim: proximoAno,
+    clausulaEncontrada: 'Padrão (1 ano)',
+    textoOriginal: ''
+  };
+}
+
 /**
  * Parser heurístico de alta precisão para Convenções Coletivas (CCTs do Mediador MTE e sindicais)
  */
 export async function parseCCT(pdfText: string, originalFileName?: string): Promise<ExtractedCctData> {
+
   const clausulas = extractClausulas(pdfText);
   const cleanedFullText = pdfText.replace(/Mediador\s*-\s*Extrato[^\n\r]*\n\d+\s+of\s+\d+[^\n\r]*/gi, '');
 
@@ -186,21 +327,11 @@ export async function parseCCT(pdfText: string, originalFileName?: string): Prom
     cidade = cidadeMatch[1].trim();
   }
 
-  // 4. Vigência / Data-base
-  let vigenciaInicio = new Date().toISOString().split('T')[0];
-  let vigenciaFim = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0];
-  
-  const dateRangeMatch = cleanedFullText.match(/(\d{1,2}\/\d{1,2}\/\d{4})\s*(?:a|até|à)\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
-  if (dateRangeMatch) {
-    const parseBRDate = (str: string) => {
-      const parts = str.split('/');
-      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-    };
-    try {
-      vigenciaInicio = parseBRDate(dateRangeMatch[1]);
-      vigenciaFim = parseBRDate(dateRangeMatch[2]);
-    } catch {}
-  }
+  // 4. Vigência / Data-base (Extração obrigatória da Cláusula Oficial de Vigência)
+  const vigenciaObj = extractVigencia(cleanedFullText, clausulas);
+  const vigenciaInicio = vigenciaObj.vigenciaInicio;
+  const vigenciaFim = vigenciaObj.vigenciaFim;
+
 
   // 5. Funções e Pisos Salariais (Cláusula 3ª / Pisos Salariais)
   const cargos: ExtractedCargo[] = [];
@@ -397,6 +528,31 @@ export async function askCctAI(
       .trim();
 
   const qNorm = normalizeStr(pergunta);
+
+  // 0. DÚVIDA DE VIGÊNCIA, VALIDADE, DATA-BASE OU PRAZO DA CCT
+  if (/\bvig[êe]ncia\b|\bvalidade\b|quando\s*(?:come[çc]a|inicia|vence|termina|expira)|prazo\s*(?:de\s*)?vig[êe]ncia|data[–\s-]*base|\bvigorar?\b/i.test(qNorm)) {
+    const vigInfo = extractVigencia(fullText, clausulas);
+    const inicioFmt = formatVigenciaDate(vigInfo.vigenciaInicio);
+    const fimFmt = formatVigenciaDate(vigInfo.vigenciaFim);
+    const clVig = clausulas.find(c => /vig[êe]ncia|prazo|data[–\s-]*base/i.test(c.titulo || '')) ||
+                  clausulas.find(c => /primeira|^1[ªaºo]?$/i.test(c.numero || '')) || {
+                    numero: 'Primeira',
+                    titulo: 'Vigência e Data-Base',
+                    texto: ''
+                  };
+
+    const resp = `A vigência e a data-base desta Convenção Coletiva de Trabalho são:\n\n` +
+      `• **Início da Vigência:** **${inicioFmt}**\n` +
+      `• **Término da Vigência:** **${fimFmt}**\n` +
+      `• **Data-Base:** Conforme estipulado expressamente na cláusula normativa de vigência;\n\n` +
+      `📌 *Fundamento Normativo:* **${clVig.numero ? `Cláusula ${clVig.numero} - ${clVig.titulo}` : 'Cláusula Oficial de Vigência'}**.`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clVig.numero} - ${clVig.titulo}`,
+      trechoOriginal: clVig.texto.substring(0, 700) || vigInfo.textoOriginal || `Período de ${inicioFmt} a ${fimFmt}`
+    };
+  }
 
   // 1. DÚVIDA DE INSALUBRIDADE OU PERICULOSIDADE
   if (/insalubr|periculos|grau\s*m[aá]ximo|grau\s*m[eé]dio|adicional\s*de\s*risco/i.test(qNorm)) {
