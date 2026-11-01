@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline, syncAllWhatsAppLeadsProfile } from './actions';
+import { getLeads, getLeadsPageInitData, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline, syncAllWhatsAppLeadsProfile } from './actions';
 import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, getLeadParticipants, updateLeadTags } from './whatsapp-actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check, Tag, RefreshCw } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,6 +10,7 @@ import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
 import WhatsAppChat from './components/WhatsAppChat';
 import UserSelectPopover from '@/components/UserSelectPopover';
+import FinancialLoadingTransition from '@/components/FinancialLoadingTransition';
 import { parseDateUTC, formatTimeBrasilia, getUserTimezone } from '@/lib/timezone';
 
 const safeDate = (val: any) => {
@@ -800,9 +801,38 @@ export default function LeadsKanban() {
     }
   }, [searchParams, leads, selectedLead]);
 
+  const isInitialMountRef = useRef(true);
+
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(() => fetchData(true), 5000);
+    const initData = async () => {
+      setLoading(true);
+      const savedPipeId = typeof window !== 'undefined' ? localStorage.getItem('orse_active_pipeline_id') || undefined : undefined;
+      const res = await getLeadsPageInitData({
+        pipelineId: savedPipeId,
+        startDate: datePreset === 'all' ? undefined : startDate,
+        endDate: datePreset === 'all' ? undefined : endDate,
+        userId: userFilter !== 'all' ? userFilter : undefined
+      });
+
+      if (res.success) {
+        if (res.pipelines) setPipelines(res.pipelines);
+        if (res.activePipelineId) {
+          setActivePipelineId(res.activePipelineId);
+          localStorage.setItem('orse_active_pipeline_id', res.activePipelineId);
+        }
+        if (res.stages) setStages(res.stages);
+        if (res.segmentos) setSegmentos(res.segmentos);
+        if (res.filterUsers) setFilterUsers(res.filterUsers);
+        if (res.leads) setLeads(res.leads);
+      }
+      setLoading(false);
+      isInitialMountRef.current = false;
+    };
+
+    initData();
+    const interval = setInterval(() => {
+      fetchFilteredLeads(true);
+    }, 15000);
     
     const handleGlobalDragEnd = () => {
       setIsDragging(false);
@@ -819,12 +849,14 @@ export default function LeadsKanban() {
   }, []);
 
   useEffect(() => {
+    if (isInitialMountRef.current) return;
     if (activePipelineId) {
       fetchData(true, activePipelineId);
     }
   }, [activePipelineId]);
 
   useEffect(() => {
+    if (isInitialMountRef.current) return;
     if (stages.length > 0) {
       fetchFilteredLeads(false, activePipelineId);
     }
@@ -1761,6 +1793,16 @@ export default function LeadsKanban() {
           Criar Etapas Padrão (Descoberta, Reunião, etc)
         </button>
       </div>
+    );
+  }
+
+  if (loading && leads.length === 0) {
+    return (
+      <FinancialLoadingTransition
+        title="Sincronizando Funil Comercial & Leads"
+        subtitle="Carregando oportunidades, cotações e estágios do pipeline..."
+        variant="fullscreen"
+      />
     );
   }
 

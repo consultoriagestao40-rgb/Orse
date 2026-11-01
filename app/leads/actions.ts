@@ -177,6 +177,112 @@ export async function deletePipeline(id: string) {
   }
 }
 
+export async function getLeadsPageInitData(params?: {
+  pipelineId?: string;
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+}) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await ensureDefaultPipeline(user.tenantId!);
+    const pipelines = await prisma.pipeline.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    let currentPipeId = params?.pipelineId;
+    if (!currentPipeId || !pipelines.some(p => p.id === currentPipeId)) {
+      currentPipeId = pipelines[0]?.id;
+    }
+
+    const where: any = { tenantId: user.tenantId };
+    const acessoLeads = (user as any).acessoLeadsTipo || (user.role === 'USER' ? 'ATRIBUIDOS' : 'TODOS');
+    if (user.role !== 'ADMIN' && acessoLeads === 'ATRIBUIDOS') {
+      where.OR = [
+        { assignedToId: user.id },
+        { shares: { some: { userId: user.id } } }
+      ];
+    } else {
+      if (params?.userId && params.userId !== 'all') {
+        where.assignedToId = params.userId;
+      }
+    }
+    if (currentPipeId) {
+      where.pipelineId = currentPipeId;
+    }
+    if (params?.startDate || params?.endDate) {
+      where.createdAt = {};
+      if (params.startDate) where.createdAt.gte = new Date(params.startDate);
+      if (params.endDate) {
+        const end = new Date(params.endDate);
+        end.setHours(23, 59, 59, 999);
+        where.createdAt.lte = end;
+      }
+    }
+
+    const [stages, segmentos, users, leads] = await Promise.all([
+      currentPipeId
+        ? prisma.leadStage.findMany({ where: { pipelineId: currentPipeId }, orderBy: { ordem: 'asc' } })
+        : Promise.resolve([]),
+      prisma.segmento.findMany({ where: { tenantId: user.tenantId }, orderBy: { nome: 'asc' } }),
+      prisma.user.findMany({
+        where: { tenantId: user.tenantId, ativo: true },
+        select: { id: true, nome: true, email: true, avatarUrl: true, role: true },
+        orderBy: { nome: 'asc' }
+      }),
+      prisma.lead.findMany({
+        where,
+        include: {
+          stage: true,
+          assignedTo: true,
+          history: {
+            orderBy: { createdAt: 'desc' },
+            take: 10
+          },
+          activities: {
+            orderBy: { dataInicio: 'asc' },
+            take: 20
+          },
+          shares: {
+            include: { user: true }
+          },
+          contacts: true,
+          whatsappMessages: {
+            where: { direction: 'INBOUND', status: { not: 'READ' } },
+            select: {
+              id: true,
+              direction: true,
+              status: true,
+              createdAt: true
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 5
+          }
+        },
+        orderBy: { updatedAt: 'desc' }
+      })
+    ]);
+
+    return {
+      success: true,
+      pipelines,
+      activePipelineId: currentPipeId,
+      stages,
+      segmentos,
+      filterUsers: users,
+      leads
+    };
+  } catch (error: any) {
+    console.error('Error fetching leads page init data:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getLeads(filters?: { startDate?: string; endDate?: string; userId?: string; pipelineId?: string }) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
@@ -217,27 +323,29 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
         stage: true,
         assignedTo: true,
         history: {
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          take: 10
         },
         activities: {
-          orderBy: { dataInicio: 'asc' }
+          orderBy: { dataInicio: 'asc' },
+          take: 20
         },
         shares: {
           include: { user: true }
         },
         contacts: true,
         whatsappMessages: {
+          where: { direction: 'INBOUND', status: { not: 'READ' } },
           select: {
             id: true,
             direction: true,
             status: true,
-            texto: true,
             createdAt: true
           },
           orderBy: {
             createdAt: 'desc'
           },
-          take: 30
+          take: 5
         }
       },
       orderBy: { updatedAt: 'desc' }

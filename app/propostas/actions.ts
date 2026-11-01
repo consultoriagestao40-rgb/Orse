@@ -28,6 +28,8 @@ async function getSubordinateIds(managerId: string): Promise<string[]> {
   }
 }
 
+import { cache } from 'react';
+
 export async function getCurrentUserRole() {
   try {
     const user = await getLoggedUser();
@@ -37,7 +39,7 @@ export async function getCurrentUserRole() {
   }
 }
 
-export async function getLoggedUser() {
+export const getLoggedUser = cache(async () => {
   try {
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
@@ -89,7 +91,7 @@ export async function getLoggedUser() {
     console.error('Erro ao obter usuario logado:', error);
   }
   return null;
-}
+});
 
 export async function deleteProposta(id: string) {
   try {
@@ -110,18 +112,6 @@ export async function deleteProposta(id: string) {
 // Ações para gerenciar os Status das Propostas
 export async function getPropostaStatuses() {
   try {
-    // Correção automática de cores legadas de status no banco de dados
-    await prisma.propostaStatus.updateMany({
-      where: {
-        color: {
-          contains: 'bg-emerald-100'
-        }
-      },
-      data: {
-        color: 'bg-green-100 text-green-800 border border-green-200'
-      }
-    });
-
     const statuses = await prisma.propostaStatus.findMany({ orderBy: { nome: 'asc' } });
     if (statuses.length === 0) {
       // Popula com defaults se a tabela estiver vazia
@@ -752,7 +742,9 @@ export async function getPropostas(preFetchedUser?: any) {
             versao: true,
             precoVenda: true,
             metadados: true
-          }
+          },
+          orderBy: { versao: 'desc' },
+          take: 1
         }
       },
       orderBy: { createdAt: 'desc' }
