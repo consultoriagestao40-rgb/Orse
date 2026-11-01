@@ -1791,7 +1791,7 @@ const Sidebar = () => {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Suporte Técnico via WhatsApp"
-      className="fixed bottom-5 right-5 z-40 group flex items-center gap-2.5 transition-all duration-300"
+      className="fixed bottom-5 right-16 z-50 group flex items-center gap-2.5 transition-all duration-300 no-print"
     >
       <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-slate-800 text-[12px] font-bold shadow-[0_6px_20px_-4px_rgba(0,0,0,0.14)] border border-slate-200 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 pointer-events-none">
         <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
