@@ -2133,57 +2133,90 @@ function PropostaEditor() {
                               </tr>
                            </thead>
                            <tbody>
-                              {proposta.equipe.map((p: any) => (
+                              {proposta.equipe.map((p: any) => {
+                                 const currentCctId = p.cctBase?.id || ccts.find((c: any) => c.cargos?.some((cg: any) => cg.id === p.cargo?.id))?.id || '';
+                                 const currentCargoId = p.cargo?.id || '';
+                                 const currentSelectValue = (currentCctId && currentCargoId) ? `${currentCctId}|${currentCargoId}` : (currentCargoId || '');
+                                 
+                                 const matchingEscala = escalasDb.find((esc: any) => esc.nome === p.escala)
+                                    || escalasDb.find((esc: any) => p.escala && esc.nome.toLowerCase().startsWith(String(p.escala).toLowerCase()))
+                                    || escalasDb.find((esc: any) => p.escala && esc.nome.toLowerCase().includes(String(p.escala).toLowerCase()));
+                                 const effectiveEscalaValue = matchingEscala ? matchingEscala.nome : (p.escala || '');
+                                 const adicionalExtraVal = Number(p.parametrosPosto?.adicionalExtraValor) || 0;
+
+                                 return (
                                  <React.Fragment key={p.id}>
                                     <tr className="border-b border-slate-200 hover:bg-slate-50">
                                        <td className="px-6 py-4">
                                           <input type="number" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
                                        </td>
                                        <td className="px-6 py-4">
-                                          <select className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.cargo?.id ? `${p.cctBase?.id}|${p.cargo?.id}` : ''} onChange={(e) => {
-                                             if (!e.target.value) return;
-                                             const [cctId, cargoId] = e.target.value.split('|');
-                                             const c = ccts.find(x => x.id === cctId);
-                                             if(c) {
-                                                const cargo = c.cargos?.find((x: any) => x.id === cargoId);
-                                                if (cargo) {
-                                                   const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, nomeCargo: cargo.nome, cargo: cargo, cctBase: c} : x);
-                                                   setProposta({...proposta, equipe: newE});
+                                          <select 
+                                             className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" 
+                                             value={currentSelectValue} 
+                                             onChange={(e) => {
+                                                if (!e.target.value) return;
+                                                const [cctId, cargoId] = e.target.value.includes('|') ? e.target.value.split('|') : ['', e.target.value];
+                                                const c = ccts.find(x => x.id === cctId) || ccts.find(x => x.cargos?.some((cg: any) => cg.id === cargoId));
+                                                if(c) {
+                                                   const cargo = c.cargos?.find((x: any) => x.id === cargoId);
+                                                   if (cargo) {
+                                                      const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, nomeCargo: cargo.nome, cargo: cargo, cctBase: c} : x);
+                                                      setProposta({...proposta, equipe: newE});
+                                                   }
                                                 }
-                                             }
-                                          }}>
+                                             }}
+                                          >
                                              <option value="" className="text-slate-800 bg-white">Selecione a Função...</option>
                                              {!proposta.cliente.sindicatoId && (
                                                  <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
                                               )}
-                                              {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId).map((c: any) => (
+                                             {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId || c.id === currentCctId).map((c: any) => (
                                                 <optgroup key={c.id} label={`${c.nome} (${c.uf})`}>
                                                    {c.cargos?.map((cg: any) => (
                                                       <option key={cg.id} value={`${c.id}|${cg.id}`}>{cg.nome} - R$ {cg.pisoSalarial}</option>
                                                    ))}
                                                 </optgroup>
                                              ))}
+                                             {currentCargoId && !ccts.some((c: any) => c.cargos?.some((cg: any) => cg.id === currentCargoId)) && (
+                                                <option value={currentSelectValue}>{p.cargo?.nome || p.nomeCargo || 'Função Atual'} - R$ {p.cargo?.pisoSalarial || '0.00'}</option>
+                                             )}
                                           </select>
                                        </td>
                                        <td className="px-6 py-4">
-                                          <select className="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.escala} onChange={(e) => {
-                                             const chosenEscala = escalasDb.find(esc => esc.nome === e.target.value);
-                                             if (chosenEscala) {
-                                                const param = {...p.parametrosPosto, diasTrabalhadosMes: chosenEscala.diasTrabalhadosMes};
-                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, escala: chosenEscala.nome, parametrosPosto: param} : x);
-                                                setProposta({...proposta, equipe: newE});
-                                             } else {
-                                                updatePosto(p.id, 'escala', e.target.value);
-                                             }
-                                          }}>
+                                          <select 
+                                             className="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" 
+                                             value={effectiveEscalaValue} 
+                                             onChange={(e) => {
+                                                const chosenEscala = escalasDb.find((esc: any) => esc.nome === e.target.value);
+                                                if (chosenEscala) {
+                                                   const param = {...p.parametrosPosto, diasTrabalhadosMes: chosenEscala.diasTrabalhadosMes};
+                                                   const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, escala: chosenEscala.nome, parametrosPosto: param} : x);
+                                                   setProposta({...proposta, equipe: newE});
+                                                } else {
+                                                   updatePosto(p.id, 'escala', e.target.value);
+                                                }
+                                             }}
+                                          >
                                              <option value="" className="text-slate-800 bg-white">Selecione a Escala...</option>
-                                             {escalasDb.map(esc => (
+                                             {effectiveEscalaValue && !escalasDb.some((esc: any) => esc.nome === effectiveEscalaValue) && (
+                                                <option value={effectiveEscalaValue}>{effectiveEscalaValue}</option>
+                                             )}
+                                             {escalasDb.map((esc: any) => (
                                                 <option key={esc.id} value={esc.nome}>{esc.nome}</option>
                                              ))}
                                           </select>
                                        </td>
                                        <td className="px-6 py-4 text-right">
                                           <div className="flex items-center justify-end gap-2.5">
+                                             {adicionalExtraVal > 0 && (
+                                                <span 
+                                                   className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-300 text-[10px] font-black px-2.5 py-1.5 rounded-xl shadow-xs" 
+                                                   title={`${p.parametrosPosto?.adicionalExtraNome || 'Adicional Extra'}: R$ ${adicionalExtraVal.toFixed(2)} (${p.parametrosPosto?.adicionalExtraIncideEncargos !== false ? 'Com Encargos CLT' : 'Indenizatório'})`}
+                                                >
+                                                   ⭐ +R$ {adicionalExtraVal.toFixed(2)}
+                                                </span>
+                                             )}
                                              <button 
                                                 type="button"
                                                 onClick={() => setActiveAdicionaisPostoId(p.id)}
@@ -2219,7 +2252,8 @@ function PropostaEditor() {
                                        </td>
                                     </tr>
                                  </React.Fragment>
-                              ))}
+                                 );
+                              })}
                               {proposta.equipe.length === 0 && (
                                  <tr>
                                     <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
@@ -2743,6 +2777,7 @@ function PropostaEditor() {
                let totalNoturno = 0;
                let totalIntrajornada = 0;
                let totalDsr = 0;
+               let totalOutrosAdicionais = 0;
 
                proposta.equipe.forEach((colab: any) => {
                   const qty = Number(colab.quantidade) || 1;
@@ -2775,6 +2810,12 @@ function PropostaEditor() {
                     dsrAdicionais = (adicionalNoturno + intrajornada) * (param.dsrPercent / 100);
                   }
 
+                  const adicionalExtra = Number(param.adicionalExtraValor) || 0;
+                  const adicionalExtraIncide = param.adicionalExtraIncideEncargos !== false;
+                  if (adicionalExtraIncide && adicionalExtra > 0) {
+                     totalOutrosAdicionais += adicionalExtra * qty;
+                  }
+
                   totalSalarios += salarioBase * qty;
                   totalInsalubridade += adicionalInsalubridade * qty;
                   totalPericulosidade += adicionalPericulosidade * qty;
@@ -2783,7 +2824,7 @@ function PropostaEditor() {
                   totalDsr += dsrAdicionais * qty;
                });
 
-               const totalRemuneracaoBase = totalSalarios + totalInsalubridade + totalPericulosidade + totalNoturno + totalIntrajornada + totalDsr;
+               const totalRemuneracaoBase = totalSalarios + totalInsalubridade + totalPericulosidade + totalNoturno + totalIntrajornada + totalDsr + totalOutrosAdicionais;
 
                // 2. Cálculos de Encargos Parametrizados na Tela
                const encargosValores = {
@@ -3117,6 +3158,18 @@ function PropostaEditor() {
                                     <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
                                        <div className="text-[11px]">{formatCurrency((totalNoturno + totalIntrajornada + totalDsr) * 12)}</div>
                                        <div className="text-[9px] text-slate-400 mt-0.5">{(((totalNoturno + totalIntrajornada + totalDsr) / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.1.11 - Adicionais Extras / Gratificações */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.1'] && totalOutrosAdicionais > 0 && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.11 - Adicionais Extras / Gratificações</td>
+                                    {MONTHS.map(m => renderValueCell(totalOutrosAdicionais, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(totalOutrosAdicionais * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{((totalOutrosAdicionais / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
                                     </td>
                                  </tr>
                               )}
@@ -5702,6 +5755,69 @@ function PropostaEditor() {
                                   }} 
                                />
                             </div>
+                        </div>
+
+                        {/* Seção Adicional Extra / Gratificação de Contrato / Posto */}
+                        <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 space-y-3 relative overflow-hidden">
+                           <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
+                              <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                                 <span>⭐</span> Adicional Extra / Gratificação Específica do Posto
+                              </h4>
+                              <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300">
+                                 Exclusivo deste contrato
+                              </span>
+                           </div>
+                           <p className="text-[11px] text-amber-800/90 leading-relaxed">
+                              Adicione gratificação de função, adicional de liderança ou verba específica deste posto. <strong>Não altera a CCT base no banco nem afeta outras propostas.</strong>
+                           </p>
+                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                              <div className="space-y-1 sm:col-span-1">
+                                 <label className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">Identificação / Nome</label>
+                                 <input 
+                                    type="text" 
+                                    placeholder="Ex: Gratificação Liderança"
+                                    className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 shadow-xs" 
+                                    value={p.parametrosPosto?.adicionalExtraNome || ''}
+                                    onChange={(e) => {
+                                       const param = {...p.parametrosPosto, adicionalExtraNome: e.target.value};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }}
+                                 />
+                              </div>
+
+                              <div className="space-y-1">
+                                 <label className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">Valor (R$/mês)</label>
+                                 <input 
+                                    type="number" 
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="R$ 0,00"
+                                    className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 shadow-xs" 
+                                    value={p.parametrosPosto?.adicionalExtraValor !== undefined && p.parametrosPosto?.adicionalExtraValor !== null ? p.parametrosPosto.adicionalExtraValor : ''}
+                                    onChange={(e) => {
+                                       const val = e.target.value === '' ? '' : Number(e.target.value);
+                                       const param = {...p.parametrosPosto, adicionalExtraValor: val};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }}
+                                 />
+                              </div>
+
+                              <div className="space-y-1">
+                                 <label className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">Incide Encargos CLT?</label>
+                                 <select 
+                                    className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 shadow-xs" 
+                                    value={p.parametrosPosto?.adicionalExtraIncideEncargos !== false ? 'SIM' : 'NAO'}
+                                    onChange={(e) => {
+                                       const incide = e.target.value === 'SIM';
+                                       const param = {...p.parametrosPosto, adicionalExtraIncideEncargos: incide};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }}
+                                 >
+                                    <option value="SIM">Sim (Salário + Encargos CLT)</option>
+                                    <option value="NAO">Não (Verba Indenizatória)</option>
+                                 </select>
+                              </div>
+                           </div>
                         </div>
 
                         {/* Seção de Jornada */}

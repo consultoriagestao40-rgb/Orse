@@ -88,9 +88,17 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     ? salarioBase 
     : (Number(cctEfetiva.salarioMinimo) || 1518);
 
-  const adicionalInsalubridade = baseInsalubridade * (pctInsalubridade / 100);
-  
-  const outrosAdicionais = Number(cargo.adicionalCopa || 0) + Number(cargo.gratificacoes || 0) + Number(cargo.assiduidade || 0) + Number(cargo.anuenio || 0);
+  // Adicional Extra específico do posto/contrato desta proposta
+  const adicionalExtraValor = Number(param.adicionalExtraValor || colab.adicionalExtraValor || 0) || 0;
+  const adicionalExtraIncideEncargos = param.adicionalExtraIncideEncargos !== undefined 
+    ? Boolean(param.adicionalExtraIncideEncargos) 
+    : true;
+
+  const outrosAdicionais = Number(cargo.adicionalCopa || 0) + 
+                           Number(cargo.gratificacoes || 0) + 
+                           Number(cargo.assiduidade || 0) + 
+                           Number(cargo.anuenio || 0) + 
+                           (adicionalExtraIncideEncargos ? adicionalExtraValor : 0);
   
   // Cálculo de Horas Noturnas (20% sobre a hora normal)
   let adicionalNoturno = 0;
@@ -204,8 +212,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 
   const outrosBeneficios = Number(cctEfetiva.outrosBeneficios || 0) || 0;
   const adicionalAssiduidade = Number(param.adicionalAssiduidade || colab.adicionalAssiduidade || 0) || 0;
+  const adicionalExtraIndenizatorio = (!adicionalExtraIncideEncargos && adicionalExtraValor > 0) ? adicionalExtraValor : 0;
 
-  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios + adicionalAssiduidade) - (descontoVA + descontoVT);
+  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios + adicionalAssiduidade + adicionalExtraIndenizatorio) - (descontoVA + descontoVT);
 
   // 5. BLOCO B - INSUMOS (Unificado para manter extrato limpo)
   // Calcula o total de ativos priorizando o valor manual do colaborador, depois a composição detalhada do cargo, e por fim o valor fixo.
@@ -238,6 +247,18 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     beneficios: totalBeneficios,
     ativos: totalAtivos,
     custoTotal: custoTotalDireto,
+    detalheBlocoA: {
+      salarioBase,
+      insalubridade: remuInsalubridade,
+      periculosidade: remuPericulosidade,
+      noturno: remuNoturno,
+      intrajornada: remuIntra,
+      dsr: remuDsr,
+      outros: remuOutros,
+      adicionalExtra: adicionalExtraValor,
+      adicionalExtraNome: param.adicionalExtraNome || 'Adicional Extra do Contrato',
+      adicionalExtraIncideEncargos
+    },
     detalheBlocoB: {
       uniformes: totalAtivos,
       epis: 0,
@@ -253,6 +274,8 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       vaFerias: vaSobreFerias,
       cestaBasica: cestaBasica,
       adicionalAssiduidade: adicionalAssiduidade,
+      adicionalExtraIndenizatorio: adicionalExtraIndenizatorio,
+      adicionalExtraNome: param.adicionalExtraNome || 'Adicional Extra do Contrato',
       descontoVA: -descontoVA,
       descontoVT: -descontoVT,
       exames: examesMedicos,
@@ -264,6 +287,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     },
     custoTotalDireto: custoTotalDireto * (Number(colab.quantidade) || 1)
   };
+
 }
 
 export function calculateEnterprisePrice(proposal: any): any {
