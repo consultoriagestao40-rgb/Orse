@@ -128,6 +128,7 @@ export default function PublishedCCTPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedClausulaId, setExpandedClausulaId] = useState<string | null>(null);
   const [clausulaSearch, setClausulaSearch] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [expandedTrechos, setExpandedTrechos] = useState<Record<string, boolean>>({});
 
@@ -136,6 +137,17 @@ export default function PublishedCCTPage() {
   };
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isChatOpen) {
+        setIsChatOpen(false);
+        setIsChatExpanded(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isChatOpen]);
 
   useEffect(() => {
     async function loadData() {
@@ -375,46 +387,60 @@ export default function PublishedCCTPage() {
               </div>
             </div>
 
-            {/* ABAS */}
-            <div className="flex border-t border-slate-100 mt-6 pt-3 gap-2">
+            {/* ABAS E BOTÃO DO COPILOT */}
+            <div className="flex flex-wrap items-center justify-between border-t border-slate-100 mt-6 pt-3 gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setActiveTab('funcoes')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === 'funcoes'
+                      ? 'bg-[#1B4D3E] text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  👥 Funções & Salários ({cct.cargos?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('beneficios')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === 'beneficios'
+                      ? 'bg-[#1B4D3E] text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  🎁 Benefícios Normativos
+                </button>
+                <button
+                  onClick={() => setActiveTab('clausulas')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === 'clausulas'
+                      ? 'bg-[#1B4D3E] text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  📜 Cláusulas na Íntegra ({clausulasList.length})
+                </button>
+              </div>
+
+              {/* BOTÃO PARA ABRIR O CHAT COPILOT IA */}
               <button
-                onClick={() => setActiveTab('funcoes')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'funcoes'
-                    ? 'bg-[#1B4D3E] text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
+                type="button"
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
+                  isChatOpen
+                    ? 'bg-[#1B4D3E] text-white shadow-md'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-300'
                 }`}
               >
-                👥 Funções & Salários ({cct.cargos?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab('beneficios')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'beneficios'
-                    ? 'bg-[#1B4D3E] text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                🎁 Benefícios Normativos
-              </button>
-              <button
-                onClick={() => setActiveTab('clausulas')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'clausulas'
-                    ? 'bg-[#1B4D3E] text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                📜 Cláusulas na Íntegra ({clausulasList.length})
+                <Bot size={15} />
+                <span>{isChatOpen ? 'Fechar Assistente IA' : '💬 Abrir CCT Copilot IA'}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               </button>
             </div>
           </div>
 
-          {/* GRID: DETALHES TÉCNICOS (ESQUERDA) + CHAT COM IA (DIREITA) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-            {/* COLUNA ESQUERDA: CONTEÚDO DA CCT (6 COLUNAS) */}
-            <div className="lg:col-span-6 space-y-6">
+          {/* CONTEÚDO DA CCT (LARGURA TOTAL 100% PARA TABELA E CARGOS) */}
+          <div className="w-full space-y-6">
 
               {/* ABA 1: FUNÇÕES E PISOS SALARIAIS */}
               {activeTab === 'funcoes' && (
@@ -595,21 +621,25 @@ export default function PublishedCCTPage() {
                 </div>
               )}
 
-            </div>
+          </div>
 
-            {/* BACKDROP QUANDO O CHAT ESTIVER EXPANDIDO */}
-            {isChatExpanded && (
-              <div 
-                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity"
-                onClick={() => setIsChatExpanded(false)}
-              />
-            )}
+          {/* BACKDROP QUANDO O CHAT ESTIVER ABERTO */}
+          {isChatOpen && (
+            <div 
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-40 transition-opacity animate-in fade-in duration-200"
+              onClick={() => {
+                setIsChatOpen(false);
+                setIsChatExpanded(false);
+              }}
+            />
+          )}
 
-            {/* COLUNA DIREITA: CHAT INTELIGENTE COM IA (6 COLUNAS OU MODO TELA CHEIA EXPANDIDO) */}
-            <div className={`bg-white rounded-3xl border border-slate-200 shadow-md flex flex-col transition-all duration-200 overflow-hidden ${
+          {/* GAVETA LATERAL DO CHAT COPILOT IA (SLIDE-OVER OU MODAL EXPANDIDO) */}
+          {isChatOpen && (
+            <div className={`bg-white shadow-2xl flex flex-col transition-all duration-300 overflow-hidden z-50 ${
               isChatExpanded 
-                ? 'fixed inset-4 md:inset-8 z-50 shadow-2xl border-slate-300' 
-                : 'lg:col-span-6 h-[720px] sticky top-6'
+                ? 'fixed inset-4 md:inset-8 rounded-3xl border border-slate-300' 
+                : 'fixed inset-y-0 right-0 w-full sm:w-[560px] md:w-[620px] border-l border-slate-200 animate-in slide-in-from-right duration-300'
             }`}>
               
               {/* CABEÇALHO DO CHAT */}
@@ -648,16 +678,17 @@ export default function PublishedCCTPage() {
                     Online
                   </span>
 
-                  {isChatExpanded && (
-                    <button
-                      type="button"
-                      onClick={() => setIsChatExpanded(false)}
-                      title="Fechar modo expandido"
-                      className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsChatOpen(false);
+                      setIsChatExpanded(false);
+                    }}
+                    title="Fechar assistente IA"
+                    className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer ml-1"
+                  >
+                    <X size={17} />
+                  </button>
                 </div>
               </div>
 
@@ -828,8 +859,29 @@ export default function PublishedCCTPage() {
               </div>
 
             </div>
+          )}
 
-          </div>
+          {/* BOTÃO FLUTUANTE DE ACESSO AO CHAT COPILOT */}
+          {!isChatOpen && (
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-slate-950 via-slate-900 to-[#1B4D3E] hover:from-black hover:to-[#143B2F] text-white px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-3 cursor-pointer border border-emerald-500/40 hover:scale-105 active:scale-95 transition-all group"
+              title="Abrir Assistente CCT Copilot IA"
+            >
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-400/30">
+                <Bot size={18} className="group-hover:rotate-12 transition-transform" />
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full" />
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-black tracking-wide flex items-center gap-1.5">
+                  CCT Copilot IA
+                  <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 bg-emerald-400/20 text-emerald-300 rounded">Online</span>
+                </div>
+                <p className="text-[10px] text-slate-300">Tire dúvidas sobre esta norma</p>
+              </div>
+            </button>
+          )}
 
         </div>
       </main>

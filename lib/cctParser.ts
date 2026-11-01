@@ -562,29 +562,42 @@ export async function askCctAI(
   }
 
   // 4. DÚVIDA DE SALÁRIO OU PISO DE UMA FUNÇÃO ESPECÍFICA
-  const isSalaryQuery = /sal[aá]rio|piso|remunera|ganha|quanto\s+(?:ganha|recebe)|tabela\s*salarial/i.test(qNorm);
+  const isSalaryQuery = /sal[aá]rio|piso|remunera|ganha|quanto\s+(?:ganha|recebe)|tabela\s*salarial|hora|horas/i.test(qNorm);
+
+  function singularize(word: string): string {
+    const w = word.toLowerCase().trim();
+    if (w.endsWith('ores')) return w.slice(0, -2); // supervisores -> supervisor
+    if (w.endsWith('ares')) return w.slice(0, -2); // auxiliares -> auxiliar
+    if (w.endsWith('eres')) return w.slice(0, -2); // líderes -> líder
+    if (w.endsWith('ões')) return w.slice(0, -3) + 'ao';
+    if (w.endsWith('oes')) return w.slice(0, -3) + 'ao';
+    if (w.endsWith('ais')) return w.slice(0, -3) + 'al'; // oficiais -> oficial
+    if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+    return w;
+  }
 
   let bestCargo: any = null;
   let maxCargoScore = 0;
+  const qWords = qNorm.split(/[\s,.;:!?\/]+/).filter(w => w.length > 2);
 
   for (const cargo of cargosList) {
     const cNorm = normalizeStr(cargo.nome);
     // Divide em palavras significativas do cargo (ignorando artigos e preposições)
-    const words = cNorm.split(/\s+/).filter(w => w.length > 3 && !['para', 'com', 'dos', 'das', 'geral', 'gerais'].includes(w));
+    const words = cNorm.split(/[\s\/]+/).filter(w => w.length > 2 && !['para', 'com', 'dos', 'das', 'geral', 'gerais', 'de', 'do', 'da', 'e'].includes(w));
     let matchCount = 0;
 
     for (const w of words) {
-      // Exige limite de palavra estrito (evita que "transporte" dê match em "porteiro")
-      const wClean = w.replace(/s$/, ''); // Remove plural simples
-      const regexExact = new RegExp(`\\b${wClean}[a-z]*\\b`, 'i');
-      const foundMatch = qNorm.match(regexExact);
-
-      if (foundMatch) {
+      const wClean = singularize(w);
+      for (const qWord of qWords) {
         // Blindagem expressa: a palavra "transporte" jamais pode pontuar para porteiro
-        if (foundMatch[0].toLowerCase().includes('transporte')) {
-          continue;
+        if (qWord === 'transporte' || qWord === 'vt') continue;
+        const qClean = singularize(qWord);
+
+        if (qClean === wClean) {
+          matchCount += 10;
+        } else if (wClean.length >= 5 && (qClean.startsWith(wClean) || wClean.startsWith(qClean))) {
+          matchCount += 6;
         }
-        matchCount += 3;
       }
     }
 
@@ -594,7 +607,7 @@ export async function askCctAI(
     }
   }
 
-  if (bestCargo && (isSalaryQuery || maxCargoScore >= 3)) {
+  if (bestCargo && (isSalaryQuery || maxCargoScore >= 6)) {
     const cl3 = clausulas.find(c => /piso|sal[aá]rio/i.test(c.titulo)) || {
       numero: 'Terceira',
       titulo: 'Pisos Salariais',
@@ -615,27 +628,38 @@ export async function askCctAI(
         ? (salarioMinimo * (bestCargo.insalubridadePercent / 100))
         : 0;
       const insalubridadeHora = insalubridadeMensal / divisor;
+      const asksForInsalubridade = /insalubr|adicional|remunera[çc][ãa]o\s*total/i.test(qNorm);
 
       let resp = `Cálculo de **Salário-Hora e Proporcional** para **${bestCargo.nome}** (Cláusula 3ª - Parágrafo 3º):\n\n` +
                  `• **Piso Mensal Integral (220h):** **${formatBRL(bestCargo.pisoSalarial)}**\n` +
                  `• **Divisor Convencional:** 220 horas/mês (jornada padrão de 44h semanais)\n` +
                  `• **Salário-Hora Base:** **${formatBRL(valorHoraBase)} / hora** (R$ ${valorHoraBase.toFixed(4).replace('.', ',')})\n`;
 
-      if (bestCargo.insalubridadePercent > 0) {
-        resp += `• **Insalubridade-Hora (${bestCargo.insalubridadePercent}% s/ SM R$ ${salarioMinimo.toFixed(2).replace('.', ',')}):** **${formatBRL(insalubridadeHora)} / hora** (R$ ${insalubridadeHora.toFixed(4).replace('.', ',')})\n`;
-      }
-
       if (horasSolicitadas) {
         const salarioProporcional = valorHoraBase * horasSolicitadas;
-        const insalubridadeProporcional = insalubridadeHora * horasSolicitadas;
-        const totalProporcional = salarioProporcional + insalubridadeProporcional;
 
-        resp += `\n📊 **Simulação para ${horasSolicitadas} horas mensais:**\n` +
-                `• **Salário Base Proporcional (${horasSolicitadas}h x ${formatBRL(valorHoraBase)}):** **${formatBRL(salarioProporcional)}**\n`;
-        if (bestCargo.insalubridadePercent > 0) {
-          resp += `• **Insalubridade Proporcional (${horasSolicitadas}h x ${formatBRL(insalubridadeHora)}):** **${formatBRL(insalubridadeProporcional)}**\n`;
+        resp += `\n📊 **Salário Base Proporcional para ${horasSolicitadas} horas mensais:**\n` +
+                `• **Salário Base (${horasSolicitadas}h x ${formatBRL(valorHoraBase)}):** **${formatBRL(salarioProporcional)} / mês**\n`;
+
+        if (bestCargo.gratificacoes > 0) {
+          const gratificacaoHora = bestCargo.gratificacoes / divisor;
+          const gratificacaoProporcional = gratificacaoHora * horasSolicitadas;
+          resp += `• **Gratificação da Função (${horasSolicitadas}h):** ${formatBRL(gratificacaoProporcional)} / mês\n`;
         }
-        resp += `• **Remuneração Total Prevista:** **${formatBRL(totalProporcional)} / mês**\n`;
+
+        if (asksForInsalubridade && bestCargo.insalubridadePercent > 0) {
+          const insalubridadeProporcional = insalubridadeHora * horasSolicitadas;
+          const totalComInsalubridade = salarioProporcional + insalubridadeProporcional;
+          resp += `• **Insalubridade Proporcional (${horasSolicitadas}h x ${formatBRL(insalubridadeHora)}):** ${formatBRL(insalubridadeProporcional)}\n` +
+                  `• **Remuneração Total (Salário + Insalubridade):** **${formatBRL(totalComInsalubridade)} / mês**\n`;
+        } else if (bestCargo.insalubridadePercent > 0) {
+          const insalubridadeProporcional = insalubridadeHora * horasSolicitadas;
+          resp += `\n💡 *Observação: Caso o posto específico envolva adicional de insalubridade (${bestCargo.insalubridadePercent}%), incide o adicional proporcional de ${formatBRL(insalubridadeProporcional)} para as ${horasSolicitadas}h.*`;
+        }
+      } else {
+        if (asksForInsalubridade && bestCargo.insalubridadePercent > 0) {
+          resp += `• **Insalubridade-Hora (${bestCargo.insalubridadePercent}% s/ SM R$ ${salarioMinimo.toFixed(2).replace('.', ',')}):** ${formatBRL(insalubridadeHora)} / hora\n`;
+        }
       }
 
       resp += `\n📌 *Base Legal: O Parágrafo Terceiro da Cláusula 3ª autoriza a contratação para jornada inferior a 44h semanais com pagamento proporcional à carga horária cumprida, observado o divisor de 220 horas.*`;
