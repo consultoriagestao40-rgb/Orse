@@ -418,7 +418,16 @@ const Sidebar = () => {
               tenantFeatures: (freshUser as any).tenant?.features || undefined,
               tenant: (freshUser as any).tenant || undefined,
               primaryColor: (freshUser as any).tenant?.primaryColor || undefined,
-              iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+              iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase(),
+              acessoWhatsTipo: (freshUser as any).acessoWhatsTipo,
+              acessoLeadsTipo: (freshUser as any).acessoLeadsTipo,
+              acessoContratos: (freshUser as any).acessoContratos,
+              acessoPic: (freshUser as any).acessoPic,
+              acessoTarefasTipo: (freshUser as any).acessoTarefasTipo,
+              acessoCrm: (freshUser as any).acessoCrm,
+              acessoProspeccao: (freshUser as any).acessoProspeccao,
+              acessoCct: (freshUser as any).acessoCct,
+              acessoPropostas: (freshUser as any).acessoPropostas,
             };
             setUser(userObj);
             
@@ -1330,7 +1339,7 @@ const Sidebar = () => {
     { icon: Presentation, label: 'Proposta Comercial', href: '/propostas-comerciais', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ClipboardList, label: 'Atas de Reunião', href: '/atas', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ClipboardCheck, label: 'PIC Implantação', href: '/pic', roles: ['ADMIN', 'MANAGER', 'USER'] },
-    { icon: FileText, label: 'Contratos', href: '/contratos', roles: ['ADMIN', 'MANAGER'] },
+    { icon: FileText, label: 'Contratos', href: '/contratos', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Briefcase, label: 'Regras (CCT)', href: '/admin/ccts', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Wrench, label: 'Equipes Técnicas (SPOT)', href: '/admin/equipes-tecnicas', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Users, label: 'Clientes', href: '/clientes', roles: ['ADMIN', 'MANAGER', 'USER'] },
@@ -1417,7 +1426,17 @@ const Sidebar = () => {
         }
       }
 
-      // Ativos e Entregas: mantidos exclusivamente para quem tem contratado (ex: Slimpe)
+      // Permissões granulares de perfil do usuário (RBAC)
+      if (user?.role !== 'ADMIN') {
+        const uAny = user as any;
+        if (item.href === '/contratos' && uAny?.acessoContratos === false) return false;
+        if (item.href === '/pic' && uAny?.acessoPic === false) return false;
+        if (item.href === '/prospeccao' && uAny?.acessoProspeccao === false) return false;
+        if ((item.href === '/leads' || item.href === '/pipeline') && uAny?.acessoCrm === false) return false;
+        if (item.href === '/admin/ccts' && uAny?.acessoCct === false) return false;
+        if (item.href === '/propostas-comerciais' && uAny?.acessoPropostas === false) return false;
+      }
+      
       if (item.href.startsWith('/ativos') && !hasAtivosModule) {
         return false;
       }

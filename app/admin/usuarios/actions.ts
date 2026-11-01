@@ -72,6 +72,16 @@ export async function createUsuario(data: any) {
         tenantId: user?.tenantId || null,
         avatarUrl: data.avatarUrl || null,
         meta: data.meta !== undefined ? parseFloat(data.meta) || 0 : 0,
+        acessoWhatsTipo: data.acessoWhatsTipo || 'PROPRIOS',
+        acessoLeadsTipo: data.acessoLeadsTipo || 'ATRIBUIDOS',
+        acessoContratos: data.acessoContratos !== undefined ? Boolean(data.acessoContratos) : true,
+        acessoPic: data.acessoPic !== undefined ? Boolean(data.acessoPic) : true,
+        acessoTarefasTipo: data.acessoTarefasTipo || 'ENVOLVIDO',
+        acessoCrm: data.acessoCrm !== undefined ? Boolean(data.acessoCrm) : true,
+        acessoProspeccao: data.acessoProspeccao !== undefined ? Boolean(data.acessoProspeccao) : true,
+        acessoCct: data.acessoCct !== undefined ? Boolean(data.acessoCct) : true,
+        acessoPropostas: data.acessoPropostas !== undefined ? Boolean(data.acessoPropostas) : true,
+        perfilAcessoNome: data.perfilAcessoNome || 'Personalizado',
       },
     });
     revalidatePath('/admin/usuarios');
@@ -91,7 +101,6 @@ export async function deleteUsuario(id: string) {
   }
 }
 
-
 export async function updateUsuario(id: string, data: any) {
   try {
     const user = await prisma.user.update({
@@ -106,6 +115,16 @@ export async function updateUsuario(id: string, data: any) {
         managerId: data.managerId || null,
         avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : undefined,
         meta: data.meta !== undefined ? parseFloat(data.meta) || 0 : undefined,
+        acessoWhatsTipo: data.acessoWhatsTipo !== undefined ? data.acessoWhatsTipo : undefined,
+        acessoLeadsTipo: data.acessoLeadsTipo !== undefined ? data.acessoLeadsTipo : undefined,
+        acessoContratos: data.acessoContratos !== undefined ? Boolean(data.acessoContratos) : undefined,
+        acessoPic: data.acessoPic !== undefined ? Boolean(data.acessoPic) : undefined,
+        acessoTarefasTipo: data.acessoTarefasTipo !== undefined ? data.acessoTarefasTipo : undefined,
+        acessoCrm: data.acessoCrm !== undefined ? Boolean(data.acessoCrm) : undefined,
+        acessoProspeccao: data.acessoProspeccao !== undefined ? Boolean(data.acessoProspeccao) : undefined,
+        acessoCct: data.acessoCct !== undefined ? Boolean(data.acessoCct) : undefined,
+        acessoPropostas: data.acessoPropostas !== undefined ? Boolean(data.acessoPropostas) : undefined,
+        perfilAcessoNome: data.perfilAcessoNome !== undefined ? data.perfilAcessoNome : undefined,
       },
     });
     revalidatePath('/admin/usuarios');

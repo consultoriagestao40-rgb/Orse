@@ -15,20 +15,32 @@ import {
   Search, 
   Pencil, 
   Phone, 
-  Briefcase 
+  Briefcase,
+  MessageSquare,
+  Target,
+  CheckSquare,
+  FileText,
+  Sparkles,
+  GitBranch,
+  Layers,
+  Check,
+  Eye,
+  AlertCircle
 } from 'lucide-react';
 import { getUsuarios, createUsuario, deleteUsuario, updateUsuario, getTenantLimit } from './actions';
+import { PERFIS_PRESETS } from './permissoesConstants';
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [modalTab, setModalTab] = useState<'hierarquia' | 'permissoes'>('hierarquia');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [tenantLimit, setTenantLimit] = useState<number | null>(null);
   const [plano, setPlano] = useState<string>('STARTER');
 
-  // Estados e helpers para Alertas e Confirmações Premium
+  // Estados e helpers para Alertas e Confirmações
   const [customAlert, setCustomAlert] = useState<{
     open: boolean;
     title: string;
@@ -70,7 +82,17 @@ export default function UsuariosPage() {
     celular: '',
     managerId: '',
     avatarUrl: '',
-    meta: ''
+    meta: '',
+    perfilAcessoNome: 'Vendedor / Closer',
+    acessoWhatsTipo: 'PROPRIOS' as 'TODOS' | 'PROPRIOS' | 'NENHUM',
+    acessoLeadsTipo: 'ATRIBUIDOS' as 'TODOS' | 'ATRIBUIDOS',
+    acessoContratos: false,
+    acessoPic: false,
+    acessoTarefasTipo: 'ENVOLVIDO' as 'TODAS' | 'ENVOLVIDO',
+    acessoCrm: true,
+    acessoProspeccao: true,
+    acessoCct: true,
+    acessoPropostas: true,
   });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,34 +172,76 @@ export default function UsuariosPage() {
       return;
     }
     setEditingUserId(null);
+    setModalTab('hierarquia');
+    // Aplica o preset padrão de Vendedor
+    const defaultPreset = PERFIS_PRESETS[0];
     setFormData({
       nome: '',
       email: '',
       password: '',
-      role: 'USER',
+      role: defaultPreset.role,
       cargo: '',
       celular: '',
       managerId: '',
       avatarUrl: '',
-      meta: ''
+      meta: '',
+      perfilAcessoNome: defaultPreset.nome,
+      acessoWhatsTipo: defaultPreset.acessoWhatsTipo,
+      acessoLeadsTipo: defaultPreset.acessoLeadsTipo,
+      acessoContratos: defaultPreset.acessoContratos,
+      acessoPic: defaultPreset.acessoPic,
+      acessoTarefasTipo: defaultPreset.acessoTarefasTipo,
+      acessoCrm: defaultPreset.acessoCrm,
+      acessoProspeccao: defaultPreset.acessoProspeccao,
+      acessoCct: defaultPreset.acessoCct,
+      acessoPropostas: defaultPreset.acessoPropostas,
     });
     setShowModal(true);
   }
 
   function handleEditClick(user: any) {
     setEditingUserId(user.id);
+    setModalTab('hierarquia');
     setFormData({
       nome: user.nome || '',
       email: user.email || '',
-      password: '', // Blank by default, only updated if filled
+      password: '',
       role: user.role || 'USER',
       cargo: user.cargo || '',
       celular: user.celular || '',
       managerId: user.managerId || '',
       avatarUrl: user.avatarUrl || '',
-      meta: user.meta !== undefined && user.meta !== null ? String(user.meta) : ''
+      meta: user.meta !== undefined && user.meta !== null ? String(user.meta) : '',
+      perfilAcessoNome: user.perfilAcessoNome || (user.role === 'ADMIN' ? 'Administrador Total' : user.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor / Closer'),
+      acessoWhatsTipo: user.acessoWhatsTipo || (user.role === 'ADMIN' ? 'TODOS' : 'PROPRIOS'),
+      acessoLeadsTipo: user.acessoLeadsTipo || (user.role === 'ADMIN' ? 'TODOS' : 'ATRIBUIDOS'),
+      acessoContratos: user.acessoContratos !== undefined ? Boolean(user.acessoContratos) : user.role === 'ADMIN' || user.role === 'MANAGER',
+      acessoPic: user.acessoPic !== undefined ? Boolean(user.acessoPic) : user.role === 'ADMIN' || user.role === 'MANAGER',
+      acessoTarefasTipo: user.acessoTarefasTipo || (user.role === 'ADMIN' ? 'TODAS' : 'ENVOLVIDO'),
+      acessoCrm: user.acessoCrm !== undefined ? Boolean(user.acessoCrm) : true,
+      acessoProspeccao: user.acessoProspeccao !== undefined ? Boolean(user.acessoProspeccao) : true,
+      acessoCct: user.acessoCct !== undefined ? Boolean(user.acessoCct) : true,
+      acessoPropostas: user.acessoPropostas !== undefined ? Boolean(user.acessoPropostas) : true,
     });
     setShowModal(true);
+  }
+
+  // Aplica um perfil modelo pré-configurado
+  function applyPreset(preset: typeof PERFIS_PRESETS[0]) {
+    setFormData(prev => ({
+      ...prev,
+      role: preset.role,
+      perfilAcessoNome: preset.nome,
+      acessoWhatsTipo: preset.acessoWhatsTipo,
+      acessoLeadsTipo: preset.acessoLeadsTipo,
+      acessoContratos: preset.acessoContratos,
+      acessoPic: preset.acessoPic,
+      acessoTarefasTipo: preset.acessoTarefasTipo,
+      acessoCrm: preset.acessoCrm,
+      acessoProspeccao: preset.acessoProspeccao,
+      acessoCct: preset.acessoCct,
+      acessoPropostas: preset.acessoPropostas,
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -186,7 +250,6 @@ export default function UsuariosPage() {
     
     let res;
     if (editingUserId) {
-      // In edit mode, if password is empty, omit it so it won't be updated
       const { password, ...submitData } = formData;
       const dataToSubmit = formData.password ? formData : submitData;
       res = await updateUsuario(editingUserId, dataToSubmit);
@@ -199,17 +262,6 @@ export default function UsuariosPage() {
     if (res.success) {
       setShowModal(false);
       setEditingUserId(null);
-      setFormData({ 
-        nome: '', 
-        email: '', 
-        password: '', 
-        role: 'USER', 
-        cargo: '', 
-        celular: '', 
-        managerId: '',
-        avatarUrl: '',
-        meta: ''
-      });
       loadUsuarios();
     } else {
       showAlert('Erro de Cadastro', res.error, 'error');
@@ -243,404 +295,786 @@ export default function UsuariosPage() {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       
-      <main className="flex-1 p-10 overflow-y-auto">
-        <header className="flex justify-between items-end mb-12">
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-10">
           <div>
             <div className="flex items-center gap-2 text-[#1B4D3E] font-black uppercase tracking-widest text-[10px] mb-2">
-              <Shield size={12} />
-              Administração de Sistema
+              <Shield size={13} />
+              Gestão de Acessos & Hierarquia
             </div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
-              Usuários e <span className="text-[#10B981]">Permissões</span>
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight uppercase">
+              Colaboradores & <span className="text-[#10B981]">Permissões</span>
             </h1>
-            <p className="text-slate-500 mt-2 font-medium">
-              Gerencie o acesso, cargo e contato da sua equipe comercial e administrativa.
+            <p className="text-slate-500 mt-1.5 font-medium text-sm">
+              Defina a hierarquia de liderança e o nível granular de acesso de cada membro (WhatsApp, Leads atribuídos, Contratos, PIC e Tarefas).
             </p>
           </div>
 
           <button 
             onClick={handleAddNewClick}
-            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/10 transition-all active:scale-[0.98] flex items-center gap-2 bell-header-spacing"
+            className="bg-gradient-to-r from-[#1B4D3E] to-[#12352B] hover:brightness-110 text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-950/10 transition-all active:scale-95 flex items-center gap-2"
           >
             <UserPlus size={16} />
-            Novo Usuário
+            Novo Colaborador
           </button>
         </header>
 
-        {/* Busca e Filtros */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8 flex items-center gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        {/* Busca e Resumo */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="text" 
-              placeholder="Buscar por nome, e-mail ou cargo..."
-              className="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-[#1B4D3E]/5 font-medium text-slate-600"
+              placeholder="Buscar por colaborador, e-mail ou cargo..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-[#1B4D3E]/10 focus:border-[#1B4D3E] text-xs font-medium text-slate-700"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
-            <div className="bg-slate-50 px-6 py-4 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100">
-              Total: {usuarios.length}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="bg-slate-50 px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">
+              Colaboradores: {usuarios.length}
             </div>
+            {tenantLimit !== null && (
+              <div className="bg-emerald-50 text-emerald-800 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-200">
+                Plano: {plano} (Máx: {tenantLimit})
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Lista de Usuários */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
-          <table className="w-full text-left">
+        {/* Lista de Usuários com Níveis de Acesso */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-x-auto">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuário</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargo e Contato</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Perfil / Role</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestor Direto</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+              <tr className="bg-[#1B4D3E] text-white uppercase text-[10px] font-black tracking-widest">
+                <th className="px-6 py-4">Colaborador</th>
+                <th className="px-6 py-4">Cargo & Hierarquia</th>
+                <th className="px-6 py-4 text-center">Perfil de Acesso</th>
+                <th className="px-6 py-4">Níveis de Visibilidade & Módulos</th>
+                <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center">
-                    <div className="inline-block w-8 h-8 border-4 border-[#10B981]/20 border-t-[#10B981] rounded-full animate-spin"></div>
+                  <td colSpan={5} className="px-6 py-16 text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-emerald-200 border-t-[#1B4D3E] rounded-full animate-spin"></div>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center text-slate-400 font-medium italic">
-                    Nenhum usuário encontrado.
+                  <td colSpan={5} className="px-6 py-16 text-center text-slate-400 font-medium italic text-xs">
+                    Nenhum colaborador encontrado.
                   </td>
                 </tr>
-              ) : filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      {u.avatarUrl ? (
-                        <img 
-                          src={u.avatarUrl} 
-                          alt={u.nome} 
-                          className="w-12 h-12 rounded-2xl object-cover border border-slate-100 shadow-sm shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-[#1B4D3E] font-black text-sm group-hover:bg-[#1B4D3E] group-hover:text-white transition-all shrink-0">
-                          {u.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2)}
+              ) : filteredUsers.map((u) => {
+                const whatsTipo = u.acessoWhatsTipo || (u.role === 'ADMIN' ? 'TODOS' : 'PROPRIOS');
+                const leadsTipo = u.acessoLeadsTipo || (u.role === 'ADMIN' ? 'TODOS' : 'ATRIBUIDOS');
+                const tarefasTipo = u.acessoTarefasTipo || (u.role === 'ADMIN' ? 'TODAS' : 'ENVOLVIDO');
+
+                return (
+                  <tr key={u.id} className="hover:bg-slate-50/70 transition-colors group">
+                    {/* Colaborador */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3.5">
+                        {u.avatarUrl ? (
+                          <img 
+                            src={u.avatarUrl} 
+                            alt={u.nome} 
+                            className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+                          />
+                        ) : (
+                          <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center text-[#1B4D3E] font-black text-xs shrink-0 border border-slate-200">
+                            {u.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm uppercase tracking-tight">{u.nome}</p>
+                          <p className="text-xs text-slate-400 font-medium">{u.email}</p>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-black text-slate-900 text-sm uppercase tracking-tight">{u.nome}</p>
-                        <p className="text-xs text-slate-500 font-medium">{u.email}</p>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="space-y-1">
-                      {u.cargo ? (
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                    </td>
+
+                    {/* Cargo & Hierarquia */}
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                           <Briefcase size={12} className="text-[#10B981]" />
-                          <span>{u.cargo}</span>
+                          <span>{u.cargo || 'Cargo não definido'}</span>
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">Cargo não informado</span>
-                      )}
-                      
-                      {u.celular ? (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                          <Phone size={12} className="text-slate-400" />
-                          <span>{u.celular}</span>
+                        
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                          <GitBranch size={11} className="text-slate-400" />
+                          <span>
+                            {u.manager ? `Reporta a: ${u.manager.nome}` : 'Líder / Direto'}
+                          </span>
                         </div>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                      u.role === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
-                      u.role === 'MANAGER' ? 'bg-sky-50 text-sky-700 border border-sky-100' :
-                      u.role === 'LOGISTICA' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
-                      'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                    }`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-xs font-bold text-slate-600">
-                      {u.manager?.nome || '--'}
-                    </p>
-                    {u.meta > 0 && (
-                      <p className="text-[10px] font-black text-emerald-700 mt-1 uppercase">
-                        Meta: {u.meta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex justify-end gap-1">
-                      <button 
-                        onClick={() => handleEditClick(u)}
-                        className="p-3 text-amber-500 hover:text-amber-600 hover:bg-[#1B4D3E]/5 rounded-xl transition-all"
-                        title="Editar Usuário"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(u.id)}
-                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                        title="Excluir Usuário"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+
+                    {/* Perfil de Acesso */}
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        u.role === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                        u.role === 'MANAGER' ? 'bg-sky-50 text-sky-700 border border-sky-200' :
+                        'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        <Shield size={10} />
+                        {u.perfilAcessoNome || (u.role === 'ADMIN' ? 'Admin' : u.role === 'MANAGER' ? 'Gestor' : 'Vendedor')}
+                      </span>
+                    </td>
+
+                    {/* Níveis de Visibilidade e Módulos */}
+                    <td className="px-6 py-4">
+                      <div className="space-y-1.5">
+                        {/* Linha de Visibilidade Granular */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                          <span className={`px-2 py-0.5 rounded font-bold border ${
+                            whatsTipo === 'TODOS' 
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                              : whatsTipo === 'PROPRIOS'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}>
+                            💬 Whats: {whatsTipo === 'TODOS' ? 'Todas' : whatsTipo === 'PROPRIOS' ? 'Próprias' : 'Bloqueado'}
+                          </span>
+
+                          <span className={`px-2 py-0.5 rounded font-bold border ${
+                            leadsTipo === 'TODOS'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              : 'bg-amber-50 text-amber-800 border-amber-200'
+                          }`}>
+                            🎯 Leads: {leadsTipo === 'TODOS' ? 'Todos' : 'Atribuídos'}
+                          </span>
+
+                          <span className={`px-2 py-0.5 rounded font-bold border ${
+                            tarefasTipo === 'TODAS'
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                              : 'bg-slate-100 text-slate-700 border-slate-200'
+                          }`}>
+                            ✓ Tarefas: {tarefasTipo === 'TODAS' ? 'Todas' : 'Onde Envolvido'}
+                          </span>
+                        </div>
+
+                        {/* Módulos com Acesso */}
+                        <div className="flex flex-wrap items-center gap-1 text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                          <span className="text-slate-400">Módulos:</span>
+                          {u.acessoCrm !== false && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">CRM</span>}
+                          {u.acessoProspeccao !== false && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">Prosp</span>}
+                          {u.acessoContratos ? (
+                            <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Contratos</span>
+                          ) : (
+                            <span className="text-slate-300 line-through">Contratos</span>
+                          )}
+                          {u.acessoPic ? (
+                            <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">PIC</span>
+                          ) : (
+                            <span className="text-slate-300 line-through">PIC</span>
+                          )}
+                          {u.acessoCct !== false && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">CCT</span>}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Ações */}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button 
+                          onClick={() => handleEditClick(u)}
+                          className="p-2 text-slate-500 hover:text-[#1B4D3E] hover:bg-emerald-50 rounded-lg transition-all"
+                          title="Editar Perfil e Permissões"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(u.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          title="Excluir Colaborador"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Modal de Criação / Edição */}
+        {/* Modal de Criação / Edição com Abas e Controle Fino */}
         {showModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-            <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col">
-              <div className="bg-[#1B4D3E] p-8 text-white relative shrink-0">
-                <h3 className="text-2xl font-black tracking-tighter uppercase">
-                  {editingUserId ? 'Editar' : 'Novo'} <span className="text-[#10B981]">Colaborador</span>
-                </h3>
-                <p className="text-emerald-100/60 text-sm mt-1">
-                  {editingUserId ? 'Atualize as informações, cargo e permissões.' : 'Configure o perfil e acesso do novo usuário.'}
-                </p>
-                <button onClick={() => setShowModal(false)} className="absolute top-8 right-8 text-white/50 hover:text-white">
-                  <Plus size={24} className="rotate-45" />
-                </button>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in duration-200">
+              
+              {/* Header do Modal */}
+              <div className="bg-[#1B4D3E] p-6 text-white relative shrink-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="bg-emerald-400/20 text-emerald-200 border border-emerald-300/30 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 mb-2">
+                      <Shield size={11} /> Controle de Acessos & Hierarquia
+                    </span>
+                    <h3 className="text-xl font-black tracking-tight uppercase">
+                      {editingUserId ? 'Editar' : 'Novo'} Colaborador
+                    </h3>
+                    <p className="text-emerald-100/70 text-xs mt-0.5">
+                      Configure dados pessoais, subordinação hierárquica e permissões granulares por recurso.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setShowModal(false)} 
+                    className="text-white/60 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <Plus size={20} className="rotate-45" />
+                  </button>
+                </div>
+
+                {/* Abas do Modal */}
+                <div className="flex gap-2 mt-5 border-b border-emerald-700/50 -mb-6 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalTab('hierarquia')}
+                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      modalTab === 'hierarquia'
+                        ? 'bg-white text-[#1B4D3E] shadow-sm'
+                        : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40'
+                    }`}
+                  >
+                    <Users size={14} /> 1. Dados & Hierarquia
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalTab('permissoes')}
+                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      modalTab === 'permissoes'
+                        ? 'bg-white text-[#1B4D3E] shadow-sm'
+                        : 'text-emerald-200 hover:text-white hover:bg-emerald-800/40'
+                    }`}
+                  >
+                    <Lock size={14} /> 2. Níveis de Acesso & Módulos
+                  </button>
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-10 space-y-6 overflow-y-auto flex-1">
-                {/* Upload de Avatar Premium */}
-                <div className="flex flex-col items-center justify-center pb-4">
-                  <div className="relative group cursor-pointer">
-                    <input 
-                      type="file" 
-                      id="avatar-upload" 
-                      accept="image/png, image/jpeg" 
-                      className="hidden" 
-                      onChange={handleAvatarChange}
-                    />
-                    <label htmlFor="avatar-upload" className="cursor-pointer block relative">
-                      {formData.avatarUrl ? (
-                        <img 
-                          src={formData.avatarUrl} 
-                          alt="Preview Avatar" 
-                          className="w-24 h-24 rounded-full object-cover border-2 border-[#1B4D3E] shadow-lg group-hover:opacity-85 transition-all"
+              {/* Formulário com Abas */}
+              <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6 overflow-y-auto flex-1">
+                
+                {modalTab === 'hierarquia' ? (
+                  <div className="space-y-6">
+                    {/* Foto / Avatar */}
+                    <div className="flex items-center gap-5 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="relative group shrink-0">
+                        <input 
+                          type="file" 
+                          id="avatar-upload" 
+                          accept="image/png, image/jpeg" 
+                          className="hidden" 
+                          onChange={handleAvatarChange}
                         />
-                      ) : (
-                        <div className="w-24 h-24 rounded-full bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:bg-slate-200 transition-all">
-                          <Plus size={20} />
-                          <span className="text-[9px] font-black uppercase tracking-wider mt-1">Foto</span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-[#1B4D3E]/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Plus size={16} />
+                        <label htmlFor="avatar-upload" className="cursor-pointer block relative">
+                          {formData.avatarUrl ? (
+                            <img 
+                              src={formData.avatarUrl} 
+                              alt="Preview Avatar" 
+                              className="w-16 h-16 rounded-xl object-cover border-2 border-[#1B4D3E] shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-slate-200 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-300 transition-colors">
+                              <Plus size={18} />
+                              <span className="text-[8px] font-black uppercase mt-0.5">Foto</span>
+                            </div>
+                          )}
+                        </label>
                       </div>
-                    </label>
-                  </div>
-                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">Clique para alterar a foto</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                    <input 
-                      type="text" 
-                      required
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail</label>
-                    <input 
-                      type="email" 
-                      required
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cargo</label>
-                    <input 
-                      type="text" 
-                      placeholder="Ex: Consultor Sênior"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
-                      value={formData.cargo}
-                      onChange={(e) => setFormData({...formData, cargo: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Celular / WhatsApp</label>
-                    <input 
-                      type="text" 
-                      placeholder="Ex: (11) 99999-9999"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
-                      value={formData.celular}
-                      onChange={(e) => setFormData({...formData, celular: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                        Senha de Acesso
-                      </label>
-                      {editingUserId && (
-                        <span className="text-[9px] text-[#10B981] font-bold uppercase tracking-wider">
-                          Opcional na edição
-                        </span>
-                      )}
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">Foto do Colaborador</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Formatos JPG ou PNG até 5MB. Aparecerá no chat e em tarefas.</p>
+                      </div>
                     </div>
-                    <input 
-                      type="password" 
-                      required={!editingUserId}
-                      placeholder={editingUserId ? "Deixe em branco para manter" : "Senha provisória"}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
-                      value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    />
+
+                    {/* Nome e E-mail */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Nome Completo *</label>
+                        <input 
+                          type="text" 
+                          required
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                          value={formData.nome}
+                          onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">E-mail de Acesso *</label>
+                        <input 
+                          type="email" 
+                          required
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Cargo e Gestor Direto (Hierarquia) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                          Cargo / Função *
+                        </label>
+                        <input 
+                          type="text" 
+                          placeholder="Ex: Executivo de Contas, SDR, Supervisor"
+                          required
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                          value={formData.cargo}
+                          onChange={(e) => setFormData({...formData, cargo: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                          Gestor Direto (Posição na Hierarquia)
+                        </label>
+                        <select 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-bold text-slate-700"
+                          value={formData.managerId}
+                          onChange={(e) => setFormData({...formData, managerId: e.target.value})}
+                        >
+                          <option value="">Nenhum (Liderança direta / Diretor)</option>
+                          {usuarios
+                            .filter(u => u.id !== editingUserId)
+                            .map(u => (
+                              <option key={u.id} value={u.id}>
+                                {u.nome} ({u.cargo || u.role})
+                              </option>
+                            ))
+                          }
+                        </select>
+                        <p className="text-[10px] text-slate-400">
+                          Define a quem este colaborador se reporta e quem supervisiona seus leads e atividades.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Celular, Senha e Meta */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Celular / WhatsApp</label>
+                        <input 
+                          type="text" 
+                          placeholder="(11) 99999-9999"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                          value={formData.celular}
+                          onChange={(e) => setFormData({...formData, celular: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                          {editingUserId ? 'Alterar Senha' : 'Senha Inicial *'}
+                        </label>
+                        <input 
+                          type="password" 
+                          required={!editingUserId}
+                          placeholder={editingUserId ? "Deixe vazio para manter" : "Mínimo 6 dígitos"}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                          value={formData.password}
+                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Meta Mensal (R$)</label>
+                        <input 
+                          type="number"
+                          step="any"
+                          placeholder="50000"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                          value={formData.meta}
+                          onChange={(e) => setFormData({...formData, meta: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-black text-emerald-900 uppercase">Avançar para Permissões</p>
+                        <p className="text-[11px] text-emerald-700">Configure agora o que este usuário pode visualizar e operar no sistema.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setModalTab('permissoes')}
+                        className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors"
+                      >
+                        Configurar Acessos <ChevronRight size={14} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Perfil de Acesso</label>
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-bold text-slate-700 appearance-none"
-                      value={formData.role}
-                      onChange={(e) => setFormData({...formData, role: e.target.value})}
+                ) : (
+                  <div className="space-y-6">
+                    {/* Presets de Perfis de Acesso */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles size={14} className="text-[#10B981]" /> Selecione um Perfil Modelo (Preset)
+                        </label>
+                        <span className="text-[11px] font-bold text-slate-400">
+                          Perfil Atual: <strong className="text-[#1B4D3E]">{formData.perfilAcessoNome}</strong>
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                        {PERFIS_PRESETS.map((preset) => {
+                          const isSelected = formData.perfilAcessoNome === preset.nome;
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => applyPreset(preset)}
+                              className={`p-3 rounded-xl border text-left transition-all ${
+                                isSelected 
+                                  ? 'border-[#1B4D3E] bg-emerald-50/60 shadow-sm ring-2 ring-[#1B4D3E]/20' 
+                                  : 'border-slate-200 hover:border-slate-300 bg-white'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold text-xs text-slate-900">{preset.nome}</span>
+                                {isSelected && <Check size={14} className="text-[#1B4D3E]" />}
+                              </div>
+                              <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed">
+                                {preset.descricao}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-5 space-y-5">
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <Layers size={14} className="text-[#1B4D3E]" /> Níveis Granulares de Visibilidade
+                      </h4>
+
+                      {/* 1. WhatsApp / Conversas */}
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <MessageSquare size={14} className="text-[#10B981]" /> Visibilidade de Conversas no WhatsApp
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoWhatsTipo" 
+                              value="PROPRIOS"
+                              checked={formData.acessoWhatsTipo === 'PROPRIOS'}
+                              onChange={() => setFormData({...formData, acessoWhatsTipo: 'PROPRIOS', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Somente Próprios</span>
+                              <span className="text-[10px] text-slate-400">Leads atribuídos a ele</span>
+                            </div>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoWhatsTipo" 
+                              value="TODOS"
+                              checked={formData.acessoWhatsTipo === 'TODOS'}
+                              onChange={() => setFormData({...formData, acessoWhatsTipo: 'TODOS', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Todas as Conversas</span>
+                              <span className="text-[10px] text-slate-400">Visão global de chats</span>
+                            </div>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoWhatsTipo" 
+                              value="NENHUM"
+                              checked={formData.acessoWhatsTipo === 'NENHUM'}
+                              onChange={() => setFormData({...formData, acessoWhatsTipo: 'NENHUM', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Sem Acesso</span>
+                              <span className="text-[10px] text-slate-400">Não vê conversas</span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* 2. Leads & CRM */}
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Target size={14} className="text-[#10B981]" /> Visibilidade de Oportunidades & Leads (CRM)
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoLeadsTipo" 
+                              value="ATRIBUIDOS"
+                              checked={formData.acessoLeadsTipo === 'ATRIBUIDOS'}
+                              onChange={() => setFormData({...formData, acessoLeadsTipo: 'ATRIBUIDOS', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Somente Leads Atribuídos / Transferidos</span>
+                              <span className="text-[10px] text-slate-400">Apenas leads passados pelo gestor ou criados por ele</span>
+                            </div>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoLeadsTipo" 
+                              value="TODOS"
+                              checked={formData.acessoLeadsTipo === 'TODOS'}
+                              onChange={() => setFormData({...formData, acessoLeadsTipo: 'TODOS', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Todos os Leads da Empresa</span>
+                              <span className="text-[10px] text-slate-400">Acesso amplo a todo o pipeline comercial</span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* 3. Tarefas */}
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <CheckSquare size={14} className="text-[#10B981]" /> Visibilidade de Tarefas
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoTarefasTipo" 
+                              value="ENVOLVIDO"
+                              checked={formData.acessoTarefasTipo === 'ENVOLVIDO'}
+                              onChange={() => setFormData({...formData, acessoTarefasTipo: 'ENVOLVIDO', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Somente onde é Responsável, Participante ou Observador</span>
+                              <span className="text-[10px] text-slate-400">Não vê tarefas privadas de outros setores</span>
+                            </div>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <input 
+                              type="radio" 
+                              name="acessoTarefasTipo" 
+                              value="TODAS"
+                              checked={formData.acessoTarefasTipo === 'TODAS'}
+                              onChange={() => setFormData({...formData, acessoTarefasTipo: 'TODAS', perfilAcessoNome: 'Personalizado'})}
+                              className="text-[#1B4D3E]"
+                            />
+                            <div>
+                              <span className="font-bold text-slate-800 block">Todas as Tarefas da Empresa</span>
+                              <span className="text-[10px] text-slate-400">Visão irrestrita do quadro e kanban de tarefas</span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* 4. Permissões de Módulos (Contratos, PIC, CRM, Prospecção) */}
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Shield size={14} className="text-[#10B981]" /> Acesso aos Módulos Específicos
+                        </p>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          {/* Contratos */}
+                          <label className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <div>
+                              <span className="font-bold text-slate-800 block">Módulo de Contratos</span>
+                              <span className="text-[10px] text-slate-400">Contratos ativos, reajustes e minutas</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.acessoContratos}
+                              onChange={(e) => setFormData({...formData, acessoContratos: e.target.checked, perfilAcessoNome: 'Personalizado'})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+
+                          {/* PIC */}
+                          <label className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <div>
+                              <span className="font-bold text-slate-800 block">Módulo PIC (Implantação)</span>
+                              <span className="text-[10px] text-slate-400">Planejamento e start de novos contratos</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.acessoPic}
+                              onChange={(e) => setFormData({...formData, acessoPic: e.target.checked, perfilAcessoNome: 'Personalizado'})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+
+                          {/* Prospecção */}
+                          <label className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <div>
+                              <span className="font-bold text-slate-800 block">Módulo de Prospecção</span>
+                              <span className="text-[10px] text-slate-400">Busca em mapas, CNPJs e captura fria</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.acessoProspeccao}
+                              onChange={(e) => setFormData({...formData, acessoProspeccao: e.target.checked, perfilAcessoNome: 'Personalizado'})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+
+                          {/* CRM */}
+                          <label className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <div>
+                              <span className="font-bold text-slate-800 block">CRM & Pipeline</span>
+                              <span className="text-[10px] text-slate-400">Etapas de negociação e funil</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.acessoCrm}
+                              onChange={(e) => setFormData({...formData, acessoCrm: e.target.checked, perfilAcessoNome: 'Personalizado'})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+
+                          {/* CCT */}
+                          <label className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <div>
+                              <span className="font-bold text-slate-800 block">Convenções Coletivas (CCT)</span>
+                              <span className="text-[10px] text-slate-400">Pisos salariais e regras sindicais</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.acessoCct}
+                              onChange={(e) => setFormData({...formData, acessoCct: e.target.checked, perfilAcessoNome: 'Personalizado'})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+
+                          {/* Propostas */}
+                          <label className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-emerald-500">
+                            <div>
+                              <span className="font-bold text-slate-800 block">Propostas Comerciais</span>
+                              <span className="text-[10px] text-slate-400">Precificação FPV e emissão</span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.acessoPropostas}
+                              onChange={(e) => setFormData({...formData, acessoPropostas: e.target.checked, perfilAcessoNome: 'Personalizado'})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rodapé do Modal */}
+                <div className="pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
+                  {modalTab === 'permissoes' ? (
+                    <button 
+                      type="button"
+                      onClick={() => setModalTab('hierarquia')}
+                      className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors"
                     >
-                      <option value="USER">Vendedor (Dados próprios)</option>
-                      <option value="MANAGER">Gestor (Dados de equipe)</option>
-                      <option value="ADMIN">Administrador (Tudo)</option>
-                      <option value="LOGISTICA">Logística (Apenas Entrega e Técnico)</option>
-                    </select>
-                  </div>
-                </div>
+                      ← Voltar para Dados
+                    </button>
+                  ) : (
+                    <div></div>
+                  )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Gestor Direto (Opcional)</label>
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-bold text-slate-700 appearance-none"
-                      value={formData.managerId}
-                      onChange={(e) => setFormData({...formData, managerId: e.target.value})}
+                  <div className="flex items-center gap-3">
+                    <button 
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors"
                     >
-                      <option value="">Sem gestor direto</option>
-                      {usuarios
-                        .filter(u => (u.role === 'MANAGER' || u.role === 'ADMIN') && u.id !== editingUserId)
-                        .map(u => (
-                          <option key={u.id} value={u.id}>{u.nome} ({u.role})</option>
-                        ))
-                      }
-                    </select>
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={loading}
+                      className="px-6 py-2.5 rounded-xl bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-950/10 transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      ) : (
+                        editingUserId ? 'Salvar Alterações' : 'Cadastrar Colaborador'
+                      )}
+                    </button>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Meta de Vendas Mensal (R$)</label>
-                    <input 
-                      type="number"
-                      step="any"
-                      placeholder="Ex: 50000"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-5 outline-none focus:border-[#1B4D3E] font-medium text-slate-700"
-                      value={formData.meta}
-                      onChange={(e) => setFormData({...formData, meta: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-6 flex gap-4">
-                  <button 
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={loading}
-                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/20 transition-all flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    ) : (
-                      editingUserId ? 'Salvar Alterações' : 'Cadastrar Usuário'
-                    )}
-                  </button>
                 </div>
               </form>
             </div>
           </div>
         )}
-      </main>
 
-      {/* MODAL DE ALERTA PREMIUM */}
-      {customAlert.open && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-8 text-center space-y-6">
-              <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center border shadow-lg shadow-slate-100 animate-bounce">
-                {customAlert.type === 'error' && <Shield className="text-red-500" size={32} />}
-                {customAlert.type === 'warning' && <Shield className="text-amber-500" size={32} />}
-                {customAlert.type === 'success' && <UserCheck className="text-emerald-500" size={32} />}
-                {customAlert.type === 'info' && <Users className="text-blue-500" size={32} />}
+        {/* Modal de Alerta */}
+        {customAlert.open && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#1B4D3E] flex items-center justify-center mx-auto">
+                <AlertCircle size={24} />
               </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customAlert.title}</h3>
-                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{customAlert.message}</p>
+              <div>
+                <h4 className="font-black text-slate-900 text-base">{customAlert.title}</h4>
+                <p className="text-xs text-slate-500 mt-1 whitespace-pre-line">{customAlert.message}</p>
               </div>
-              <button 
-                onClick={() => setCustomAlert(prev => ({ ...prev, open: false }))}
-                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#1B4D3E]/10"
+              <button
+                onClick={() => setCustomAlert({ ...customAlert, open: false })}
+                className="w-full bg-[#1B4D3E] text-white py-2.5 rounded-xl text-xs font-bold"
               >
-                Entendido
+                Entendi
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
-      {customConfirm.open && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-8 text-center space-y-6">
-              <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center border border-amber-100 bg-amber-50/50 text-amber-600 shadow-lg shadow-amber-50 animate-pulse">
-                <Trash2 size={32} />
+        {/* Modal de Confirmação */}
+        {customConfirm.open && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 size={24} />
               </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customConfirm.title}</h3>
-                <p className="text-sm text-slate-500 font-bold leading-relaxed">{customConfirm.message}</p>
+              <div>
+                <h4 className="font-black text-slate-900 text-base">{customConfirm.title}</h4>
+                <p className="text-xs text-slate-500 mt-1">{customConfirm.message}</p>
               </div>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setCustomConfirm(prev => ({ ...prev, open: false }))}
-                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCustomConfirm({ ...customConfirm, open: false })}
+                  className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-200"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     customConfirm.onConfirm();
-                    setCustomConfirm(prev => ({ ...prev, open: false }));
+                    setCustomConfirm({ ...customConfirm, open: false });
                   }}
-                  className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-600/10"
+                  className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-rose-700"
                 >
-                  Confirmar Exclusão
+                  Confirmar
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }

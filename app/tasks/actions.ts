@@ -196,6 +196,17 @@ export async function getTasks(filters?: {
 
     const where: any = { tenantId: user.tenantId };
 
+    // Restrição de Acesso às Tarefas:
+    // Se não for ADMIN e o perfil estiver configurado para ver apenas tarefas envolvidas
+    if (user.role !== 'ADMIN' && (user as any).acessoTarefasTipo === 'ENVOLVIDO') {
+      where.OR = [
+        { criadorId: user.id },
+        { responsavelId: user.id },
+        { taskParticipants: { some: { userId: user.id } } },
+        { taskObservers: { some: { userId: user.id } } }
+      ];
+    }
+
     if (filters?.stageId && filters.stageId !== 'all') {
       where.stageId = filters.stageId;
     }

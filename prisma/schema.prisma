@@ -131,6 +131,18 @@ model User {
   createdOSs               OrdemServicoAtivo[] @relation("OSCreator")
   createdEntregas          Entrega[]           @relation("EntregaCreator")
   pushSubscriptions        PushSubscription[]  @relation("UserPushSubscriptions")
+
+  // Níveis e Permissões de Acesso Granulares
+  acessoWhatsTipo        String   @default("PROPRIOS") // "TODOS" | "PROPRIOS" | "NENHUM"
+  acessoLeadsTipo        String   @default("ATRIBUIDOS") // "TODOS" | "ATRIBUIDOS"
+  acessoContratos        Boolean  @default(true)
+  acessoPic              Boolean  @default(true)
+  acessoTarefasTipo      String   @default("ENVOLVIDO") // "TODAS" | "ENVOLVIDO"
+  acessoCrm              Boolean  @default(true)
+  acessoProspeccao       Boolean  @default(true)
+  acessoCct              Boolean  @default(true)
+  acessoPropostas        Boolean  @default(true)
+  perfilAcessoNome       String?  @default("Vendedor")
 }
 
 model Client {

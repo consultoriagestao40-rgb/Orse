@@ -184,7 +184,11 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
   try {
     const where: any = {};
     where.tenantId = user.tenantId;
-    if (user.role === 'USER') {
+
+    // Restrição de Acesso aos Leads (CRM):
+    // Se não for ADMIN e estiver configurado para ver somente leads atribuídos pelo gestor (ou perfil padrão USER)
+    const acessoLeads = (user as any).acessoLeadsTipo || (user.role === 'USER' ? 'ATRIBUIDOS' : 'TODOS');
+    if (user.role !== 'ADMIN' && acessoLeads === 'ATRIBUIDOS') {
       where.OR = [
         { assignedToId: user.id },
         { shares: { some: { userId: user.id } } }
@@ -1136,12 +1140,27 @@ export async function getPendingUnansweredLeads() {
   if (!user) return { success: false, error: 'Unauthorized', pendingLeads: [] };
 
   try {
+    // Restrição de Acesso ao WhatsApp:
+    const whatsTipo = (user as any).acessoWhatsTipo || 'PROPRIOS';
+    if (user.role !== 'ADMIN' && whatsTipo === 'NENHUM') {
+      return { success: true, pendingLeads: [] };
+    }
+
+    const leadsWhere: any = {
+      tenantId: user.tenantId,
+      telefone: { not: null },
+      whatsappMessages: { some: {} }
+    };
+
+    if (user.role !== 'ADMIN' && (whatsTipo === 'PROPRIOS' || (user as any).acessoLeadsTipo === 'ATRIBUIDOS')) {
+      leadsWhere.OR = [
+        { assignedToId: user.id },
+        { shares: { some: { userId: user.id } } }
+      ];
+    }
+
     const leadsWithMsgs = await prisma.lead.findMany({
-      where: {
-        tenantId: user.tenantId,
-        telefone: { not: null },
-        whatsappMessages: { some: {} }
-      },
+      where: leadsWhere,
       include: {
         assignedTo: { select: { id: true, nome: true, email: true } },
         stage: { select: { id: true, nome: true } },
