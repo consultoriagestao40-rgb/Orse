@@ -198,28 +198,34 @@ export default function FpvPdfDocument({
         {/* ========================================================================= */}
         {/* 2. TAXAS E TRIBUTOS / BDI */}
         {/* ========================================================================= */}
-        {shouldRender('premissas') && (
+        {shouldRender('premissas') && (() => {
+          const taxaAdmPct = Number(proposta.premissas?.taxaAdm ?? proposta.premissas?.taxaAdministracao ?? 0);
+          const lucroPct = Number(proposta.premissas?.margemLucro ?? proposta.premissas?.lucro ?? 0);
+          const comissaoPct = Number(proposta.premissas?.comissaoVendedor ?? 0);
+          const tributosList = Array.isArray(proposta.premissas?.tributos) ? proposta.premissas.tributos : [];
+          const totalTributosPct = tributosList.reduce((acc: number, t: any) => acc + Number(t.percent ?? t.aliquota ?? 0), 0);
+          const fatBruto = Number(resultado?.faturamentoBruto || 0);
+          const valorImpostos = Number(resultado?.impostosTotais ?? (fatBruto * (totalTributosPct / 100)));
+
+          return (
           <div className="mb-2">
             {renderSectionHeader('Taxas, Tributos e Premissas de BDI', '02')}
 
             <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-50 border-x border-slate-200">
               <div className="bg-emerald-50 border border-emerald-200 p-1 rounded text-center">
-                <span className="text-[7.5px] uppercase font-bold text-emerald-800 block">BDI Total / Markup</span>
-                <span className="text-sm font-black text-emerald-900">{formatPercent(proposta.premissas?.taxaAdministracao || 0)}</span>
+                <span className="text-[7.5px] uppercase font-bold text-emerald-800 block">Taxa Administrativa</span>
+                <span className="text-sm font-black text-emerald-900">{formatPercent(taxaAdmPct)}</span>
+                <span className="text-[7.5px] text-emerald-700 block">{formatCurrency(resultado?.taxaAdm || 0)}</span>
               </div>
               <div className="bg-blue-50 border border-blue-200 p-1 rounded text-center">
                 <span className="text-[7.5px] uppercase font-bold text-blue-800 block">Impostos s/ Faturamento</span>
-                <span className="text-sm font-black text-blue-900">
-                  {formatPercent(
-                    Array.isArray(proposta.premissas?.tributos)
-                      ? proposta.premissas.tributos.reduce((a: number, b: any) => a + (Number(b.aliquota) || 0), 0)
-                      : 0
-                  )}
-                </span>
+                <span className="text-sm font-black text-blue-900">{formatPercent(totalTributosPct)}</span>
+                <span className="text-[7.5px] text-blue-700 block">{formatCurrency(valorImpostos)}</span>
               </div>
               <div className="bg-amber-50 border border-amber-200 p-1 rounded text-center">
-                <span className="text-[7.5px] uppercase font-bold text-amber-800 block">Margem / Lucro</span>
-                <span className="text-sm font-black text-amber-900">{formatPercent(proposta.premissas?.lucro || 0)}</span>
+                <span className="text-[7.5px] uppercase font-bold text-amber-800 block">Margem / Lucro {comissaoPct > 0 ? `(+${comissaoPct}% Com.)` : ''}</span>
+                <span className="text-sm font-black text-amber-900">{formatPercent(lucroPct + comissaoPct)}</span>
+                <span className="text-[7.5px] text-amber-700 block">{formatCurrency((resultado?.margemLucro || 0) + (resultado?.comissaoVendedor || 0))}</span>
               </div>
             </div>
 
@@ -229,27 +235,42 @@ export default function FpvPdfDocument({
                   <tr className="bg-slate-100 border-b border-slate-200 font-bold text-slate-700">
                     <th className="py-0.5 px-2">Tributo</th>
                     <th className="py-0.5 px-2 text-right w-20">Alíquota (%)</th>
+                    <th className="py-0.5 px-2 text-right w-24">Valor Mensal (R$)</th>
                     <th className="py-0.5 px-2">Descrição / Enquadramento</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {Array.isArray(proposta.premissas?.tributos) && proposta.premissas.tributos.map((t: any, idx: number) => (
-                    <tr key={idx}>
-                      <td className="py-0.5 px-2 font-semibold text-slate-800">{t.nome || t.tributo || `Tributo ${idx + 1}`}</td>
-                      <td className="py-0.5 px-2 text-right font-black text-slate-900">{formatPercent(t.aliquota)}</td>
-                      <td className="py-0.5 px-2 text-slate-500">{t.descricao || 'Imposto incidente sobre faturamento bruto'}</td>
-                    </tr>
-                  ))}
-                  {(!proposta.premissas?.tributos || proposta.premissas.tributos.length === 0) && (
+                  {tributosList.map((t: any, idx: number) => {
+                    const aliquota = Number(t.percent ?? t.aliquota ?? 0);
+                    const valorTributo = fatBruto > 0 ? (fatBruto * (aliquota / 100)) : 0;
+                    return (
+                      <tr key={t.id || idx}>
+                        <td className="py-0.5 px-2 font-semibold text-slate-800">{t.nome || t.tributo || `Tributo ${idx + 1}`}</td>
+                        <td className="py-0.5 px-2 text-right font-black text-slate-900">{formatPercent(aliquota)}</td>
+                        <td className="py-0.5 px-2 text-right font-semibold text-slate-700">{formatCurrency(valorTributo)}</td>
+                        <td className="py-0.5 px-2 text-slate-500">{t.descricao || 'Imposto incidente sobre faturamento bruto'}</td>
+                      </tr>
+                    );
+                  })}
+                  {tributosList.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="py-1 px-2 text-center text-slate-400">Nenhum tributo individual configurado.</td>
+                      <td colSpan={4} className="py-1 px-2 text-center text-slate-400">Nenhum tributo individual configurado.</td>
+                    </tr>
+                  )}
+                  {tributosList.length > 0 && (
+                    <tr className="bg-slate-50 font-bold border-t border-slate-200">
+                      <td className="py-0.5 px-2 uppercase">Total de Carga Tributária</td>
+                      <td className="py-0.5 px-2 text-right font-black text-[#1B4D3E]">{formatPercent(totalTributosPct)}</td>
+                      <td className="py-0.5 px-2 text-right font-black text-[#1B4D3E]">{formatCurrency(valorImpostos)}</td>
+                      <td></td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ========================================================================= */}
         {/* 3. ENCARGOS SOCIAIS CLT */}
@@ -653,7 +674,15 @@ export default function FpvPdfDocument({
         {/* ========================================================================= */}
         {/* 9. RESUMO DA PROPOSTA / INDICADORES */}
         {/* ========================================================================= */}
-        {shouldRender('resumo') && (
+        {shouldRender('resumo') && (() => {
+          const fatBruto = Number(resultado?.faturamentoBruto || 0);
+          const totalTributosPct = (proposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + Number(t.percent ?? t.aliquota ?? 0), 0);
+          const valorImpostos = Number(resultado?.impostosTotais ?? (fatBruto * (totalTributosPct / 100)));
+          const custoDireto = Number(resultado?.custoDiretoTotal || resultado?.custoTotal || 0);
+          const valorLucro = Number(resultado?.margemLucro || 0);
+          const valorAdm = Number(resultado?.taxaAdm || 0);
+
+          return (
           <div className="mb-2">
             {renderSectionHeader('Resumo Executivo da Proposta Comercial', '09')}
 
@@ -662,15 +691,15 @@ export default function FpvPdfDocument({
                 <span className="text-[7.5px] uppercase font-bold tracking-widest text-emerald-200 block">
                   Preço Mensal Sugerido (Faturamento Bruto)
                 </span>
-                <span className="text-base font-black">{formatCurrency(resultado?.faturamentoBruto || 0)}</span>
-                <span className="text-[7.5px] text-emerald-300 block">Anual: {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}</span>
+                <span className="text-base font-black">{formatCurrency(fatBruto)}</span>
+                <span className="text-[7.5px] text-emerald-300 block">Anual: {formatCurrency(fatBruto * 12)}</span>
               </div>
               <div className="bg-slate-800 text-white p-1.5 rounded text-center">
                 <span className="text-[7.5px] uppercase font-bold tracking-widest text-slate-300 block">
-                  Custo Operacional Total Mensal
+                  Custo Operacional Direto Mensal
                 </span>
-                <span className="text-base font-black">{formatCurrency(resultado?.custoTotal || 0)}</span>
-                <span className="text-[7.5px] text-slate-300 block">Anual: {formatCurrency((resultado?.custoTotal || 0) * 12)}</span>
+                <span className="text-base font-black">{formatCurrency(custoDireto)}</span>
+                <span className="text-[7.5px] text-slate-300 block">Anual: {formatCurrency(custoDireto * 12)}</span>
               </div>
             </div>
 
@@ -700,25 +729,30 @@ export default function FpvPdfDocument({
                   )}
                   <tr className="bg-slate-50 font-bold">
                     <td className="py-0.5 px-2 uppercase">Custo Direto Total</td>
-                    <td className="py-0.5 px-2 text-right font-black text-slate-900">{formatCurrency(resultado?.custoTotal || 0)}</td>
+                    <td className="py-0.5 px-2 text-right font-black text-slate-900">{formatCurrency(custoDireto)}</td>
                   </tr>
                   <tr>
-                    <td className="py-0.5 px-2 text-slate-700">Tributos e Impostos Fiscais</td>
-                    <td className="py-0.5 px-2 text-right font-bold text-red-700">{formatCurrency(resultado?.impostosValor || 0)}</td>
+                    <td className="py-0.5 px-2 text-slate-700">Taxa Administrativa (BDI)</td>
+                    <td className="py-0.5 px-2 text-right font-semibold text-slate-800">{formatCurrency(valorAdm)}</td>
                   </tr>
                   <tr>
-                    <td className="py-0.5 px-2 text-slate-700">Margem Bruta / Contribuição</td>
-                    <td className="py-0.5 px-2 text-right font-bold text-emerald-700">{formatCurrency(resultado?.lucroValor || 0)}</td>
+                    <td className="py-0.5 px-2 text-slate-700">Tributos e Impostos Fiscais ({totalTributosPct.toFixed(2)}%)</td>
+                    <td className="py-0.5 px-2 text-right font-bold text-red-700">{formatCurrency(valorImpostos)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-0.5 px-2 text-slate-700">Margem de Lucro / Contribuição</td>
+                    <td className="py-0.5 px-2 text-right font-bold text-emerald-700">{formatCurrency(valorLucro)}</td>
                   </tr>
                   <tr className="bg-[#1B4D3E] text-white font-black text-[9px]">
                     <td className="py-1 px-2 uppercase">Faturamento Bruto Mensal Sugerido</td>
-                    <td className="py-1 px-2 text-right font-black">{formatCurrency(resultado?.faturamentoBruto || 0)}</td>
+                    <td className="py-1 px-2 text-right font-black">{formatCurrency(fatBruto)}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ========================================================================= */}
         {/* 10. DRE DO PROJETO (12 MESES) */}
@@ -739,10 +773,11 @@ export default function FpvPdfDocument({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {(() => {
-                    const rec = resultado?.faturamentoBruto || 0;
-                    const imp = resultado?.impostosValor || 0;
+                    const rec = Number(resultado?.faturamentoBruto || 0);
+                    const totalTributosPct = (proposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + Number(t.percent ?? t.aliquota ?? 0), 0);
+                    const imp = Number(resultado?.impostosTotais ?? (rec * (totalTributosPct / 100)));
                     const recLiq = rec - imp;
-                    const custoTot = resultado?.custoTotal || 0;
+                    const custoTot = Number(resultado?.custoDiretoTotal || resultado?.custoTotal || 0);
                     const margem = recLiq - custoTot;
 
                     const row = (label: string, val: number, isHeader = false, isHighlight = false) => {
