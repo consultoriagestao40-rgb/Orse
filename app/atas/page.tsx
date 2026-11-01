@@ -1656,28 +1656,6 @@ export default function AtasPage() {
                 </div>
               </div>
 
-              {/* MÓDULO DE GRAVAÇÃO DE REUNIÕES & INTELIGÊNCIA ARTIFICIAL */}
-              <MeetingRecorderAndAI
-                titulo={titulo}
-                dataReuniou={dataReuniou}
-                pautas={pautas.map(p => p.descricao)}
-                participantes={participantes}
-                initialAudioUrl={audioUrl}
-                initialAudioDuracao={audioDuracao}
-                initialTranscricao={transcricao}
-                initialResumoIa={resumoIa}
-                initialAcoesIa={acoesSugeridasIa}
-                onApplyMinutaToReport={handleApplyMinutaToReport}
-                onImportAcoes={handleImportAcoesFromAI}
-                onUpdateAiData={(data) => {
-                  if (data.audioUrl !== undefined) setAudioUrl(data.audioUrl);
-                  if (data.audioDuracao !== undefined) setAudioDuracao(data.audioDuracao);
-                  if (data.transcricao !== undefined) setTranscricao(data.transcricao);
-                  if (data.resumoIa !== undefined) setResumoIa(data.resumoIa);
-                  if (data.acoesSugeridasIa !== undefined) setAcoesSugeridasIa(data.acoesSugeridasIa);
-                }}
-              />
-
               {/* CANVAS DO DOCUMENTO (FOLHA EXECUTIVA MODERNA DE ALTA PRECISÃO) */}
               <div 
                 id="print-document-container"
@@ -1699,7 +1677,7 @@ export default function AtasPage() {
                   <thead>
                     <tr>
                       <th colSpan={7} className="bg-gradient-to-r from-[#1B4D3E] via-teal-900 to-[#13382D] text-white font-black text-center text-sm md:text-base py-3.5 border-b border-slate-300 tracking-wider">
-                        {titulo ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
+                        {titulo && titulo !== '__SYSTEM_PLANNING_DATA__' ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
                       </th>
                     </tr>
                     
@@ -1815,6 +1793,32 @@ export default function AtasPage() {
                             </span>
                           )}
                         </div>
+                      </td>
+                    </tr>
+
+                    {/* SEÇÃO DISCRETA: GRAVAÇÃO & INTELIGÊNCIA ARTIFICIAL */}
+                    <tr className="no-print bg-slate-50/50 border-b border-slate-300">
+                      <td colSpan={7} className="p-2.5">
+                        <MeetingRecorderAndAI
+                          titulo={titulo}
+                          dataReuniou={dataReuniou}
+                          pautas={pautas.map(p => p.descricao)}
+                          participantes={participantes}
+                          initialAudioUrl={audioUrl}
+                          initialAudioDuracao={audioDuracao}
+                          initialTranscricao={transcricao}
+                          initialResumoIa={resumoIa}
+                          initialAcoesIa={acoesSugeridasIa}
+                          onApplyMinutaToReport={handleApplyMinutaToReport}
+                          onImportAcoes={handleImportAcoesFromAI}
+                          onUpdateAiData={(data) => {
+                            if (data.audioUrl !== undefined) setAudioUrl(data.audioUrl);
+                            if (data.audioDuracao !== undefined) setAudioDuracao(data.audioDuracao);
+                            if (data.transcricao !== undefined) setTranscricao(data.transcricao);
+                            if (data.resumoIa !== undefined) setResumoIa(data.resumoIa);
+                            if (data.acoesSugeridasIa !== undefined) setAcoesSugeridasIa(data.acoesSugeridasIa);
+                          }}
+                        />
                       </td>
                     </tr>
 

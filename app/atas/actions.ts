@@ -32,7 +32,8 @@ export async function getAtas() {
   try {
     const atas = await prisma.ata.findMany({
       where: {
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
+        titulo: { not: '__SYSTEM_PLANNING_DATA__' }
       },
       include: {
         acoes: {
@@ -467,7 +468,8 @@ export async function getAcoesStats() {
     const totalAcoes = await prisma.ataAcao.count({
       where: {
         ata: {
-          tenantId: user.tenantId
+          tenantId: user.tenantId,
+          titulo: { not: '__SYSTEM_PLANNING_DATA__' }
         }
       }
     });
@@ -476,7 +478,8 @@ export async function getAcoesStats() {
       where: {
         concluida: true,
         ata: {
-          tenantId: user.tenantId
+          tenantId: user.tenantId,
+          titulo: { not: '__SYSTEM_PLANNING_DATA__' }
         }
       }
     });
@@ -878,7 +881,8 @@ export async function getPendingActionsDetailed() {
       where: {
         concluida: false,
         ata: {
-          tenantId: user.tenantId
+          tenantId: user.tenantId,
+          titulo: { not: '__SYSTEM_PLANNING_DATA__' }
         }
       },
       include: {
