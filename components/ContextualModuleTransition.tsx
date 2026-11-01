@@ -157,7 +157,7 @@ export default function ContextualModuleTransition({
 
   const containerClasses =
     variant === 'fullscreen'
-      ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl text-white select-none overflow-hidden'
+      ? 'fixed inset-0 z-[300] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl text-white select-none overflow-hidden'
       : 'w-full py-16 flex flex-col items-center justify-center bg-slate-950/90 rounded-3xl border border-slate-800 text-white shadow-2xl select-none my-4 overflow-hidden';
 
   return (

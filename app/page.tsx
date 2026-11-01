@@ -535,6 +535,15 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       
+      {loading && (
+        <ContextualModuleTransition
+          module="radar"
+          title="Calculando KPIs do Radar Comercial"
+          subtitle="Sincronizando faturamento, propostas emitidas e metas corporativas..."
+          variant="fullscreen"
+        />
+      )}
+      
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           
@@ -670,14 +679,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
             )}
           </div>
 
-          {loading ? (
-            <ContextualModuleTransition
-              module="radar"
-              title="Calculando KPIs do Radar Comercial"
-              subtitle="Sincronizando faturamento, propostas emitidas e metas corporativas..."
-              variant="inline"
-            />
-          ) : (propostasList.length === 0 && totalSellers.length === 0) ? (
+          {(propostasList.length === 0 && totalSellers.length === 0) ? (
             <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
               <p className="text-slate-500 font-bold uppercase tracking-wider">Nenhuma proposta encontrada para os filtros selecionados.</p>
               <p className="text-slate-400 text-xs mt-1">Crie propostas comerciais para visualizar os KPIs.</p>
