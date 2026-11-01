@@ -502,27 +502,131 @@ export async function askCctAI(
     };
   }
 
-  // 2. DÚVIDA DE VALE ALIMENTAÇÃO / REFEIÇÃO / TICKET
-  if (/alimenta|refei|ticket|tiquete|almoco|marmita/i.test(qNorm)) {
-    const clVA = clausulas.find(c => /vale[–\s-]*alimenta|aux[íi]lio[–\s-]*alimenta|refei[çc][ãa]o/i.test(c.titulo)) ||
-                 clausulas.find(c => /alimenta[çc]/i.test(c.titulo));
+  // 2. DÚVIDA DE VALE TRANSPORTE (VT)
+  const isVT = /\bvt\b|vale\s*transporte|transporte|condu[çc][ãa]o|passe\s*(?:de\s*[oó]nibus|escolar)?|tarifa|combust[íi]vel|\b[oó]nibus\b/i.test(qNorm);
 
-    if (clVA) {
-      let resp = `Conforme a **Cláusula ${clVA.numero} (${clVA.titulo})**, o benefício de alimentação tem as seguintes regras:\n\n`;
-      resp += `• **Valor Integral:** **R$ 900,00 mensais** (vale-mercado) concedido a todos os empregados com carga semanal superior a 20 horas;\n`;
-      resp += `• **Desconto em Folha:** Autorizado desconto legal de até **20%** do valor do benefício;\n`;
-      resp += `• **Jornadas Reduzidas / Regime SDF:** Para jornadas inferiores a 4h diárias ou regime SDF, o benefício é concedido no valor de **R$ 30,00 por dia efetivamente trabalhado**;\n`;
-      resp += `• **Faltas Injustificadas:** Em caso de falta injustificada ao serviço, a empresa está autorizada a descontar **R$ 30,00 por dia** do benefício.`;
+  if (isVT) {
+    const clVT = clausulas.find(c => /transporte/i.test(c.titulo)) || {
+      numero: 'Décima Quinta',
+      titulo: 'Vale Transporte',
+      texto: ''
+    };
+
+    let resp = `Diretrizes do **Vale Transporte (Cláusula 15ª - Vale Transporte)** e legislação (Lei nº 7.418/1985):\n\n` +
+      `• **Fornecimento Diário:** O benefício é concedido obrigatoriamente para cobrir os deslocamentos residência-trabalho e vice-versa em dias de efetivo serviço;\n` +
+      `• **Tarifa / Custo:** O valor é correspondente à tarifa do transporte público coletivo local (orçado na planilha padrão da CCT em **R$ 11,00/dia**);\n` +
+      `• **Desconto Legal em Folha:** Autorizado desconto salarial de até **6%** sobre o salário-base do empregado;\n` +
+      `• **Pagamento em Dinheiro / Ajuda Combustível (Parágrafo 1º):** É expressamente facultada a **antecipação do vale transporte em dinheiro** (quando a empresa não mantiver filial no município do tomador) ou a substituição por **ajuda de custo combustível** em valor equivalente, mediante solicitação do empregado;\n` +
+      `• **Multa por Descumprimento (Parágrafo 3º):** R$ 205,00 mensais por empregado prejudicado.`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clVT.numero} - ${clVT.titulo}`,
+      trechoOriginal: clVT.texto.substring(0, 700) || 'As empresas se obrigam a conceder aos seus empregados o vale transporte, na forma da Lei.'
+    };
+  }
+
+  // 3. DÚVIDA DE VALE ALIMENTAÇÃO / REFEIÇÃO / TICKET (VA / VR)
+  const isVA = /\bva\b|\bvr\b|vale\s*alimenta|aux[íi]lio\s*alimenta|alimenta[çc][ãa]o|refei[çc][ãa]o|ticket|tiquete|almo[çc]o|marmita|vale\s*mercado/i.test(qNorm);
+
+  if (isVA) {
+    const clVA = clausulas.find(c => /vale[–\s-]*alimenta|aux[íi]lio[–\s-]*alimenta|refei[çc][ãa]o/i.test(c.titulo)) ||
+                 clausulas.find(c => /alimenta[çc]/i.test(c.titulo)) || {
+                   numero: 'Décima Terceira',
+                   titulo: 'Vale-Alimentação',
+                   texto: ''
+                 };
+
+    // Subcaso A: Fornecimento de refeição / alimentação no local de trabalho
+    const isAlimentacaoNoLocal = /refei[çc][ãa]o\s+(?:no|em)\s+local|alimenta[çc][ãa]o\s+(?:no|em)\s+local|fornece[^\n\r]{0,20}refei|fornece[^\n\r]{0,20}alimenta|fornecimento|refeit[oó]rio|posto[s\s]+que\s+concedam\s+alimenta/i.test(qNorm);
+
+    if (isAlimentacaoNoLocal) {
+      let resp = `Quando o posto de serviço **fornece alimentação/refeição no local**, o valor do vale-alimentação (mercado) é de **R$ 494,00 mensais**, conforme o **Parágrafo Quinto da Cláusula 13ª**:\n\n` +
+        `• **Valor Mensal:** **R$ 494,00** (em vez do valor integral de R$ 900,00);\n` +
+        `• **Desconto em Folha:** Autorizado o desconto legal de até **20%** sobre o valor;\n` +
+        `• **Desconto por Falta ao Serviço:** Em caso de falta, a empresa pode descontar **R$ 17,00 por dia** (ao invés de R$ 30,00 da regra geral);\n` +
+        `• **Falta Injustificada no Mês (Parágrafo 7º):** Aplica-se desconto de **R$ 29,00** no mês seguinte caso ocorra falta injustificada ou mais de uma legalmente justificada;\n` +
+        `• **Valor nas Férias (Parágrafo 8º):** R$ 494,00 (sem faltas), R$ 445,00 (1 a 3 faltas) e R$ 395,00 (4 a 5 faltas).`;
 
       return {
         resposta: resp,
-        clausulaCitada: `Cláusula ${clVA.numero} - ${clVA.titulo}`,
-        trechoOriginal: clVA.texto.substring(0, 700)
+        clausulaCitada: `Cláusula ${clVA.numero} - Parágrafo Quinto (Alimentação no Local)`,
+        trechoOriginal: `PARÁGRAFO QUINTO – Aos empregados em postos de serviços que concedam alimentação no local, a empresa fornecerá o vale alimentação (mercado) no valor mensal de R$ 494,00, autorizado o desconto de 20% do referido valor. Em caso de falta, fica autorizada a empresa a descontar o valor de R$ 17,00, por dia do quanto aqui especificado.`
       };
     }
+
+    // Subcaso B: Vale alimentação nas férias
+    if (/f[ée]rias/i.test(qNorm)) {
+      let resp = `Conforme o **Parágrafo Oitavo da Cláusula 13ª**, o empregado tem direito ao vale-alimentação durante as **férias**, conforme a assiduidade no período aquisitivo:\n\n` +
+        `• **Regra Geral (postos sem refeição no local):**\n` +
+        `  - Nenhuma falta (justificada ou não): **R$ 900,00**;\n` +
+        `  - De 1 a 3 faltas: **R$ 810,00**;\n` +
+        `  - De 4 a 5 faltas: **R$ 720,00**;\n` +
+        `  - 6 ou mais faltas: Não faz jus ao benefício nas férias.\n\n` +
+        `• **Postos com refeição no local (Parágrafo 5º):**\n` +
+        `  - Nenhuma falta: **R$ 494,00**;\n` +
+        `  - De 1 a 3 faltas: **R$ 445,00**;\n` +
+        `  - De 4 a 5 faltas: **R$ 395,00**;\n` +
+        `  - 6 ou mais faltas: Sem benefício nas férias.\n\n` +
+        `📌 *O valor concedido nas férias não possui natureza salarial.*`;
+
+      return {
+        resposta: resp,
+        clausulaCitada: `Cláusula ${clVA.numero} - Parágrafo Oitavo (Férias)`,
+        trechoOriginal: clVA.texto.substring(clVA.texto.indexOf('PARÁGRAFO OITAVO'), clVA.texto.indexOf('PARÁGRAFO OITAVO') + 600) || clVA.texto.substring(0, 700)
+      };
+    }
+
+    // Subcaso C: Jornada inferior a 4h ou Regime SDF
+    if (/sdf|4\s*horas|jornada\s*reduzida|por\s*dia/i.test(qNorm)) {
+      let resp = `Conforme o **Parágrafo Terceiro da Cláusula 13ª**:\n\n` +
+        `• **Jornadas com no mínimo 4h que cubram 5 dias úteis:** Vale alimentação integral no valor de **R$ 900,00 mensais**;\n` +
+        `• **Jornadas inferiores a 4h (sem cobrir todos os dias da semana) ou Regime SDF:** O benefício é pago no valor de **R$ 30,00 por dia efetivamente trabalhado**, autorizado desconto de até 20%.`;
+
+      return {
+        resposta: resp,
+        clausulaCitada: `Cláusula ${clVA.numero} - Parágrafo Terceiro`,
+        trechoOriginal: clVA.texto.substring(clVA.texto.indexOf('PARÁGRAFO TERCEIRO'), clVA.texto.indexOf('PARÁGRAFO TERCEIRO') + 500) || clVA.texto.substring(0, 600)
+      };
+    }
+
+    // Subcaso Geral de Alimentação
+    let resp = `Regras do **Vale-Alimentação (Cláusula 13ª)** desta CCT:\n\n` +
+      `• **Valor Integral Padrão:** **R$ 900,00 mensais** (vale-mercado) concedido a empregados com carga superior a 20h semanais;\n` +
+      `• **Com Refeição Fornecida no Local:** Reduzido para **R$ 494,00 mensais** (Parágrafo 5º);\n` +
+      `• **Jornadas Reduzidas / Regime SDF:** **R$ 30,00 por dia trabalhado** (Parágrafo 3º);\n` +
+      `• **Desconto em Folha:** Autorizado desconto legal de até **20%** do valor;\n` +
+      `• **Desconto por Falta ao Serviço:** R$ 30,00/dia na regra geral ou R$ 17,00/dia quando há refeição no local;\n` +
+      `• **Nas Férias:** Mantido benefício conforme assiduidade (R$ 900 / 810 / 720).`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clVA.numero} - ${clVA.titulo}`,
+      trechoOriginal: clVA.texto.substring(0, 700)
+    };
   }
 
-  // 3. DÚVIDA SOBRE ATESTADO MÉDICO E FALTAS
+  // 4. DÚVIDA SOBRE DESJEJUM / CAFÉ DA MANHÃ / LANCHE (CLÁUSULA 14ª)
+  if (/desjejum|caf[ée]\s*da\s*manh[ãa]|lanche/i.test(qNorm)) {
+    const clDesjejum = clausulas.find(c => /desjejum|caf[ée]/i.test(c.titulo)) || {
+      numero: 'Décima Quarta',
+      titulo: 'Desjejum',
+      texto: ''
+    };
+
+    let resp = `Conforme a **Cláusula 14ª (Desjejum)**:\n\n` +
+      `• As empresas de limpeza pública e privada fornecerão **gratuitamente** em dias de efetivo trabalho um lanche;\n` +
+      `• **Composição do Lanche:** Café, leite, pão com queijo, presunto ou similar;\n` +
+      `• **Momento:** Deve ser servido antes do início da jornada de trabalho (não computado na jornada).`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clDesjejum.numero} - ${clDesjejum.titulo}`,
+      trechoOriginal: clDesjejum.texto.substring(0, 500)
+    };
+  }
+
+  // 5. DÚVIDA SOBRE ATESTADO MÉDICO E FALTAS
   if (/atestado|falta|medico|doen[çc]a|afastamento/i.test(qNorm)) {
     const clAtestado = clausulas.find(c => /atestado|falta/i.test(c.titulo)) || {
       numero: 'Trigésima Quarta',
@@ -530,10 +634,10 @@ export async function askCctAI(
       texto: ''
     };
 
-    let resp = `Sobre atestados médicos e faltas, esta CCT estabelece:\n\n`;
-    resp += `• **Validade dos Atestados (Cláusula 34ª):** Serão aceitos prioritariamente os atestados emitidos pelo serviço médico próprio da empresa ou convênio, do SUS ou das entidades sindicais, devendo ser entregues em até 48 horas;\n`;
-    resp += `• **Impacto no Vale Alimentação (Cláusula 13ª):** Faltas *legalmente justificadas* com atestado médico homologado não geram perda integral do benefício, ao contrário das faltas injustificadas que autorizam o desconto diário de R$ 30,00;\n`;
-    resp += `• **Manutenção dos Benefícios Sociais:** Em caso de afastamento por doença ou acidente de trabalho, a empresa deve manter o custeio do benefício de Assistência Médica (Cláusula 16ª) e do Benefício Social Familiar (Cláusula 17ª) por até 12 meses.`;
+    let resp = `Sobre atestados médicos e faltas, esta CCT estabelece:\n\n` +
+      `• **Validade dos Atestados (Cláusula 34ª):** Serão aceitos prioritariamente os atestados emitidos pelo serviço médico próprio da empresa ou convênio, do SUS ou das entidades sindicais, devendo ser entregues em até 48 horas;\n` +
+      `• **Impacto no Vale Alimentação (Cláusula 13ª):** Faltas legalmente justificadas com atestado homologado não geram perda integral do benefício, ao contrário das faltas injustificadas que autorizam desconto diário de R$ 30,00 (ou R$ 17,00 se houver refeição no local);\n` +
+      `• **Manutenção dos Benefícios Sociais:** Em caso de afastamento por doença ou acidente, a empresa deve manter a Assistência Médica (Cláusula 16ª) e o Benefício Social Familiar (Cláusula 17ª) por até 12 meses.`;
 
     return {
       resposta: resp,
@@ -542,30 +646,13 @@ export async function askCctAI(
     };
   }
 
-  // 4. DÚVIDA SOBRE VALE TRANSPORTE
-  if (/transporte|combustivel|passe|condu[çc][ãa]o/i.test(qNorm)) {
-    const clVT = clausulas.find(c => /transporte/i.test(c.titulo));
-    if (clVT) {
-      let resp = `Conforme a **Cláusula ${clVT.numero} (${clVT.titulo})**:\n\n`;
-      resp += `• O Vale Transporte é obrigatório na forma da Lei (desconto máximo de até **6%** sobre o salário base);\n`;
-      resp += `• É facultada a **antecipação do vale transporte em dinheiro**, especialmente em postos pulverizados ou onde a empresa não mantiver filial;\n`;
-      resp += `• Mediante solicitação formal do empregado, a empresa pode substituir o vale transporte por **ajuda de custo combustível** em valor equivalente.`;
-
-      return {
-        resposta: resp,
-        clausulaCitada: `Cláusula ${clVT.numero} - ${clVT.titulo}`,
-        trechoOriginal: clVT.texto.substring(0, 500)
-      };
-    }
-  }
-
-  // 5. DÚVIDA SOBRE ASSISTÊNCIA MÉDICA / ODONTOLÓGICA
-  if (/assist[êe]ncia|m[ée]dic|odontol[óo]g|sa[úu]de/i.test(qNorm)) {
-    const clMed = clausulas.find(c => /assist[êe]ncia\s+m[ée]dica/i.test(c.titulo));
+  // 6. DÚVIDA SOBRE ASSISTÊNCIA MÉDICA / ODONTOLÓGICA (IST)
+  if (/\bist\b|assist[êe]ncia\s*m[ée]dica|odontol[óo]g|sa[úu]de|plano\s*de\s*sa[úu]de/i.test(qNorm)) {
+    const clMed = clausulas.find(c => /assist[êe]ncia\s+m[ée]dica|sa[úu]de/i.test(c.titulo));
     if (clMed) {
-      let resp = `Conforme a **Cláusula ${clMed.numero} (${clMed.titulo})**:\n\n`;
-      resp += `• As empresas fornecem aos seus empregados o benefício social de **Assistência Médica** gerido pelos Institutos de Saúde do Trabalhador regionais (ex: IST Curitiba, Ponta Grossa, Londrina, Maringá, etc.);\n`;
-      resp += `• O valor de custeio patronal é de **R$ 94,50 por empregado/mês**, sem desconto na remuneração do trabalhador.`;
+      let resp = `Conforme a **Cláusula ${clMed.numero} (${clMed.titulo})**:\n\n` +
+        `• As empresas fornecem aos empregados o benefício social de **Assistência Médica** gerido pelos Institutos de Saúde do Trabalhador regionais (ex: IST Curitiba, Londrina, Maringá, etc.);\n` +
+        `• **Valor Patronal:** **R$ 94,50 por empregado/mês**, custeado integralmente pela empresa sem qualquer desconto em folha.`;
 
       return {
         resposta: resp,
@@ -575,14 +662,14 @@ export async function askCctAI(
     }
   }
 
-  // 6. DÚVIDA SOBRE BENEFÍCIO SOCIAL FAMILIAR / SEGURO
-  if (/seguro|social\s+familiar|morte|auxilio\s+funeral|nascimento/i.test(qNorm)) {
+  // 7. DÚVIDA SOBRE BENEFÍCIO SOCIAL FAMILIAR (BSF)
+  if (/\bbsf\b|social\s+familiar|seguro\s+de\s+vida|auxilio\s+funeral|natalidade/i.test(qNorm)) {
     const clSoc = clausulas.find(c => /social\s+familiar/i.test(c.titulo));
     if (clSoc) {
-      let resp = `Conforme a **Cláusula ${clSoc.numero} (${clSoc.titulo})**:\n\n`;
-      resp += `• Custeio empresarial de **R$ 31,00 por empregado/mês** junto à UPS Serviços / FEACONSPAR;\n`;
-      resp += `• Cobre assistência em caso de incapacitação permanente ou falecimento do trabalhador;\n`;
-      resp += `• Prevê benefício de **R$ 1.300,00 em pagamento único** por ocasião do nascimento de filho de colaborador(a).`;
+      let resp = `Conforme a **Cláusula ${clSoc.numero} (${clSoc.titulo})**:\n\n` +
+        `• **Custeio Patronal:** **R$ 31,00 por empregado/mês** junto à UPS Serviços / FEACONSPAR sem desconto salarial;\n` +
+        `• **Coberturas:** Auxílio funeral, assistência por incapacitação permanente ou falecimento do titular;\n` +
+        `• **Auxílio Natalidade:** Benefício de **R$ 1.300,00 em pagamento único** por ocasião do nascimento de filho de colaborador(a).`;
 
       return {
         resposta: resp,
@@ -592,7 +679,27 @@ export async function askCctAI(
     }
   }
 
-  // 7. DÚVIDA SOBRE HORAS EXTRAS OU ADICIONAL NOTURNO
+  // 8. DÚVIDA SOBRE UNIFORMES E EPIS
+  if (/\bepi\b|\bepis\b|uniforme|farda|bota|cal[çc]ado|luva/i.test(qNorm)) {
+    const clEPI = clausulas.find(c => /uniforme|epi/i.test(c.titulo)) || {
+      numero: 'Trigésima Segunda',
+      titulo: 'Uniformes e Equipamentos de Proteção',
+      texto: ''
+    };
+
+    let resp = `Diretrizes de **Uniformes e EPIs (Cláusula 32ª)**:\n\n` +
+      `• **Fornecimento Gratuito:** Obrigatório fornecimento gratuito de **2 uniformes completos por ano** para cada trabalhador;\n` +
+      `• **Reposição:** Reposição sem ônus sempre que desgastados pelo uso regular;\n` +
+      `• **EPIs Adequados:** Devem ser fornecidos calçados adequados, luvas, óculos e itens de proteção específicos segundo os riscos da função.`;
+
+    return {
+      resposta: resp,
+      clausulaCitada: `Cláusula ${clEPI.numero} - ${clEPI.titulo}`,
+      trechoOriginal: clEPI.texto.substring(0, 500)
+    };
+  }
+
+  // 9. DÚVIDA SOBRE HORAS EXTRAS OU ADICIONAL NOTURNO
   if (/hora\s*extra|adicional\s*noturno|noturno|banco\s*de\s*horas/i.test(qNorm)) {
     const clHE = clausulas.find(c => /hora\s*extra|jornada/i.test(c.titulo)) || {
       numero: 'Décima',
@@ -613,7 +720,7 @@ export async function askCctAI(
     };
   }
 
-  // 8. DÚVIDA SOBRE JORNADA DE TRABALHO / 12X36 / INTERVALO
+  // 10. DÚVIDA SOBRE JORNADA DE TRABALHO / 12X36 / INTERVALO
   if (/12x36|jornada|escala|intervalo|refei[çc][ãa]o|descanso/i.test(qNorm)) {
     const clJornada = clausulas.find(c => /jornada|escala|12x36/i.test(c.titulo)) || {
       numero: 'Vigésima Oitava',
@@ -633,28 +740,37 @@ export async function askCctAI(
     };
   }
 
-  // 9. BUSCA SEMÂNTICA POR TOKEN EM TODAS AS CLÁUSULAS
+  // 11. BUSCA SEMÂNTICA POR TOKEN FILTRANDO STOPWORDS GENÉRICAS
+  const stopwords = new Set([
+    'qual', 'quais', 'como', 'onde', 'quando', 'esse', 'essa', 'este', 'esta', 
+    'para', 'com', 'sobre', 'valor', 'valores', 'diario', 'diaria', 'mensal', 
+    'quanto', 'regras', 'diretrizes', 'tem', 'ha', 'existe', 'dessa', 'desta', 
+    'cct', 'convencao', 'de', 'do', 'da', 'dos', 'das', 'um', 'uma', 'uns', 'umas'
+  ]);
+
   let bestMatch: { numero: string; titulo: string; texto: string; score: number } | null = null;
   const keywords = qNorm
     .split(' ')
-    .filter(w => w.length > 2 && !['qual', 'como', 'onde', 'quando', 'esse', 'essa', 'este', 'para', 'com', 'sobre'].includes(w));
+    .filter(w => (w.length > 2 || ['vt', 'va', 'vr', 'he'].includes(w)) && !stopwords.has(w));
 
-  for (const c of clausulas) {
-    let score = 0;
-    const cTitleNorm = normalizeStr(c.titulo);
-    const cBodyNorm = normalizeStr(c.texto);
+  if (keywords.length > 0) {
+    for (const c of clausulas) {
+      let score = 0;
+      const cTitleNorm = normalizeStr(c.titulo);
+      const cBodyNorm = normalizeStr(c.texto);
 
-    for (const kw of keywords) {
-      if (cTitleNorm.includes(kw)) score += 5;
-      if (cBodyNorm.includes(kw)) score += 1;
-    }
+      for (const kw of keywords) {
+        if (cTitleNorm.includes(kw)) score += 6;
+        if (cBodyNorm.includes(kw)) score += 1;
+      }
 
-    if (!bestMatch || score > bestMatch.score) {
-      bestMatch = { ...c, score };
+      if (!bestMatch || score > bestMatch.score) {
+        bestMatch = { ...c, score };
+      }
     }
   }
 
-  if (bestMatch && bestMatch.score >= 2) {
+  if (bestMatch && bestMatch.score >= 3) {
     // Sintetiza os primeiros pontos da cláusula de maneira limpa
     const linhas = bestMatch.texto
       .split('\n')
@@ -676,7 +792,7 @@ export async function askCctAI(
     resposta: `Não localizei uma regra específica na CCT "${cct.nome}". Você pode me consultar sobre:\n\n` +
       `• **Pisos Salariais:** *Servente, Porteiro, Copeiro, Zelador, etc.*\n` +
       `• **Insalubridade:** *Quais funções têm 40% e 20%*\n` +
-      `• **Benefícios:** *Vale Alimentação, Assistência Médica, Benefício Social*\n` +
+      `• **Benefícios:** *Vale Transporte (VT), Vale Alimentação (VA), Refeição no local, Desjejum, IST, BSF*\n` +
       `• **Jornadas & Atestados:** *12x36, Horas extras, falta justificada*`,
     clausulaCitada: 'Consulta Geral',
     trechoOriginal: fullText.substring(0, 400)
