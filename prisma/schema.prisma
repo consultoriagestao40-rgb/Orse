@@ -808,6 +808,13 @@ model Ata {
   justificativaFinalizacao String?    @db.Text
   criadorNome             String?
   
+  // Gravação de Áudio & IA
+  audioUrl                String?     @db.Text
+  audioDuracao            Int?        // Duração em segundos
+  transcricao             String?     @db.Text
+  resumoIa                String?     @db.Text
+  acoesSugeridasIa        Json?       // [{ descricao: "...", responsavelNome: "...", dataLimite: "...", prioridade: "..." }]
+  
   acoes                   AtaAcao[]
   
   versao                  Int         @default(1)
