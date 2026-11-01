@@ -21,6 +21,90 @@ interface Message {
   timestamp: string;
 }
 
+function FormattedChatText({ text, isUser }: { text: string; isUser: boolean }) {
+  if (!text) return null;
+
+  if (isUser) {
+    return <p className="whitespace-pre-line font-medium leading-relaxed">{text}</p>;
+  }
+
+  const renderInlineFormatted = (str: string) => {
+    const parts: React.ReactNode[] = [];
+    const tokenRegex = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+    let lastIndex = 0;
+    let match;
+    let keyIdx = 0;
+
+    while ((match = tokenRegex.exec(str)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(str.substring(lastIndex, match.index));
+      }
+      const token = match[0];
+      if (token.startsWith('**') && token.endsWith('**')) {
+        parts.push(
+          <strong key={keyIdx++} className="font-black text-slate-900">
+            {token.slice(2, -2)}
+          </strong>
+        );
+      } else if (token.startsWith('*') && token.endsWith('*')) {
+        parts.push(
+          <em key={keyIdx++} className="italic text-slate-700 font-semibold">
+            {token.slice(1, -1)}
+          </em>
+        );
+      }
+      lastIndex = tokenRegex.lastIndex;
+    }
+
+    if (lastIndex < str.length) {
+      parts.push(str.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : str;
+  };
+
+  const lines = text.split('\n');
+
+  return (
+    <div className="space-y-1.5 text-xs leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        // Bullet point principal (• ou -)
+        if (trimmed.startsWith('•') || (trimmed.startsWith('- ') && !trimmed.startsWith('---'))) {
+          const content = trimmed.replace(/^[•\-]\s*/, '');
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-0.5 py-0.5 text-slate-800">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1B4D3E] shrink-0 mt-1.5" />
+              <div className="flex-1 leading-snug">{renderInlineFormatted(content)}</div>
+            </div>
+          );
+        }
+
+        // Sub-bullet indentado
+        if (trimmed.startsWith('  -') || trimmed.startsWith('    -')) {
+          const content = trimmed.replace(/^\s*[\-•]\s*/, '');
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-3 py-0.5 text-slate-700">
+              <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+              <div className="flex-1 leading-snug">{renderInlineFormatted(content)}</div>
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="text-slate-800">
+            {renderInlineFormatted(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PublishedCCTPage() {
   const params = useParams();
   const router = useRouter();
@@ -298,7 +382,7 @@ export default function PublishedCCTPage() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                🥪 Benefícios & Encargos
+                🎁 Benefícios Normativos
               </button>
               <button
                 onClick={() => setActiveTab('clausulas')}
@@ -388,7 +472,7 @@ export default function PublishedCCTPage() {
                 </div>
               )}
 
-              {/* ABA 2: BENEFÍCIOS & ENCARGOS */}
+              {/* ABA 2: BENEFÍCIOS NORMATIVOS */}
               {activeTab === 'beneficios' && (
                 <div className="space-y-4">
                   <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
@@ -405,8 +489,13 @@ export default function PublishedCCTPage() {
                         <span className="text-[10px] text-slate-500">Desc. folha: {cct.vtDescPercent || 6}%</span>
                       </div>
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                        <span className="text-[10px] font-black uppercase text-slate-400">Seguro de Vida</span>
+                        <span className="text-[10px] font-black uppercase text-slate-400">Benefício Social Familiar</span>
                         <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.seguroVida)}/mês</p>
+                        <span className="text-[10px] text-slate-500">Por funcionário</span>
+                      </div>
+                      <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                        <span className="text-[10px] font-black uppercase text-slate-400">Assistência Médica (IST)</span>
+                        <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.examesMedicos)}/mês</p>
                         <span className="text-[10px] text-slate-500">Por funcionário</span>
                       </div>
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
@@ -414,34 +503,8 @@ export default function PublishedCCTPage() {
                         <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.cestaBasica)}/mês</p>
                       </div>
                       <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                        <span className="text-[10px] font-black uppercase text-slate-400">Exames Médicos (PCMSO)</span>
-                        <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.examesMedicos)}/mês</p>
-                      </div>
-                      <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                         <span className="text-[10px] font-black uppercase text-slate-400">Uniforme & EPI</span>
                         <p className="text-base font-black text-slate-800 mt-1">{formatBRL(cct.uniformeEpi)}/mês</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
-                    <h3 className="text-sm font-black text-slate-800">Provisões & Encargos Sociais</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">INSS Patronal</span>
-                        <p className="font-black text-slate-800 text-sm mt-0.5">{cct.encargoInss}%</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">FGTS</span>
-                        <p className="font-black text-slate-800 text-sm mt-0.5">{cct.encargoFgts}%</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">Provisão Férias</span>
-                        <p className="font-black text-slate-800 text-sm mt-0.5">{cct.provisFerias}%</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">Provisão 13º</span>
-                        <p className="font-black text-slate-800 text-sm mt-0.5">{cct.provis13}%</p>
                       </div>
                     </div>
                   </div>
@@ -569,26 +632,41 @@ export default function PublishedCCTPage() {
                             : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-xs'
                         }`}
                       >
-                        <p className="whitespace-pre-line font-medium">{m.text}</p>
+                        <FormattedChatText text={m.text} isUser={isUser} />
 
                         {/* CLÁUSULA CITADA */}
                         {m.clausulaCitada && (
-                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-emerald-800 bg-emerald-50/70 p-2 rounded-lg">
-                            <span>📌 {m.clausulaCitada}</span>
+                          <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-emerald-900 bg-emerald-50/90 border border-emerald-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">📌</span>
+                              <span>{m.clausulaCitada}</span>
+                            </div>
                             <button
                               onClick={() => handleCopyText(m.id, `${m.clausulaCitada}\n\n${m.trechoOriginal || m.text}`)}
                               title="Copiar trecho"
-                              className="text-slate-500 hover:text-emerald-700 ml-2 cursor-pointer"
+                              className="p-1 text-slate-400 hover:text-emerald-800 hover:bg-emerald-100/60 rounded-lg transition-colors cursor-pointer"
                             >
-                              {copiedId === m.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                              {copiedId === m.id ? (
+                                <span className="flex items-center gap-1 text-[10px] text-emerald-700 font-bold">
+                                  <Check size={12} /> Copiado
+                                </span>
+                              ) : (
+                                <Copy size={13} />
+                              )}
                             </button>
                           </div>
                         )}
 
-                        {/* TRECHO ORIGINAL */}
+                        {/* TRECHO ORIGINAL DA CCT */}
                         {m.trechoOriginal && (
-                          <div className="mt-2 text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg font-mono border border-slate-200/60 max-h-32 overflow-y-auto">
-                            <strong>Trecho da CCT:</strong> &ldquo;{m.trechoOriginal}&rdquo;
+                          <div className="mt-2.5 p-3 rounded-xl bg-slate-50 border-l-4 border-[#1B4D3E] border border-slate-200/80 text-[11px] text-slate-600 leading-relaxed max-h-36 overflow-y-auto">
+                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                              <FileText size={12} className="text-[#1B4D3E]" />
+                              <span>Trecho Original da Convenção</span>
+                            </div>
+                            <blockquote className="italic text-slate-700 font-sans leading-relaxed">
+                              &ldquo;{m.trechoOriginal}&rdquo;
+                            </blockquote>
                           </div>
                         )}
                       </div>
