@@ -1,15 +1,30 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id') || 'cmpsloy27000004jlxvb5n9xo';
-    const url = searchParams.get('url') || 'https://www.canva.com/design/DAHCXKiLmiQ/v3lyl52DMCmsHRbgxx8uHQ/view?embed';
+    const user = await getLoggedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
+    }
 
-    // 1. Busca o documento existente
-    const doc = await prisma.documentoProposta.findUnique({
-      where: { id }
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const url = searchParams.get('url');
+
+    if (!id || !url) {
+      return NextResponse.json({ error: 'Parâmetros "id" e "url" são obrigatórios.' }, { status: 400 });
+    }
+
+    // 1. Busca o documento existente garantindo que pertence ao tenant
+    const doc = await prisma.documentoProposta.findFirst({
+      where: { 
+        id,
+        proposta: {
+          tenantId: user.tenantId
+        }
+      }
     });
 
     if (!doc) {

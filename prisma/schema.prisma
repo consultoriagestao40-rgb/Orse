@@ -143,6 +143,14 @@ model User {
   acessoCct              Boolean  @default(true)
   acessoPropostas        Boolean  @default(true)
   perfilAcessoNome       String?  @default("Vendedor")
+
+  // Segurança Corporativa, Brute Force & 2FA
+  failedLoginAttempts    Int      @default(0)
+  lockedUntil            DateTime?
+  emailVerified          Boolean  @default(true)
+  twoFactorEnabled       Boolean  @default(false)
+  twoFactorCode          String?
+  twoFactorExpiresAt     DateTime?
 }
 
 model Client {

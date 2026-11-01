@@ -93,6 +93,7 @@ export default function UsuariosPage() {
     acessoProspeccao: true,
     acessoCct: true,
     acessoPropostas: true,
+    twoFactorEnabled: false,
   });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,6 +196,7 @@ export default function UsuariosPage() {
       acessoProspeccao: defaultPreset.acessoProspeccao,
       acessoCct: defaultPreset.acessoCct,
       acessoPropostas: defaultPreset.acessoPropostas,
+      twoFactorEnabled: false,
     });
     setShowModal(true);
   }
@@ -222,6 +224,7 @@ export default function UsuariosPage() {
       acessoProspeccao: user.acessoProspeccao !== undefined ? Boolean(user.acessoProspeccao) : true,
       acessoCct: user.acessoCct !== undefined ? Boolean(user.acessoCct) : true,
       acessoPropostas: user.acessoPropostas !== undefined ? Boolean(user.acessoPropostas) : true,
+      twoFactorEnabled: Boolean(user.twoFactorEnabled),
     });
     setShowModal(true);
   }
@@ -423,6 +426,17 @@ export default function UsuariosPage() {
                         <Shield size={10} />
                         {u.perfilAcessoNome || (u.role === 'ADMIN' ? 'Admin' : u.role === 'MANAGER' ? 'Gestor' : 'Vendedor')}
                       </span>
+                      <div className="mt-1 flex items-center justify-center">
+                        {u.twoFactorEnabled ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-200 px-2 py-0.5 rounded-full" title="Autenticação em Dois Fatores Ativada">
+                            <Lock size={9} /> 2FA Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full" title="2FA Inativo para este usuário">
+                            2FA Inativo
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Níveis de Visibilidade e Módulos */}
@@ -974,6 +988,31 @@ export default function UsuariosPage() {
                               checked={formData.acessoPropostas}
                               onChange={(e) => setFormData({...formData, acessoPropostas: e.target.checked, perfilAcessoNome: 'Personalizado'})}
                               className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                            />
+                          </label>
+                        </div>
+
+                        {/* Bloco de Segurança & 2FA */}
+                        <div className="pt-4 border-t border-slate-200">
+                          <label className="block text-[11px] font-black uppercase text-slate-600 mb-2 flex items-center gap-1.5">
+                            <Lock size={13} className="text-[#10B981]" />
+                            Segurança & Autenticação
+                          </label>
+                          <label className="flex items-center justify-between p-3.5 bg-emerald-50/50 border border-emerald-200/80 rounded-xl cursor-pointer hover:bg-emerald-50/90 transition-colors">
+                            <div>
+                              <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                <Shield size={13} className="text-emerald-700" />
+                                Exigir Segundo Fator (2FA por E-mail)
+                              </span>
+                              <span className="text-[10px] text-slate-500 block mt-0.5">
+                                Ao fazer login, um código de verificação numérico de 6 dígitos será enviado ao e-mail deste colaborador.
+                              </span>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={formData.twoFactorEnabled}
+                              onChange={(e) => setFormData({...formData, twoFactorEnabled: e.target.checked})}
+                              className="w-4 h-4 rounded text-[#1B4D3E] focus:ring-[#1B4D3E] accent-[#1B4D3E]"
                             />
                           </label>
                         </div>

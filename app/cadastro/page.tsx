@@ -67,8 +67,8 @@ function CadastroForm() {
       setError('Informe um WhatsApp válido com DDD.');
       return;
     }
-    if (form.password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres.');
+    if (form.password.length < 8 || !/[A-Z]/.test(form.password) || !/[a-z]/.test(form.password) || !/[0-9]/.test(form.password) || !/[^A-Za-z0-9]/.test(form.password)) {
+      setError('A senha deve conter no mínimo 8 caracteres com letras maiúsculas, minúsculas, números e caracteres especiais.');
       return;
     }
 
@@ -91,6 +91,15 @@ function CadastroForm() {
       setLoading(false);
     }
   };
+
+  const passwordRules = [
+    { label: '8+ caracteres', valid: form.password.length >= 8 },
+    { label: 'Maiúscula', valid: /[A-Z]/.test(form.password) },
+    { label: 'Minúscula', valid: /[a-z]/.test(form.password) },
+    { label: 'Número', valid: /[0-9]/.test(form.password) },
+    { label: 'Símbolo (!@#...)', valid: /[^A-Za-z0-9]/.test(form.password) },
+  ];
+  const passwordValidCount = passwordRules.filter(r => r.valid).length;
 
   return (
     <div
@@ -205,7 +214,7 @@ function CadastroForm() {
               <Field label="WhatsApp">
                 <input id="cadastro-whatsapp" type="tel" inputMode="numeric" className={inputCls} style={{ borderColor: C.line }} value={form.celular} onChange={set('celular')} autoComplete="tel" placeholder="(11) 99999-9999" />
               </Field>
-              <Field label="Senha">
+              <Field label="Senha corporativa segura">
                 <div className="relative">
                   <input
                     id="cadastro-senha"
@@ -215,7 +224,7 @@ function CadastroForm() {
                     value={form.password}
                     onChange={set('password')}
                     autoComplete="new-password"
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 8 caracteres (A, a, 1, !)"
                   />
                   <button
                     type="button"
@@ -227,6 +236,35 @@ function CadastroForm() {
                     {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
+
+                {/* Medidor visual de força */}
+                {form.password && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex gap-1 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-300 rounded-full ${
+                          passwordValidCount <= 2 ? 'w-1/4 bg-rose-500' :
+                          passwordValidCount <= 4 ? 'w-3/4 bg-amber-500' :
+                          'w-full bg-emerald-600'
+                        }`}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {passwordRules.map((r, i) => (
+                        <span 
+                          key={i}
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition-colors ${
+                            r.valid 
+                              ? 'bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200' 
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
+                        >
+                          {r.valid ? '✓ ' : '• '}{r.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </Field>
 
               {error && (

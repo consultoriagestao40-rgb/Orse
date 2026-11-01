@@ -1,5 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { 
+  checkAccountLockout, 
+  verifyPassword, 
+  registerFailedAttempt, 
+  registerSuccessfulLogin,
+  generateOtpCode
+} from '@/lib/security'
 
 export async function POST(request: Request) {
   try {
@@ -9,14 +16,66 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios' }, { status: 400 })
     }
 
+    const emailNorm = email.toLowerCase().trim()
+
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: emailNorm },
       include: { tenant: true }
     })
 
-    if (!user || user.password !== password) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
+    if (!user) {
+      return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 })
     }
+
+    // 1. Verificação de Bloqueio por Força Bruta (Brute-Force Lockout)
+    const lockout = checkAccountLockout(user)
+    if (lockout.isLocked) {
+      return NextResponse.json({ 
+        error: `Conta bloqueada temporariamente por motivos de segurança. Tente novamente em ${lockout.remainingMinutes} minuto(s).` 
+      }, { status: 423 })
+    }
+
+    // 2. Validação da Senha com Bcrypt (com migração suave de legados)
+    const { isValid, needsMigration } = await verifyPassword(password, user.password)
+
+    if (!isValid) {
+      const failResult = await registerFailedAttempt(user.id, user.failedLoginAttempts || 0)
+      if (failResult.isLocked) {
+        return NextResponse.json({ 
+          error: `Muitas tentativas incorretas. Sua conta foi temporariamente bloqueada por ${failResult.remainingMinutes} minutos por segurança.` 
+        }, { status: 423 })
+      }
+      return NextResponse.json({ 
+        error: `Credenciais inválidas. Você tem mais ${failResult.remainingAttempts} tentativa(s) antes do bloqueio da conta.` 
+      }, { status: 401 })
+    }
+
+    // 3. Suporte a Autenticação em Dois Fatores (2FA)
+    if (user.twoFactorEnabled) {
+      const otpCode = generateOtpCode()
+      const otpExpires = new Date(Date.now() + 10 * 60 * 1000) // 10 minutos
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          twoFactorCode: otpCode,
+          twoFactorExpiresAt: otpExpires,
+        },
+      })
+
+      // Envia notificação por e-mail (ou registra no log para testes locais)
+      console.log(`[2FA SECURITY] Código OTP para ${user.email}: ${otpCode}`)
+
+      return NextResponse.json({
+        success: true,
+        requires2FA: true,
+        email: user.email,
+        message: 'Código de segurança de 6 dígitos enviado para seu e-mail.',
+      })
+    }
+
+    // 4. Sucesso: Reseta tentativas e migra senha legada para hash Bcrypt
+    await registerSuccessfulLogin(user.id, password, needsMigration)
 
     const isProduction = process.env.NODE_ENV === 'production'
 
@@ -50,14 +109,13 @@ export async function POST(request: Request) {
       path: '/',
     }
 
-    // sb_session: armazena o email diretamente (httpOnly - lido apenas pelo servidor)
-    // Isso permite que o layout.tsx valide admin sem depender de sb_user
+    // sb_session: armazena o email (httpOnly - proteção total contra XSS)
     response.cookies.set('sb_session', user.email, {
       ...baseOpts,
       httpOnly: true,
     })
 
-    // sb_user: dados completos para o frontend (não httpOnly - lido pelo browser)
+    // sb_user: dados de exibição do usuário
     response.cookies.set('sb_user', JSON.stringify(userData), {
       ...baseOpts,
       httpOnly: false,

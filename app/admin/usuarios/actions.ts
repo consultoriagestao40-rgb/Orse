@@ -60,11 +60,15 @@ export async function createUsuario(data: any) {
       }
     }
 
+    const { hashPassword } = await import('@/lib/security');
+    const rawPassword = data.password && data.password.trim() ? data.password.trim() : '123456';
+    const hashedPassword = await hashPassword(rawPassword);
+
     const newUser = await prisma.user.create({
       data: {
         email: data.email,
         nome: data.nome,
-        password: data.password || '123456',
+        password: hashedPassword,
         role: data.role,
         cargo: data.cargo || null,
         celular: data.celular || null,
@@ -82,6 +86,9 @@ export async function createUsuario(data: any) {
         acessoCct: data.acessoCct !== undefined ? Boolean(data.acessoCct) : true,
         acessoPropostas: data.acessoPropostas !== undefined ? Boolean(data.acessoPropostas) : true,
         perfilAcessoNome: data.perfilAcessoNome || 'Personalizado',
+        twoFactorEnabled: data.twoFactorEnabled !== undefined ? Boolean(data.twoFactorEnabled) : false,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
       },
     });
     revalidatePath('/admin/usuarios');
@@ -103,12 +110,18 @@ export async function deleteUsuario(id: string) {
 
 export async function updateUsuario(id: string, data: any) {
   try {
+    let hashedPassword: string | undefined = undefined;
+    if (data.password && data.password.trim()) {
+      const { hashPassword } = await import('@/lib/security');
+      hashedPassword = await hashPassword(data.password.trim());
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: {
         email: data.email,
         nome: data.nome,
-        password: data.password ? data.password : undefined,
+        password: hashedPassword !== undefined ? hashedPassword : undefined,
         role: data.role,
         cargo: data.cargo || null,
         celular: data.celular || null,
@@ -125,6 +138,7 @@ export async function updateUsuario(id: string, data: any) {
         acessoCct: data.acessoCct !== undefined ? Boolean(data.acessoCct) : undefined,
         acessoPropostas: data.acessoPropostas !== undefined ? Boolean(data.acessoPropostas) : undefined,
         perfilAcessoNome: data.perfilAcessoNome !== undefined ? data.perfilAcessoNome : undefined,
+        twoFactorEnabled: data.twoFactorEnabled !== undefined ? Boolean(data.twoFactorEnabled) : undefined,
       },
     });
     revalidatePath('/admin/usuarios');

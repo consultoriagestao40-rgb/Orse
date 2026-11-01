@@ -1,11 +1,22 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function GET() {
   try {
-    // 1. Fetch all DocumentoProposta records with their proposal info
+    const user = await getLoggedUser();
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
+    }
+
+    // 1. Fetch all DocumentoProposta records with their proposal info for this tenant
     const docs = await prisma.documentoProposta.findMany({
+      where: {
+        proposta: {
+          tenantId: user.tenantId
+        }
+      },
       include: {
         proposta: true,
       },

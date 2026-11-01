@@ -1357,12 +1357,31 @@ export async function changeMyPassword(currentPassword: string, newPassword: str
     if (!user) {
       return { success: false, error: 'Usuário não autenticado.' };
     }
-    if (user.password !== currentPassword) {
+
+    const { verifyPassword, validatePasswordStrength, hashPassword } = await import('@/lib/security');
+
+    // Valida senha atual
+    const { isValid } = await verifyPassword(currentPassword, user.password);
+    if (!isValid) {
       return { success: false, error: 'A senha atual informada está incorreta.' };
     }
+
+    // Valida complexidade da nova senha
+    const strength = validatePasswordStrength(newPassword);
+    if (!strength.valid) {
+      return { success: false, error: strength.errors[0] || 'A nova senha não atende aos requisitos de segurança.' };
+    }
+
+    // Hash Bcrypt da nova senha
+    const hashedPassword = await hashPassword(newPassword);
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { password: newPassword }
+      data: { 
+        password: hashedPassword,
+        failedLoginAttempts: 0,
+        lockedUntil: null
+      }
     });
     return { success: true };
   } catch (error: any) {
@@ -1396,10 +1415,18 @@ export async function requestPasswordReset(email: string) {
     if (!user) {
       return { success: false, error: 'Este e-mail corporativo não está cadastrado na plataforma.' };
     }
+
+    const { hashPassword } = await import('@/lib/security');
     const tempPass = 'SBH-' + Math.floor(1000 + Math.random() * 9000);
+    const hashedTemp = await hashPassword(tempPass);
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { password: tempPass }
+      data: { 
+        password: hashedTemp,
+        failedLoginAttempts: 0,
+        lockedUntil: null
+      }
     });
     return { success: true, tempPassword: tempPass };
   } catch (error: any) {

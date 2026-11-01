@@ -16,6 +16,15 @@ export async function POST(request: Request) {
 
     const emailNorm = email.toLowerCase().trim()
 
+    // Validação da Política de Senhas Fortes
+    const { validatePasswordStrength, hashPassword } = await import('@/lib/security')
+    const passwordCheck = validatePasswordStrength(password)
+    if (!passwordCheck.valid) {
+      return NextResponse.json({ 
+        error: passwordCheck.errors[0] || 'Por favor, crie uma senha mais forte (mínimo 8 caracteres com maiúsculas, números e símbolos).' 
+      }, { status: 400 })
+    }
+
     // Verifica se já existe usuário com esse e-mail
     const existing = await prisma.user.findUnique({ where: { email: emailNorm } })
     if (existing) {
@@ -36,14 +45,17 @@ export async function POST(request: Request) {
     })
     const tenantId = tenant.id
 
+    const hashedPassword = await hashPassword(password)
+
     const user = await prisma.user.create({
       data: {
         nome: nome.trim(),
         email: emailNorm,
-        password: password, // Em produção, usar bcrypt — aqui mantemos o padrão do sistema
+        password: hashedPassword,
         role: 'ADMIN',
         celular: celularDigits,
         tenantId,
+        emailVerified: true,
       },
       include: { tenant: true }
     })
