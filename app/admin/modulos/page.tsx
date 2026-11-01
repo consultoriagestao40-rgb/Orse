@@ -3,12 +3,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
-  MODULOS_CATALOGO, 
   getTenantsForModulosAction, 
-  updateTenantModulosAction,
-  TenantFeaturesConfig,
-  ModulePricingItem 
+  updateTenantModulosAction 
 } from './actions';
+import {
+  MODULOS_CATALOGO,
+  type TenantFeaturesConfig,
+  type ModulePricingItem
+} from './constants';
 import { 
   Layers, CheckCircle2, Shield, Users, DollarSign, 
   Sparkles, Copy, Check, Save, RefreshCw, Building2, 
@@ -133,12 +135,13 @@ export default function ModulosPricingPage() {
 
   // Cálculos financeiros
   const calculations = useMemo(() => {
-    const core = MODULOS_CATALOGO.find(m => m.id === 'core')!;
-    let subtotalModulos = core.precoMensal;
+    const list = Array.isArray(MODULOS_CATALOGO) ? MODULOS_CATALOGO : [];
+    const core = list.find(m => m.id === 'core') || list[0];
+    let subtotalModulos = core ? core.precoMensal : 690.0;
 
-    const modulosSelecionadosList: ModulePricingItem[] = [core];
+    const modulosSelecionadosList: ModulePricingItem[] = core ? [core] : [];
 
-    MODULOS_CATALOGO.forEach(mod => {
+    list.forEach(mod => {
       if (mod.id !== 'core') {
         const isSelected = Boolean(activeFeatures[mod.id as keyof TenantFeaturesConfig]);
         if (isSelected) {
@@ -147,6 +150,7 @@ export default function ModulosPricingPage() {
         }
       }
     });
+
 
     const totalExtraUsersPrice = extraUsers * pricePerExtraUser;
     const totalUsers = baseIncludedUsers + extraUsers;
