@@ -162,8 +162,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       (cctEfetiva.provisRescisao || 0);
   }
     
+  const adicionalExtraIndenizatorio = (!adicionalExtraIncideEncargos && adicionalExtraValor > 0) ? adicionalExtraValor : 0;
   const totalEncargos = totalRemuneracao * (percentualEncargosGerais / 100);
-  const totalBlocoA = totalRemuneracao + totalEncargos;
+  const totalBlocoA = totalRemuneracao + totalEncargos + adicionalExtraIndenizatorio;
 
   // 3. Inteligência de Escalas para Benefícios
   let diasEscala = 22;
@@ -214,9 +215,8 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 
   const outrosBeneficios = Number(cctEfetiva.outrosBeneficios || 0) || 0;
   const adicionalAssiduidade = Number(param.adicionalAssiduidade || colab.adicionalAssiduidade || 0) || 0;
-  const adicionalExtraIndenizatorio = (!adicionalExtraIncideEncargos && adicionalExtraValor > 0) ? adicionalExtraValor : 0;
 
-  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios + adicionalAssiduidade + adicionalExtraIndenizatorio) - (descontoVA + descontoVT);
+  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios + adicionalAssiduidade) - (descontoVA + descontoVT);
 
   // 5. BLOCO B - INSUMOS (Unificado para manter extrato limpo)
   // Calcula o total de ativos priorizando o valor manual do colaborador, depois a composição detalhada do cargo, e por fim o valor fixo.
@@ -245,6 +245,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   return {
     remuneracao: totalRemuneracao,
     encargos: totalEncargos,
+    outrosBlocoA: adicionalExtraIndenizatorio,
     blocoA: totalBlocoA,
     beneficios: totalBeneficios,
     ativos: totalAtivos,
@@ -257,6 +258,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       intrajornada: remuIntra,
       dsr: remuDsr,
       outros: remuOutros,
+      outrosIndenizatorios: adicionalExtraIndenizatorio,
       adicionalExtra: adicionalExtraValor,
       adicionalExtraNome: param.adicionalExtraNome || 'Adicional Extra do Contrato',
       adicionalExtraIncideEncargos

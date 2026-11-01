@@ -2338,12 +2338,21 @@ function PropostaEditor() {
                                     {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0) || 0)}
                                  </td>
                               </tr>
-                              <tr className="border-b border-slate-200 border-dotted">
-                                 <td className="py-1.5 px-6 font-bold">3) Outros (Especificar)</td>
-                                 <td className="py-1.5 px-6 text-center">-</td>
-                                 <td className="py-1.5 px-6 text-right">-</td>
-                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(0)}</td>
-                              </tr>
+                              {(() => {
+                                 const totalOutrosIndenizatorios = resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.outrosBlocoA || 0) * i.quantidade), 0) || 0;
+                                 const itemComExtra = proposta.equipe.find((p: any) => p.parametrosPosto?.adicionalExtraIncideEncargos === false && Number(p.parametrosPosto?.adicionalExtraValor) > 0);
+                                 const labelOutros = totalOutrosIndenizatorios > 0 
+                                    ? `3) Outros (${itemComExtra?.parametrosPosto?.adicionalExtraNome || 'Adicional Extra do Contrato / Verba Indenizatória'})`
+                                    : '3) Outros (Especificar)';
+                                 return (
+                                    <tr className="border-b border-slate-200 border-dotted">
+                                       <td className="py-1.5 px-6 font-bold">{labelOutros}</td>
+                                       <td className="py-1.5 px-6 text-center">-</td>
+                                       <td className="py-1.5 px-6 text-right">-</td>
+                                       <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalOutrosIndenizatorios)}</td>
+                                    </tr>
+                                 );
+                              })()}
                            </>
                         )}
                         

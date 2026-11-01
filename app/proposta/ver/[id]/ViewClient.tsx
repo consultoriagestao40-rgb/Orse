@@ -1717,12 +1717,21 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                                     {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0) || 0)}
                                   </td>
                                 </tr>
-                                <tr className="border-b border-slate-200 border-dotted bg-white">
-                                  <td className="py-1.5 px-6 font-bold">3) Outros (Especificar)</td>
-                                  <td className="py-1.5 px-6 text-center font-bold">-</td>
-                                  <td className="py-1.5 px-6 text-right">-</td>
-                                  <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(0)}</td>
-                                </tr>
+                                {(() => {
+                                  const totalOutrosIndenizatorios = versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.outrosBlocoA || 0) * i.quantidade), 0) || 0;
+                                  const itemComExtra = (versao?.proposta?.equipe || []).find((p: any) => p.parametrosPosto?.adicionalExtraIncideEncargos === false && Number(p.parametrosPosto?.adicionalExtraValor) > 0);
+                                  const labelOutros = totalOutrosIndenizatorios > 0 
+                                    ? `3) Outros (${itemComExtra?.parametrosPosto?.adicionalExtraNome || 'Adicional Extra do Contrato / Verba Indenizatória'})`
+                                    : '3) Outros (Especificar)';
+                                  return (
+                                    <tr className="border-b border-slate-200 border-dotted bg-white">
+                                      <td className="py-1.5 px-6 font-bold">{labelOutros}</td>
+                                      <td className="py-1.5 px-6 text-center font-bold">-</td>
+                                      <td className="py-1.5 px-6 text-right">-</td>
+                                      <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(totalOutrosIndenizatorios)}</td>
+                                    </tr>
+                                  );
+                                })()}
                               </>
                             );
                           })()}
