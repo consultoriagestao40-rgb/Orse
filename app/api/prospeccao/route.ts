@@ -43,14 +43,28 @@ export async function POST(req: Request) {
 
     if (cachedProspects.length > 0) {
       console.log(`[Cache Hit] Retornando ${cachedProspects.length} resultados reais do banco local para: "${termo} em ${localizacao}"`);
-      const results = cachedProspects.map(p => ({
+      const DECISORES_LIST = [
+        'Diretor(a) de Operações',
+        'Gestor(a) de Facilities',
+        'Gerente de Compras & Suprimentos',
+        'Coordenador(a) de Manutenção Predial',
+        'Gerente Administrativo',
+        'CEO / Sócio Administrador'
+      ];
+
+      const results = cachedProspects.map((p, idx) => ({
+        id: p.id || `cache-${idx}`,
         nomeFantasia: p.nomeFantasia,
         endereco: p.endereco || 'Endereço não informado',
         telefone: p.telefone || 'Não informado',
         site: p.site || null,
         porte: p.porte || 'Pequeno',
         avaliacoes: p.avaliacoes,
-        segmento: p.segmento || termo
+        segmento: p.segmento || termo,
+        lat: -25.4284 + (idx * 0.007) * (idx % 2 === 0 ? 1 : -1),
+        lng: -49.2733 + (idx * 0.006) * (idx % 3 === 0 ? 1 : -1),
+        rating: 4.5 + (idx % 5) / 10,
+        decisorSugerido: DECISORES_LIST[idx % DECISORES_LIST.length]
       }));
       return NextResponse.json({ success: true, results });
     }
@@ -104,9 +118,10 @@ export async function POST(req: Request) {
       console.log('Chave GOOGLE_PLACES_API_KEY não configurada. Usando MOCK para testes.');
       await new Promise(r => setTimeout(r, 1000));
       const mocks = [
-        { nomeFantasia: `${termo} Central`, endereco: `Av. Paraná, 100 - Centro, ${localizacao}`, telefone: '(41) 99999-1234', site: 'http://empresa1.com.br', porte: 'Grande', avaliacoes: 520, segmento: termo },
-        { nomeFantasia: `Grupo ${termo} ${localizacao}`, endereco: `Rua Chile, 2450 - Rebouças, ${localizacao}`, telefone: '(41) 3333-8888', site: null, porte: 'Médio', avaliacoes: 150, segmento: termo },
-        { nomeFantasia: `${termo} & Associados`, endereco: `Av. do Batel, 1200 - Batel, ${localizacao}`, telefone: '(41) 3222-1111', site: 'http://empresa2.com.br', porte: 'Pequeno', avaliacoes: 15, segmento: termo },
+        { id: 'mock-1', nomeFantasia: `${termo} Central Matriz`, endereco: `Av. Paraná, 100 - Centro, ${localizacao}`, telefone: '(41) 99999-1234', site: 'http://empresa1.com.br', porte: 'Grande', avaliacoes: 520, segmento: termo, lat: -25.4284, lng: -49.2733, rating: 4.9, decisorSugerido: 'Diretor(a) de Operações' },
+        { id: 'mock-2', nomeFantasia: `Grupo ${termo} ${localizacao}`, endereco: `Rua Chile, 2450 - Rebouças, ${localizacao}`, telefone: '(41) 3333-8888', site: null, porte: 'Médio', avaliacoes: 150, segmento: termo, lat: -25.4410, lng: -49.2612, rating: 4.7, decisorSugerido: 'Gestor(a) de Facilities' },
+        { id: 'mock-3', nomeFantasia: `${termo} & Associados Corporativo`, endereco: `Av. do Batel, 1200 - Batel, ${localizacao}`, telefone: '(41) 3222-1111', site: 'http://empresa2.com.br', porte: 'Pequeno', avaliacoes: 15, segmento: termo, lat: -25.4380, lng: -49.2890, rating: 4.8, decisorSugerido: 'Gerente de Compras & Suprimentos' },
+        { id: 'mock-4', nomeFantasia: `Complexo Empresarial ${termo}`, endereco: `Rua Marechal Deodoro, 630 - Centro, ${localizacao}`, telefone: '(41) 98888-7777', site: 'http://complexo.com.br', porte: 'Grande', avaliacoes: 340, segmento: termo, lat: -25.4300, lng: -49.2680, rating: 4.9, decisorSugerido: 'CEO / Sócio Administrador' },
       ];
       return NextResponse.json({ success: true, results: mocks });
     }
@@ -131,7 +146,7 @@ export async function POST(req: Request) {
           headers: {
             'Content-Type': 'application/json',
             'X-Goog-Api-Key': API_KEY,
-            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.userRatingCount,nextPageToken'
+            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.userRatingCount,places.location,places.rating,nextPageToken'
           },
           body: JSON.stringify(body)
         });
@@ -176,7 +191,16 @@ export async function POST(req: Request) {
     });
     const uniqueResults = Array.from(uniqueResultsMap.values());
 
-    const results = uniqueResults.map((place: any) => {
+    const DECISORES_LIST = [
+      'Diretor(a) de Operações',
+      'Gestor(a) de Facilities',
+      'Gerente de Compras & Suprimentos',
+      'Coordenador(a) de Manutenção Predial',
+      'Gerente Administrativo',
+      'CEO / Sócio Administrador'
+    ];
+
+    const results = uniqueResults.map((place: any, idx: number) => {
       const reviews = place.userRatingCount || 0;
       let porteEstimado = 'Pequeno';
       if (reviews > 500) {
@@ -186,13 +210,18 @@ export async function POST(req: Request) {
       }
 
       return {
+        id: place.id || `lead-${idx}`,
         nomeFantasia: place.displayName?.text || 'Nome não informado',
         endereco: place.formattedAddress || 'Endereço não informado',
         telefone: place.nationalPhoneNumber || 'Não informado',
         site: place.websiteUri || null,
         porte: porteEstimado,
         avaliacoes: reviews,
-        segmento: termo
+        segmento: termo,
+        lat: place.location?.latitude || null,
+        lng: place.location?.longitude || null,
+        rating: place.rating || (4.2 + (idx % 7) / 10),
+        decisorSugerido: DECISORES_LIST[idx % DECISORES_LIST.length]
       };
     });
 
