@@ -10,7 +10,7 @@ import {
   Bold, Italic, Underline, Strikethrough, AlignLeft, 
   AlignCenter, AlignRight, AlignJustify, Type, Palette, Clock,
   History, X, MessageSquare, CheckSquare, Square, List, ListOrdered, FileSymlink, Copy,
-  Indent, Outdent
+  Indent, Outdent, Sparkles, ArrowDownToLine, Flame, Lightbulb
 } from 'lucide-react';
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
@@ -19,7 +19,7 @@ import {
   getPendingActionsDetailed, AISuggestedAction
 } from './actions';
 import { getUsersForFilter } from '@/app/leads/actions';
-import MeetingRecorderAndAI from '@/components/atas/MeetingRecorderAndAI';
+import AtaHeaderRecorder from '@/components/atas/AtaHeaderRecorder';
 
 interface Participante {
   userId?: string;
@@ -119,6 +119,7 @@ export default function AtasPage() {
   const [transcricao, setTranscricao] = useState<string>('');
   const [resumoIa, setResumoIa] = useState<string>('');
   const [acoesSugeridasIa, setAcoesSugeridasIa] = useState<any[]>([]);
+  const [relatorioTab, setRelatorioTab] = useState<'relatorio' | 'sintese' | 'acoes_ia' | 'transcricao'>('relatorio');
 
   // Callbacks para o componente MeetingRecorderAndAI
   const handleApplyMinutaToReport = (htmlMinuta: string) => {
@@ -1673,11 +1674,39 @@ export default function AtasPage() {
                     <col style={{ width: '12%' }} />
                   </colgroup>
                   
-                  {/* CABEÇALHO DA ATA */}
+                  {/* CABEÇALHO DA ATA COM BOTÃO DE GRAVAÇÃO */}
                   <thead>
                     <tr>
-                      <th colSpan={7} className="bg-gradient-to-r from-[#1B4D3E] via-teal-900 to-[#13382D] text-white font-black text-center text-sm md:text-base py-3.5 border-b border-slate-300 tracking-wider">
-                        {titulo && titulo !== '__SYSTEM_PLANNING_DATA__' ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
+                      <th colSpan={7} className="bg-gradient-to-r from-[#1B4D3E] via-teal-900 to-[#13382D] text-white font-black text-center text-sm md:text-base py-3 px-4 border-b border-slate-300 tracking-wider">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <span className="font-black text-left sm:text-center flex-1">
+                            {titulo && titulo !== '__SYSTEM_PLANNING_DATA__' ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
+                          </span>
+                          
+                          {/* BOTÃO DISCRETO DE GRAVAÇÃO NO CABEÇALHO DA ATA */}
+                          <div className="no-print font-sans font-normal text-xs shrink-0">
+                            <AtaHeaderRecorder
+                              titulo={titulo}
+                              dataReuniou={dataReuniou}
+                              pautas={pautas.map(p => p.descricao)}
+                              participantes={participantes}
+                              audioUrl={audioUrl}
+                              audioDuracao={audioDuracao}
+                              transcricao={transcricao}
+                              onUpdateAudio={(url, dur) => {
+                                setAudioUrl(url);
+                                setAudioDuracao(dur);
+                              }}
+                              onUpdateTranscricao={text => setTranscricao(text)}
+                              onAiProcessed={(data) => {
+                                setResumoIa(data.resumoExecutivo);
+                                setAcoesSugeridasIa(data.acoesSugeridas);
+                                setRelatorioTab('sintese');
+                              }}
+                              onSelectRelatorioTab={tab => setRelatorioTab(tab)}
+                            />
+                          </div>
+                        </div>
                       </th>
                     </tr>
                     
@@ -1793,32 +1822,6 @@ export default function AtasPage() {
                             </span>
                           )}
                         </div>
-                      </td>
-                    </tr>
-
-                    {/* SEÇÃO DISCRETA: GRAVAÇÃO & INTELIGÊNCIA ARTIFICIAL */}
-                    <tr className="no-print bg-slate-50/50 border-b border-slate-300">
-                      <td colSpan={7} className="p-2.5">
-                        <MeetingRecorderAndAI
-                          titulo={titulo}
-                          dataReuniou={dataReuniou}
-                          pautas={pautas.map(p => p.descricao)}
-                          participantes={participantes}
-                          initialAudioUrl={audioUrl}
-                          initialAudioDuracao={audioDuracao}
-                          initialTranscricao={transcricao}
-                          initialResumoIa={resumoIa}
-                          initialAcoesIa={acoesSugeridasIa}
-                          onApplyMinutaToReport={handleApplyMinutaToReport}
-                          onImportAcoes={handleImportAcoesFromAI}
-                          onUpdateAiData={(data) => {
-                            if (data.audioUrl !== undefined) setAudioUrl(data.audioUrl);
-                            if (data.audioDuracao !== undefined) setAudioDuracao(data.audioDuracao);
-                            if (data.transcricao !== undefined) setTranscricao(data.transcricao);
-                            if (data.resumoIa !== undefined) setResumoIa(data.resumoIa);
-                            if (data.acoesSugeridasIa !== undefined) setAcoesSugeridasIa(data.acoesSugeridasIa);
-                          }}
-                        />
                       </td>
                     </tr>
 
@@ -2031,162 +2034,392 @@ export default function AtasPage() {
                       </td>
                     </tr>
 
-                    {/* SEÇÃO RELATÓRIO DA REUNIÃO */}
+                    {/* SEÇÃO RELATÓRIO DA REUNIÃO COM ABAS INTEGRADAS */}
                     <tr>
-                      <th colSpan={7} className="bg-[#1B4D3E] text-white font-black text-center text-xs py-2 border-b border-slate-200 tracking-wider uppercase">
-                        RELATÓRIO DA REUNIÃO:
+                      <th colSpan={7} className="bg-[#1B4D3E] text-white font-black text-xs py-2 px-3 border-b border-slate-200 tracking-wider">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <span className="uppercase tracking-wider">RELATÓRIO DA REUNIÃO</span>
+                          
+                          {/* ABAS DO RELATÓRIO (no-print) */}
+                          <div className="flex items-center gap-1 font-normal no-print">
+                            <button
+                              type="button"
+                              onClick={() => setRelatorioTab('relatorio')}
+                              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                relatorioTab === 'relatorio' 
+                                  ? 'bg-white text-[#1B4D3E] shadow-xs' 
+                                  : 'text-emerald-100 hover:bg-white/10'
+                              }`}
+                            >
+                              📝 Minuta da Ata
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setRelatorioTab('sintese')}
+                              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                relatorioTab === 'sintese' 
+                                  ? 'bg-white text-[#1B4D3E] shadow-xs' 
+                                  : 'text-emerald-100 hover:bg-white/10'
+                              }`}
+                            >
+                              <span>✨ Síntese IA</span>
+                              {resumoIa && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setRelatorioTab('acoes_ia')}
+                              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                relatorioTab === 'acoes_ia' 
+                                  ? 'bg-white text-[#1B4D3E] shadow-xs' 
+                                  : 'text-emerald-100 hover:bg-white/10'
+                              }`}
+                            >
+                              <span>🎯 Ações IA</span>
+                              {acoesSugeridasIa.length > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-700 text-white font-bold">
+                                  {acoesSugeridasIa.length}
+                                </span>
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setRelatorioTab('transcricao')}
+                              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                relatorioTab === 'transcricao' 
+                                  ? 'bg-white text-[#1B4D3E] shadow-xs' 
+                                  : 'text-emerald-100 hover:bg-white/10'
+                              }`}
+                            >
+                              <span>🎙️ Transcrição</span>
+                              {transcricao && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                            </button>
+                          </div>
+                        </div>
                       </th>
                     </tr>
 
-                    {/* EDITOR PRINCIPAL DO RELATÓRIO / RELAÇÃO DE ATIVIDADES */}
+                    {/* CONTEÚDO DO RELATÓRIO / ABAS INTEGRADAS */}
                     <tr className="bg-white border-b border-slate-200">
-                      <td colspan="7" className="p-4 text-slate-800">
-                        {/* Rich Text Editor Toolbar para o Relatório Principal - Ocultada na Impressão */}
-                        <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
-                          <div className="flex gap-0.5 pr-2">
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'bold')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Negrito"
-                            >
-                              <Bold size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'italic')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Itálico"
-                            >
-                              <Italic size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'underline')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Sublinhado"
-                            >
-                              <Underline size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'strikeThrough')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Tachado"
-                            >
-                              <Strikethrough size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'insertUnorderedList')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Marcadores"
-                            >
-                              <List size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'insertOrderedList')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Numeração"
-                            >
-                              <ListOrdered size={13} />
-                            </button>
+                      <td colSpan={7} className="p-4 text-slate-800">
+                        
+                        {/* ABA 1: MINUTA / EDITOR PRINCIPAL (SEMPRE RENDERIZADO NA IMPRESSÃO) */}
+                        <div className={relatorioTab === 'relatorio' ? 'block' : 'hidden print:block'}>
+                          {/* Rich Text Editor Toolbar para o Relatório Principal - Ocultada na Impressão */}
+                          <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
+                            <div className="flex gap-0.5 pr-2">
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'bold')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Negrito"
+                              >
+                                <Bold size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'italic')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Itálico"
+                              >
+                                <Italic size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'underline')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Sublinhado"
+                              >
+                                <Underline size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'strikeThrough')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Tachado"
+                              >
+                                <Strikethrough size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'insertUnorderedList')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Marcadores"
+                              >
+                                <List size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'insertOrderedList')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Numeração"
+                              >
+                                <ListOrdered size={13} />
+                              </button>
+                            </div>
+
+                            <div className="flex gap-0.5 px-2">
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'justifyLeft')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Alinhar Esquerda"
+                              >
+                                <AlignLeft size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'justifyCenter')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Centralizar"
+                              >
+                                <AlignCenter size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'justifyRight')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Alinhar Direita"
+                              >
+                                <AlignRight size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'justifyFull')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Justificar"
+                              >
+                                <AlignJustify size={13} />
+                              </button>
+                            </div>
+
+                            <div className="flex gap-0.5 px-2">
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'outdent')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Diminuir Recuo"
+                              >
+                                <Outdent size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => execEditorCmd(relatorioEditorRef, 'indent')}
+                                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                                title="Aumentar Recuo"
+                              >
+                                <Indent size={13} />
+                              </button>
+                            </div>
+
+                            <div className="relative flex gap-1.5 px-2 items-center">
+                              <button
+                                type="button"
+                                onClick={() => setActiveColorPicker(activeColorPicker === 'relatorio' ? null : 'relatorio')}
+                                className="p-1 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                                title="Cor do Texto"
+                              >
+                                <Palette size={13} />
+                                <div className="w-3.5 h-3.5 rounded border border-slate-300" style={{ backgroundColor: relatorioColor }} />
+                              </button>
+                              {activeColorPicker === 'relatorio' && renderColorPicker(relatorioEditorRef, 'relatorio')}
+                              
+                              <span className="text-slate-400 pl-1" title="Tamanho do Texto">
+                                <Type size={13} />
+                              </span>
+                              <select
+                                onChange={e => execEditorCmd(relatorioEditorRef, 'fontSize', e.target.value)}
+                                className="text-[10px] font-bold bg-white border border-slate-200 rounded-md p-1 outline-none text-slate-600"
+                                title="Tamanho"
+                              >
+                                <option value="2">Pequeno</option>
+                                <option value="3" selected>Normal</option>
+                                <option value="4">Médio</option>
+                                <option value="5">Grande</option>
+                                <option value="6">Muito Grande</option>
+                              </select>
+                            </div>
                           </div>
 
-                          <div className="flex gap-0.5 px-2">
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'justifyLeft')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Alinhar Esquerda"
-                            >
-                              <AlignLeft size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'justifyCenter')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Centralizar"
-                            >
-                              <AlignCenter size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'justifyRight')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Alinhar Direita"
-                            >
-                              <AlignRight size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'justifyFull')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Justificar"
-                            >
-                              <AlignJustify size={13} />
-                            </button>
-                          </div>
-
-                          <div className="flex gap-0.5 px-2">
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'outdent')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Diminuir Recuo"
-                            >
-                              <Outdent size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => execEditorCmd(relatorioEditorRef, 'indent')}
-                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                              title="Aumentar Recuo"
-                            >
-                              <Indent size={13} />
-                            </button>
-                          </div>
-
-                          <div className="relative flex gap-1.5 px-2 items-center">
-                            <button
-                              type="button"
-                              onClick={() => setActiveColorPicker(activeColorPicker === 'relatorio' ? null : 'relatorio')}
-                              className="p-1 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
-                              title="Cor do Texto"
-                            >
-                              <Palette size={13} />
-                              <div className="w-3.5 h-3.5 rounded border border-slate-300" style={{ backgroundColor: relatorioColor }} />
-                            </button>
-                            {activeColorPicker === 'relatorio' && renderColorPicker(relatorioEditorRef, 'relatorio')}
-                            
-                            <span className="text-slate-400 pl-1" title="Tamanho do Texto">
-                              <Type size={13} />
-                            </span>
-                            <select
-                              onChange={e => execEditorCmd(relatorioEditorRef, 'fontSize', e.target.value)}
-                              className="text-[10px] font-bold bg-white border border-slate-200 rounded-md p-1 outline-none text-slate-600"
-                              title="Tamanho"
-                            >
-                              <option value="2">Pequeno</option>
-                              <option value="3" selected>Normal</option>
-                              <option value="4">Médio</option>
-                              <option value="5">Grande</option>
-                              <option value="6">Muito Grande</option>
-                            </select>
-                          </div>
+                          {/* Editor de Texto do Relatório Principal */}
+                          <div
+                            ref={relatorioEditorRef}
+                            contentEditable
+                            onInput={e => setRelatorio(e.currentTarget.innerHTML)}
+                            onKeyUp={e => handleEditorKeyUp(e, relatorioEditorRef)}
+                            className="min-h-[220px] p-4 bg-white border border-slate-200 focus:bg-slate-50/10 focus:border-slate-300 outline-none text-slate-800 text-xs font-semibold leading-relaxed"
+                            style={{ whiteSpace: 'pre-wrap' }}
+                            placeholder="Digite aqui as atividades tratadas na reunião (Ex: RELAÇÃO DE ATIVIDADES da equipe...)"
+                          />
                         </div>
 
-                        {/* Editor de Texto do Relatório Principal */}
-                        <div
-                          ref={relatorioEditorRef}
-                          contentEditable
-                          onInput={e => setRelatorio(e.currentTarget.innerHTML)}
-                          onKeyUp={e => handleEditorKeyUp(e, relatorioEditorRef)}
-                          className="min-h-[220px] p-4 bg-white border border-slate-200 focus:bg-slate-50/10 focus:border-slate-300 outline-none text-slate-800 text-xs font-semibold leading-relaxed"
-                          style={{ whiteSpace: 'pre-wrap' }}
-                          placeholder="Digite aqui as atividades tratadas na reunião (Ex: RELAÇÃO DE ATIVIDADES da equipe...)"
-                        />
+                        {/* ABA 2: SÍNTESE IA */}
+                        {relatorioTab === 'sintese' && (
+                          <div className="space-y-3 no-print animate-fadeIn">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <Sparkles size={14} className="text-amber-500" />
+                                Síntese Executiva Gerada por Inteligência Artificial
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(resumoIa);
+                                    alert('Síntese copiada para a área de transferência!');
+                                  }}
+                                  disabled={!resumoIa}
+                                  className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                >
+                                  <Copy size={12} /> Copiar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (resumoIa) {
+                                      handleApplyMinutaToReport(`<p><strong>Síntese da Reunião (IA):</strong></p><p>${resumoIa.replace(/\n/g, '<br/>')}</p>`);
+                                      setRelatorioTab('relatorio');
+                                      alert('Síntese inserida no Relatório!');
+                                    }
+                                  }}
+                                  disabled={!resumoIa}
+                                  className="text-[11px] font-bold text-white bg-[#1B4D3E] hover:bg-[#13382D] px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                >
+                                  <ArrowDownToLine size={12} /> Inserir no Relatório Principal
+                                </button>
+                              </div>
+                            </div>
+
+                            {resumoIa ? (
+                              <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                {resumoIa}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 text-slate-400">
+                                <Sparkles size={28} className="mx-auto text-slate-300 mb-2" />
+                                <p className="text-xs font-bold text-slate-600">Nenhuma síntese de IA gerada ainda.</p>
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                  Use o botão &quot;Gravar Reunião&quot; ou &quot;Gerar com IA&quot; no cabeçalho da ATA para processar.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ABA 3: AÇÕES SUGERIDAS PELA IA */}
+                        {relatorioTab === 'acoes_ia' && (
+                          <div className="space-y-3 no-print animate-fadeIn">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <CheckSquare size={14} className="text-[#1B4D3E]" />
+                                Ações & Tarefas Identificadas pela IA ({acoesSugeridasIa.length})
+                              </span>
+                              {acoesSugeridasIa.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleImportAcoesFromAI(acoesSugeridasIa);
+                                    alert(`${acoesSugeridasIa.length} Ações importadas com sucesso para a Tabela de Ações da ATA!`);
+                                  }}
+                                  className="text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                >
+                                  <ArrowDownToLine size={12} />
+                                  <span>Importar Ações para a Tabela da ATA</span>
+                                </button>
+                              )}
+                            </div>
+
+                            {acoesSugeridasIa.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                {acoesSugeridasIa.map((acao: any, idx: number) => (
+                                  <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col justify-between">
+                                    <div>
+                                      <div className="flex items-center justify-between gap-1 mb-1.5">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase">Ação #{idx + 1}</span>
+                                        <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
+                                          {acao.prioridade || 'Média'}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs font-semibold text-slate-800 leading-snug">{acao.descricao}</p>
+                                    </div>
+                                    <div className="mt-2.5 pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
+                                      <span className="flex items-center gap-1 font-medium text-slate-700">
+                                        <User size={12} className="text-[#1B4D3E]" />
+                                        {acao.responsavelNome || 'Não especificado'}
+                                      </span>
+                                      <span className="flex items-center gap-1 font-mono text-[10px] text-slate-600">
+                                        <Calendar size={11} />
+                                        {acao.dataLimite ? new Date(acao.dataLimite).toLocaleDateString('pt-BR') : 'Sem prazo'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 text-slate-400">
+                                <CheckSquare size={28} className="mx-auto text-slate-300 mb-2" />
+                                <p className="text-xs font-bold text-slate-600">Nenhuma ação identificada ainda.</p>
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                  A IA identifica automaticamente prazos e responsáveis citados nas falas da reunião.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ABA 4: TRANSCRIÇÃO */}
+                        {relatorioTab === 'transcricao' && (
+                          <div className="space-y-3 no-print animate-fadeIn">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <MessageSquare size={14} className="text-slate-500" />
+                                Transcrição das Falas da Reunião
+                                {transcricao && (
+                                  <span className="text-[10px] font-mono text-slate-400 font-normal">
+                                    ({transcricao.split(/\s+/).filter(Boolean).length} palavras)
+                                  </span>
+                                )}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(transcricao);
+                                    alert('Transcrição copiada!');
+                                  }}
+                                  disabled={!transcricao}
+                                  className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                >
+                                  <Copy size={12} /> Copiar
+                                </button>
+                                {transcricao && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (confirm('Deseja limpar o texto da transcrição?')) {
+                                        setTranscricao('');
+                                      }
+                                    }}
+                                    className="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg cursor-pointer"
+                                  >
+                                    Limpar
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            <textarea
+                              value={transcricao}
+                              onChange={e => setTranscricao(e.target.value)}
+                              placeholder="A transcrição das falas aparecerá aqui em tempo real durante a gravação... Você também pode digitar ou colar anotações de reunião."
+                              rows={8}
+                              className="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-800 placeholder-slate-400 leading-relaxed focus:bg-white focus:border-[#1B4D3E] focus:outline-none resize-y"
+                            />
+                          </div>
+                        )}
+
                       </td>
                     </tr>
 
