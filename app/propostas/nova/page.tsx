@@ -21,6 +21,9 @@ import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightb
 import BrazilMap from '@/components/BrazilMap';
 import DocumentoA4 from '@/components/DocumentoA4';
 import TemplateEditorModal from '@/components/TemplateEditorModal';
+import SearchableSelect, { SearchableSelectOption } from '@/components/SearchableSelect';
+import FpvPdfDocument from '@/components/FpvPdfDocument';
+import { FileDown, Printer } from 'lucide-react';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
 const TABS = [
@@ -1237,44 +1240,27 @@ function PropostaEditor() {
               </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 mb-3">
-              <div className="flex-1">
-                <input 
-                  type="text" 
-                  placeholder="🔍 Digite para filtrar..." 
-                  className="w-full bg-white border border-slate-350 rounded px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#1B4D3E] placeholder-slate-400 font-medium"
-                  value={productSearch[tipo] || ''}
-                  onChange={(e) => {
-                    setProductSearch(prev => ({
-                      ...prev,
-                      [tipo]: e.target.value
-                    }));
-                  }}
-                />
-              </div>
-              <div className="flex-[2]">
-                <select 
-                  className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
-                  value=""
-                  onChange={(e) => {
-                    const prod = produtosDb.find(p => p.id === e.target.value);
-                    if (prod) {
-                      addInsumoItem(tipo, prod);
-                      setProductSearch(prev => ({
-                        ...prev,
-                        [tipo]: ''
-                      }));
-                    }
-                  }}
-                >
-                  <option value="" className="text-slate-800 bg-white">
-                    {produtosFiltrados.length === 0 ? "Nenhum produto correspondente..." : `Selecione um produto (${produtosFiltrados.length} encontrados)...`}
-                  </option>
-                  {produtosFiltrados.map(p => (
-                    <option key={p.id} value={p.id}>[{p.codigo}] {p.descricao} - {formatCurrency(p.precoUnitario)}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="mb-3">
+              <SearchableSelect
+                value=""
+                clearOnSelect={true}
+                onChange={(prodId) => {
+                  const prod = produtosDb.find(p => p.id === prodId);
+                  if (prod) {
+                    addInsumoItem(tipo, prod);
+                  }
+                }}
+                placeholder={produtosFiltrados.length === 0 ? "Nenhum produto cadastrado nesta categoria..." : "🔍 Digite o nome, código ou selecione um produto para adicionar..."}
+                searchPlaceholder="Digitar código, descrição ou marca..."
+                emptyMessage="Nenhum produto correspondente encontrado."
+                options={produtosFiltrados.map(p => ({
+                  value: p.id,
+                  label: `[${p.codigo}] ${p.descricao}`,
+                  sublabel: p.marca ? `Marca: ${p.marca} • Unidade: ${p.unidade || 'UN'}` : `Unidade: ${p.unidade || 'UN'}`,
+                  badge: formatCurrency(p.precoUnitario),
+                  keywords: [String(p.codigo), p.descricao, p.marca || '', p.categoria || '']
+                }))}
+              />
             </div>
           </div>
 
@@ -1385,7 +1371,19 @@ function PropostaEditor() {
            <Sidebar />
            <main className="flex-1 flex items-center justify-center">
               <div className="text-[#1B4D3E] font-bold animate-pulse">Carregando Editor FPV...</div>
-           </main>
+                 {/* COMPONENTE DE EXPORTAÇÃO E IMPRESSÃO DO FPV EM PDF (TODAS AS TELAS OU TELA ESPECÍFICA) */}
+      {fpvExportMode && (
+        <FpvPdfDocument
+          mode={fpvExportMode}
+          proposta={proposta}
+          resultado={resultado}
+          empresaEmissora={empresasEmissoras.find((e: any) => e.id === selectedEmpresaId)}
+          companyLogo={companyLogo}
+          companyName={companyName}
+          escalasDb={escalasDb}
+        />
+      )}
+</main>
         </div>
      );
   }
@@ -1443,6 +1441,61 @@ function PropostaEditor() {
                {!id && (
                  <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-medium">Nova Proposta</span>
                )}
+               <div className="relative inline-block text-left">
+                 <button 
+                   type="button"
+                   onClick={() => setShowFpvExportMenu(!showFpvExportMenu)}
+                   className="bg-white border border-[#1B4D3E] hover:bg-emerald-50 text-[#1B4D3E] text-sm font-semibold py-2 px-4 rounded shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                   title="Exportar FPV em PDF (Completo ou por Tela)"
+                 >
+                   <FileDown size={16} />
+                   <span>Exportar FPV</span>
+                   <ChevronDown size={14} className={`transition-transform ${showFpvExportMenu ? 'rotate-180' : ''}`} />
+                 </button>
+
+                 {showFpvExportMenu && (
+                   <div className="origin-top-right absolute right-0 mt-1.5 w-64 rounded-xl shadow-2xl bg-white border border-slate-200 divide-y divide-slate-100 z-50 animate-in fade-in zoom-in-95">
+                     <div className="p-2">
+                       <button
+                         type="button"
+                         onClick={() => {
+                           setShowFpvExportMenu(false);
+                           handleExportFpv('ALL');
+                         }}
+                         className="w-full text-left px-3 py-2 text-xs font-bold text-slate-800 hover:bg-emerald-50 hover:text-[#1B4D3E] rounded-lg transition-colors flex items-center gap-2.5 cursor-pointer"
+                       >
+                         <span className="p-1.5 bg-emerald-100 text-[#1B4D3E] rounded">
+                           <FileText size={15} />
+                         </span>
+                         <div>
+                           <div className="font-bold">FPV Completo</div>
+                           <div className="text-[10px] text-slate-400 font-normal">Todas as 10 telas em sequência (A4)</div>
+                         </div>
+                       </button>
+                     </div>
+                     <div className="p-2">
+                       <button
+                         type="button"
+                         onClick={() => {
+                           setShowFpvExportMenu(false);
+                           handleExportFpv(activeTab);
+                         }}
+                         className="w-full text-left px-3 py-2 text-xs font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors flex items-center gap-2.5 cursor-pointer"
+                       >
+                         <span className="p-1.5 bg-blue-100 text-blue-700 rounded">
+                           <Printer size={15} />
+                         </span>
+                         <div>
+                           <div className="font-bold">Exportar Apenas Esta Tela</div>
+                           <div className="text-[10px] text-slate-400 font-normal">
+                             Somente {TABS.find(t => t.id === activeTab)?.label || activeTab}
+                           </div>
+                         </div>
+                       </button>
+                     </div>
+                   </div>
+                 )}
+               </div>
                <button 
                  onClick={handleCalcularProposta}
                  disabled={loading}
@@ -1462,8 +1515,8 @@ function PropostaEditor() {
 
         {/* NAVEGAÇÃO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
         {activeTab !== 'comercial' && (
-           <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
-              <nav className="flex flex-wrap gap-x-6 gap-y-2">
+           <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <nav className="flex flex-wrap gap-x-6 gap-y-2 flex-1">
                  {TABS.filter(tab => {
                     if (proposta.cliente.tipoProposta === 'SPOT' && (tab.id === 'dre' || tab.id === 'encargos')) {
                        return false;
@@ -1497,6 +1550,17 @@ function PropostaEditor() {
                     );
                  })}
               </nav>
+              <div className="shrink-0 flex items-center gap-2">
+                 <button
+                   type="button"
+                   onClick={() => handleExportFpv(activeTab)}
+                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1B4D3E] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all shadow-xs cursor-pointer"
+                   title="Exportar somente esta tela em PDF"
+                 >
+                   <Printer size={13} className="text-[#1B4D3E]" />
+                   <span>Exportar Esta Tela (PDF)</span>
+                 </button>
+              </div>
            </div>
         )}
 
@@ -1659,16 +1723,18 @@ function PropostaEditor() {
 
                      <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-700">Sindicato / Regra Técnica</label>
-                        <select 
-                           className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium"
-                           value={proposta.cliente.sindicatoId}
-                           onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, sindicatoId: e.target.value}})}
-                        >
-                           <option value="" className="text-slate-800 bg-white">Selecione o Sindicato...</option>
-                           {ccts.map((c: any) => (
-                              <option key={c.id} value={c.id} className="text-slate-800 bg-white">{c.nome} ({c.uf})</option>
-                           ))}
-                        </select>
+                        <SearchableSelect
+                           value={proposta.cliente.sindicatoId || ''}
+                           onChange={(val) => setProposta({...proposta, cliente: {...proposta.cliente, sindicatoId: val}})}
+                           placeholder="Selecione o Sindicato..."
+                           searchPlaceholder="Filtrar sindicato por nome ou UF..."
+                           options={ccts.map((c: any) => ({
+                              value: c.id,
+                              label: `${c.nome} (${c.uf})`,
+                              badge: c.uf,
+                              keywords: [c.nome, c.uf, c.codigoSindicato || '']
+                           }))}
+                        />
                      </div>
 
                     <div className="space-y-1">
@@ -1676,16 +1742,17 @@ function PropostaEditor() {
                           <label className="text-xs font-semibold text-slate-700">Tipo dos Serviços</label>
                           <button onClick={() => setShowNewTipoModal(true)} className="text-[10px] bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold px-2 py-0.5 rounded transition-colors flex items-center gap-1"><Plus size={12}/> Novo</button>
                        </div>
-                       <select 
-                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium"
-                          value={proposta.cliente.tipoServicos}
-                          onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})}
-                       >
-                          <option value="" className="text-slate-800 bg-white">Selecione o Tipo...</option>
-                          {tiposServico.map((t: any) => (
-                             <option key={t.id} value={t.nome} className="text-slate-800 bg-white">{t.nome}</option>
-                          ))}
-                       </select>
+                       <SearchableSelect
+                          value={proposta.cliente.tipoServicos || ''}
+                          onChange={(val) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: val}})}
+                          placeholder="Selecione o Tipo..."
+                          searchPlaceholder="Filtrar tipo de serviço..."
+                          options={tiposServico.map((t: any) => ({
+                             value: t.nome,
+                             label: t.nome,
+                             keywords: [t.nome]
+                          }))}
+                       />
                     </div>
 
                     <div className="space-y-1">
@@ -1708,16 +1775,17 @@ function PropostaEditor() {
                           <label className="text-xs font-semibold text-slate-700">Segmento do Cliente</label>
                           <button onClick={() => setShowNewSegmentoModal(true)} className="text-[10px] bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold px-2 py-0.5 rounded transition-colors flex items-center gap-1"><Plus size={12}/> Novo</button>
                        </div>
-                       <select 
-                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]"
+                       <SearchableSelect
                           value={proposta.cliente.segmento || ''}
-                          onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, segmento: e.target.value}})}
-                       >
-                          <option value="" className="text-slate-800 bg-white">Selecione...</option>
-                          {segmentos.map((s: any) => (
-                             <option key={s.id} value={s.nome} className="text-slate-800 bg-white">{s.nome}</option>
-                          ))}
-                       </select>
+                          onChange={(val) => setProposta({...proposta, cliente: {...proposta.cliente, segmento: val}})}
+                          placeholder="Selecione o Segmento..."
+                          searchPlaceholder="Filtrar segmento..."
+                          options={segmentos.map((s: any) => ({
+                             value: s.nome,
+                             label: s.nome,
+                             keywords: [s.nome]
+                          }))}
+                       />
                     </div>
 
                     <div className="md:col-span-2 space-y-1">
@@ -1992,11 +2060,9 @@ function PropostaEditor() {
                                        />
                                     </td>
                                     <td className="px-6 py-4">
-                                       <select 
-                                          className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-blue-500" 
-                                          value={p.equipeTecnicaId || ''} 
-                                          onChange={(e) => {
-                                             const eqId = e.target.value;
+                                       <SearchableSelect
+                                          value={p.equipeTecnicaId || ''}
+                                          onChange={(eqId) => {
                                              const eq = equipesTecnicasDb.find(x => x.id === eqId);
                                              if (eq) {
                                                 const preco = p.unidadeMedida === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido;
@@ -2019,12 +2085,15 @@ function PropostaEditor() {
                                                 setProposta({...proposta, equipe: newE});
                                              }
                                           }}
-                                       >
-                                          <option value="" className="text-slate-800 bg-white">Selecione o Serviço/Equipe...</option>
-                                          {equipesTecnicasDb.map((eq: any) => (
-                                             <option key={eq.id} value={eq.id} className="text-slate-800 bg-white">{eq.nome}</option>
-                                          ))}
-                                       </select>
+                                          placeholder="Selecione o Serviço/Equipe..."
+                                          searchPlaceholder="Filtrar serviço..."
+                                          options={equipesTecnicasDb.map((eq: any) => ({
+                                             value: eq.id,
+                                             label: eq.nome,
+                                             sublabel: `Diária: R$ ${eq.valorDiariaSugerido || 0} | Hora: R$ ${eq.valorHoraSugerido || 0}`,
+                                             keywords: [eq.nome]
+                                          }))}
+                                       />
                                     </td>
                                     <td className="px-6 py-4">
                                        <select 
@@ -2151,12 +2220,12 @@ function PropostaEditor() {
                                           <input type="number" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
                                        </td>
                                        <td className="px-6 py-4">
-                                          <select 
-                                             className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" 
-                                             value={currentSelectValue} 
-                                             onChange={(e) => {
-                                                if (!e.target.value) return;
-                                                const [cctId, cargoId] = e.target.value.includes('|') ? e.target.value.split('|') : ['', e.target.value];
+                                          <SearchableSelect
+                                             value={currentSelectValue}
+                                             disabled={!proposta.cliente.sindicatoId && ccts.length > 0}
+                                             onChange={(val) => {
+                                                if (!val) return;
+                                                const [cctId, cargoId] = val.includes('|') ? val.split('|') : ['', val];
                                                 const c = ccts.find(x => x.id === cctId) || ccts.find(x => x.cargos?.some((cg: any) => cg.id === cargoId));
                                                 if(c) {
                                                    const cargo = c.cargos?.find((x: any) => x.id === cargoId);
@@ -2166,46 +2235,58 @@ function PropostaEditor() {
                                                    }
                                                 }
                                              }}
-                                          >
-                                             <option value="" className="text-slate-800 bg-white">Selecione a Função...</option>
-                                             {!proposta.cliente.sindicatoId && (
-                                                 <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
-                                              )}
-                                             {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId || c.id === currentCctId).map((c: any) => (
-                                                <optgroup key={c.id} label={`${c.nome} (${c.uf})`}>
-                                                   {c.cargos?.map((cg: any) => (
-                                                      <option key={cg.id} value={`${c.id}|${cg.id}`}>{cg.nome} - R$ {cg.pisoSalarial}</option>
-                                                   ))}
-                                                </optgroup>
-                                             ))}
-                                             {currentCargoId && !ccts.some((c: any) => c.cargos?.some((cg: any) => cg.id === currentCargoId)) && (
-                                                <option value={currentSelectValue}>{p.cargo?.nome || p.nomeCargo || 'Função Atual'} - R$ {p.cargo?.pisoSalarial || '0.00'}</option>
-                                             )}
-                                          </select>
+                                             placeholder={!proposta.cliente.sindicatoId ? "⚠️ Selecione o Sindicato na Aba 1" : "Selecione a Função..."}
+                                             searchPlaceholder="Buscar função ou cargo..."
+                                             emptyMessage="Nenhuma função encontrada."
+                                             options={(() => {
+                                                const opts: SearchableSelectOption[] = [];
+                                                const availableCcts = ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId || c.id === currentCctId);
+                                                availableCcts.forEach((c: any) => {
+                                                   const groupName = `${c.nome} (${c.uf})`;
+                                                   c.cargos?.forEach((cg: any) => {
+                                                      opts.push({
+                                                         value: `${c.id}|${cg.id}`,
+                                                         label: cg.nome,
+                                                         group: groupName,
+                                                         badge: `R$ ${cg.pisoSalarial}`,
+                                                         keywords: [cg.nome, c.nome, c.uf, String(cg.pisoSalarial)]
+                                                      });
+                                                   });
+                                                });
+                                                if (currentCargoId && !opts.some(o => o.value === currentSelectValue)) {
+                                                   opts.unshift({
+                                                      value: currentSelectValue,
+                                                      label: p.cargo?.nome || p.nomeCargo || 'Função Atual',
+                                                      badge: `R$ ${p.cargo?.pisoSalarial || '0.00'}`,
+                                                      keywords: [p.cargo?.nome || p.nomeCargo || '']
+                                                   });
+                                                }
+                                                return opts;
+                                             })()}
+                                          />
                                        </td>
                                        <td className="px-6 py-4">
-                                          <select 
-                                             className="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" 
-                                             value={effectiveEscalaValue} 
-                                             onChange={(e) => {
-                                                const chosenEscala = escalasDb.find((esc: any) => esc.nome === e.target.value);
+                                          <SearchableSelect
+                                             value={effectiveEscalaValue}
+                                             onChange={(val) => {
+                                                const chosenEscala = escalasDb.find((esc: any) => esc.nome === val);
                                                 if (chosenEscala) {
                                                    const param = {...p.parametrosPosto, diasTrabalhadosMes: chosenEscala.diasTrabalhadosMes};
                                                    const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, escala: chosenEscala.nome, parametrosPosto: param} : x);
                                                    setProposta({...proposta, equipe: newE});
                                                 } else {
-                                                   updatePosto(p.id, 'escala', e.target.value);
+                                                   updatePosto(p.id, 'escala', val);
                                                 }
                                              }}
-                                          >
-                                             <option value="" className="text-slate-800 bg-white">Selecione a Escala...</option>
-                                             {effectiveEscalaValue && !escalasDb.some((esc: any) => esc.nome === effectiveEscalaValue) && (
-                                                <option value={effectiveEscalaValue}>{effectiveEscalaValue}</option>
-                                             )}
-                                             {escalasDb.map((esc: any) => (
-                                                <option key={esc.id} value={esc.nome}>{esc.nome}</option>
-                                             ))}
-                                          </select>
+                                             placeholder="Selecione a Escala..."
+                                             searchPlaceholder="Filtrar escala..."
+                                             options={escalasDb.map((esc: any) => ({
+                                                value: esc.nome,
+                                                label: esc.nome,
+                                                sublabel: `${esc.diasTrabalhadosMes || 0} dias/mês`,
+                                                keywords: [esc.nome, String(esc.diasTrabalhadosMes || '')]
+                                             }))}
+                                          />
                                        </td>
                                        <td className="px-6 py-4 text-right">
                                           <div className="flex items-center justify-end gap-2.5">
