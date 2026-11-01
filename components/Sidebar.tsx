@@ -1353,47 +1353,53 @@ const Sidebar = () => {
   const isPlatformAccountGlobally = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
   const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && !isPlatformAccountGlobally;
 
-  const renderedMenuItems = isSaaSArea
-    ? isPlatformAccountGlobally
-      ? [
-          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
-        ]
-      : [
-          { icon: Home, label: 'Voltar ao CRM', href: '/' },
-          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
-        ]
-    : menuItems.filter(item => {
-        const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
-        const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
+  const filterMenuItems = (items: any[]) => {
+    return items.filter(item => {
+      const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
+      const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
 
-        const tenantFeatures = (typeof user?.tenantFeatures === 'object' && user?.tenantFeatures) 
-          ? user.tenantFeatures 
-          : (typeof user?.tenant?.features === 'object' && user?.tenant?.features) 
-            ? user.tenant.features 
-            : {};
+      const tenantFeatures = (typeof user?.tenantFeatures === 'object' && user?.tenantFeatures) 
+        ? user.tenantFeatures 
+        : (typeof user?.tenant?.features === 'object' && user?.tenant?.features) 
+          ? user.tenant.features 
+          : {};
 
-        const tenantNome = typeof user?.tenantNome === 'string' 
-          ? user.tenantNome 
-          : typeof user?.tenant?.nomeFantasia === 'string' 
-            ? user.tenant.nomeFantasia 
-            : '';
+      const tenantNome = typeof user?.tenantNome === 'string' 
+        ? user.tenantNome 
+        : typeof user?.tenant?.nomeFantasia === 'string' 
+          ? user.tenant.nomeFantasia 
+          : '';
 
-        const isSlimpe = (tenantNome && tenantNome.toLowerCase().includes('slimpe')) || 
-                         (user?.tenantId && String(user.tenantId).toLowerCase().includes('slimpe')) ||
-                         (user?.email && String(user.email).toLowerCase().includes('slimpe'));
+      const isSlimpe = (tenantNome && tenantNome.toLowerCase().includes('slimpe')) || 
+                       (user?.tenantId && String(user.tenantId).toLowerCase().includes('slimpe')) ||
+                       (user?.email && String(user.email).toLowerCase().includes('slimpe'));
 
-        const hasAtivosModule = Boolean(isSlimpe || (tenantFeatures as any)?.ativos);
-        const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
-        const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
-        
-        const hasCrmModule = (tenantFeatures as any)?.crm !== false;
-        const hasTasksModule = (tenantFeatures as any)?.tasks !== false;
-        const hasContratosModule = (tenantFeatures as any)?.contratos !== false;
-        const hasAtasModule = (tenantFeatures as any)?.atas !== false;
-        const hasPicModule = (tenantFeatures as any)?.pic !== false;
+      const hasAtivosModule = Boolean(isSlimpe || (tenantFeatures as any)?.ativos);
+      const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
+      const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
+      
+      const plano = String((user as any)?.tenant?.plano || (user as any)?.tenantPlano || '').toUpperCase();
+      const isFreePlan = plano.includes('GRATIS') || plano.includes('FREE');
 
+      // Módulos bloqueados no Plano Grátis (mas que devem ficar visíveis como vitrine para upgrade)
+      const isLockedForFree = isFreePlan && (
+        item.href === '/contratos' ||
+        item.href === '/tasks' ||
+        item.href === '/atas' ||
+        item.href === '/pic' ||
+        item.href === '/emails' ||
+        item.href === '/prospeccao'
+      );
+      item.isLocked = Boolean(isLockedForFree);
+
+      const hasCrmModule = (tenantFeatures as any)?.crm !== false;
+      const hasTasksModule = (tenantFeatures as any)?.tasks !== false;
+      const hasContratosModule = (tenantFeatures as any)?.contratos !== false;
+      const hasAtasModule = (tenantFeatures as any)?.atas !== false;
+      const hasPicModule = (tenantFeatures as any)?.pic !== false;
+
+      // No plano grátis, mantém visível para que o usuário veja o ecossistema completo
+      if (!isFreePlan) {
         if ((item.href === '/leads' || item.href === '/prospeccao' || item.href === '/emails') && !hasCrmModule) {
           return false;
         }
@@ -1409,28 +1415,45 @@ const Sidebar = () => {
         if (item.href === '/pic' && !hasPicModule) {
           return false;
         }
-        if (item.href.startsWith('/ativos') && !hasAtivosModule) {
+      }
+
+      // Ativos e Entregas: mantidos exclusivamente para quem tem contratado (ex: Slimpe)
+      if (item.href.startsWith('/ativos') && !hasAtivosModule) {
+        return false;
+      }
+      if (item.href.startsWith('/entrega') && !hasEntregasModule) {
+        return false;
+      }
+      if (item.href.startsWith('/integracoes') && !hasErpFlexModule) {
+        return false;
+      }
+      
+      if (isPlatformAccount) {
+        return item.href === '/admin/empresas';
+      } else {
+        if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
           return false;
         }
-        if (item.href.startsWith('/entrega') && !hasEntregasModule) {
+        if ((item.href === '/ativos/tecnico' || item.href === '/entrega/entregador') && !isMobile) {
           return false;
         }
-        if (item.href.startsWith('/integracoes') && !hasErpFlexModule) {
-          return false;
-        }
-        
-        if (isPlatformAccount) {
-          return item.href === '/admin/empresas';
-        } else {
-          if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
-            return false;
-          }
-          if ((item.href === '/ativos/tecnico' || item.href === '/entrega/entregador') && !isMobile) {
-            return false;
-          }
-          return item.roles.includes(user?.role || 'USER');
-        }
-      });
+        return item.roles.includes(user?.role || 'USER');
+      }
+    });
+  };
+
+  const renderedMenuItems = isSaaSArea
+    ? isPlatformAccountGlobally
+      ? [
+          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
+        ]
+      : [
+          { icon: Home, label: 'Voltar ao CRM', href: '/' },
+          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
+        ]
+    : filterMenuItems(menuItems);
 
   const [orderedItems, setOrderedItems] = useState<any[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -1451,73 +1474,8 @@ const Sidebar = () => {
             { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
             { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
           ]
-      : menuItems.filter(item => {
-          const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
-          const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
+      : filterMenuItems(menuItems);
 
-          const tenantFeatures = (typeof user?.tenantFeatures === 'object' && user?.tenantFeatures) 
-            ? user.tenantFeatures 
-            : (typeof user?.tenant?.features === 'object' && user?.tenant?.features) 
-              ? user.tenant.features 
-              : {};
-
-          const tenantNome = typeof user?.tenantNome === 'string' 
-            ? user.tenantNome 
-            : typeof user?.tenant?.nomeFantasia === 'string' 
-              ? user.tenant.nomeFantasia 
-              : '';
-
-          const isSlimpe = (tenantNome && tenantNome.toLowerCase().includes('slimpe')) || 
-                           (user?.tenantId && String(user.tenantId).toLowerCase().includes('slimpe')) ||
-                           (user?.email && String(user.email).toLowerCase().includes('slimpe'));
-
-          const hasAtivosModule = Boolean(isSlimpe || (tenantFeatures as any)?.ativos);
-          const hasEntregasModule = Boolean(isSlimpe || (tenantFeatures as any)?.entregas);
-          const hasErpFlexModule = Boolean(isSlimpe || (tenantFeatures as any)?.erpflex);
-          
-          const hasCrmModule = (tenantFeatures as any)?.crm !== false;
-          const hasTasksModule = (tenantFeatures as any)?.tasks !== false;
-          const hasContratosModule = (tenantFeatures as any)?.contratos !== false;
-          const hasAtasModule = (tenantFeatures as any)?.atas !== false;
-          const hasPicModule = (tenantFeatures as any)?.pic !== false;
-
-          if ((item.href === '/leads' || item.href === '/prospeccao' || item.href === '/emails') && !hasCrmModule) {
-            return false;
-          }
-          if (item.href === '/tasks' && !hasTasksModule) {
-            return false;
-          }
-          if (item.href === '/contratos' && !hasContratosModule) {
-            return false;
-          }
-          if (item.href === '/atas' && !hasAtasModule) {
-            return false;
-          }
-          if (item.href === '/pic' && !hasPicModule) {
-            return false;
-          }
-          if (item.href.startsWith('/ativos') && !hasAtivosModule) {
-            return false;
-          }
-          if (item.href.startsWith('/entrega') && !hasEntregasModule) {
-            return false;
-          }
-          if (item.href.startsWith('/integracoes') && !hasErpFlexModule) {
-            return false;
-          }
-          
-          if (isPlatformAccount) {
-            return item.href === '/admin/empresas';
-          } else {
-            if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
-              return false;
-            }
-            if ((item.href === '/ativos/tecnico' || item.href === '/entrega/entregador') && !isMobile) {
-              return false;
-            }
-            return item.roles.includes(user?.role || 'USER');
-          }
-        });
 
     if (typeof window !== 'undefined' && user?.email) {
       const savedOrderKey = `sb_sidebar_menu_order_${user.email}`;
@@ -1719,7 +1677,17 @@ const Sidebar = () => {
               }`}
             >
               <a
-                href={item?.href || '#'}
+                href={item.isLocked ? '#' : (item?.href || '#')}
+                onClick={(e) => {
+                  if (item.isLocked) {
+                    e.preventDefault();
+                    setTrialAlert({
+                      open: true,
+                      title: `Módulo ${item.label} (Plano Pago)`,
+                      message: `Você está utilizando o Plano Grátis do SmartBid.\n\nO módulo de ${item.label} é exclusivo dos planos pagos (a partir do Plano Profissional - R$ 299/mês).\n\nFaça o upgrade da sua conta para destravar essa ferramenta para toda a sua equipe!`
+                    });
+                  }
+                }}
                 title={isCollapsed ? item.label : undefined}
                 style={
                   isHighlighted
@@ -1735,11 +1703,18 @@ const Sidebar = () => {
                 className={`sidebar-item flex items-center gap-3 rounded-2xl transition-all ${
                   isActive 
                     ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-bold'
+                    : item.isLocked
+                      ? 'text-slate-400 hover:bg-slate-50 hover:text-slate-700 font-medium'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-bold'
                 }`}
               >
-                <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : 'text-slate-400 shrink-0'} />
+                <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : item.isLocked ? 'text-slate-400 shrink-0 opacity-70' : 'text-slate-400 shrink-0'} />
                 <span className="text-sm truncate sidebar-expanded-only">{item.label}</span>
+                {item.isLocked && (
+                  <span className="ml-auto sidebar-expanded-only px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center gap-1">
+                    <Lock size={10} /> PRO
+                  </span>
+                )}
               </a>
             </div>
           );

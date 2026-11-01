@@ -8,14 +8,17 @@ import {
 } from './actions';
 import {
   MODULOS_CATALOGO,
+  PLANOS_PRESETS,
   type TenantFeaturesConfig,
-  type ModulePricingItem
+  type ModulePricingItem,
+  type PlanoPreset
 } from './constants';
 import { 
   Layers, CheckCircle2, Shield, Users, DollarSign, 
   Sparkles, Copy, Check, Save, RefreshCw, Building2, 
   MessageSquare, Target, CheckSquare, FileText, ClipboardList, 
-  Boxes, Truck, AlertCircle, ArrowRight, Zap, HelpCircle, ChevronRight
+  Boxes, Truck, AlertCircle, ArrowRight, Zap, HelpCircle, ChevronRight,
+  Gift, Award, Crown, Sliders, Lock
 } from 'lucide-react';
 
 const MODULE_ICONS: Record<string, any> = {
@@ -36,6 +39,9 @@ export default function ModulosPricingPage() {
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('simulation');
 
+  // Preset de plano ativo
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('PRO');
+
   // Estados da Calculadora / Configuração
   const [activeFeatures, setActiveFeatures] = useState<TenantFeaturesConfig>({
     crm: true,
@@ -48,11 +54,11 @@ export default function ModulosPricingPage() {
   });
 
   const [extraUsers, setExtraUsers] = useState<number>(0);
-  const pricePerExtraUser = 49.0;
-  const baseIncludedUsers = 3;
+  const pricePerExtraUser = 25.0; // Valor acessível de usuário adicional
 
-  const [setupFee, setSetupFee] = useState<number>(1900.0);
-  const [setupInstallments, setSetupInstallments] = useState<number>(2);
+  // Taxa de setup: Padrão R$ 0,00 (Preço fechado por mês. Sem taxa escondida, conforme a LP)
+  const [setupFee, setSetupFee] = useState<number>(0.0);
+  const [setupInstallments, setSetupInstallments] = useState<number>(1);
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [customClientName, setCustomClientName] = useState<string>('');
 
@@ -65,6 +71,10 @@ export default function ModulosPricingPage() {
     setLoading(true);
     try {
       const res = await getTenantsForModulosAction();
+      if (!res.success && res.error === 'Não autenticado') {
+        window.location.href = '/login';
+        return;
+      }
       if (res.success && res.tenants) {
         setTenants(res.tenants);
         setIsPlatformAdmin(Boolean(res.isPlatformAdmin));
@@ -98,7 +108,7 @@ export default function ModulosPricingPage() {
   const syncTenantFeatures = (tenant: any) => {
     if (!tenant) return;
     const f = tenant.features || {};
-    setActiveFeatures({
+    const featuresObj: TenantFeaturesConfig = {
       crm: f.crm !== undefined ? Boolean(f.crm) : true,
       tasks: f.tasks !== undefined ? Boolean(f.tasks) : true,
       contratos: f.contratos !== undefined ? Boolean(f.contratos) : true,
@@ -107,16 +117,40 @@ export default function ModulosPricingPage() {
       ativos: f.ativos !== undefined ? Boolean(f.ativos) : false,
       entregas: f.entregas !== undefined ? Boolean(f.entregas) : false,
       erpflex: f.erpflex !== undefined ? Boolean(f.erpflex) : false
-    });
+    };
+    setActiveFeatures(featuresObj);
+
+    // Identificar preset pelo plano cadastrado no Tenant
+    const planoCadastrado = String(tenant.plano || '').toUpperCase();
+    if (planoCadastrado.includes('GRATIS') || planoCadastrado.includes('FREE')) {
+      setSelectedPresetId('GRATIS');
+    } else if (planoCadastrado.includes('BASICO') || planoCadastrado.includes('STARTER')) {
+      setSelectedPresetId('BASICO');
+    } else if (planoCadastrado.includes('PRO') || planoCadastrado.includes('PROFISSIONAL')) {
+      setSelectedPresetId('PRO');
+    } else if (planoCadastrado.includes('ENTERPRISE')) {
+      setSelectedPresetId('ENTERPRISE');
+    } else {
+      setSelectedPresetId('CUSTOM');
+    }
 
     const limUsers = tenant.limiteUsuarios || 3;
-    setExtraUsers(Math.max(0, limUsers - baseIncludedUsers));
+    const baseIncluded = getBaseUsersForPreset(planoCadastrado);
+    setExtraUsers(Math.max(0, limUsers - baseIncluded));
+  };
+
+  const getBaseUsersForPreset = (presetId: string) => {
+    if (presetId === 'GRATIS') return 1;
+    if (presetId === 'BASICO') return 3;
+    if (presetId === 'PRO') return 10;
+    if (presetId === 'ENTERPRISE') return 100;
+    return 3;
   };
 
   const handleSelectTenant = (id: string) => {
     setSelectedTenantId(id);
     if (id === 'simulation') {
-      // Padrão de simulação
+      applyPreset('PRO');
       return;
     }
     const found = tenants.find(t => t.id === id);
@@ -125,36 +159,70 @@ export default function ModulosPricingPage() {
     }
   };
 
+  // Aplicação rápida de Preset Oficial da LP
+  const applyPreset = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    const preset = PLANOS_PRESETS.find(p => p.id === presetId);
+    if (!preset) return;
+
+    setActiveFeatures({ ...preset.features });
+    setExtraUsers(0);
+    setDiscountPct(0);
+    setSetupFee(0.0);
+  };
+
   const toggleModule = (modId: keyof TenantFeaturesConfig | 'core') => {
-    if (modId === 'core') return; // Core é obrigatório
+    if (modId === 'core') return; // Core é sempre base
+    setSelectedPresetId('CUSTOM'); // Passa para modo sob medida
     setActiveFeatures(prev => ({
       ...prev,
       [modId]: !prev[modId]
     }));
   };
 
-  // Cálculos financeiros
+  // Cálculos financeiros alinhados aos planos da LP
   const calculations = useMemo(() => {
     const list = Array.isArray(MODULOS_CATALOGO) ? MODULOS_CATALOGO : [];
     const core = list.find(m => m.id === 'core') || list[0];
-    let subtotalModulos = core ? core.precoMensal : 690.0;
-
     const modulosSelecionadosList: ModulePricingItem[] = core ? [core] : [];
 
     list.forEach(mod => {
       if (mod.id !== 'core') {
         const isSelected = Boolean(activeFeatures[mod.id as keyof TenantFeaturesConfig]);
         if (isSelected) {
-          subtotalModulos += mod.precoMensal;
           modulosSelecionadosList.push(mod);
         }
       }
     });
 
+    // Se estiver em um dos presets oficiais fechados da LP, usa o preço oficial do pacote:
+    let subtotalMensalidade = 0;
+    const baseUsers = getBaseUsersForPreset(selectedPresetId);
+
+    if (selectedPresetId === 'GRATIS') {
+      subtotalMensalidade = 0.0;
+    } else if (selectedPresetId === 'BASICO') {
+      subtotalMensalidade = 149.0;
+    } else if (selectedPresetId === 'PRO') {
+      // No PRO da LP é R$ 299/mês. Se incluir WhatsApp/CRM já está incluso.
+      subtotalMensalidade = 299.0;
+    } else if (selectedPresetId === 'ENTERPRISE') {
+      subtotalMensalidade = 599.0;
+    } else {
+      // Modo CUSTOM: Soma base R$ 149 + adicionais
+      subtotalMensalidade = 149.0;
+      list.forEach(mod => {
+        if (mod.id !== 'core') {
+          if (activeFeatures[mod.id as keyof TenantFeaturesConfig]) {
+            subtotalMensalidade += mod.precoMensal;
+          }
+        }
+      });
+    }
 
     const totalExtraUsersPrice = extraUsers * pricePerExtraUser;
-    const totalUsers = baseIncludedUsers + extraUsers;
-    const subtotalGeral = subtotalModulos + totalExtraUsersPrice;
+    const totalUsers = baseUsers + extraUsers;
+    const subtotalGeral = subtotalMensalidade + totalExtraUsersPrice;
 
     const discountValue = (subtotalGeral * discountPct) / 100;
     const totalMensalidade = Math.max(0, subtotalGeral - discountValue);
@@ -163,9 +231,10 @@ export default function ModulosPricingPage() {
     const installmentSetup = setupInstallments > 0 ? setupFee / setupInstallments : setupFee;
 
     return {
-      subtotalModulos,
+      subtotalMensalidade,
       totalExtraUsersPrice,
       totalUsers,
+      baseUsers,
       subtotalGeral,
       discountValue,
       totalMensalidade,
@@ -173,7 +242,7 @@ export default function ModulosPricingPage() {
       installmentSetup,
       modulosSelecionadosList
     };
-  }, [activeFeatures, extraUsers, discountPct, setupFee, setupInstallments]);
+  }, [activeFeatures, selectedPresetId, extraUsers, discountPct, setupFee, setupInstallments]);
 
   const formatBRL = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -182,7 +251,7 @@ export default function ModulosPricingPage() {
   // Salvar alterações no Tenant
   const handleSaveToTenant = async () => {
     if (selectedTenantId === 'simulation') {
-      alert('Selecione uma empresa cadastrada acima para aplicar e ativar os módulos no sistema.');
+      alert('Selecione uma empresa cadastrada no seletor acima para aplicar os módulos.');
       return;
     }
 
@@ -194,15 +263,16 @@ export default function ModulosPricingPage() {
       const res = await updateTenantModulosAction(
         selectedTenantId,
         activeFeatures,
-        calculations.totalUsers
+        calculations.totalUsers,
+        selectedPresetId
       );
 
       if (res.success) {
-        setSaveSuccessMsg('Módulos e permissões atualizados com sucesso no sistema!');
-        // Atualiza o estado local do tenant
+        setSaveSuccessMsg(`Plano e permissões atualizados com sucesso para ${selectedPresetId}!`);
         setTenants(prev => prev.map(t => t.id === selectedTenantId ? {
           ...t,
           features: activeFeatures,
+          plano: selectedPresetId,
           limiteUsuarios: calculations.totalUsers
         } : t));
 
@@ -228,33 +298,36 @@ export default function ModulosPricingPage() {
     text += `Para: *${clientName}*\n`;
     text += `Data: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
 
-    text += `Olá! Conforme conversamos, segue a composição da proposta personalizada do *SmartBid* para a sua operação:\n\n`;
+    const presetObj = PLANOS_PRESETS.find(p => p.id === selectedPresetId);
+    text += `📋 *PLANO CONTRATADO:* *${presetObj ? presetObj.nome : 'Plano Personalizado'}*\n`;
+    text += `Preço fechado por mês, sem taxa de implantação escondida.\n\n`;
 
-    text += `📋 *MÓDULOS CONTRATADOS:*\n`;
+    text += `🛠️ *MÓDULOS INCLUSOS:*\n`;
     calculations.modulosSelecionadosList.forEach(m => {
-      text += `• *${m.nome}* (${formatBRL(m.precoMensal)}/mês)\n`;
+      text += `• *${m.nome}*\n`;
     });
 
-    text += `\n👥 *USUÁRIOS:* ${calculations.totalUsers} usuários inclusos (${baseIncludedUsers} base + ${extraUsers} adicionais)\n\n`;
+    text += `\n👥 *USUÁRIOS:* ${calculations.totalUsers} usuários inclusos (${calculations.baseUsers} base${extraUsers > 0 ? ` + ${extraUsers} extras` : ''})\n\n`;
 
     text += `💰 *CONDIÇÕES FINANCEIRAS:*\n`;
     text += `• *Mensalidade (SaaS):* ${formatBRL(calculations.totalMensalidade)}/mês`;
     if (discountPct > 0) {
       text += ` (com ${discountPct}% de desconto promocional aplicado)`;
     }
-    text += `\n• *Implantação & Treinamento:* ${formatBRL(setupFee)}`;
-    if (setupInstallments > 1) {
-      text += ` (em até ${setupInstallments}x de ${formatBRL(calculations.installmentSetup)})`;
+    if (setupFee > 0) {
+      text += `\n• *Treinamento & Parametrização Opcional:* ${formatBRL(setupFee)}`;
+    } else {
+      text += `\n• *Taxa de Implantação:* R$ 0,00 (Isenta)`;
     }
     text += `\n• *Investimento Anual Previsto:* ${formatBRL(calculations.totalAnual)}\n\n`;
 
     text += `🚀 *BENEFÍCIOS PRINCIPAIS:*\n`;
     text += `✅ Fim dos riscos e fórmulas quebradas do Excel na formação de CCTs;\n`;
     text += `✅ Propostas comerciais A4 geradas em minutos com link rastreável;\n`;
-    text += `✅ Gestão integrada de custos de EPIs, uniformes e benefícios;\n`;
+    text += `✅ Controle de reajustes anuais de contratos na data-base;\n`;
     text += `✅ Suporte técnico especializado e atualizações contínuas da plataforma.\n\n`;
 
-    text += `Ficamos à disposição para darmos início à implantação!`;
+    text += `Ficamos à disposição para darmos início à liberação do acesso!`;
 
     navigator.clipboard.writeText(text);
     setCopiedProposal(true);
@@ -262,6 +335,10 @@ export default function ModulosPricingPage() {
   };
 
   const selectedTenantObj = tenants.find(t => t.id === selectedTenantId);
+
+  // Filtros de módulos
+  const modulosComerciais = MODULOS_CATALOGO.filter(m => m.id !== 'core' && m.categoria === 'COMERCIAL');
+  const modulosEspecializados = MODULOS_CATALOGO.filter(m => m.categoria === 'ESPECIALIZADO');
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -282,7 +359,7 @@ export default function ModulosPricingPage() {
                 </h1>
               </div>
               <p className="text-slate-500 text-xs md:text-sm mt-1 font-medium">
-                Configure o pacote de ferramentas, simule propostas comerciais e ative/desative recursos por cliente.
+                Alinhado aos planos oficiais da Landing Page. Configure os pacotes comerciais e ative ferramentas por empresa.
               </p>
             </div>
 
@@ -298,7 +375,7 @@ export default function ModulosPricingPage() {
                   <option value="simulation">🧪 Simulador Comercial (Novo Prospect)</option>
                   {tenants.map(t => (
                     <option key={t.id} value={t.id}>
-                      🏢 {t.nomeFantasia} ({t.cnpj || 'Sem CNPJ'})
+                      🏢 {t.nomeFantasia} ({t.cnpj || 'Sem CNPJ'}) — Plano: {t.plano || 'STARTER'}
                     </option>
                   ))}
                 </select>
@@ -330,6 +407,152 @@ export default function ModulosPricingPage() {
             </div>
           )}
 
+          {/* SELETOR RÁPIDO DE PRESETS (PLANOS OFICIAIS DA LP) */}
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-amber-500" /> Presets Rápidos de Planos da Landing Page
+                </h3>
+                <p className="text-xs text-slate-600 font-medium">
+                  Clique em um plano para aplicar imediatamente a combinação de módulos e limites recomendados:
+                </p>
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full w-fit">
+                Plano Selecionado: <strong className="text-slate-900">{selectedPresetId}</strong>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-1">
+              
+              {/* PLANO GRÁTIS */}
+              <button
+                type="button"
+                onClick={() => applyPreset('GRATIS')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                  selectedPresetId === 'GRATIS'
+                    ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-emerald-100 text-emerald-800 rounded-lg">
+                    <Gift size={16} />
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Freemium
+                  </span>
+                </div>
+                <h4 className="font-black text-sm text-slate-800 mt-2">Plano Grátis</h4>
+                <p className="text-xs font-black text-emerald-700 mt-0.5">R$ 0,00 <span className="text-[10px] text-slate-500 font-normal">/mês</span></p>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                  1 usuário, 1 CCT, 5 FPVs e 5 propostas.
+                </p>
+              </button>
+
+              {/* PLANO BÁSICO */}
+              <button
+                type="button"
+                onClick={() => applyPreset('BASICO')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  selectedPresetId === 'BASICO'
+                    ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-slate-200 text-slate-700 rounded-lg">
+                    <Award size={16} />
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                    Básico
+                  </span>
+                </div>
+                <h4 className="font-black text-sm text-slate-800 mt-2">Básico</h4>
+                <p className="text-xs font-black text-slate-900 mt-0.5">R$ 149,00 <span className="text-[10px] text-slate-500 font-normal">/mês</span></p>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                  3 usuários, Link Rastreável e CRM essencial.
+                </p>
+              </button>
+
+              {/* PLANO PROFISSIONAL (DESTAQUE) */}
+              <button
+                type="button"
+                onClick={() => applyPreset('PRO')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                  selectedPresetId === 'PRO'
+                    ? 'bg-[#1B4D3E] text-white border-[#1B4D3E] ring-2 ring-[#1B4D3E]/30 shadow-md'
+                    : 'bg-slate-900 text-white hover:bg-black border-slate-800'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-white/20 text-emerald-300 rounded-lg">
+                    <Crown size={16} />
+                  </span>
+                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-400 text-slate-900">
+                    Mais Escolhido
+                  </span>
+                </div>
+                <h4 className="font-black text-sm text-white mt-2">Profissional</h4>
+                <p className="text-xs font-black text-emerald-300 mt-0.5">R$ 299,00 <span className="text-[10px] text-white/70 font-normal">/mês</span></p>
+                <p className="text-[10px] text-slate-300 mt-1 line-clamp-2">
+                  10 usuários, Contratos, Tasks, Alertas CCT.
+                </p>
+              </button>
+
+              {/* PLANO ENTERPRISE */}
+              <button
+                type="button"
+                onClick={() => applyPreset('ENTERPRISE')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  selectedPresetId === 'ENTERPRISE'
+                    ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-purple-100 text-purple-700 rounded-lg">
+                    <Building2 size={16} />
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                    Grandes Filiais
+                  </span>
+                </div>
+                <h4 className="font-black text-sm text-slate-800 mt-2">Enterprise</h4>
+                <p className="text-xs font-black text-slate-900 mt-0.5">R$ 599,00 <span className="text-[10px] text-slate-500 font-normal">/mês</span></p>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                  100 usuários, tudo liberado, APIs e SLA 24/7.
+                </p>
+              </button>
+
+              {/* MODO PERSONALIZADO */}
+              <button
+                type="button"
+                onClick={() => setSelectedPresetId('CUSTOM')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  selectedPresetId === 'CUSTOM'
+                    ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
+                    : 'bg-slate-50/70 border-slate-200 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-amber-100 text-amber-800 rounded-lg">
+                    <Sliders size={16} />
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    Custom
+                  </span>
+                </div>
+                <h4 className="font-black text-sm text-slate-800 mt-2">Sob Medida</h4>
+                <p className="text-xs font-black text-amber-800 mt-0.5">Modular <span className="text-[10px] text-slate-500 font-normal">À La Carte</span></p>
+                <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                  Ative ou desative cada módulo livremente.
+                </p>
+              </button>
+
+            </div>
+          </div>
+
           {/* CARDS DE RESUMO RÁPIDO */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
@@ -339,17 +562,17 @@ export default function ModulosPricingPage() {
                 <span className="text-xs text-slate-400 font-medium">/mês</span>
               </p>
               <span className="text-[10px] text-emerald-600 font-bold mt-1 inline-block">
-                Recorrência mensal
+                {selectedPresetId === 'GRATIS' ? 'Degustação Gratuita' : 'Preço Fechado Mensal'}
               </span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Setup / Implantação</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Taxa de Implantação</span>
               <p className="text-xl md:text-2xl font-black text-slate-900 mt-1">
                 {formatBRL(setupFee)}
               </p>
               <span className="text-[10px] text-slate-500 font-medium mt-1 inline-block">
-                {setupInstallments}x de {formatBRL(calculations.installmentSetup)}
+                {setupFee === 0 ? 'Sem taxa escondida' : `${setupInstallments}x de ${formatBRL(calculations.installmentSetup)}`}
               </span>
             </div>
 
@@ -359,7 +582,7 @@ export default function ModulosPricingPage() {
                 {calculations.modulosSelecionadosList.length} <span className="text-xs text-slate-400 font-medium">de {MODULOS_CATALOGO.length}</span>
               </p>
               <span className="text-[10px] text-slate-500 font-medium mt-1 inline-block">
-                Empacotamento modular
+                {selectedPresetId}
               </span>
             </div>
 
@@ -369,7 +592,7 @@ export default function ModulosPricingPage() {
                 {calculations.totalUsers} <span className="text-xs text-slate-400 font-medium">acessos</span>
               </p>
               <span className="text-[10px] text-slate-500 font-medium mt-1 inline-block">
-                {baseIncludedUsers} inclusos + {extraUsers} extras
+                {calculations.baseUsers} base + {extraUsers} extras
               </span>
             </div>
           </div>
@@ -377,10 +600,10 @@ export default function ModulosPricingPage() {
           {/* GRID PRINCIPAL: MÓDULOS (ESQUERDA) + RESUMO/AÇÕES (DIREITA) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             
-            {/* COLUNA ESQUERDA: LISTA DE MÓDULOS E CONFIGURAÇÃO */}
+            {/* COLUNA ESQUERDA: LISTA DE MÓDULOS */}
             <div className="lg:col-span-2 space-y-6">
 
-              {/* CARD CORE (BASE OBRIGATÓRIA) */}
+              {/* CARD CORE (BASE OBRIGATÓRIA DA ENGENHARIA DE CUSTOS) */}
               <div className="bg-gradient-to-br from-[#1B4D3E] to-[#12362B] text-white p-6 rounded-3xl shadow-lg border border-emerald-900 relative overflow-hidden">
                 <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-44 h-44 bg-white/5 rounded-full blur-2xl pointer-events-none" />
                 
@@ -393,19 +616,18 @@ export default function ModulosPricingPage() {
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-black tracking-tight">SmartBid Core & Precificação</h2>
                         <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Obrigatório / Base
+                          Base Inclusa
                         </span>
                       </div>
                       <p className="text-xs text-emerald-100 font-medium mt-0.5">
-                        A fundação do software. Essencial para formação de preço e emissão de propostas.
+                        A fundação da engenharia de custos para facilities: CCTs, encargos A/B/C/D, FPVs e propostas.
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right sm:shrink-0">
-                    <span className="text-[10px] text-emerald-200 uppercase font-black tracking-wider block">Preço Base</span>
-                    <span className="text-2xl font-black text-white">R$ 690,00</span>
-                    <span className="text-xs text-emerald-200">/mês</span>
+                    <span className="text-[10px] text-emerald-200 uppercase font-black tracking-wider block">Status</span>
+                    <span className="text-base font-black text-white">Incluso no Pacote</span>
                   </div>
                 </div>
 
@@ -419,26 +641,26 @@ export default function ModulosPricingPage() {
                 </div>
               </div>
 
-              {/* SEÇÃO: MÓDULOS OPCIONAIS */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
+              {/* SEÇÃO 1: MÓDULOS CENTRAIS DE GESTÃO COMERCIAL & CONTRATOS */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-base font-black text-slate-800">
-                      Módulos Adicionais (À La Carte)
+                      Módulos de Gestão Comercial, Leads & Contratos
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Marque ou desmarque conforme a necessidade e o orçamento do seu cliente.
+                      Ferramentas voltadas para resolver a dor comercial, captação de clientes e controle de reajustes.
                     </p>
                   </div>
                   <span className="text-xs font-bold text-slate-500">
-                    {MODULOS_CATALOGO.filter(m => m.id !== 'core' && activeFeatures[m.id as keyof TenantFeaturesConfig]).length} de {MODULOS_CATALOGO.length - 1} selecionados
+                    {modulosComerciais.filter(m => activeFeatures[m.id as keyof TenantFeaturesConfig]).length} de {modulosComerciais.length} ativos
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {MODULOS_CATALOGO.filter(m => m.id !== 'core').map(mod => {
+                  {modulosComerciais.map(mod => {
                     const isChecked = Boolean(activeFeatures[mod.id as keyof TenantFeaturesConfig]);
-                    const IconComp = MODULE_ICONS[mod.id] || Boxes;
+                    const IconComp = MODULE_ICONS[mod.id] || Target;
 
                     return (
                       <div
@@ -464,7 +686,7 @@ export default function ModulosPricingPage() {
                                   {mod.nome}
                                 </h4>
                                 <span className="text-[11px] font-bold text-slate-500 mt-0.5 block">
-                                  +{formatBRL(mod.precoMensal)}/mês
+                                  Ref: {formatBRL(mod.precoMensal)}/mês
                                 </span>
                               </div>
                             </div>
@@ -483,7 +705,7 @@ export default function ModulosPricingPage() {
                             {mod.descricao}
                           </p>
 
-                          {/* LISTA DE BENEFÍCIOS */}
+                          {/* BENEFÍCIOS */}
                           <div className="mt-3.5 space-y-1.5 border-t border-slate-100 pt-3">
                             {mod.beneficios.map((item, idx) => (
                               <div key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-600">
@@ -497,7 +719,7 @@ export default function ModulosPricingPage() {
                         {/* STATUS BADGE */}
                         <div className="mt-4 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
                           <span className={isChecked ? 'text-emerald-700 font-bold' : 'text-slate-400'}>
-                            {isChecked ? '● Ativo na Proposta' : '○ Não Contratado'}
+                            {isChecked ? '● Ativo na Empresa' : '○ Desativado'}
                           </span>
                           <span className="text-slate-400 font-medium">
                             Clique para alternar
@@ -509,11 +731,77 @@ export default function ModulosPricingPage() {
                 </div>
               </div>
 
-              {/* SEÇÃO: USUÁRIOS E TAXA DE SETUP */}
+              {/* SEÇÃO 2: MÓDULOS ESPECIALIZADOS / SOB DEMANDA (EX: SLIMPE) */}
+              <div className="bg-slate-100/70 p-5 rounded-3xl border border-slate-200/90 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                      <Boxes size={15} /> Módulos Operacionais Sob Medida (Slimpe / Especiais)
+                    </h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Ferramentas exclusivas para empresas com operações de comodato e frota física de entregas.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                    Customizado
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {modulosEspecializados.map(mod => {
+                    const isChecked = Boolean(activeFeatures[mod.id as keyof TenantFeaturesConfig]);
+                    const IconComp = MODULE_ICONS[mod.id] || Boxes;
+
+                    return (
+                      <div
+                        key={mod.id}
+                        onClick={() => toggleModule(mod.id)}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer select-none flex flex-col justify-between ${
+                          isChecked 
+                            ? 'bg-white border-[#1B4D3E] shadow-sm' 
+                            : 'bg-white/60 border-slate-200 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              isChecked ? 'bg-[#1B4D3E]/10 text-[#1B4D3E]' : 'bg-slate-200 text-slate-500'
+                            }`}>
+                              <IconComp size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-800 leading-tight">
+                                {mod.nome}
+                              </h4>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                +{formatBRL(mod.precoMensal)}/mês
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors ${
+                            isChecked ? 'bg-[#1B4D3E]' : 'bg-slate-300'
+                          }`}>
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                              isChecked ? 'translate-x-4' : 'translate-x-0'
+                            }`} />
+                          </div>
+                        </div>
+
+                        <p className="text-[10px] text-slate-500 mt-2 line-clamp-2">
+                          {mod.descricao}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SEÇÃO: USUÁRIOS E IMPLANTAÇÃO */}
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                 <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                   <Users size={16} className="text-[#1B4D3E]" />
-                  Acessos & Taxa de Implantação
+                  Acessos & Usuários Adicionais
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -526,7 +814,7 @@ export default function ModulosPricingPage() {
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-500">
-                      O Core já inclui {baseIncludedUsers} usuários. Cada usuário extra custa +{formatBRL(pricePerExtraUser)}/mês.
+                      O plano {selectedPresetId} inclui {calculations.baseUsers} acessos. Cada extra custa +{formatBRL(pricePerExtraUser)}/mês.
                     </p>
                     <div className="flex items-center gap-3 pt-1">
                       <button
@@ -552,35 +840,38 @@ export default function ModulosPricingPage() {
                     </div>
                   </div>
 
-                  {/* IMPLANTAÇÃO E TREINAMENTO */}
+                  {/* IMPLANTAÇÃO / SETUP (DEFAULT R$ 0,00) */}
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold text-slate-700">Taxa de Implantação (Setup)</label>
+                      <label className="text-xs font-bold text-slate-700">Taxa de Implantação / Setup</label>
                       <span className="text-xs font-black text-slate-800">
-                        {formatBRL(setupFee)}
+                        {setupFee === 0 ? 'Isenta (R$ 0,00)' : formatBRL(setupFee)}
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-500">
-                      Configuração de CCTs, treinamento da equipe e parametrização.
+                      Padrão SmartBid: Preço fechado mensal sem taxas escondidas.
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <input
                         type="number"
-                        step="100"
+                        step="50"
                         min="0"
                         value={setupFee}
                         onChange={e => setSetupFee(Number(e.target.value) || 0)}
+                        placeholder="0,00"
                         className="w-28 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E]"
                       />
-                      <select
-                        value={setupInstallments}
-                        onChange={e => setSetupInstallments(Number(e.target.value))}
-                        className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-none"
-                      >
-                        <option value={1}>À vista (1x)</option>
-                        <option value={2}>2x de {formatBRL(setupFee / 2)}</option>
-                        <option value={3}>3x de {formatBRL(setupFee / 3)}</option>
-                      </select>
+                      {setupFee > 0 && (
+                        <select
+                          value={setupInstallments}
+                          onChange={e => setSetupInstallments(Number(e.target.value))}
+                          className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none"
+                        >
+                          <option value={1}>1x</option>
+                          <option value={2}>2x de {formatBRL(setupFee / 2)}</option>
+                          <option value={3}>3x de {formatBRL(setupFee / 3)}</option>
+                        </select>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -588,7 +879,7 @@ export default function ModulosPricingPage() {
                 {/* DESCONTO COMERCIAL */}
                 <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-700">Desconto Comercial na Mensalidade:</span>
+                    <span className="text-xs font-bold text-slate-700">Desconto Promocional na Mensalidade:</span>
                     <div className="flex items-center gap-1">
                       {[0, 5, 10, 15, 20].map(pct => (
                         <button
@@ -609,7 +900,7 @@ export default function ModulosPricingPage() {
 
                   {discountPct > 0 && (
                     <span className="text-xs font-bold text-emerald-700">
-                      Economia de {formatBRL(calculations.discountValue)}/mês para o cliente
+                      Economia de {formatBRL(calculations.discountValue)}/mês
                     </span>
                   )}
                 </div>
@@ -617,7 +908,7 @@ export default function ModulosPricingPage() {
 
             </div>
 
-            {/* COLUNA DIREITA: PAINEL STICKY DE FECHAMENTO COMERCIAL */}
+            {/* COLUNA DIREITA: PAINEL STICKY DE RESUMO E AÇÕES */}
             <div className="space-y-4 lg:sticky lg:top-8">
               
               <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 space-y-6">
@@ -625,11 +916,17 @@ export default function ModulosPricingPage() {
                 {/* CABEÇALHO DO RESUMO */}
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Proposta Comercial</span>
-                  <h3 className="text-lg font-black text-slate-800 mt-0.5">
-                    Resumo do Pacote
-                  </h3>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <h3 className="text-lg font-black text-slate-800">
+                      Resumo do Pacote
+                    </h3>
+                    <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {selectedPresetId}
+                    </span>
+                  </div>
+
                   {selectedTenantId === 'simulation' && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nome do Prospect / Cliente</label>
                       <input
                         type="text"
@@ -642,21 +939,22 @@ export default function ModulosPricingPage() {
                   )}
                 </div>
 
-                {/* LISTAGEM DE ITENS */}
-                <div className="space-y-2 border-t border-slate-100 pt-4 max-h-[300px] overflow-y-auto">
+                {/* LISTAGEM DE ITENS INCLUSOS */}
+                <div className="space-y-2 border-t border-slate-100 pt-4 max-h-[260px] overflow-y-auto">
                   {calculations.modulosSelecionadosList.map(mod => (
                     <div key={mod.id} className="flex justify-between items-center text-xs">
-                      <span className="text-slate-600 font-medium truncate pr-2">
+                      <span className="text-slate-600 font-medium truncate pr-2 flex items-center gap-1.5">
+                        <Check size={13} className="text-emerald-600 shrink-0" />
                         {mod.nome}
                       </span>
-                      <span className="font-bold text-slate-800 shrink-0">
-                        {formatBRL(mod.precoMensal)}
+                      <span className="font-bold text-slate-800 shrink-0 text-[11px]">
+                        Incluso
                       </span>
                     </div>
                   ))}
 
                   {extraUsers > 0 && (
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="flex justify-between items-center text-xs border-t border-slate-100 pt-1.5">
                       <span className="text-slate-600 font-medium">
                         +{extraUsers} Usuários Extras
                       </span>
@@ -685,8 +983,8 @@ export default function ModulosPricingPage() {
                   </div>
 
                   <div className="border-t border-slate-200/80 pt-2 flex justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Implantação (Setup):</span>
-                    <span className="font-bold text-slate-800">{formatBRL(setupFee)}</span>
+                    <span className="text-slate-600 font-medium">Taxa de Implantação:</span>
+                    <span className="font-bold text-slate-800">{setupFee === 0 ? 'R$ 0,00 (Isenta)' : formatBRL(setupFee)}</span>
                   </div>
 
                   <div className="flex justify-between text-xs">
@@ -731,7 +1029,7 @@ export default function ModulosPricingPage() {
                       ) : (
                         <>
                           <Save size={16} />
-                          <span>Ativar na Empresa Selecionada</span>
+                          <span>Ativar {selectedPresetId} nesta Empresa</span>
                         </>
                       )}
                     </button>
@@ -739,20 +1037,20 @@ export default function ModulosPricingPage() {
 
                   {selectedTenantId === 'simulation' && (
                     <p className="text-[11px] text-slate-400 text-center font-medium">
-                      💡 Para aplicar estas ferramentas na conta do cliente, selecione a empresa no topo da página.
+                      💡 Para aplicar este plano em uma empresa real, selecione o cliente no topo da página.
                     </p>
                   )}
                 </div>
 
               </div>
 
-              {/* CARD DE BENEFÍCIOS DO MODELO MODULAR */}
+              {/* CARD DESTRUTURADOR DE OBJEÇÕES COMERCIAIS */}
               <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 text-emerald-950 text-xs space-y-2">
                 <span className="font-black uppercase tracking-wider text-[10px] text-emerald-800 flex items-center gap-1.5">
-                  <Zap size={14} className="text-emerald-600" /> Vantagem Comercial do Pacote
+                  <Zap size={14} className="text-emerald-600" /> Estratégia Comercial SmartBid
                 </span>
                 <p className="text-[11px] leading-relaxed text-emerald-900">
-                  Ao oferecer o <strong>Core de Precificação</strong> como porta de entrada e os demais módulos opcionais, você reduz a resistência do cliente em fechar e aumenta seu <strong>LTV</strong> com upsells contínuos.
+                  O <strong>Plano Grátis</strong> atrai o lead e o deixa calcular a primeira proposta. Ao atingir o limite ou precisar de <strong>Contratos com alerta de reajuste</strong>, o upgrade para o <strong>Profissional (R$ 299/mês)</strong> é o caminho natural!
                 </p>
               </div>
 

@@ -1207,64 +1207,86 @@ export default function LandingPage() {
 
       {/* PLANOS */}
       <section id="planos" className="lp-bg-pricing py-24 md:py-32 border-y" style={{ borderColor: C.line }}>
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
-            <h2 className="text-[40px] md:text-[52px] leading-[1.05]" style={serif}>Planos</h2>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <span className="text-[13px] font-bold uppercase tracking-wider text-[#1B4D3E] bg-[#1B4D3E]/10 px-3 py-1 rounded-full mb-3 inline-block">
+                Acessível para qualquer operação
+              </span>
+              <h2 className="text-[40px] md:text-[52px] leading-[1.05]" style={serif}>Planos</h2>
+            </div>
             <p className="text-[15px]" style={{ color: C.muted }}>Preço fechado por mês. Sem taxa de implantação escondida.</p>
           </div>
 
-          <div data-stagger className="grid lg:grid-cols-3 gap-5">
+          <div data-stagger className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
-                nome: 'Básico', para: 'Para quem está começando', preco: '149', extra: null,
-                itens: ['Até 3 usuários', '30 buscas novas por mês no Google Places', 'FPVs e CCTs limitadas', 'Histórico e rastreio básicos'],
-                cta: 'Escolher Básico', destaque: false,
+                nome: 'Grátis', para: 'Para começar e experimentar', preco: '0', extra: 'Sem cartão. 100% gratuito.',
+                itens: ['01 Usuário', '01 CCT cadastrada', 'Até 05 FPVs e 05 propostas', 'Propostas em PDF/A4', 'Módulos avançados em modo vitrine'],
+                cta: 'Começar grátis agora', destaque: false, isFree: true,
+              },
+              {
+                nome: 'Básico', para: 'Para quem está começando', preco: '149', extra: 'Sem fidelidade.',
+                itens: ['Até 3 usuários', 'Link Interativo Rastreável liberado', '30 buscas novas/mês no Google Places', 'FPVs e CCTs essenciais', 'Histórico e rastreio'],
+                cta: 'Escolher Básico', destaque: false, isFree: false,
               },
               {
                 nome: 'Profissional', para: 'Para prestadoras em expansão', preco: '299', extra: 'R$ 429/mês com WhatsApp integrado',
-                itens: ['Até 10 usuários', '150 buscas novas por mês no Google Places', 'FPVs e CCTs ilimitadas', 'Auditoria completa de acessos', 'Alertas automáticos de reajuste'],
-                cta: 'Começar no Profissional', destaque: true,
+                itens: ['Até 10 usuários', 'CCTs, FPVs e Propostas ilimitadas', 'Módulo de Contratos com alerta de reajuste', 'Gestão de Tarefas (Tasks)', '150 buscas novas/mês no Google Places'],
+                cta: 'Começar no Profissional', destaque: true, isFree: false,
               },
               {
-                nome: 'Enterprise', para: 'Para grandes operações e filiais', preco: '599', extra: null,
-                itens: ['Até 100 usuários', '400 buscas novas por mês no Google Places', 'Ilimitado, com APIs liberadas', 'SLA avançado e suporte 24/7'],
-                cta: 'Falar com consultor', destaque: false,
+                nome: 'Enterprise', para: 'Para grandes operações e filiais', preco: '599', extra: 'Customização total.',
+                itens: ['Até 100 usuários', '400 buscas novas/mês no Google Places', 'Todos os módulos comerciais liberados', 'APIs liberadas e suporte 24/7'],
+                cta: 'Falar com consultor', destaque: false, isFree: false,
               },
             ].map(p => (
               <div
                 key={p.nome}
-                className={`lp-plan rounded-2xl p-8 flex flex-col ${p.destaque ? 'lp-plan-featured' : ''}`}
+                className={`lp-plan rounded-2xl p-6 sm:p-7 flex flex-col justify-between ${p.destaque ? 'lp-plan-featured ring-2 ring-[#EA580C]/40' : ''}`}
                 style={p.destaque ? { background: C.ink, color: '#fff' } : { border: `1px solid ${C.line}`, background: '#FFFFFF', boxShadow: '0 10px 30px -15px rgba(17,20,24,0.06)' }}
               >
-                <div className="flex items-center justify-between">
-                  <p className="text-[15px] font-semibold">{p.nome}</p>
-                  {p.destaque && <span className="text-[12px] px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.12)' }}>Mais escolhido</span>}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[16px] font-bold">{p.nome}</p>
+                    {p.destaque && <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#EA580C] text-white">Mais escolhido</span>}
+                    {p.isFree && <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Entrada</span>}
+                  </div>
+                  <p className="text-[13px] mt-1" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>{p.para}</p>
+                  <p className="mt-6 flex items-baseline gap-1.5">
+                    <span className="text-[14px]">R$</span>
+                    <span className="text-[48px] sm:text-[52px] leading-none tabular-nums font-black" style={serif}>{p.preco}</span>
+                    <span className="text-[13px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>/mês</span>
+                  </p>
+                  <p className="text-[12px] mt-1.5 min-h-[18px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>{p.extra}</p>
+                  <ul className="mt-6 space-y-2.5 text-[13px] flex-1 border-t pt-5" style={{ borderColor: p.destaque ? 'rgba(255,255,255,0.1)' : '#F1EFEA' }}>
+                    {p.itens.map(i => (
+                      <li key={i} className="flex gap-2 items-start">
+                        <Check size={15} className="mt-0.5 shrink-0" style={{ color: p.destaque ? '#9FD3BC' : C.green }} strokeWidth={2.5} />
+                        <span className="leading-snug">{i}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <p className="text-[14px] mt-1" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>{p.para}</p>
-                <p className="mt-8 flex items-baseline gap-1.5">
-                  <span className="text-[15px]">R$</span>
-                  <span className="text-[56px] leading-none tabular-nums" style={serif}>{p.preco}</span>
-                  <span className="text-[14px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>/mês</span>
-                </p>
-                <p className="text-[13px] mt-2 h-5" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>{p.extra}</p>
-                <ul className="mt-8 space-y-3 text-[14px] flex-1">
-                  {p.itens.map(i => (
-                    <li key={i} className="flex gap-2.5">
-                      <Check size={16} className="mt-0.5 shrink-0" style={{ color: p.destaque ? '#9FD3BC' : C.green }} strokeWidth={2.5} />
-                      {i}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href={`/cadastro?plano=${encodeURIComponent(p.nome)}`}
-                  className="mt-10 w-full py-3 rounded-full text-[14px] font-semibold text-center transition-opacity hover:opacity-90"
-                  style={p.destaque ? { background: '#EA580C', color: '#fff', boxShadow: '0 12px 30px -12px rgba(234,88,12,0.7)' } : { border: `1px solid ${C.ink}`, color: C.ink }}
-                >
-                  Testar 7 dias grátis
-                </a>
-                <p className="text-[12px] text-center mt-2.5" style={{ color: p.destaque ? 'rgba(255,255,255,0.55)' : C.muted }}>
-                  Sem cartão. Escolha o plano no fim do teste.
-                </p>
+
+                <div className="mt-8 pt-4">
+                  <a
+                    href={`/cadastro?plano=${encodeURIComponent(p.nome)}`}
+                    className="w-full py-3 rounded-full text-[13px] font-bold text-center block transition-all hover:opacity-90 active:scale-[0.98]"
+                    style={
+                      p.destaque 
+                        ? { background: '#EA580C', color: '#fff', boxShadow: '0 12px 30px -12px rgba(234,88,12,0.7)' } 
+                        : p.isFree
+                          ? { background: '#1B4D3E', color: '#fff', boxShadow: '0 8px 20px -8px rgba(27,77,62,0.5)' }
+                          : { border: `1px solid ${C.ink}`, color: C.ink }
+                    }
+                  >
+                    {p.cta}
+                  </a>
+                  <p className="text-[11px] text-center mt-2" style={{ color: p.destaque ? 'rgba(255,255,255,0.55)' : C.muted }}>
+                    {p.isFree ? '100% grátis. Crie em 1 minuto.' : 'Sem cartão. Cancele quando quiser.'}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

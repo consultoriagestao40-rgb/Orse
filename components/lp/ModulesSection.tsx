@@ -55,13 +55,13 @@ const GROUPS: { id: string; n: string; t: string; d: string; mods: Mod[] }[] = [
     ],
   },
   {
-    id: 'operacao', n: '04', t: 'Implantação e operação',
-    d: 'Depois do sim, a implantação e a logística seguem no mesmo sistema, sem planilha paralela.',
+    id: 'operacao', n: '04', t: 'Implantação e transição',
+    d: 'Depois do aceite do cliente, a passagem de bastão do comercial para a operação é estruturada e sem ruídos.',
     mods: [
-      { icon: ClipboardCheck, t: 'PIC Implantação', d: 'Plano de implantação do contrato com checklist e responsáveis.' },
-      { icon: Boxes, t: 'Gestão de Ativos', d: 'Equipamentos por contrato, com área do técnico no celular.' },
-      { icon: Truck, t: 'Gestão de Entregas', d: 'Entregas de materiais com área do entregador e comprovante.' },
-      { icon: LinkIcon, t: 'Integração ERPFlex', d: 'Envio de dados para o ERP sem redigitar.' },
+      { icon: ClipboardCheck, t: 'PIC Implantação', d: 'Checklist rigoroso de mobilização do contrato com prazos e responsáveis.' },
+      { icon: ShieldCheck, t: 'Mobilização de Posto', d: 'Cronograma de entrega inicial de EPIs, uniformes e alocação de equipe.' },
+      { icon: ClipboardList, t: 'Ata de Alinhamento', d: 'Registro das premissas acordadas na venda para a equipe operacional.' },
+      { icon: LinkIcon, t: 'Integração ERP', d: 'Envio seguro dos dados de faturamento para o sistema financeiro/ERP.' },
     ],
   },
 ];
