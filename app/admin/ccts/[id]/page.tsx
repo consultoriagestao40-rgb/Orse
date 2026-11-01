@@ -310,6 +310,20 @@ export default function PublishedCCTPage() {
             </Link>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
+                  isChatOpen
+                    ? 'bg-slate-900 text-white shadow-md'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-300'
+                }`}
+              >
+                <Bot size={15} />
+                <span>{isChatOpen ? 'Fechar Chat IA' : 'CCT Copilot IA'}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </button>
+
               <Link
                 href={`/admin/ccts/${cct.id}/edit`}
                 className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all"
@@ -859,28 +873,6 @@ export default function PublishedCCTPage() {
               </div>
 
             </div>
-          )}
-
-          {/* BOTÃO FLUTUANTE DE ACESSO AO CHAT COPILOT */}
-          {!isChatOpen && (
-            <button
-              onClick={() => setIsChatOpen(true)}
-              className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-slate-950 via-slate-900 to-[#1B4D3E] hover:from-black hover:to-[#143B2F] text-white px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-3 cursor-pointer border border-emerald-500/40 hover:scale-105 active:scale-95 transition-all group"
-              title="Abrir Assistente CCT Copilot IA"
-            >
-              <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-400/30">
-                <Bot size={18} className="group-hover:rotate-12 transition-transform" />
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full" />
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-black tracking-wide flex items-center gap-1.5">
-                  CCT Copilot IA
-                  <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 bg-emerald-400/20 text-emerald-300 rounded">Online</span>
-                </div>
-                <p className="text-[10px] text-slate-300">Tire dúvidas sobre esta norma</p>
-              </div>
-            </button>
           )}
 
         </div>
