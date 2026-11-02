@@ -1403,7 +1403,6 @@ function PropostaEditor() {
       const periculosidade = Number(bA?.periculosidade ?? (temPeric ? salarioBase * 0.3 : 0));
       const pctInsalub = Number(p.parametrosPosto?.insalubridadePercent !== undefined ? p.parametrosPosto?.insalubridadePercent : (p.cargo?.insalubridadePercent || 0));
       const insalubridade = Number(bA?.insalubridade ?? 0);
-      const grauInsalubridade = pctInsalub === 40 ? 'Máximo (40%)' : pctInsalub === 20 ? 'Médio (20%)' : pctInsalub === 10 ? 'Mínimo (10%)' : 'Não';
       const noturno = Number(bA?.noturno ?? 0);
       const intrajornada = Number(bA?.intrajornada ?? 0);
       const dsr = Number(bA?.dsr ?? 0);
@@ -1431,7 +1430,7 @@ function PropostaEditor() {
       const outrosBeneficios = Number(bC?.outros ?? 0);
       const beneficiosTotal = Number(itemRes?.detalhes?.beneficios ?? 0);
 
-      // Uniformes e EPIs (Montante B por colaborador)
+      // Ativos / Uniformes e EPIs
       const uniformesEpis = Number(itemRes?.detalhes?.ativos ?? 0);
 
       // Custo Direto Unitário do Posto
@@ -1460,8 +1459,6 @@ function PropostaEditor() {
         escala: p.escala || '44h',
         quantidade: qtd,
         temPeric,
-        grauInsalubridade,
-        // Unitários
         salarioBase,
         periculosidade,
         insalubridade,
@@ -1490,7 +1487,6 @@ function PropostaEditor() {
         subtotalMargensUnit,
         impostosUnit,
         precoVendaUnit,
-        // Totais da Função (Unitário * Quantidade)
         salarioBaseTotal: salarioBase * qtd,
         periculosidadeTotal: periculosidade * qtd,
         insalubridadeTotal: insalubridade * qtd,
@@ -1561,100 +1557,95 @@ function PropostaEditor() {
     const exportComposicaoCSV = () => {
       const sep = ';';
       const formatNum = (n: number) => n.toFixed(2).replace('.', ',');
-
-      // Linhas da tabela
       const rows: string[][] = [];
 
-      // Cabeçalho de Funções
       const h1 = ['COMPOSIÇÃO DE CUSTO DE MÃO DE OBRA'];
       const h2 = ['FUNÇÃO / CARGO'];
-      const h3 = ['ESCALA / REGIME'];
-      const h4 = ['QUANTIDADE DE POSTOS'];
+      const h3 = ['QUANTIDADE DE POSTOS'];
 
       colunasComposicao.forEach(c => {
         h1.push(`FUNÇÃO ${c.indice}`, `FUNÇÃO ${c.indice}`);
         h2.push(c.cargoNome, c.cargoNome);
-        h3.push(c.escala, c.escala);
-        h4.push(`${c.quantidade} posto(s)`, `${c.quantidade} posto(s)`);
+        h3.push(`${c.quantidade} posto(s)`, `${c.quantidade} posto(s)`);
       });
       h1.push('TOTAL CONTRATO', 'TOTAL CONTRATO');
       h2.push('CONSOLIDADO', 'CONSOLIDADO');
-      h3.push('-', '-');
-      h4.push(`${consolidado.totalPostos} postos`, `${consolidado.totalPostos} postos`);
+      h3.push(`${consolidado.totalPostos} postos`, `${consolidado.totalPostos} postos`);
 
       const hColTypes = ['ITEM / DISCRIMINAÇÃO'];
       colunasComposicao.forEach(() => {
-        hColTypes.push('Unitário (R$)', 'Total Função (R$)');
+        hColTypes.push('Custo Unit', 'Total');
       });
-      hColTypes.push('Médio por Posto (R$)', 'Total Contrato (R$)');
+      hColTypes.push('Médio Unit', 'Total Geral');
 
-      rows.push(h1, h2, h3, h4, hColTypes);
+      rows.push(h1, h2, h3, hColTypes);
 
-      const addRow = (label: string, getVal: (c: typeof colunasComposicao[0]) => { unit: number; total: number; isText?: string }, totalConsolidado: { unit: number; total: number }) => {
+      const addRow = (label: string, getVal: (c: typeof colunasComposicao[0]) => { unit: number; total: number }, totalConsolidado: { unit: number; total: number }) => {
         const line: string[] = [label];
         colunasComposicao.forEach(c => {
           const v = getVal(c);
-          if (v.isText) {
-            line.push(v.isText, v.isText);
-          } else {
-            line.push(formatNum(v.unit), formatNum(v.total));
-          }
+          line.push(formatNum(v.unit), formatNum(v.total));
         });
         line.push(formatNum(totalConsolidado.unit), formatNum(totalConsolidado.total));
         rows.push(line);
       };
 
-      // Bloco A
-      rows.push(['--- REMUNERAÇÃO (MONTANTE A) ---']);
-      addRow('A) Salário mensal (sem encargos)', c => ({ unit: c.salarioBase, total: c.salarioBaseTotal }), { unit: medio(consolidado.salarioBaseTotal), total: consolidado.salarioBaseTotal });
-      addRow('Possui Periculosidade ?', c => ({ unit: 0, total: 0, isText: c.temPeric ? 'Sim (30%)' : 'Não' }), { unit: 0, total: 0 });
-      addRow('B) Periculosidade (R$)', c => ({ unit: c.periculosidade, total: c.periculosidadeTotal }), { unit: medio(consolidado.periculosidadeTotal), total: consolidado.periculosidadeTotal });
-      addRow('Informe o grau de insalubridade', c => ({ unit: 0, total: 0, isText: c.grauInsalubridade }), { unit: 0, total: 0 });
-      addRow('C) Insalubridade (R$)', c => ({ unit: c.insalubridade, total: c.insalubridadeTotal }), { unit: medio(consolidado.insalubridadeTotal), total: consolidado.insalubridadeTotal });
-      addRow('Adicional Noturno (R$)', c => ({ unit: c.noturno, total: c.noturnoTotal }), { unit: medio(consolidado.noturnoTotal), total: consolidado.noturnoTotal });
-      addRow('Intrajornada (R$)', c => ({ unit: c.intrajornada, total: c.intrajornadaTotal }), { unit: medio(consolidado.intrajornadaTotal), total: consolidado.intrajornadaTotal });
-      addRow('DSR s/ Adicionais (R$)', c => ({ unit: c.dsr, total: c.dsrTotal }), { unit: medio(consolidado.dsrTotal), total: consolidado.dsrTotal });
-      addRow('Outros Adicionais / Verbas Indenizatórias (R$)', c => ({ unit: c.outrosIndenizatorios, total: c.outrosIndenizatoriosTotal }), { unit: medio(consolidado.outrosIndenizatoriosTotal), total: consolidado.outrosIndenizatoriosTotal });
-      addRow('D) Total da Remuneração (A)', c => ({ unit: c.remuTotal, total: c.remuTotalTotal }), { unit: medio(consolidado.remuTotalTotal), total: consolidado.remuTotalTotal });
+      // Montante A
+      rows.push(['--- MONTANTE "A" - REMUNERAÇÃO ---']);
+      addRow('1.1) Salário Base Mensal', c => ({ unit: c.salarioBase, total: c.salarioBaseTotal }), { unit: medio(consolidado.salarioBaseTotal), total: consolidado.salarioBaseTotal });
+      addRow('1.2) Periculosidade', c => ({ unit: c.periculosidade, total: c.periculosidadeTotal }), { unit: medio(consolidado.periculosidadeTotal), total: consolidado.periculosidadeTotal });
+      addRow('1.3) Insalubridade', c => ({ unit: c.insalubridade, total: c.insalubridadeTotal }), { unit: medio(consolidado.insalubridadeTotal), total: consolidado.insalubridadeTotal });
+      addRow('1.4) Adicional Noturno', c => ({ unit: c.noturno, total: c.noturnoTotal }), { unit: medio(consolidado.noturnoTotal), total: consolidado.noturnoTotal });
+      addRow('1.5) Intrajornada', c => ({ unit: c.intrajornada, total: c.intrajornadaTotal }), { unit: medio(consolidado.intrajornadaTotal), total: consolidado.intrajornadaTotal });
+      addRow('1.6) DSR s/ Adicionais', c => ({ unit: c.dsr, total: c.dsrTotal }), { unit: medio(consolidado.dsrTotal), total: consolidado.dsrTotal });
+      if (consolidado.outrosIndenizatoriosTotal > 0) {
+        addRow('1.7) Outros Adicionais / Gratificações', c => ({ unit: c.outrosIndenizatorios, total: c.outrosIndenizatoriosTotal }), { unit: medio(consolidado.outrosIndenizatoriosTotal), total: consolidado.outrosIndenizatoriosTotal });
+      }
+      addRow('Total Remuneração', c => ({ unit: c.remuTotal, total: c.remuTotalTotal }), { unit: medio(consolidado.remuTotalTotal), total: consolidado.remuTotalTotal });
 
       // Encargos
       rows.push(['--- ENCARGOS SOCIAIS ---']);
-      addRow('E) Encargos sociais (R$)', c => ({ unit: c.encargos, total: c.encargosTotal }), { unit: medio(consolidado.encargosTotal), total: consolidado.encargosTotal });
+      addRow(`2) Encargos Sociais (${totalGeralEncargos.toFixed(2)}%)`, c => ({ unit: c.encargos, total: c.encargosTotal }), { unit: medio(consolidado.encargosTotal), total: consolidado.encargosTotal });
       if (consolidado.outrosBlocATotal > 0) {
-        addRow('Outros Encargos Indenizatórios (R$)', c => ({ unit: c.outrosBlocoA, total: c.outrosBlocATotal }), { unit: medio(consolidado.outrosBlocATotal), total: consolidado.outrosBlocATotal });
+        addRow('3) Outros Encargos Indenizatórios', c => ({ unit: c.outrosBlocoA, total: c.outrosBlocATotal }), { unit: medio(consolidado.outrosBlocATotal), total: consolidado.outrosBlocATotal });
       }
-      addRow('Total Montante "A" (Remuneração + Encargos)', c => ({ unit: c.blocoATotal, total: c.blocoATotalTotal }), { unit: medio(consolidado.blocoATotalTotal), total: consolidado.blocoATotalTotal });
+      addRow('Total do Montante "A"', c => ({ unit: c.blocoATotal, total: c.blocoATotalTotal }), { unit: medio(consolidado.blocoATotalTotal), total: consolidado.blocoATotalTotal });
 
-      // Benefícios C
-      rows.push(['--- CUSTOS DIVERSOS E BENEFÍCIOS (MONTANTE C) ---']);
-      addRow('F1) Alimentação (R$ líquida)', c => ({ unit: c.vaLiquido, total: c.vaLiquidoTotal }), { unit: medio(consolidado.vaLiquidoTotal), total: consolidado.vaLiquidoTotal });
-      addRow('F2) Transporte (R$ líquida)', c => ({ unit: c.vtLiquido, total: c.vtLiquidoTotal }), { unit: medio(consolidado.vtLiquidoTotal), total: consolidado.vtLiquidoTotal });
-      addRow('F3) Cesta Básica / Assiduidade (R$)', c => ({ unit: c.cestaBasica, total: c.cestaBasicaTotal }), { unit: medio(consolidado.cestaBasicaTotal), total: consolidado.cestaBasicaTotal });
-      addRow('F4) Assistência Médica / Sindicato (R$)', c => ({ unit: c.sindicatoAssistencia, total: c.sindicatoAssistenciaTotal }), { unit: medio(consolidado.sindicatoAssistenciaTotal), total: consolidado.sindicatoAssistenciaTotal });
-      addRow('F5) Exames Médicos / Admissionais (R$)', c => ({ unit: c.exames, total: c.examesTotal }), { unit: medio(consolidado.examesTotal), total: consolidado.examesTotal });
-      addRow('F6) Reserva Técnica (R$)', c => ({ unit: c.reservaTecnica, total: c.reservaTecnicaTotal }), { unit: medio(consolidado.reservaTecnicaTotal), total: consolidado.reservaTecnicaTotal });
-      addRow('F7) Manutenção de Equipamentos (R$)', c => ({ unit: c.manutencao, total: c.manutencaoTotal }), { unit: medio(consolidado.manutencaoTotal), total: consolidado.manutencaoTotal });
-      addRow('F8) Outros Benefícios (R$)', c => ({ unit: c.outrosBeneficios, total: c.outrosBeneficiosTotal }), { unit: medio(consolidado.outrosBeneficiosTotal), total: consolidado.outrosBeneficiosTotal });
-      addRow('Total Benefícios (Montante C)', c => ({ unit: c.beneficiosTotal, total: c.beneficiosTotalTotal }), { unit: medio(consolidado.beneficiosTotalTotal), total: consolidado.beneficiosTotalTotal });
+      // Montante C
+      rows.push(['--- MONTANTE "C" - CUSTOS DIVERSOS E BENEFÍCIOS ---']);
+      addRow('1) Vale Alimentação (Líquido)', c => ({ unit: c.vaLiquido, total: c.vaLiquidoTotal }), { unit: medio(consolidado.vaLiquidoTotal), total: consolidado.vaLiquidoTotal });
+      addRow('2) Vale Transporte (Líquido)', c => ({ unit: c.vtLiquido, total: c.vtLiquidoTotal }), { unit: medio(consolidado.vtLiquidoTotal), total: consolidado.vtLiquidoTotal });
+      addRow('3) Custos com Sindicatos', c => ({ unit: c.sindicatoAssistencia, total: c.sindicatoAssistenciaTotal }), { unit: medio(consolidado.sindicatoAssistenciaTotal), total: consolidado.sindicatoAssistenciaTotal });
+      addRow('4) Cesta Básica / Assiduidade', c => ({ unit: c.cestaBasica, total: c.cestaBasicaTotal }), { unit: medio(consolidado.cestaBasicaTotal), total: consolidado.cestaBasicaTotal });
+      addRow('5) Exames Médicos', c => ({ unit: c.exames, total: c.examesTotal }), { unit: medio(consolidado.examesTotal), total: consolidado.examesTotal });
+      addRow('6) Reservas Técnicas', c => ({ unit: c.reservaTecnica, total: c.reservaTecnicaTotal }), { unit: medio(consolidado.reservaTecnicaTotal), total: consolidado.reservaTecnicaTotal });
+      addRow('7) Manutenção Equipamentos', c => ({ unit: c.manutencao, total: c.manutencaoTotal }), { unit: medio(consolidado.manutencaoTotal), total: consolidado.manutencaoTotal });
+      if (consolidado.outrosBeneficiosTotal > 0) {
+        addRow('8) Outros Benefícios', c => ({ unit: c.outrosBeneficios, total: c.outrosBeneficiosTotal }), { unit: medio(consolidado.outrosBeneficiosTotal), total: consolidado.outrosBeneficiosTotal });
+      }
+      addRow('Total do Montante "C"', c => ({ unit: c.beneficiosTotal, total: c.beneficiosTotalTotal }), { unit: medio(consolidado.beneficiosTotalTotal), total: consolidado.beneficiosTotalTotal });
 
       // Montante B
-      rows.push(['--- UNIFORMES E EPIS (MONTANTE B) ---']);
-      addRow('Uniformes e EPI\'s (R$)', c => ({ unit: c.uniformesEpis, total: c.uniformesEpisTotal }), { unit: medio(consolidado.uniformesEpisTotal), total: consolidado.uniformesEpisTotal });
+      rows.push(['--- MONTANTE "B" - INSUMOS POR POSTO ---']);
+      addRow('1) Uniformes e EPI\'s', c => ({ unit: c.uniformesEpis, total: c.uniformesEpisTotal }), { unit: medio(consolidado.uniformesEpisTotal), total: consolidado.uniformesEpisTotal });
 
       // Custo Direto
       rows.push(['--- CUSTO DIRETO TOTAL ---']);
-      addRow('CUSTO TOTAL DIRETO DA MÃO DE OBRA (A+B+C)', c => ({ unit: c.custoDiretoUnit, total: c.custoDiretoTotal }), { unit: medio(consolidado.custoDiretoTotal), total: consolidado.custoDiretoTotal });
+      addRow('Custo Direto Total da Mão de Obra (A+B+C)', c => ({ unit: c.custoDiretoUnit, total: c.custoDiretoTotal }), { unit: medio(consolidado.custoDiretoTotal), total: consolidado.custoDiretoTotal });
 
-      // Formação de Preço
-      rows.push(['--- FORMAÇÃO DE PREÇO EM CASCATA ---']);
-      addRow(`Taxa de Administração (${proposta.premissas.taxaAdm.toFixed(2)}%)`, c => ({ unit: c.admUnit, total: c.admTotal }), { unit: medio(consolidado.admTotal), total: consolidado.admTotal });
-      addRow(`Margem de Lucro (${proposta.premissas.margemLucro.toFixed(2)}%)`, c => ({ unit: c.lucroUnit, total: c.lucroTotal }), { unit: medio(consolidado.lucroTotal), total: consolidado.lucroTotal });
+      // Montante D
+      rows.push(['--- MONTANTE "D" - BDI ---']);
+      addRow(`Administração (${proposta.premissas.taxaAdm.toFixed(2)}%)`, c => ({ unit: c.admUnit, total: c.admTotal }), { unit: medio(consolidado.admTotal), total: consolidado.admTotal });
+      addRow(`Lucro (${proposta.premissas.margemLucro.toFixed(2)}%)`, c => ({ unit: c.lucroUnit, total: c.lucroTotal }), { unit: medio(consolidado.lucroTotal), total: consolidado.lucroTotal });
       addRow(`Comissão do Vendedor (${(proposta.premissas.comissaoVendedor || 0).toFixed(2)}%)`, c => ({ unit: c.comissaoUnit, total: c.comissaoTotal }), { unit: medio(consolidado.comissaoTotal), total: consolidado.comissaoTotal });
-      addRow('Subtotal com Margens (A+B+C+D)', c => ({ unit: c.subtotalMargensUnit, total: c.subtotalMargensTotal }), { unit: medio(consolidado.subtotalMargensTotal), total: consolidado.subtotalMargensTotal });
-      addRow(`Tributos e Impostos Fiscais (${totalTributos.toFixed(2)}%)`, c => ({ unit: c.impostosUnit, total: c.impostosTotal }), { unit: medio(consolidado.impostosTotal), total: consolidado.impostosTotal });
-      addRow('VALOR MENSAL DO POSTO (PREÇO UNITÁRIO)', c => ({ unit: c.precoVendaUnit, total: c.precoVendaTotal }), { unit: medio(consolidado.precoVendaTotal), total: consolidado.precoVendaTotal });
-      addRow('VALOR TOTAL MENSAL DA FUNÇÃO (R$)', c => ({ unit: c.precoVendaTotal, total: c.precoVendaTotal }), { unit: consolidado.precoVendaTotal, total: consolidado.precoVendaTotal });
-      addRow('VALOR TOTAL ANUAL DA FUNÇÃO (12 MESES)', c => ({ unit: c.precoVendaAnual, total: c.precoVendaAnual }), { unit: consolidado.precoVendaAnual, total: consolidado.precoVendaAnual });
+      addRow('Total dos Montantes "A+B+C+D"', c => ({ unit: c.subtotalMargensUnit, total: c.subtotalMargensTotal }), { unit: medio(consolidado.subtotalMargensTotal), total: consolidado.subtotalMargensTotal });
+
+      // Impostos e Totais Finais
+      rows.push(['--- IMPOSTOS E TOTAIS FINAIS ---']);
+      addRow(`Impostos (${totalTributos.toFixed(2)}%)`, c => ({ unit: c.impostosUnit, total: c.impostosTotal }), { unit: medio(consolidado.impostosTotal), total: consolidado.impostosTotal });
+      addRow('Valor Mensal do Posto (Preço Unitário)', c => ({ unit: c.precoVendaUnit, total: c.precoVendaTotal }), { unit: medio(consolidado.precoVendaTotal), total: consolidado.precoVendaTotal });
+      addRow('Valor Total Mensal da Função', c => ({ unit: c.precoVendaTotal, total: c.precoVendaTotal }), { unit: consolidado.precoVendaTotal, total: consolidado.precoVendaTotal });
+      addRow('Valor Total Anual da Função (12 Meses)', c => ({ unit: c.precoVendaAnual, total: c.precoVendaAnual }), { unit: consolidado.precoVendaAnual, total: consolidado.precoVendaAnual });
 
       const csvContent = rows.map(r => r.join(sep)).join('\r\n');
       const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1672,757 +1663,508 @@ function PropostaEditor() {
 
     if (proposta.equipe.length === 0) {
       return (
-        <div className="bg-white border border-slate-300 rounded-md p-12 text-center shadow-sm">
-          <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Nenhuma Função ou Posto Cadastrado</h3>
-          <p className="text-slate-500 text-sm max-w-md mx-auto mb-6">
-            Adicione cargos e postos na aba <strong>"4. Quadro Equipe"</strong> para visualizar a composição estratificada de custos de mão de obra.
-          </p>
+        <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs text-slate-800 rounded p-12 text-center">
+          <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Nenhum posto cadastrado</h3>
+          <p className="text-slate-400 text-xs mb-4">Adicione colaboradores no Quadro de Equipe para visualizar a composição de custos.</p>
           <button
             onClick={() => setActiveTab('quadro')}
-            className="inline-flex items-center gap-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white px-5 py-2.5 rounded text-xs font-bold uppercase tracking-wider transition-all"
+            className="inline-flex items-center gap-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white px-4 py-2 rounded text-xs font-bold uppercase transition-all"
           >
-            <UserCheck className="w-4 h-4" />
             Ir para Quadro Equipe
           </button>
         </div>
       );
     }
 
-    const showUnit = composicaoViewMode === 'BOTH' || composicaoViewMode === 'UNIT';
-    const showTotal = composicaoViewMode === 'BOTH' || composicaoViewMode === 'TOTAL';
+    const totalCols = 1 + (colunasComposicao.length * 2) + 2;
 
     return (
-      <div className="w-full space-y-6">
-        {/* CARDS RESUMO EXECUTIVO (KPIS) */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Efetivo Total de Postos</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">{consolidado.totalPostos}</span>
-              <span className="text-xs text-slate-500 font-semibold">{consolidado.totalPostos === 1 ? 'colaborador' : 'colaboradores'}</span>
-            </div>
-            <span className="text-[11px] text-emerald-600 font-medium mt-1 block">{colunasComposicao.length} {colunasComposicao.length === 1 ? 'função cadastrada' : 'funções cadastradas'}</span>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Custo Direto Total MO</span>
-            <div className="mt-1">
-              <span className="text-2xl font-black text-slate-900">{formatCurrency(consolidado.custoDiretoTotal)}</span>
-            </div>
-            <span className="text-[11px] text-slate-500 font-medium mt-1 block">Média: {formatCurrency(medio(consolidado.custoDiretoTotal))} / posto</span>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Faturamento Mensal MO</span>
-            <div className="mt-1">
-              <span className="text-2xl font-black text-[#1B4D3E]">{formatCurrency(consolidado.precoVendaTotal)}</span>
-            </div>
-            <span className="text-[11px] text-slate-500 font-medium mt-1 block">Margem / BDI e Tributos aplicados</span>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Valor Médio por Posto</span>
-            <div className="mt-1">
-              <span className="text-2xl font-black text-emerald-700">{formatCurrency(medio(consolidado.precoVendaTotal))}</span>
-            </div>
-            <span className="text-[11px] text-slate-500 font-medium mt-1 block">Preço de venda mensal unitário médio</span>
-          </div>
-        </div>
-
-        {/* BARRA DE AÇÕES E CONTROLE DE VISUALIZAÇÃO */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3.5 border border-slate-300 rounded shadow-xs print:hidden">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Modo de Exibição:</span>
-            <div className="inline-flex rounded-md shadow-xs" role="group">
-              <button
-                type="button"
-                onClick={() => setComposicaoViewMode('BOTH')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-l-md border transition-colors ${
-                  composicaoViewMode === 'BOTH'
-                    ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                Completo (Unit + Total)
-              </button>
-              <button
-                type="button"
-                onClick={() => setComposicaoViewMode('UNIT')}
-                className={`px-3 py-1.5 text-xs font-bold border-y border-r transition-colors ${
-                  composicaoViewMode === 'UNIT'
-                    ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                Somente Unitário
-              </button>
-              <button
-                type="button"
-                onClick={() => setComposicaoViewMode('TOTAL')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-r-md border-y border-r transition-colors ${
-                  composicaoViewMode === 'TOTAL'
-                    ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                Somente Total Função
-              </button>
+      <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs text-slate-800 rounded overflow-hidden print:border-none print:shadow-none">
+        
+        {/* CABEÇALHO PLANILHA - EXATAMENTE IGUAL AO EXTRATO */}
+        <div className="bg-[#1B4D3E] text-white flex justify-between items-center px-6 py-4 border-b border-white">
+          <div>
+            <h2 className="font-bold uppercase text-xl tracking-widest">Planilha de Custos — Composição de Mão de Obra</h2>
+            <div className="text-[10px] text-emerald-200 font-bold uppercase tracking-wider mt-0.5">
+              Efetivo Total: {consolidado.totalPostos} {consolidado.totalPostos === 1 ? 'colaborador' : 'colaboradores'} alocados em {colunasComposicao.length} {colunasComposicao.length === 1 ? 'função' : 'funções'}
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 print:hidden">
             <button
               type="button"
               onClick={exportComposicaoCSV}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition-all shadow-xs cursor-pointer"
-              title="Baixar planilha formatada em CSV compatível com Excel"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 active:bg-white/30 text-white rounded text-xs font-bold border border-white/30 transition-all cursor-pointer shadow-xs"
+              title="Exportar planilha para CSV"
             >
-              <FileDown className="w-4 h-4" />
-              <span>Exportar Excel (.csv)</span>
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Exportar CSV</span>
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-xs font-bold transition-all shadow-xs cursor-pointer"
-              title="Imprimir visualização desta composição"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 active:bg-white/30 text-white rounded text-xs font-bold border border-white/30 transition-all cursor-pointer shadow-xs"
+              title="Imprimir visualização"
             >
-              <Printer className="w-4 h-4" />
-              <span>Imprimir / PDF</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>Imprimir</span>
             </button>
           </div>
         </div>
 
-        {/* CONTAINER DA PLANILHA NO FORMATO DO PRINT */}
-        <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs text-slate-800 rounded overflow-hidden print:border-none print:shadow-none">
-          
-          {/* CABEÇALHO PLANILHA - IDÊNTICO AO PRINT */}
-          <div className="bg-black text-white flex justify-between items-center px-6 py-4 border-b border-white">
-            <div className="flex items-center gap-3">
-              {companyLogo && (
-                <img src={companyLogo} alt={companyName} className="h-8 max-w-[150px] object-contain brightness-0 invert" />
-              )}
-              <span className="font-extrabold uppercase text-sm tracking-wider text-slate-200">
-                {proposta.cliente.cliente || proposta.cliente.razaoSocial || companyName}
-              </span>
-            </div>
-            <h2 className="font-bold uppercase text-2xl tracking-widest text-white">MÃO DE OBRA</h2>
-          </div>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse text-slate-800">
+            <thead>
+              {/* MONTANTE A HEADER */}
+              <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
+                <th colSpan={totalCols} className="py-2 text-center uppercase tracking-widest font-bold">
+                  Montante "A" — Mão-de-Obra (Estratificação por Função)
+                </th>
+              </tr>
 
-          {/* FAIXA AMARELA DE ATENÇÃO NO FORMATO DO PRINT */}
-          <div className="bg-[#FEF08A] text-slate-900 border-y-2 border-amber-400 px-6 py-2.5 font-black uppercase text-xs tracking-wider flex items-center justify-between">
-            <span>ATENÇÃO : ESTRATIFICAÇÃO E COMPOSIÇÃO DE CUSTOS DE MÃO DE OBRA POR POSTO E FUNÇÃO</span>
-            <span className="text-[11px] font-bold text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded">
-              TOTAL DE POSTOS: {consolidado.totalPostos}
-            </span>
-          </div>
-
-          {/* TABELA ESTRATIFICADA COM SCROLL HORIZONTAL */}
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse text-slate-800 min-w-[900px]">
-              <thead>
-                {/* CABEÇALHO DAS FUNÇÕES (COR LARANJA / PÊSSEGO SUAVE COMO NO PRINT) */}
-                <tr className="bg-[#FED7AA] text-slate-900 border-b border-amber-300">
-                  <th className="py-3 px-4 font-black uppercase tracking-wider text-xs w-[320px] sticky left-0 bg-[#FED7AA] z-10 border-r border-amber-300">
-                    FUNÇÃO (descrever a função):
-                  </th>
-                  {colunasComposicao.map((c) => (
-                    <th
-                      key={c.id}
-                      colSpan={showUnit && showTotal ? 2 : 1}
-                      className="py-3 px-4 text-center border-r border-amber-300 font-extrabold uppercase text-xs"
-                    >
-                      <div className="text-amber-950 font-black text-sm">FUNÇÃO {c.indice}</div>
-                      <div className="text-slate-800 font-bold truncate max-w-[220px] mx-auto text-xs">{c.cargoNome}</div>
-                      <div className="text-[10px] text-amber-900 font-semibold mt-0.5">
-                        Escala: {c.escala} | Qtd: <span className="font-black underline">{c.quantidade} {c.quantidade > 1 ? 'postos' : 'posto'}</span>
-                      </div>
-                    </th>
-                  ))}
-                  <th
-                    colSpan={showUnit && showTotal ? 2 : 1}
-                    className="py-3 px-4 text-center font-black uppercase text-xs bg-[#1B4D3E] text-white border-l border-white/20"
-                  >
-                    <div className="text-white text-sm">TOTAL GERAL</div>
-                    <div className="text-emerald-200 text-xs">CONTRATO COMPLETO</div>
-                    <div className="text-[10px] text-emerald-100 font-semibold mt-0.5">
-                      {consolidado.totalPostos} {consolidado.totalPostos === 1 ? 'posto' : 'postos'} alocados
+              {/* CABEÇALHO COM OS NOMES DAS FUNÇÕES */}
+              <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
+                <th className="py-2.5 px-6 min-w-[280px]">1) Função / Discriminação</th>
+                {colunasComposicao.map((c) => (
+                  <th key={`h-${c.id}`} colSpan={2} className="py-2 px-3 text-center border-l border-slate-300">
+                    <div className="font-extrabold text-slate-800 text-xs">{c.cargoNome}</div>
+                    <div className="text-[10px] text-slate-500 font-semibold normal-case">
+                      {c.quantidade} {c.quantidade > 1 ? 'postos' : 'posto'} ({c.escala})
                     </div>
                   </th>
-                </tr>
+                ))}
+                <th colSpan={2} className="py-2 px-3 text-center border-l border-slate-300 bg-slate-200">
+                  <div className="font-extrabold text-slate-900 text-xs">Total Contrato</div>
+                  <div className="text-[10px] text-slate-600 font-semibold normal-case">
+                    {consolidado.totalPostos} postos alocados
+                  </div>
+                </th>
+              </tr>
 
-                {/* SUB-CABEÇALHOS DAS COLUNAS (UNITÁRIO E TOTAL FUNÇÃO) */}
-                <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
-                  <th className="py-2 px-4 sticky left-0 bg-slate-100 z-10 border-r border-slate-300">
-                    Linhas de Custos e Encargos
-                  </th>
+              {/* SUB-HEADER CUSTO UNIT E TOTAL */}
+              <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-300 text-[9px] uppercase tracking-wider">
+                <th className="py-1 px-6 text-slate-400">Linha de Custo</th>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`subh-${c.id}`}>
+                    <th className="py-1 px-3 text-right border-l border-slate-200 text-slate-500 min-w-[105px]">Custo Unit</th>
+                    <th className="py-1 px-3 text-right bg-emerald-100/50 font-bold text-slate-700 min-w-[115px]">Total ({c.quantidade}x)</th>
+                  </React.Fragment>
+                ))}
+                <th className="py-1 px-3 text-right border-l border-slate-300 bg-slate-100 text-slate-600 min-w-[110px]">Médio Unit</th>
+                <th className="py-1 px-3 text-right bg-emerald-200/50 font-bold text-slate-900 min-w-[125px]">Total Geral</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {/* 1.1) Salário Base */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-semibold text-slate-800">1.1) Salário mensal (sem encargos)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`sal-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.salarioBase)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.salarioBaseTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.salarioBaseTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.salarioBaseTotal)}</td>
+              </tr>
+
+              {/* 1.2) Periculosidade */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-semibold text-slate-800">1.2) Periculosidade (30%)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`peric-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.periculosidade > 0 ? formatCurrency(c.periculosidade) : '-'}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.periculosidadeTotal > 0 ? formatCurrency(c.periculosidadeTotal) : '-'}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{consolidado.periculosidadeTotal > 0 ? formatCurrency(medio(consolidado.periculosidadeTotal)) : '-'}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{consolidado.periculosidadeTotal > 0 ? formatCurrency(consolidado.periculosidadeTotal) : '-'}</td>
+              </tr>
+
+              {/* 1.3) Insalubridade */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-semibold text-slate-800">1.3) Insalubridade</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`insalub-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.insalubridade > 0 ? formatCurrency(c.insalubridade) : '-'}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.insalubridadeTotal > 0 ? formatCurrency(c.insalubridadeTotal) : '-'}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{consolidado.insalubridadeTotal > 0 ? formatCurrency(medio(consolidado.insalubridadeTotal)) : '-'}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{consolidado.insalubridadeTotal > 0 ? formatCurrency(consolidado.insalubridadeTotal) : '-'}</td>
+              </tr>
+
+              {/* 1.4) Adicional Noturno */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-semibold text-slate-800">1.4) Adicional Noturno</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`noturno-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.noturno > 0 ? formatCurrency(c.noturno) : '-'}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.noturnoTotal > 0 ? formatCurrency(c.noturnoTotal) : '-'}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{consolidado.noturnoTotal > 0 ? formatCurrency(medio(consolidado.noturnoTotal)) : '-'}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{consolidado.noturnoTotal > 0 ? formatCurrency(consolidado.noturnoTotal) : '-'}</td>
+              </tr>
+
+              {/* 1.5) Intrajornada */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-semibold text-slate-800">1.5) Intrajornada</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`intra-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.intrajornada > 0 ? formatCurrency(c.intrajornada) : '-'}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.intrajornadaTotal > 0 ? formatCurrency(c.intrajornadaTotal) : '-'}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{consolidado.intrajornadaTotal > 0 ? formatCurrency(medio(consolidado.intrajornadaTotal)) : '-'}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{consolidado.intrajornadaTotal > 0 ? formatCurrency(consolidado.intrajornadaTotal) : '-'}</td>
+              </tr>
+
+              {/* 1.6) DSR */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-semibold text-slate-800">1.6) DSR sobre Adicionais</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`dsr-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.dsr > 0 ? formatCurrency(c.dsr) : '-'}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.dsrTotal > 0 ? formatCurrency(c.dsrTotal) : '-'}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{consolidado.dsrTotal > 0 ? formatCurrency(medio(consolidado.dsrTotal)) : '-'}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{consolidado.dsrTotal > 0 ? formatCurrency(consolidado.dsrTotal) : '-'}</td>
+              </tr>
+
+              {/* 1.7) Outros / Gratificações */}
+              {consolidado.outrosIndenizatoriosTotal > 0 && (
+                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                  <td className="py-1.5 px-6 font-semibold text-slate-800">1.7) Outros Adicionais / Gratificações</td>
                   {colunasComposicao.map((c) => (
-                    <React.Fragment key={`sub-${c.id}`}>
-                      {showUnit && <th className="py-2 px-3 text-right border-r border-slate-200">Unitário (R$)</th>}
-                      {showTotal && <th className="py-2 px-3 text-right border-r border-slate-300 bg-amber-50/70 font-black text-amber-950">Total ({c.quantidade}x)</th>}
+                    <React.Fragment key={`outros-remu-${c.id}`}>
+                      <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.outrosIndenizatorios > 0 ? formatCurrency(c.outrosIndenizatorios) : '-'}</td>
+                      <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.outrosIndenizatoriosTotal > 0 ? formatCurrency(c.outrosIndenizatoriosTotal) : '-'}</td>
                     </React.Fragment>
                   ))}
-                  {showUnit && <th className="py-2 px-3 text-right bg-slate-800 text-white border-r border-white/20">Médio / Posto</th>}
-                  {showTotal && <th className="py-2 px-3 text-right bg-[#13382D] text-white font-black">Total Geral</th>}
+                  <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.outrosIndenizatoriosTotal))}</td>
+                  <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.outrosIndenizatoriosTotal)}</td>
                 </tr>
-              </thead>
+              )}
 
-              <tbody>
-                {/* SEÇÃO: BLOCO A - REMUNERAÇÃO */}
-                <tr className="bg-[#1B4D3E] text-white font-black uppercase text-xs tracking-wider border-y border-white/20">
-                  <td colSpan={1 + colunasComposicao.length * (showUnit && showTotal ? 2 : 1) + (showUnit && showTotal ? 2 : 1)} className="py-2 px-4">
-                    Montante "A" - Remuneração e Salário
-                  </td>
-                </tr>
+              {/* Total Remuneração (Total Função no Extrato) */}
+              <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
+                <td className="py-1.5 px-6 text-right">Total Remuneração</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`tot-remu-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-[#2d631d]">{formatCurrency(c.remuTotal)}</td>
+                    <td className="py-1.5 px-3 text-right">{formatCurrency(c.remuTotalTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-[#2d631d]">{formatCurrency(medio(consolidado.remuTotalTotal))}</td>
+                <td className="py-1.5 px-3 text-right font-extrabold">{formatCurrency(consolidado.remuTotalTotal)}</td>
+              </tr>
 
-                {/* A) Salário Mensal */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    A) Salário mensal (sem encargos)
-                  </td>
+              {/* 2) Encargos Sociais */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold">2) Encargos Sociais ({totalGeralEncargos.toFixed(2)}%)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`enc-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.encargos)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.encargosTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.encargosTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.encargosTotal)}</td>
+              </tr>
+
+              {/* 3) Outros Encargos se houver */}
+              {consolidado.outrosBlocATotal > 0 && (
+                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                  <td className="py-1.5 px-6 font-bold">3) Outros Encargos Indenizatórios</td>
                   {colunasComposicao.map((c) => (
-                    <React.Fragment key={`sal-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.salarioBase)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.salarioBaseTotal)}</td>}
+                    <React.Fragment key={`outros-enc-${c.id}`}>
+                      <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.outrosBlocoA)}</td>
+                      <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.outrosBlocATotal)}</td>
                     </React.Fragment>
                   ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.salarioBaseTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.salarioBaseTotal)}</td>}
+                  <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.outrosBlocATotal))}</td>
+                  <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.outrosBlocATotal)}</td>
                 </tr>
+              )}
 
-                {/* Periculosidade Sim/Não */}
-                <tr className="border-b border-slate-200 border-dotted bg-slate-50/40 text-[11px]">
-                  <td className="py-1 px-4 text-slate-600 font-semibold sticky left-0 bg-slate-50 z-10 border-r border-slate-200">
-                    Possui Periculosidade ? [ Selecionar Sim ou Não ]
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <td
-                      key={`peric-yn-${c.id}`}
-                      colSpan={showUnit && showTotal ? 2 : 1}
-                      className="py-1 px-3 text-center border-r border-slate-200 font-bold"
-                    >
-                      <span className={`px-2 py-0.5 rounded text-[10px] ${c.temPeric ? 'bg-orange-100 text-orange-800 font-black' : 'text-slate-400 font-normal'}`}>
-                        {c.temPeric ? 'Sim (30%)' : 'Não'}
-                      </span>
-                    </td>
-                  ))}
-                  <td colSpan={showUnit && showTotal ? 2 : 1} className="py-1 px-3 text-center text-slate-400 font-semibold">-</td>
-                </tr>
+              {/* Total Montante A */}
+              <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
+                <td className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`tot-ma-${c.id}`}>
+                    <td className="py-2.5 px-3 text-right border-l border-white/20">{formatCurrency(c.blocoATotal)}</td>
+                    <td className="py-2.5 px-3 text-right">{formatCurrency(c.blocoATotalTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-2.5 px-3 text-right border-l border-white/20">{formatCurrency(medio(consolidado.blocoATotalTotal))}</td>
+                <td className="py-2.5 px-3 text-right font-extrabold">{formatCurrency(consolidado.blocoATotalTotal)}</td>
+              </tr>
 
-                {/* B) Periculosidade R$ */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    B) Periculosidade (R$)
-                  </td>
+              {/* MONTANTE C - BENEFÍCIOS */}
+              <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                <th colSpan={totalCols} className="py-2 text-center uppercase tracking-widest font-bold">
+                  Montante "C" — Custos Diversos e Benefícios
+                </th>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">1) Vale Alimentação (Líquido)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`va-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.vaLiquido)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.vaLiquidoTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.vaLiquidoTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.vaLiquidoTotal)}</td>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">2) Vale Transporte (Líquido)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`vt-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.vtLiquido)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.vtLiquidoTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.vtLiquidoTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.vtLiquidoTotal)}</td>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">3) Custos com Sindicatos</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`sindicato-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.sindicatoAssistencia)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.sindicatoAssistenciaTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.sindicatoAssistenciaTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.sindicatoAssistenciaTotal)}</td>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">4) Cesta Básica / Assiduidade</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`cesta-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.cestaBasica)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.cestaBasicaTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.cestaBasicaTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.cestaBasicaTotal)}</td>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">5) Exames Médicos</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`exames-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.exames)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.examesTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.examesTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.examesTotal)}</td>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">6) Reservas Técnicas</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`reserva-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.reservaTecnica)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.reservaTecnicaTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.reservaTecnicaTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.reservaTecnicaTotal)}</td>
+              </tr>
+
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">7) Manutenção Equipamentos</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`manut-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.manutencao)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.manutencaoTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.manutencaoTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.manutencaoTotal)}</td>
+              </tr>
+
+              {consolidado.outrosBeneficiosTotal > 0 && (
+                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                  <td className="py-1.5 px-6 font-bold text-slate-800">8) Outros Benefícios</td>
                   {colunasComposicao.map((c) => (
-                    <React.Fragment key={`peric-val-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.periculosidade)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.periculosidadeTotal)}</td>}
+                    <React.Fragment key={`outros-ben-${c.id}`}>
+                      <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.outrosBeneficios)}</td>
+                      <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.outrosBeneficiosTotal)}</td>
                     </React.Fragment>
                   ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.periculosidadeTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.periculosidadeTotal)}</td>}
+                  <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.outrosBeneficiosTotal))}</td>
+                  <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.outrosBeneficiosTotal)}</td>
                 </tr>
+              )}
 
-                {/* Grau de Insalubridade */}
-                <tr className="border-b border-slate-200 border-dotted bg-slate-50/40 text-[11px]">
-                  <td className="py-1 px-4 text-slate-600 font-semibold sticky left-0 bg-slate-50 z-10 border-r border-slate-200">
-                    Informe o grau de insalubridade [ Selecionar Mínimo, Médio ou Máximo ]
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <td
-                      key={`insalub-degree-${c.id}`}
-                      colSpan={showUnit && showTotal ? 2 : 1}
-                      className="py-1 px-3 text-center border-r border-slate-200 font-bold"
-                    >
-                      <span className={`px-2 py-0.5 rounded text-[10px] ${c.grauInsalubridade !== 'Não' ? 'bg-amber-100 text-amber-900 font-black' : 'text-slate-400 font-normal'}`}>
-                        {c.grauInsalubridade}
-                      </span>
-                    </td>
-                  ))}
-                  <td colSpan={showUnit && showTotal ? 2 : 1} className="py-1 px-3 text-center text-slate-400 font-semibold">-</td>
-                </tr>
+              {/* Total Montante C */}
+              <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
+                <td className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`tot-mc-${c.id}`}>
+                    <td className="py-2.5 px-3 text-right border-l border-white/20">{formatCurrency(c.beneficiosTotal)}</td>
+                    <td className="py-2.5 px-3 text-right">{formatCurrency(c.beneficiosTotalTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-2.5 px-3 text-right border-l border-white/20">{formatCurrency(medio(consolidado.beneficiosTotalTotal))}</td>
+                <td className="py-2.5 px-3 text-right font-extrabold">{formatCurrency(consolidado.beneficiosTotalTotal)}</td>
+              </tr>
 
-                {/* C) Insalubridade R$ */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    C) Insalubridade (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`insalub-val-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.insalubridade)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.insalubridadeTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.insalubridadeTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.insalubridadeTotal)}</td>}
-                </tr>
+              {/* MONTANTE B - UNIFORMES E EPIS */}
+              <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                <th colSpan={totalCols} className="py-2 text-center uppercase tracking-widest font-bold">
+                  Montante "B" — Uniformes e EPI's (Por Posto)
+                </th>
+              </tr>
 
-                {/* Adicionais: Noturno, Intrajornada, DSR, Outros */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Adicional Noturno (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`noturno-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.noturno)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.noturnoTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.noturnoTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.noturnoTotal)}</td>}
-                </tr>
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">1) Uniformes e EPI's</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`epi-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.uniformesEpis)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.uniformesEpisTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.uniformesEpisTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.uniformesEpisTotal)}</td>
+              </tr>
 
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Intrajornada (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`intra-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.intrajornada)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.intrajornadaTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.intrajornadaTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.intrajornadaTotal)}</td>}
-                </tr>
+              {/* CUSTO DIRETO TOTAL */}
+              <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
+                <td className="py-2.5 px-6 text-right uppercase tracking-wider">Custo Direto Total da Mão de Obra (A+B+C)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`tot-cd-${c.id}`}>
+                    <td className="py-2.5 px-3 text-right border-l border-[#2d631d] font-bold">{formatCurrency(c.custoDiretoUnit)}</td>
+                    <td className="py-2.5 px-3 text-right font-bold">{formatCurrency(c.custoDiretoTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-2.5 px-3 text-right border-l border-[#2d631d] font-bold">{formatCurrency(medio(consolidado.custoDiretoTotal))}</td>
+                <td className="py-2.5 px-3 text-right font-black">{formatCurrency(consolidado.custoDiretoTotal)}</td>
+              </tr>
 
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    DSR s/ Adicionais (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`dsr-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.dsr)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.dsrTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.dsrTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.dsrTotal)}</td>}
-                </tr>
+              {/* MONTANTE D - BDI */}
+              <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                <th colSpan={totalCols} className="py-2 text-center uppercase tracking-widest font-bold">
+                  Montante "D" — BDI
+                </th>
+              </tr>
 
-                {consolidado.outrosIndenizatoriosTotal > 0 && (
-                  <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                    <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                      Outros Adicionais / Verba Indenizatória (R$)
-                    </td>
-                    {colunasComposicao.map((c) => (
-                      <React.Fragment key={`outros-remu-${c.id}`}>
-                        {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.outrosIndenizatorios)}</td>}
-                        {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.outrosIndenizatoriosTotal)}</td>}
-                      </React.Fragment>
-                    ))}
-                    {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.outrosIndenizatoriosTotal))}</td>}
-                    {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.outrosIndenizatoriosTotal)}</td>}
-                  </tr>
-                )}
+              {/* Administração */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">Administração ({proposta.premissas.taxaAdm.toFixed(2)}%)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`adm-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.admUnit)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.admTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.admTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.admTotal)}</td>
+              </tr>
 
-                {/* D) Total do Salário / Remuneração */}
-                <tr className="bg-[#3b8026]/15 font-black text-slate-900 border-y-2 border-[#3b8026]/40">
-                  <td className="py-2 px-4 uppercase sticky left-0 bg-[#E8F5E9] z-10 border-r border-slate-300">
-                    D) Total do Salário / Remuneração
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`tot-sal-${c.id}`}>
-                      {showUnit && <td className="py-2 px-3 text-right border-r border-slate-200 font-extrabold">{formatCurrency(c.remuTotal)}</td>}
-                      {showTotal && <td className="py-2 px-3 text-right border-r border-slate-300 bg-emerald-100/60 font-black text-emerald-950">{formatCurrency(c.remuTotalTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-2 px-3 text-right bg-slate-100 border-r border-slate-300 font-bold">{formatCurrency(medio(consolidado.remuTotalTotal))}</td>}
-                  {showTotal && <td className="py-2 px-3 text-right bg-[#3b8026] text-white font-black">{formatCurrency(consolidado.remuTotalTotal)}</td>}
-                </tr>
+              {/* Lucro */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">Lucro ({proposta.premissas.margemLucro.toFixed(2)}%)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`lucro-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{formatCurrency(c.lucroUnit)}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{formatCurrency(c.lucroTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.lucroTotal))}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.lucroTotal)}</td>
+              </tr>
 
-                {/* SEÇÃO: ENCARGOS SOCIAIS */}
-                <tr className="bg-[#1B4D3E] text-white font-black uppercase text-xs tracking-wider border-y border-white/20">
-                  <td colSpan={1 + colunasComposicao.length * (showUnit && showTotal ? 2 : 1) + (showUnit && showTotal ? 2 : 1)} className="py-2 px-4">
-                    Encargos Sociais e Trabalhistas
-                  </td>
-                </tr>
+              {/* Comissão Vendedor */}
+              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                <td className="py-1.5 px-6 font-bold text-slate-800">Comissão do Vendedor ({(proposta.premissas.comissaoVendedor || 0).toFixed(2)}%)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`comissao-${c.id}`}>
+                    <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.comissaoUnit > 0 ? formatCurrency(c.comissaoUnit) : '-'}</td>
+                    <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.comissaoTotal > 0 ? formatCurrency(c.comissaoTotal) : '-'}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{consolidado.comissaoTotal > 0 ? formatCurrency(medio(consolidado.comissaoTotal)) : '-'}</td>
+                <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{consolidado.comissaoTotal > 0 ? formatCurrency(consolidado.comissaoTotal) : '-'}</td>
+              </tr>
 
-                {/* % Encargos */}
-                <tr className="border-b border-slate-200 border-dotted bg-slate-50/40 text-[11px]">
-                  <td className="py-1 px-4 text-slate-600 font-semibold sticky left-0 bg-slate-50 z-10 border-r border-slate-200">
-                    % Encargos Sociais Aplicado
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <td
-                      key={`enc-pct-${c.id}`}
-                      colSpan={showUnit && showTotal ? 2 : 1}
-                      className="py-1 px-3 text-center border-r border-slate-200 font-bold text-slate-700"
-                    >
-                      {totalGeralEncargos.toFixed(2)}%
-                    </td>
-                  ))}
-                  <td colSpan={showUnit && showTotal ? 2 : 1} className="py-1 px-3 text-center font-bold text-slate-700 bg-slate-100">
-                    {totalGeralEncargos.toFixed(2)}%
-                  </td>
-                </tr>
+              {/* Total dos Montantes A+B+C+D */}
+              <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234]">
+                <td className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`sub-margens-${c.id}`}>
+                    <td className="py-2.5 px-3 text-right border-l border-[#488234] font-bold">{formatCurrency(c.subtotalMargensUnit)}</td>
+                    <td className="py-2.5 px-3 text-right font-bold">{formatCurrency(c.subtotalMargensTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-2.5 px-3 text-right border-l border-[#488234] font-bold">{formatCurrency(medio(consolidado.subtotalMargensTotal))}</td>
+                <td className="py-2.5 px-3 text-right font-black">{formatCurrency(consolidado.subtotalMargensTotal)}</td>
+              </tr>
 
-                {/* E) Encargos Sociais R$ */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    E) Encargos sociais (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`enc-val-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.encargos)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.encargosTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.encargosTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.encargosTotal)}</td>}
-                </tr>
+              {/* Impostos */}
+              <tr className="bg-[#8ec277] text-slate-900 border-b border-white">
+                <td className="py-2 px-6 font-bold uppercase">Impostos ({totalTributos.toFixed(2)}%)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`imp-${c.id}`}>
+                    <td className="py-2 px-3 text-right border-l border-white/30 font-bold">{formatCurrency(c.impostosUnit)}</td>
+                    <td className="py-2 px-3 text-right font-bold">{formatCurrency(c.impostosTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-2 px-3 text-right border-l border-white/30 font-bold">{formatCurrency(medio(consolidado.impostosTotal))}</td>
+                <td className="py-2 px-3 text-right font-black">{formatCurrency(consolidado.impostosTotal)}</td>
+              </tr>
 
-                {consolidado.outrosBlocATotal > 0 && (
-                  <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                    <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                      Outros Encargos Indenizatórios (R$)
-                    </td>
-                    {colunasComposicao.map((c) => (
-                      <React.Fragment key={`outros-enc-${c.id}`}>
-                        {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.outrosBlocoA)}</td>}
-                        {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.outrosBlocATotal)}</td>}
-                      </React.Fragment>
-                    ))}
-                    {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.outrosBlocATotal))}</td>}
-                    {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.outrosBlocATotal)}</td>}
-                  </tr>
-                )}
+              {/* VALOR MENSAL DO POSTO (PREÇO UNITÁRIO) */}
+              <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-sm tracking-widest">
+                <td className="py-4 px-6 text-right uppercase">Valor Mensal do Posto (Preço Unitário)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`pv-unit-${c.id}`}>
+                    <td className="py-4 px-3 text-right border-l border-white/20 text-white font-black text-sm">{formatCurrency(c.precoVendaUnit)}</td>
+                    <td className="py-4 px-3 text-right text-emerald-200/60 text-xs italic">-</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-4 px-3 text-right border-l border-white/20 text-white font-black text-sm">{formatCurrency(medio(consolidado.precoVendaTotal))}</td>
+                <td className="py-4 px-3 text-right text-emerald-200/60 text-xs italic">-</td>
+              </tr>
 
-                {/* Total Montante A */}
-                <tr className="bg-[#1B4D3E]/10 font-black text-slate-900 border-y-2 border-[#1B4D3E]/30">
-                  <td className="py-2 px-4 uppercase sticky left-0 bg-[#E0F2F1] z-10 border-r border-slate-300">
-                    Total Montante "A" (Remuneração + Encargos)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`tot-ma-${c.id}`}>
-                      {showUnit && <td className="py-2 px-3 text-right border-r border-slate-200 font-extrabold">{formatCurrency(c.blocoATotal)}</td>}
-                      {showTotal && <td className="py-2 px-3 text-right border-r border-slate-300 bg-teal-50 font-black text-teal-950">{formatCurrency(c.blocoATotalTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-2 px-3 text-right bg-slate-100 border-r border-slate-300 font-bold">{formatCurrency(medio(consolidado.blocoATotalTotal))}</td>}
-                  {showTotal && <td className="py-2 px-3 text-right bg-[#1B4D3E] text-white font-black">{formatCurrency(consolidado.blocoATotalTotal)}</td>}
-                </tr>
+              {/* VALOR TOTAL MENSAL DA FUNÇÃO */}
+              <tr className="bg-[#13382D] text-white font-black border-t border-white/20 text-sm tracking-widest">
+                <td className="py-4 px-6 text-right uppercase">Valor Total Mensal da Função</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`pv-tot-${c.id}`}>
+                    <td className="py-4 px-3 text-right border-l border-white/20 text-emerald-200/70 text-xs font-semibold">{c.quantidade}x posto(s)</td>
+                    <td className="py-4 px-3 text-right text-white font-black text-sm">{formatCurrency(c.precoVendaTotal)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-4 px-3 text-right border-l border-white/20 text-emerald-200/70 text-xs font-semibold">{consolidado.totalPostos} postos</td>
+                <td className="py-4 px-3 text-right text-white font-black text-sm">{formatCurrency(consolidado.precoVendaTotal)}</td>
+              </tr>
 
-                {/* SEÇÃO: BLOCO C - CUSTOS DIVERSOS E BENEFÍCIOS */}
-                <tr className="bg-[#1B4D3E] text-white font-black uppercase text-xs tracking-wider border-y border-white/20">
-                  <td colSpan={1 + colunasComposicao.length * (showUnit && showTotal ? 2 : 1) + (showUnit && showTotal ? 2 : 1)} className="py-2 px-4">
-                    Montante "C" - Custos Diversos e Benefícios
-                  </td>
-                </tr>
-
-                {/* F1 Alimentação */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F1) Alimentação (R$ líquida)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`va-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.vaLiquido)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.vaLiquidoTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.vaLiquidoTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.vaLiquidoTotal)}</td>}
-                </tr>
-
-                {/* F2 Transporte */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F2) Transporte (R$ líquida)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`vt-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.vtLiquido)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.vtLiquidoTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.vtLiquidoTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.vtLiquidoTotal)}</td>}
-                </tr>
-
-                {/* F3 Cesta Básica */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F3) Cesta Básica / Assiduidade (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`cesta-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.cestaBasica)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.cestaBasicaTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.cestaBasicaTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.cestaBasicaTotal)}</td>}
-                </tr>
-
-                {/* F4 Assistência Médica / Sindicato */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F4) Assistência Médica / Sindicato (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`sindicato-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.sindicatoAssistencia)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.sindicatoAssistenciaTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.sindicatoAssistenciaTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.sindicatoAssistenciaTotal)}</td>}
-                </tr>
-
-                {/* F5 Exames Médicos */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F5) Exames Médicos / Admissionais (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`exames-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.exames)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.examesTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.examesTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.examesTotal)}</td>}
-                </tr>
-
-                {/* F6 Reserva Técnica */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F6) Reserva Técnica (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`reserva-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.reservaTecnica)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.reservaTecnicaTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.reservaTecnicaTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.reservaTecnicaTotal)}</td>}
-                </tr>
-
-                {/* F7 Manutenção Equipamentos */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    F7) Manutenção de Equipamentos (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`manut-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.manutencao)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.manutencaoTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.manutencaoTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.manutencaoTotal)}</td>}
-                </tr>
-
-                {/* F8 Outros Benefícios */}
-                {consolidado.outrosBeneficiosTotal > 0 && (
-                  <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                    <td className="py-1.5 px-4 font-medium text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-200">
-                      F8) Outros Benefícios (R$)
-                    </td>
-                    {colunasComposicao.map((c) => (
-                      <React.Fragment key={`outros-ben-${c.id}`}>
-                        {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.outrosBeneficios)}</td>}
-                        {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.outrosBeneficiosTotal)}</td>}
-                      </React.Fragment>
-                    ))}
-                    {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.outrosBeneficiosTotal))}</td>}
-                    {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.outrosBeneficiosTotal)}</td>}
-                  </tr>
-                )}
-
-                {/* Total Montante C */}
-                <tr className="bg-amber-100/60 font-black text-amber-950 border-y-2 border-amber-300">
-                  <td className="py-2 px-4 uppercase sticky left-0 bg-amber-100 z-10 border-r border-amber-300">
-                    Total Benefícios (Montante "C")
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`tot-mc-${c.id}`}>
-                      {showUnit && <td className="py-2 px-3 text-right border-r border-amber-200 font-extrabold">{formatCurrency(c.beneficiosTotal)}</td>}
-                      {showTotal && <td className="py-2 px-3 text-right border-r border-amber-300 bg-amber-200/50 font-black">{formatCurrency(c.beneficiosTotalTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-2 px-3 text-right bg-slate-100 border-r border-slate-300 font-bold">{formatCurrency(medio(consolidado.beneficiosTotalTotal))}</td>}
-                  {showTotal && <td className="py-2 px-3 text-right bg-amber-600 text-white font-black">{formatCurrency(consolidado.beneficiosTotalTotal)}</td>}
-                </tr>
-
-                {/* SEÇÃO: BLOCO B - UNIFORMES E EPIS */}
-                <tr className="bg-[#1B4D3E] text-white font-black uppercase text-xs tracking-wider border-y border-white/20">
-                  <td colSpan={1 + colunasComposicao.length * (showUnit && showTotal ? 2 : 1) + (showUnit && showTotal ? 2 : 1)} className="py-2 px-4">
-                    Montante "B" - Uniformes e EPI's (Por Colaborador)
-                  </td>
-                </tr>
-
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Uniformes e EPI's (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`epi-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.uniformesEpis)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.uniformesEpisTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.uniformesEpisTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.uniformesEpisTotal)}</td>}
-                </tr>
-
-                {/* TOTAL CUSTO DIRETO TOTAL (A + B + C) */}
-                <tr className="bg-[#3b8026] text-white font-black text-sm tracking-wider border-y-2 border-[#2d631d]">
-                  <td className="py-3 px-4 uppercase sticky left-0 bg-[#3b8026] z-10 border-r border-white/30">
-                    CUSTO TOTAL DIRETO DA MÃO DE OBRA (A+B+C)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`tot-cd-${c.id}`}>
-                      {showUnit && <td className="py-3 px-3 text-right border-r border-white/20 font-black">{formatCurrency(c.custoDiretoUnit)}</td>}
-                      {showTotal && <td className="py-3 px-3 text-right border-r border-white/30 bg-[#2d631d] font-black">{formatCurrency(c.custoDiretoTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-3 px-3 text-right bg-[#2d631d] border-r border-white/20 font-black">{formatCurrency(medio(consolidado.custoDiretoTotal))}</td>}
-                  {showTotal && <td className="py-3 px-3 text-right bg-[#1B4D3E] text-white font-black">{formatCurrency(consolidado.custoDiretoTotal)}</td>}
-                </tr>
-
-                {/* SEÇÃO: FORMAÇÃO DE PREÇO EM CASCATA */}
-                <tr className="bg-[#1B4D3E] text-white font-black uppercase text-xs tracking-wider border-y border-white/20">
-                  <td colSpan={1 + colunasComposicao.length * (showUnit && showTotal ? 2 : 1) + (showUnit && showTotal ? 2 : 1)} className="py-2 px-4">
-                    Formação de Preço em Cascata (Premissas do Extrato de Custos)
-                  </td>
-                </tr>
-
-                {/* Taxa de Adm */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Taxa de Administração ({proposta.premissas.taxaAdm.toFixed(2)}%)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`adm-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.admUnit)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.admTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.admTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.admTotal)}</td>}
-                </tr>
-
-                {/* Margem de Lucro */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Margem de Lucro ({proposta.premissas.margemLucro.toFixed(2)}%)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`lucro-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.lucroUnit)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.lucroTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.lucroTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.lucroTotal)}</td>}
-                </tr>
-
-                {/* Comissão Vendedor */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Comissão do Vendedor ({(proposta.premissas.comissaoVendedor || 0).toFixed(2)}%)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`comissao-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.comissaoUnit)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.comissaoTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.comissaoTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.comissaoTotal)}</td>}
-                </tr>
-
-                {/* Subtotal com Margens */}
-                <tr className="bg-slate-100 font-bold text-slate-800 border-y border-slate-300">
-                  <td className="py-2 px-4 uppercase sticky left-0 bg-slate-200 z-10 border-r border-slate-300">
-                    Subtotal com Margens (Custos + Adm + Lucro + Comissão)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`sub-margens-${c.id}`}>
-                      {showUnit && <td className="py-2 px-3 text-right border-r border-slate-200">{formatCurrency(c.subtotalMargensUnit)}</td>}
-                      {showTotal && <td className="py-2 px-3 text-right border-r border-slate-300 bg-slate-200/60 font-black">{formatCurrency(c.subtotalMargensTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-2 px-3 text-right bg-slate-200 border-r border-slate-300 font-bold">{formatCurrency(medio(consolidado.subtotalMargensTotal))}</td>}
-                  {showTotal && <td className="py-2 px-3 text-right bg-slate-800 text-white font-black">{formatCurrency(consolidado.subtotalMargensTotal)}</td>}
-                </tr>
-
-                {/* Impostos */}
-                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/80">
-                  <td className="py-1.5 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200">
-                    Tributos e Impostos Fiscais ({totalTributos.toFixed(2)}%)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`imp-${c.id}`}>
-                      {showUnit && <td className="py-1.5 px-3 text-right border-r border-slate-100">{formatCurrency(c.impostosUnit)}</td>}
-                      {showTotal && <td className="py-1.5 px-3 text-right border-r border-slate-200 bg-amber-50/30 font-semibold">{formatCurrency(c.impostosTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-1.5 px-3 text-right bg-slate-50 border-r border-slate-200">{formatCurrency(medio(consolidado.impostosTotal))}</td>}
-                  {showTotal && <td className="py-1.5 px-3 text-right bg-emerald-50 font-bold">{formatCurrency(consolidado.impostosTotal)}</td>}
-                </tr>
-
-                {/* VALOR MENSAL DO POSTO (PREÇO UNITÁRIO) */}
-                <tr className="bg-[#1B4D3E] text-white font-black text-sm tracking-wider border-t-2 border-white">
-                  <td className="py-3 px-4 uppercase sticky left-0 bg-[#1B4D3E] z-10 border-r border-white/30">
-                    VALOR MENSAL DO POSTO (PREÇO UNITÁRIO)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`pv-unit-${c.id}`}>
-                      {showUnit && <td className="py-3 px-3 text-right border-r border-white/20 font-black text-base">{formatCurrency(c.precoVendaUnit)}</td>}
-                      {showTotal && <td className="py-3 px-3 text-right border-r border-white/30 bg-[#13382D] text-slate-300 text-xs italic">-</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-3 px-3 text-right bg-[#13382D] border-r border-white/20 font-black text-base">{formatCurrency(medio(consolidado.precoVendaTotal))}</td>}
-                  {showTotal && <td className="py-3 px-3 text-right bg-[#0f2d24] text-slate-300 text-xs italic">-</td>}
-                </tr>
-
-                {/* VALOR TOTAL MENSAL DA FUNÇÃO (PREÇO TOTAL = UNITÁRIO X QTD) */}
-                <tr className="bg-[#059669] text-white font-black text-sm tracking-wider border-t border-white/40">
-                  <td className="py-3.5 px-4 uppercase sticky left-0 bg-[#059669] z-10 border-r border-white/30">
-                    VALOR TOTAL MENSAL DA FUNÇÃO (R$)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`pv-tot-${c.id}`}>
-                      {showUnit && <td className="py-3.5 px-3 text-right border-r border-white/20 text-emerald-100 text-xs font-semibold">{c.quantidade}x posto(s)</td>}
-                      {showTotal && <td className="py-3.5 px-3 text-right border-r border-white/30 bg-[#047857] font-black text-base">{formatCurrency(c.precoVendaTotal)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-3.5 px-3 text-right bg-[#047857] border-r border-white/20 text-emerald-100 text-xs font-semibold">{consolidado.totalPostos} postos</td>}
-                  {showTotal && <td className="py-3.5 px-3 text-right bg-[#065f46] text-white font-black text-base">{formatCurrency(consolidado.precoVendaTotal)}</td>}
-                </tr>
-
-                {/* VALOR ANUAL DA FUNÇÃO (12 MESES) */}
-                <tr className="bg-black text-white font-black text-xs tracking-wider uppercase border-t border-slate-800">
-                  <td className="py-3 px-4 sticky left-0 bg-black z-10 border-r border-slate-700">
-                    VALOR TOTAL ANUAL DA FUNÇÃO (12 MESES)
-                  </td>
-                  {colunasComposicao.map((c) => (
-                    <React.Fragment key={`pv-anual-${c.id}`}>
-                      {showUnit && <td className="py-3 px-3 text-right border-r border-slate-800 text-slate-400 font-normal">{formatCurrency(c.precoVendaUnit * 12)}</td>}
-                      {showTotal && <td className="py-3 px-3 text-right border-r border-slate-700 bg-slate-900 font-extrabold text-white">{formatCurrency(c.precoVendaAnual)}</td>}
-                    </React.Fragment>
-                  ))}
-                  {showUnit && <td className="py-3 px-3 text-right bg-slate-900 border-r border-slate-800 text-slate-400 font-normal">{formatCurrency(medio(consolidado.precoVendaAnual))}</td>}
-                  {showTotal && <td className="py-3 px-3 text-right bg-slate-950 text-white font-black text-sm">{formatCurrency(consolidado.precoVendaAnual)}</td>}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* RODAPÉ DA PLANILHA COM INSTRUÇÕES */}
-          <div className="bg-slate-100 border-t border-slate-300 px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] text-slate-500 gap-2">
-            <div>
-              * A formação de preço em cascata segue as premissas estabelecidas na FPV: Taxa de Adm ({proposta.premissas.taxaAdm.toFixed(2)}%), Margem de Lucro ({proposta.premissas.margemLucro.toFixed(2)}%), Comissão ({(proposta.premissas.comissaoVendedor || 0).toFixed(2)}%) e Tributos ({totalTributos.toFixed(2)}% por dentro).
-            </div>
-            <div className="font-bold text-slate-700 whitespace-nowrap">
-              Efetivo: {consolidado.totalPostos} colaboradores | {colunasComposicao.length} funções
-            </div>
-          </div>
+              {/* VALOR TOTAL ANUAL DA FUNÇÃO (12 MESES) */}
+              <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
+                <td className="py-4 px-6 text-right">Valor Total Anual da Função (12 Meses)</td>
+                {colunasComposicao.map((c) => (
+                  <React.Fragment key={`pv-anual-${c.id}`}>
+                    <td className="py-4 px-3 text-right border-l border-slate-800 text-slate-400 font-normal">{formatCurrency(c.precoVendaUnit * 12)}</td>
+                    <td className="py-4 px-3 text-right text-white font-black">{formatCurrency(c.precoVendaAnual)}</td>
+                  </React.Fragment>
+                ))}
+                <td className="py-4 px-3 text-right border-l border-slate-800 text-slate-400 font-normal">{formatCurrency(medio(consolidado.precoVendaAnual))}</td>
+                <td className="py-4 px-3 text-right text-white font-black">{formatCurrency(consolidado.precoVendaAnual)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     );
