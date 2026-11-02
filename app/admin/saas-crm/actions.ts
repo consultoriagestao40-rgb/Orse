@@ -508,6 +508,70 @@ export async function createSaasProposta(data: {
   }
 }
 
+// 5.5 ATUALIZAR PROPOSTA EXISTENTE
+export async function updateSaasProposta(
+  id: string,
+  data: {
+    empresaNome: string;
+    cnpj?: string;
+    contatoNome: string;
+    contatoEmail: string;
+    contatoTelefone: string;
+    modulos: string[];
+    plano: 'MENSAL' | 'SEMESTRAL' | 'ANUAL';
+    valorMensal: number;
+    valorSetup: number;
+    descontoSetup: number;
+    maxUsuarios: number;
+    condicoesEspeciais?: string;
+  }
+) {
+  try {
+    const updated = await prisma.saasProposta.update({
+      where: { id },
+      data: {
+        empresaNome: data.empresaNome,
+        cnpj: data.cnpj,
+        contatoNome: data.contatoNome,
+        contatoEmail: data.contatoEmail,
+        contatoTelefone: data.contatoTelefone,
+        modulos: JSON.stringify(data.modulos),
+        plano: data.plano,
+        valorMensal: data.valorMensal,
+        valorSetup: data.valorSetup,
+        descontoSetup: data.descontoSetup,
+        maxUsuarios: data.maxUsuarios,
+        condicoesEspeciais: data.condicoesEspeciais,
+      },
+    });
+
+    const publicUrl = `https://smartbidhub.com.br/proposta/smartbid/${updated.token}`;
+
+    revalidatePath('/admin/saas-crm');
+    return {
+      success: true,
+      proposta: updated,
+      token: updated.token,
+      publicUrl,
+    };
+  } catch (error: any) {
+    console.error('[updateSaasProposta] Erro:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 5.6 EXCLUIR PROPOSTA
+export async function deleteSaasProposta(id: string) {
+  try {
+    await prisma.saasProposta.delete({ where: { id } });
+    revalidatePath('/admin/saas-crm');
+    return { success: true };
+  } catch (error: any) {
+    console.error('[deleteSaasProposta] Erro:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // 6. BUSCAR PROPOSTA PELO TOKEN (LINK PÚBLICO DO CLIENTE)
 export async function getSaasPropostaByToken(token: string) {
   try {

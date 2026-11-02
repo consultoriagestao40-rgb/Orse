@@ -7,13 +7,13 @@ import {
   Layers, Plus, Search, Filter, Phone, Mail, Building2, 
   ExternalLink, Copy, Check, CheckCircle2, AlertTriangle, 
   Sparkles, X, ChevronRight, Ban, RefreshCw, Key, ShieldCheck,
-  Eye, Percent, ArrowUpRight, Clock, Award, Sliders
+  Eye, Percent, ArrowUpRight, Clock, Award, Sliders, Edit2, Trash2
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   getSaasCRMData, createOrUpdateSaasLead, updateSaasLeadStatus, 
-  deleteSaasLead, createSaasProposta, toggleNegativeKeyword, 
-  addTrafficKeyword, testAsaasKeyAction 
+  deleteSaasLead, createSaasProposta, updateSaasProposta, deleteSaasProposta,
+  toggleNegativeKeyword, addTrafficKeyword, testAsaasKeyAction 
 } from './actions';
 import { SAAS_AVAILABLE_MODULES } from './constants';
 import SaasLeadsKanban from './components/SaasLeadsKanban';
@@ -69,6 +69,7 @@ export default function SaasCRMPage() {
     condicoesEspeciais: 'Inclui 2 sessões remotas de onboarding e configuração inicial das CCTs.',
   });
 
+  const [editingPropostaId, setEditingPropostaId] = useState<string | null>(null);
   const [propostaGerada, setPropostaGerada] = useState<{
     token: string;
     url: string;
@@ -137,34 +138,136 @@ export default function SaasCRMPage() {
     return Math.round(base);
   };
 
-  // Submissão do Gerador de Proposta
+  // Carregar Proposta para Edição no Formulário
+  const handleEditarProposta = (prop: any) => {
+    setEditingPropostaId(prop.id);
+    let parsedModulos: string[] = [];
+    try {
+      parsedModulos = typeof prop.modulos === 'string' ? JSON.parse(prop.modulos) : prop.modulos || [];
+    } catch (e) {
+      parsedModulos = ['custos_fpv', 'ccts_ia', 'crm_facilities'];
+    }
+
+    setPropostaForm({
+      empresaNome: prop.empresaNome || '',
+      cnpj: prop.cnpj || '',
+      contatoNome: prop.contatoNome || '',
+      contatoEmail: prop.contatoEmail || '',
+      contatoTelefone: prop.contatoTelefone || '',
+      modulos: parsedModulos.length > 0 ? parsedModulos : ['custos_fpv', 'ccts_ia', 'crm_facilities'],
+      plano: (prop.plano as any) || 'MENSAL',
+      maxUsuarios: prop.maxUsuarios || 5,
+      valorSetup: prop.valorSetup !== undefined ? prop.valorSetup : 1500,
+      descontoSetup: prop.descontoSetup || 0,
+      condicoesEspeciais: prop.condicoesEspeciais || '',
+    });
+
+    setPropostaGerada({
+      token: prop.token,
+      url: `https://smartbidhub.com.br/proposta/smartbid/${prop.token}`,
+    });
+
+    if (activeTab !== 'propostas') {
+      handleTabChange('propostas');
+    }
+  };
+
+  // Cancelar Edição da Proposta
+  const handleCancelarEdicao = () => {
+    setEditingPropostaId(null);
+    setPropostaGerada(null);
+    setPropostaForm({
+      empresaNome: '',
+      cnpj: '',
+      contatoNome: '',
+      contatoEmail: '',
+      contatoTelefone: '',
+      modulos: ['custos_fpv', 'ccts_ia', 'crm_facilities'],
+      plano: 'MENSAL',
+      maxUsuarios: 5,
+      valorSetup: 1500,
+      descontoSetup: 500,
+      condicoesEspeciais: 'Inclui 2 sessões remotas de onboarding e configuração inicial das CCTs.',
+    });
+  };
+
+  // Excluir Proposta
+  const handleExcluirProposta = async (id: string, empresaNome: string) => {
+    if (!confirm(`Deseja realmente excluir a proposta da empresa "${empresaNome}"?`)) return;
+    try {
+      const res = await deleteSaasProposta(id);
+      if (res.success) {
+        if (editingPropostaId === id) {
+          handleCancelarEdicao();
+        }
+        loadData();
+      } else {
+        alert(res.error || 'Erro ao excluir proposta.');
+      }
+    } catch (err: any) {
+      alert('Erro: ' + err.message);
+    }
+  };
+
+  // Submissão do Gerador / Atualizador de Proposta
   const handleGerarProposta = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const valorMensal = calcularValorMensal();
-      const res = await createSaasProposta({
-        empresaNome: propostaForm.empresaNome,
-        cnpj: propostaForm.cnpj,
-        contatoNome: propostaForm.contatoNome,
-        contatoEmail: propostaForm.contatoEmail,
-        contatoTelefone: propostaForm.contatoTelefone,
-        modulos: propostaForm.modulos,
-        plano: propostaForm.plano,
-        valorMensal,
-        valorSetup: Number(propostaForm.valorSetup),
-        descontoSetup: Number(propostaForm.descontoSetup),
-        maxUsuarios: Number(propostaForm.maxUsuarios),
-        condicoesEspeciais: propostaForm.condicoesEspeciais,
-      });
 
-      if (res.success && res.token && res.publicUrl) {
-        setPropostaGerada({
-          token: res.token,
-          url: res.publicUrl,
+      if (editingPropostaId) {
+        // Atualiza proposta existente
+        const res = await updateSaasProposta(editingPropostaId, {
+          empresaNome: propostaForm.empresaNome,
+          cnpj: propostaForm.cnpj,
+          contatoNome: propostaForm.contatoNome,
+          contatoEmail: propostaForm.contatoEmail,
+          contatoTelefone: propostaForm.contatoTelefone,
+          modulos: propostaForm.modulos,
+          plano: propostaForm.plano,
+          valorMensal,
+          valorSetup: Number(propostaForm.valorSetup),
+          descontoSetup: Number(propostaForm.descontoSetup),
+          maxUsuarios: Number(propostaForm.maxUsuarios),
+          condicoesEspeciais: propostaForm.condicoesEspeciais,
         });
-        loadData();
+
+        if (res.success && res.token && res.publicUrl) {
+          setPropostaGerada({
+            token: res.token,
+            url: res.publicUrl,
+          });
+          loadData();
+          alert('Proposta atualizada com sucesso! As alterações já estão ativas no link do cliente.');
+        } else {
+          alert(res.error || 'Erro ao atualizar proposta.');
+        }
       } else {
-        alert(res.error || 'Erro ao gerar proposta.');
+        // Cria nova proposta
+        const res = await createSaasProposta({
+          empresaNome: propostaForm.empresaNome,
+          cnpj: propostaForm.cnpj,
+          contatoNome: propostaForm.contatoNome,
+          contatoEmail: propostaForm.contatoEmail,
+          contatoTelefone: propostaForm.contatoTelefone,
+          modulos: propostaForm.modulos,
+          plano: propostaForm.plano,
+          valorMensal,
+          valorSetup: Number(propostaForm.valorSetup),
+          descontoSetup: Number(propostaForm.descontoSetup),
+          maxUsuarios: Number(propostaForm.maxUsuarios),
+          condicoesEspeciais: propostaForm.condicoesEspeciais,
+        });
+
+        if (res.success && res.token && res.publicUrl) {
+          setPropostaGerada({
+            token: res.token,
+            url: res.publicUrl,
+          });
+          loadData();
+        } else {
+          alert(res.error || 'Erro ao gerar proposta.');
+        }
       }
     } catch (err: any) {
       alert('Erro: ' + err.message);
@@ -259,9 +362,9 @@ export default function SaasCRMPage() {
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-slate-50">
         {/* Topbar Superior */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
+        <header className="shrink-0 bg-white border-b border-slate-200 px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4 z-20 shadow-2xs">
           <div>
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
@@ -382,44 +485,71 @@ export default function SaasCRMPage() {
         </div>
 
         {/* Conteúdo Dinâmico por Aba */}
-        <div className="p-6 space-y-6">
+        {activeTab === 'crm' ? (
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-50">
+            <SaasLeadsKanban
+              onGenerateProposta={(lead) => {
+                setEditingPropostaId(null);
+                setPropostaForm((prev) => ({
+                  ...prev,
+                  empresaNome: lead.empresa || '',
+                  contatoNome: lead.nome || '',
+                  contatoEmail: lead.email || '',
+                  contatoTelefone: lead.telefone || '',
+                  valorMensal: lead.valorMensal || 890,
+                  valorSetup: lead.valorSetup || 1500,
+                }));
+                handleTabChange('propostas');
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
+            {/* ================= ABA 2: GERADOR DE PROPOSTAS FLEGÁVEIS ================= */}
+            {activeTab === 'propostas' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                {/* Formulário Flegável */}
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-emerald-600" />
+                      {editingPropostaId ? 'Editar Proposta Comercial SmartBid' : 'Gerador Rápido de Propostas SmartBid (Pós-Reunião)'}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {editingPropostaId
+                        ? 'Atualize os módulos, condições e valores desta proposta. Ao salvar, as alterações refletem imediatamente no link do cliente.'
+                        : 'No final da apresentação, fleque os módulos que o cliente quer, gere o link exclusivo e envie no WhatsApp para assinatura digital.'}
+                    </p>
+                  </div>
 
-          {/* ================= ABA 1: CRM KANBAN SAAS (ISOLADO DO TENANT) ================= */}
-          {activeTab === 'crm' && (
-            <div className="-mx-6 -my-6 bg-slate-50 min-h-[calc(100vh-140px)]">
-              <SaasLeadsKanban
-                onGenerateProposta={(lead) => {
-                  setPropostaForm((prev) => ({
-                    ...prev,
-                    empresaNome: lead.empresa || '',
-                    contatoNome: lead.nome || '',
-                    contatoEmail: lead.email || '',
-                    contatoTelefone: lead.telefone || '',
-                    valorMensal: lead.valorMensal || 890,
-                    valorSetup: lead.valorSetup || 1500,
-                  }));
-                  handleTabChange('propostas');
-                }}
-              />
-            </div>
-          )}
+                  {/* Banner de Modo de Edição */}
+                  {editingPropostaId && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between gap-3 animate-in fade-in">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-1.5 bg-amber-100 text-amber-800 rounded-lg shrink-0">
+                          <Edit2 className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-amber-900 truncate">
+                            Modo de Edição: {propostaForm.empresaNome || 'Proposta Selecionada'}
+                          </p>
+                          <p className="text-[11px] text-amber-700">
+                            Qualquer ajuste feito abaixo atualizará a proposta existente sem alterar o link enviado.
+                          </p>
+                        </div>
+                      </div>
 
-          {/* ================= ABA 2: GERADOR DE PROPOSTAS FLEGÁVEIS ================= */}
-          {activeTab === 'propostas' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-              {/* Formulário Flegável */}
-              <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-emerald-600" />
-                    Gerador Rápido de Propostas SmartBid (Pós-Reunião)
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-1">
-                    No final da apresentação, fleque os módulos que o cliente quer, gere o link exclusivo e envie no WhatsApp para assinatura digital.
-                  </p>
-                </div>
+                      <button
+                        type="button"
+                        onClick={handleCancelarEdicao}
+                        className="px-3 py-1.5 bg-white hover:bg-amber-100 text-amber-900 rounded-lg text-xs font-bold border border-amber-300 transition shrink-0 cursor-pointer"
+                      >
+                        Cancelar Edição
+                      </button>
+                    </div>
+                  )}
 
-                <form onSubmit={handleGerarProposta} className="space-y-6">
+                  <form onSubmit={handleGerarProposta} className="space-y-6">
                   {/* Dados do Cliente */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -622,10 +752,23 @@ export default function SaasCRMPage() {
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer"
+                    className={`w-full py-3.5 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer ${
+                      editingPropostaId
+                        ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-700/20'
+                        : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-700/20'
+                    }`}
                   >
-                    <Layers className="w-4 h-4" />
-                    Gerar Proposta Comercial & Link de Assinatura
+                    {editingPropostaId ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Salvar Alterações na Proposta Comercial
+                      </>
+                    ) : (
+                      <>
+                        <Layers className="w-4 h-4" />
+                        Gerar Proposta Comercial & Link de Assinatura
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -669,7 +812,7 @@ export default function SaasCRMPage() {
                   <div className="bg-white border-2 border-emerald-500 rounded-2xl p-5 shadow-lg space-y-3 animate-in fade-in">
                     <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
                       <CheckCircle2 className="w-4 h-4" />
-                      Proposta Gerada com Sucesso!
+                      {editingPropostaId ? 'Proposta Atualizada com Sucesso!' : 'Proposta Gerada com Sucesso!'}
                     </div>
 
                     <p className="text-[11px] text-slate-600">
@@ -716,36 +859,121 @@ export default function SaasCRMPage() {
                   </div>
                 )}
 
-                {/* Histórico das Últimas Propostas */}
+                {/* Histórico das Últimas Propostas com Gestão Completa (Editar, Copiar, WhatsApp, Excluir) */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Últimas Propostas Enviadas
-                  </h3>
-                  <div className="space-y-2 max-h-72 overflow-y-auto">
-                    {data.propostas.map((prop) => (
-                      <div key={prop.id} className="p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 transition text-xs space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-900 truncate max-w-[150px]">{prop.empresaNome}</span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            prop.status === 'ASSINADA' ? 'bg-emerald-100 text-emerald-800' :
-                            prop.status === 'VISUALIZADA' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {prop.status}
-                          </span>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Propostas Enviadas ({data.propostas.length})
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      Salvas permanentemente
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+                    {data.propostas.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-6">
+                        Nenhuma proposta gerada ainda.
+                      </p>
+                    ) : (
+                      data.propostas.map((prop) => (
+                        <div
+                          key={prop.id}
+                          className={`p-3 rounded-xl border transition text-xs space-y-2 ${
+                            editingPropostaId === prop.id
+                              ? 'border-amber-400 bg-amber-50/50 shadow-xs'
+                              : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50/60'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <span className="font-bold text-slate-900 truncate block max-w-[170px]" title={prop.empresaNome}>
+                                {prop.empresaNome}
+                              </span>
+                              <span className="text-[10px] text-slate-500 truncate block">
+                                {prop.contatoNome} {prop.contatoTelefone ? `• ${prop.contatoTelefone}` : ''}
+                              </span>
+                            </div>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 ${
+                              prop.status === 'ASSINADA' ? 'bg-emerald-100 text-emerald-800' :
+                              prop.status === 'VISUALIZADA' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {prop.status}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] text-slate-600 pt-2 border-t border-slate-100">
+                            <span className="font-extrabold text-[#1B4D3E]">
+                              R$ {prop.valorMensal?.toLocaleString('pt-BR') || 0}/mês
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                              {/* Botão Editar Proposta */}
+                              <button
+                                type="button"
+                                onClick={() => handleEditarProposta(prop)}
+                                className={`px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 text-[10px] font-bold ${
+                                  editingPropostaId === prop.id
+                                    ? 'bg-amber-200 text-amber-900'
+                                    : 'bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800'
+                                }`}
+                                title="Editar esta Proposta no Formulário"
+                              >
+                                <Edit2 className="w-3 h-3 text-emerald-600" />
+                                Editar
+                              </button>
+
+                              {/* Botão Copiar Link */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`https://smartbidhub.com.br/proposta/smartbid/${prop.token}`);
+                                  alert('Link da proposta copiado!');
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                                title="Copiar Link"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+
+                              {/* Botão Abrir */}
+                              <a 
+                                href={`https://smartbidhub.com.br/proposta/smartbid/${prop.token}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 transition"
+                                title="Abrir Proposta"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+
+                              {/* Botão WhatsApp */}
+                              {prop.contatoTelefone && (
+                                <a
+                                  href={`https://wa.me/55${prop.contatoTelefone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá, ${prop.contatoNome}! Segue o link da proposta comercial do SmartBid para a ${prop.empresaNome}: https://smartbidhub.com.br/proposta/smartbid/${prop.token}`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-lg hover:bg-emerald-100 text-emerald-700 transition"
+                                  title="Enviar no WhatsApp"
+                                >
+                                  <Phone className="w-3 h-3" />
+                                </a>
+                              )}
+
+                              {/* Botão Excluir */}
+                              <button
+                                type="button"
+                                onClick={() => handleExcluirProposta(prop.id, prop.empresaNome)}
+                                className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-600 transition cursor-pointer"
+                                title="Excluir Proposta"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500">
-                          <span>R$ {prop.valorMensal}/mês</span>
-                          <a 
-                            href={`https://smartbidhub.com.br/proposta/smartbid/${prop.token}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-emerald-600 hover:underline flex items-center gap-1"
-                          >
-                            Abrir <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -1062,7 +1290,8 @@ export default function SaasCRMPage() {
             </div>
           )}
 
-        </div>
+          </div>
+        )}
       </main>
 
       {/* Modal Criar Lead */}

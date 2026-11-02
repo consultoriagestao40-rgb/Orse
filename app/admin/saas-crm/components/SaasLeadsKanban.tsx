@@ -30,6 +30,34 @@ const PRESET_COLORS = [
   '#334155', // Grafite executivo
 ];
 
+const normalizeHex = (hex: string) => {
+  let h = (hex || '#64748b').replace('#', '');
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  return '#' + h;
+};
+
+const getContrastYIQ = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 140) ? 'black' : 'white';
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
+
 export default function SaasLeadsKanban({
   onGenerateProposta,
 }: {
@@ -317,57 +345,50 @@ export default function SaasLeadsKanban({
   const ticketMedio = totalLeads > 0 ? totalMRR / totalLeads : 0;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* ================= BARRA SUPERIOR DO CRM (IDENTIDADE SMARTBID) ================= */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">
-              Pipeline de Vendas SaaS (Licenças SmartBid)
-            </h2>
-            <span className="bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-              {totalLeads} {totalLeads === 1 ? 'Lead' : 'Leads'}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium">
-            Ambiente exclusivo para captação de clientes, demonstrações e fechamento de novas assinaturas.
-          </p>
+    <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
+      {/* ================= BARRA DE CONTROLE COMPACTA (SEM DUPLICAÇÃO DE CABEÇALHO) ================= */}
+      <div className="shrink-0 bg-white border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 z-10">
+        {/* Campo de Busca */}
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por empresa, nome, e-mail..."
+            className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none w-64 transition font-medium"
+          />
         </div>
 
+        {/* Métricas Inline Elegantes */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Campo de Busca */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por empresa, nome, e-mail..."
-              className="pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none w-64 transition font-medium"
-            />
+          <div className="px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200/80 text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+            <span className="text-slate-400 uppercase text-[9px]">Pipeline:</span>
+            <span>R$ {totalMRR.toLocaleString('pt-BR')}/mês</span>
           </div>
+          <div className="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-800 flex items-center gap-1.5">
+            <span className="text-emerald-500 uppercase text-[9px]">Ticket Médio:</span>
+            <span>R$ {Math.round(ticketMedio).toLocaleString('pt-BR')}/mês</span>
+          </div>
+          <div className="px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200/80 text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+            <span className="text-slate-400 uppercase text-[9px]">Leads:</span>
+            <span>{totalLeads}</span>
+          </div>
+        </div>
 
-          {/* Toggle Métricas */}
-          <button
-            onClick={() => setShowMetrics(!showMetrics)}
-            className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer border border-slate-200"
-          >
-            {showMetrics ? 'Ocultar Métricas' : 'Ver Métricas'}
-          </button>
-
-          {/* Botão + Nova Etapa */}
+        {/* Ações */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setNewStageModalOpen(true)}
-            className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 rounded-xl transition flex items-center gap-1.5 border border-slate-200 shadow-xs cursor-pointer"
+            className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 rounded-xl transition flex items-center gap-1.5 border border-slate-200 shadow-2xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-emerald-600" />
             Etapa
           </button>
 
-          {/* Botão + Novo Lead */}
           <button
             onClick={() => setNewLeadModalOpen(true)}
-            className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1B4D3E] hover:bg-[#153e32] rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1B4D3E] hover:bg-[#153e32] rounded-xl transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             Novo Lead SaaS
@@ -375,85 +396,63 @@ export default function SaasLeadsKanban({
         </div>
       </div>
 
-      {/* ================= BARRA DE MÉTRICAS ================= */}
-      {showMetrics && (
-        <div className="bg-slate-100/70 border-b border-slate-200/80 px-6 py-2.5 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold text-slate-500">Pipeline Total:</span>
-            <span className="text-xs font-black text-slate-900">
-              R$ {totalMRR.toLocaleString('pt-BR')} <span className="text-[10px] text-slate-500 font-normal">/mês</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold text-slate-500">Ticket Médio:</span>
-            <span className="text-xs font-black text-emerald-700">
-              R$ {Math.round(ticketMedio).toLocaleString('pt-BR')} <span className="text-[10px] text-slate-500 font-normal">/mês</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold text-slate-500">Oportunidades:</span>
-            <span className="text-xs font-black text-slate-800">{totalLeads} empresas</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold text-slate-500">Etapas Ativas:</span>
-            <span className="text-xs font-black text-slate-800">{stages.length} etapas no funil</span>
-          </div>
-        </div>
-      )}
-
-      {/* ================= KANBAN BOARD COM CHEVRONS REAIS (ESTILO SMARTBID) ================= */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-        <div className="flex items-start gap-4 h-full min-w-max pb-4">
+      {/* ================= KANBAN BOARD IDÊNTICO AO SMARTBID (274px, gap-[3px]) ================= */}
+      <div className="w-full overflow-x-auto overflow-y-visible bg-slate-50 flex-1 min-h-0">
+        <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max flex gap-[3px]">
           {stages.map((stage, idx) => {
             const isFirst = idx === 0;
             const isLast = idx === stages.length - 1;
             const stageLeads = filteredLeads.filter((l) => l.stageId === stage.id);
             const totalStageMRR = stageLeads.reduce((acc, curr) => acc + (curr.valorMensal || 0), 0);
-            const isDragOver = dragOverStageId === stage.id;
-            const stageColor = stage.color || '#475569';
+            const resolvedHex = stage.color || '#475569';
+            const contrast = getContrastYIQ(resolvedHex);
+            const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+            const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
 
             return (
               <div
                 key={stage.id}
+                className="flex flex-col flex-shrink-0"
+                style={{ width: '274px' }}
                 onDragOver={(e) => handleDragOver(e, stage.id)}
                 onDrop={() => handleDrop(stage.id)}
-                className={`w-[320px] min-w-[320px] shrink-0 flex flex-col h-full max-h-[calc(100vh-230px)] rounded-2xl transition-all ${
-                  isDragOver ? 'ring-2 ring-emerald-500 bg-emerald-50/20' : ''
-                }`}
               >
-                {/* ================= CHEVRON HEADER (SVG ARROW NATIVO SMARTBID) ================= */}
-                <div className="relative h-[52px] shrink-0 select-none group/header">
+                {/* Chevron Header SmartBid Nativo */}
+                <div className="relative h-[52px] shrink-0 select-none group/header" style={{ width: '274px' }}>
                   <svg 
-                    className="absolute inset-0 w-full h-full transition-all duration-200 overflow-visible"
-                    viewBox={isLast ? "0 0 320 52" : "0 0 320 52"}
+                    className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                    viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
                     preserveAspectRatio="none"
-                    style={{ color: stageColor }}
+                    style={{ color: resolvedHex }}
                   >
                     <path 
                       d={isFirst 
-                        ? "M 10,0 L 310,0 L 320,26 L 310,52 L 0,52 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                        ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                         : isLast 
-                          ? "M 0,0 L 310,0 A 10,10 0 0,1 320,10 L 320,52 L 0,52 L 10,26 L 0,0 Z"
-                          : "M 0,0 L 310,0 L 320,26 L 310,52 L 0,52 L 10,26 L 0,0 Z"
+                          ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                          : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                       }
                       fill="currentColor" 
-                      stroke="rgba(255,255,255,0.2)"
+                      stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
                       strokeWidth="1"
                     />
                   </svg>
 
                   {/* Conteúdo sobreposto no Chevron */}
-                  <div className={`relative z-10 flex items-center justify-between h-full text-white ${isFirst ? 'pl-4 pr-6' : 'pl-6 pr-6'}`}>
+                  <div 
+                    className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                    style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                  >
                     <div className="flex flex-col min-w-0 justify-center">
-                      <h3 className="font-black uppercase tracking-wider text-xs truncate max-w-[190px] leading-tight">
+                      <h3 className="font-black uppercase tracking-wider text-xs truncate max-w-[160px] leading-tight">
                         {stage.nome}
                       </h3>
-                      <span className="text-[10px] font-bold opacity-90 truncate leading-none mt-0.5">
+                      <span className="text-[10px] font-bold mt-0.5 opacity-90 truncate leading-none">
                         R$ {totalStageMRR.toLocaleString('pt-BR')} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
                       </span>
                     </div>
 
-                    {/* Botões de Ação na Coluna (Editar Cor, Renomear, Excluir) */}
+                    {/* Botões de Ação na Coluna */}
                     <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover/header:opacity-100 transition-opacity">
                       <button
                         type="button"
@@ -463,7 +462,8 @@ export default function SaasLeadsKanban({
                           setEditingStageName(stage.nome);
                         }}
                         title="Personalizar Etapa (Nome e Cor)"
-                        className="p-1 rounded-full hover:bg-black/20 text-white transition cursor-pointer"
+                        className="p-1 rounded-full hover:bg-black/10 transition cursor-pointer"
+                        style={{ color: 'inherit' }}
                       >
                         <Edit2 size={13} />
                       </button>
@@ -476,7 +476,8 @@ export default function SaasLeadsKanban({
                             handleDeleteStage(stage.id);
                           }}
                           title="Excluir Etapa"
-                          className="p-1 rounded-full hover:bg-black/20 text-white transition cursor-pointer"
+                          className="p-1 rounded-full hover:bg-black/10 transition cursor-pointer"
+                          style={{ color: 'inherit' }}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -484,7 +485,7 @@ export default function SaasLeadsKanban({
                     </div>
                   </div>
 
-                  {/* Popover de Edição da Etapa (Nome e Cor) */}
+                  {/* Popover de Edição da Etapa */}
                   {editingStageId === stage.id && (
                     <>
                       <div 
@@ -526,11 +527,11 @@ export default function SaasLeadsKanban({
                                 className="w-6 h-6 rounded-full border shadow-xs transition hover:scale-110 flex items-center justify-center cursor-pointer"
                                 style={{
                                   backgroundColor: c,
-                                  borderColor: stageColor === c ? '#0f172a' : 'transparent',
-                                  borderWidth: stageColor === c ? '2px' : '0px',
+                                  borderColor: stage.color === c ? '#0f172a' : 'transparent',
+                                  borderWidth: stage.color === c ? '2px' : '0px',
                                 }}
                               >
-                                {stageColor === c && <Check size={11} className="text-white" />}
+                                {stage.color === c && <Check size={11} className="text-white" />}
                               </button>
                             ))}
                           </div>
@@ -550,79 +551,91 @@ export default function SaasLeadsKanban({
                   )}
                 </div>
 
-                {/* ================= CORPO DA COLUNA / CARDS DE LEADS ================= */}
-                <div className="flex-1 bg-slate-100/60 border-x border-b border-slate-200/80 rounded-b-2xl p-2.5 space-y-2.5 overflow-y-auto mt-1 min-h-[450px]">
-                  {stageLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      draggable
-                      onDragStart={() => handleDragStart(lead.id)}
-                      onClick={() => openLeadModal(lead.id)}
-                      className="bg-white p-3.5 rounded-xl border border-slate-200/90 hover:border-emerald-500/60 shadow-xs hover:shadow-md transition-all cursor-pointer group space-y-2.5 relative select-none"
-                    >
-                      {/* Topo do Card */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/60">
-                            {lead.origem || 'LP'}
-                          </span>
-                          <h4 className="text-xs font-bold text-slate-900 mt-1 line-clamp-1 group-hover:text-emerald-700 transition">
-                            {lead.empresa}
-                          </h4>
-                          <p className="text-[11px] text-slate-500 line-clamp-1 font-medium">
-                            {lead.nome} {lead.cargo ? `• ${lead.cargo}` : ''}
-                          </p>
-                        </div>
+                {/* Coluna de Cards (Estilo Idêntico com bgRgba e borderRgba) */}
+                <div
+                  className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                  style={{
+                    width: '274px',
+                    minWidth: '274px',
+                    maxWidth: '274px',
+                    marginLeft: '0px',
+                    backgroundColor: bgRgba,
+                    borderColor: borderRgba,
+                    borderWidth: '0 1px 1px 1px',
+                    borderStyle: 'solid',
+                    height: 'calc(100vh - 165px)',
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div className="flex flex-col gap-1.5">
+                    {stageLeads.length === 0 ? (
+                      <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
                       </div>
+                    ) : (
+                      stageLeads.map((lead) => (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={() => handleDragStart(lead.id)}
+                          onClick={() => openLeadModal(lead.id)}
+                          className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col justify-between h-32 relative overflow-visible"
+                        >
+                          {/* Top: Origem e Empresa */}
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-0.5">
+                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 tracking-wide uppercase truncate max-w-[120px]">
+                                {lead.origem || 'SaaS'}
+                              </span>
+                              {lead.tamanhoEmpresa && (
+                                <span className="text-[9px] font-bold text-slate-400 truncate">
+                                  {lead.tamanhoEmpresa}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-bold text-slate-900 leading-tight truncate" title={lead.empresa || lead.nome}>
+                              {lead.empresa || lead.nome}
+                            </p>
+                            {lead.empresa && lead.nome && (
+                              <p className="text-[11px] text-slate-500 truncate">
+                                {lead.nome} {lead.cargo ? `• ${lead.cargo}` : ''}
+                              </p>
+                            )}
+                          </div>
 
-                      {/* Dados Financeiros */}
-                      <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
-                        <span className="font-extrabold text-emerald-700">
-                          R$ {lead.valorMensal?.toLocaleString('pt-BR') || '0'}/mês
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {lead.tamanhoEmpresa ? `${lead.tamanhoEmpresa} func.` : ''}
-                        </span>
-                      </div>
-
-                      {/* Ações Rápidas no Card */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px]">
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          {lead.telefone && (
-                            <span title="Possui Telefone/WhatsApp" className="flex items-center text-emerald-600">
-                              <MessageCircle size={12} />
+                          {/* Bottom: Valor Mensal e Proposta */}
+                          <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100">
+                            <span className="text-xs font-black text-[#1B4D3E]">
+                              R$ {(lead.valorMensal || 0).toLocaleString('pt-BR')}
+                              <span className="text-[9px] text-slate-400 font-normal">/mês</span>
                             </span>
-                          )}
-                          {lead.email && (
-                            <span title="Possui E-mail" className="flex items-center text-blue-500">
-                              <Mail size={12} />
-                            </span>
-                          )}
+
+                            <div className="flex items-center gap-1.5">
+                              {lead.telefone && (
+                                <span title={lead.telefone} className="text-emerald-600">
+                                  <MessageCircle size={12} />
+                                </span>
+                              )}
+                              {onGenerateProposta && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onGenerateProposta(lead);
+                                  }}
+                                  className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 hover:underline cursor-pointer"
+                                  title="Gerar / Editar Proposta Flegável para este Lead"
+                                >
+                                  <Layers size={11} />
+                                  Proposta
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-
-                        {onGenerateProposta && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onGenerateProposta(lead);
-                            }}
-                            className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 text-[10px] hover:underline cursor-pointer"
-                            title="Gerar Proposta Flegável para este cliente"
-                          >
-                            <Layers size={11} /> Proposta
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {stageLeads.length === 0 && (
-                    <div className="h-32 flex flex-col items-center justify-center text-slate-400 text-xs italic border-2 border-dashed border-slate-200 rounded-xl">
-                      <span>Nenhum lead nesta etapa</span>
-                      <span className="text-[10px] text-slate-300 mt-0.5">Arraste um card para cá</span>
-                    </div>
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             );
