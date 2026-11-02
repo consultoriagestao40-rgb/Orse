@@ -26,29 +26,26 @@ export async function sendMail({ to, subject, html, text, smtpAccountId, fromNam
     let dbAccount = null;
     
     if (smtpAccountId) {
-      dbAccount = await prisma.smtpAccount.findUnique({
+      const dbAccount = await prisma.smtpAccount.findUnique({
         where: { id: smtpAccountId }
       });
-    } else {
-      dbAccount = await prisma.smtpAccount.findFirst({
-        where: { active: true }
-      });
-    }
 
-    if (dbAccount) {
-      host = dbAccount.host;
-      port = dbAccount.port;
-      user = dbAccount.user;
-      pass = dbAccount.password;
-      fromEmail = dbAccount.fromEmail;
-      fromName = customFromName || dbAccount.fromName || "SmartBid";
+      if (dbAccount) {
+        host = dbAccount.host;
+        port = dbAccount.port;
+        user = dbAccount.user;
+        pass = dbAccount.password;
+        fromEmail = dbAccount.fromEmail;
+        fromName = customFromName || dbAccount.fromName || "SmartBid";
+      }
     }
+    // Se não passou smtpAccountId, utiliza estritamente as credenciais do sistema SaaS configuradas no .env
   } catch (error) {
     console.warn("⚠️ Error fetching SMTP account from DB, falling back to env:", error);
   }
 
-  if (!host || !user || !pass || !fromEmail) {
-    console.warn("⚠️ SMTP credentials not fully configured in env variables or database. Simulating email send.");
+  if (!host || !user || !pass || !fromEmail || pass === 'your-strong-smtp-password-here') {
+    console.warn("⚠️ SMTP credentials not fully configured in env variables. Simulating email send.");
     console.log(`[SIMULATED EMAIL] To: ${to} | Subject: ${subject}`);
     console.log(`[SIMULATED BODY] ${text || html}`);
     return { success: true, simulated: true };
