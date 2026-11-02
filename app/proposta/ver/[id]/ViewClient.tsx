@@ -194,7 +194,9 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   // Controle de Slide Atual da Apresentação
   const totalSlides = Number(doc.configApresentacao?.totalSlides) > 0 ? Number(doc.configApresentacao?.totalSlides) : 10;
   const [currentSlide, setCurrentSlide] = useState(1);
-  const isLastSlide = currentSlide >= totalSlides;
+  const [presWatchSeconds, setPresWatchSeconds] = useState(0);
+  const [presCanComplete, setPresCanComplete] = useState(false);
+  const isLastSlide = currentSlide >= totalSlides || presCanComplete || presWatchSeconds >= 10;
 
   // Controle de Tempo e Últimos 10 Segundos do Vídeo
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
@@ -215,6 +217,41 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
+  }, [activeClientTab, totalSlides]);
+
+  // Temporizador de leitura e permanência na apresentação do Canva (habilita conclusão após 10s)
+  useEffect(() => {
+    let interval: any = null;
+    if (activeClientTab === 'apresentacao' && !presentationCompleted) {
+      interval = setInterval(() => {
+        setPresWatchSeconds((prev) => {
+          const next = prev + 1;
+          if (next >= 10) {
+            setPresCanComplete(true);
+          }
+          return next;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeClientTab, presentationCompleted]);
+
+  // Detecção de clique/foco dentro do iframe do Canva (evento blur na janela pai)
+  useEffect(() => {
+    const handleCanvaInteraction = () => {
+      if (activeClientTab === 'apresentacao') {
+        setPresWatchSeconds((prev) => {
+          const next = prev + 3;
+          if (next >= 6) setPresCanComplete(true);
+          return next;
+        });
+        setCurrentSlide((prev) => Math.min(totalSlides, prev + 1));
+      }
+    };
+    window.addEventListener('blur', handleCanvaInteraction);
+    return () => window.removeEventListener('blur', handleCanvaInteraction);
   }, [activeClientTab, totalSlides]);
 
   // Escuta de postMessages do YouTube / Vimeo para detectar últimos 10 segundos
@@ -1466,11 +1503,14 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                     {!isLastSlide && (
                       <button
                         type="button"
-                        onClick={() => setCurrentSlide(totalSlides)}
+                        onClick={() => {
+                          setCurrentSlide(totalSlides);
+                          setPresCanComplete(true);
+                        }}
                         className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
-                        title="Ir direto para a confirmação do último slide"
+                        title="Se você já visualizou os slides pelo Canva, clique aqui para habilitar a liberação"
                       >
-                        Estou no Último Slide ⏭
+                        Já estou no Último Slide ⏭
                       </button>
                     )}
                   </div>
@@ -1489,15 +1529,15 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                         {presentationCompleted 
                           ? 'Apresentação Concluída' 
                           : isLastSlide 
-                            ? '🎉 Você chegou ao último slide!' 
-                            : `Etapa Obrigatória: Navegue até o último slide (${currentSlide}/${totalSlides})`}
+                            ? '🎉 Apresentação Pronta para Conclusão!' 
+                            : `Visualização Obrigatória (${presWatchSeconds > 0 ? presWatchSeconds + 's' : currentSlide + '/' + totalSlides})`}
                       </h4>
                       <p className="text-[11px] text-slate-500 font-medium leading-snug">
                         {presentationCompleted 
                           ? 'A proposta comercial (A4), planilhas FPV e minutas foram desbloqueadas no menu lateral.'
                           : isLastSlide 
                             ? 'Clique no botão ao lado para confirmar a conclusão e liberar a Proposta Comercial (A4) e planilhas.'
-                            : 'O botão de conclusão será habilitado automaticamente assim que você chegar ao último slide.'}
+                            : 'Navegue pelos slides no Canva acima ou aguarde alguns instantes para habilitar a liberação.'}
                       </p>
                     </div>
                   </div>
@@ -1517,13 +1557,25 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                         <CheckCircle2 size={16} /> Concluir Apresentação e Liberar
                       </button>
                     ) : (
-                      <button
-                        disabled
-                        className="w-full sm:w-auto px-5 py-3 bg-slate-150 text-slate-400 border border-slate-250 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 shrink-0 select-none opacity-80"
-                        title="Navegue até o último slide para habilitar a conclusão"
-                      >
-                        <Lock size={14} className="text-slate-400" /> Libera no Último Slide ({currentSlide}/{totalSlides})
-                      </button>
+                      <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCurrentSlide(totalSlides);
+                            setPresCanComplete(true);
+                          }}
+                          className="w-full sm:w-auto px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-[11px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-2xs"
+                          title="Clique se você já passou os slides pelo player do Canva"
+                        >
+                          <Check size={14} className="text-amber-700" /> Já vi os slides no Canva
+                        </button>
+                        <button
+                          disabled
+                          className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 shrink-0 select-none opacity-80"
+                        >
+                          <Lock size={14} className="text-slate-400" /> Libera em {Math.max(1, 10 - presWatchSeconds)}s
+                        </button>
+                      </div>
                     )
                   ) : (
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
