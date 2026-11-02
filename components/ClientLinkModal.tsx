@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle, Lock, ShieldCheck } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle, Lock, ShieldCheck, Upload } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
 import { updateConfigApresentacao, uploadClientFileAction, getDocumentoConfigApresentacao } from '@/app/propostas-comerciais/actions';
 import { getFaqsPadrao } from '@/app/admin/settings/actions';
@@ -25,6 +25,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [apresentacao, setApresentacao] = useState(
     configApresentacao?.clientTabs?.apresentacao !== false
   );
+  const [slidesList, setSlidesList] = useState<string[]>(
+    configApresentacao?.slidesList || []
+  );
+  const [uploadingSlides, setUploadingSlides] = useState(false);
   const [proposta, setProposta] = useState(
     configApresentacao?.clientTabs?.proposta !== false
   );
@@ -164,6 +168,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             setDocumentos(config.clientTabs.documentos === true);
             setFaq(config.clientTabs.faq === true);
           }
+          if (Array.isArray(config.slidesList)) setSlidesList(config.slidesList);
           if (config.videoUrl) setVideoUrl(config.videoUrl);
           setCanvaEmbedUrl(config.canvaEmbedUrl || DEFAULT_CANVA_URL);
           if (config.totalSlides) setTotalSlides(config.totalSlides);
@@ -205,6 +210,42 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     }
     loadTemplates();
   }, [minutaTemplateId]);
+
+  const handleSlideUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingSlides(true);
+    try {
+      const fileArray = Array.from(files).sort((a, b) => {
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      const urls: string[] = [];
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i];
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const base64Data = await base64Promise;
+        const res = await uploadClientFileAction(base64Data, file.name);
+        if (res.success && res.fileUrl) {
+          urls.push(res.fileUrl);
+        } else {
+          alert(`Erro ao subir slide ${file.name}: ${res.error || 'Erro desconhecido'}`);
+        }
+      }
+      setSlidesList(prev => [...prev, ...urls]);
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao carregar slides: ' + err.message);
+    } finally {
+      setUploadingSlides(false);
+      e.target.value = '';
+    }
+  };
 
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -305,6 +346,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           obrigarVideo: video && obrigarVideo
         },
         videoUrl: videoUrl.trim(),
+        slidesList,
         fotosList,
         documentosList,
         faqList,
@@ -395,28 +437,102 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
               </label>
 
               {apresentacao && (
-                <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                    Código de Incorporação (Embed HTML) ou Link do Canva
-                  </label>
-                  <input 
-                    type="text"
-                    placeholder="Cole o link inteligente (https://www.canva.com/design/.../view?embed) ou o código iframe do Canva..."
-                    value={canvaEmbedUrl}
-                    onChange={(e) => {
-                      let val = e.target.value;
-                      if (val.includes('<iframe')) {
-                        const match = val.match(/src="([^"]+)"/);
-                        if (match && match[1]) {
-                          val = match[1];
-                        }
-                      }
-                      setCanvaEmbedUrl(val);
-                    }}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                  {/* 1. Upload de Slides Nativos do Canva */}
+                  <div className="bg-indigo-50/40 border border-indigo-100/90 rounded-2xl p-4 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                          🖼️
+                        </div>
+                        <div>
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-800 block">
+                            Slides da Apresentação (Imagens do Canva)
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            Baixe no Canva como PNG e selecione todos os slides de uma vez.
+                          </span>
+                        </div>
+                      </div>
 
-                  <label className="flex items-start gap-2.5 p-2.5 bg-indigo-50/40 border border-indigo-100/80 rounded-xl cursor-pointer hover:bg-indigo-50/70 transition-all select-none mt-2">
+                      <label className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center justify-center gap-2 shrink-0">
+                        {uploadingSlides ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                        <span>{uploadingSlides ? 'Enviando slides...' : '+ Subir Slides (PNG/JPG)'}</span>
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleSlideUpload}
+                          disabled={uploadingSlides}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Galeria de miniaturas dos slides carregados */}
+                    {slidesList.length > 0 ? (
+                      <div className="space-y-2 pt-2 border-t border-indigo-100/60">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-indigo-950">
+                          <span>{slidesList.length} slide{slidesList.length > 1 ? 's' : ''} carregado{slidesList.length > 1 ? 's' : ''} no sistema</span>
+                          <button 
+                            type="button" 
+                            onClick={() => setSlidesList([])}
+                            className="text-rose-600 hover:text-rose-700 hover:underline cursor-pointer text-[10px] font-bold"
+                          >
+                            Limpar todos os slides
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 max-h-52 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-indigo-100">
+                          {slidesList.map((url, idx) => (
+                            <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-slate-200 group bg-slate-900 shadow-2xs">
+                              <img src={url} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover" />
+                              <div className="absolute top-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
+                                {idx + 1}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setSlidesList(prev => prev.filter((_, i) => i !== idx))}
+                                className="absolute top-1 right-1 w-4 h-4 bg-rose-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-rose-700"
+                                title="Remover este slide"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-white/70 rounded-xl border border-dashed border-indigo-200 text-center text-[10px] text-slate-500 font-medium">
+                        Nenhum slide enviado ainda. Clique no botão acima para selecionar as fotos exportadas do Canva.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Campo alternativo para Link / Embed do Canva */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                      Ou Código de Incorporação / Link do Canva (Modo Iframe)
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="Cole o link inteligente (https://www.canva.com/design/.../view?embed) ou o código iframe do Canva..."
+                      value={canvaEmbedUrl}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (val.includes('<iframe')) {
+                          const match = val.match(/src="([^"]+)"/);
+                          if (match && match[1]) {
+                            val = match[1];
+                          }
+                        }
+                        setCanvaEmbedUrl(val);
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* 3. Trava de Visualização Obrigatória */}
+                  <label className="flex items-start gap-2.5 p-2.5 bg-indigo-50/40 border border-indigo-100/80 rounded-xl cursor-pointer hover:bg-indigo-50/70 transition-all select-none">
                     <input 
                       type="checkbox"
                       className="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
@@ -429,31 +545,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                         Obrigar visualização da apresentação
                       </span>
                       <span className="text-[9.5px] text-slate-500 font-medium block mt-0.5 leading-snug">
-                        As demais abas (Proposta Comercial A4, FPV e Minuta) ficam bloqueadas com cadeado 🔒 e só liberam após o cliente passar pelos slides.
+                        As demais abas (Proposta Comercial A4, FPV e Minuta) ficam bloqueadas com cadeado 🔒 e só liberam quando o cliente visualizar todos os slides até o final.
                       </span>
                     </div>
                   </label>
-
-                  {obrigarApresentacao && (
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 pl-3 pt-1">
-                      <div className="flex items-center gap-2">
-                        <label className="text-[10px] font-bold text-slate-700">
-                          Total de Slides da Apresentação:
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={totalSlides}
-                          onChange={(e) => setTotalSlides(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 1)}
-                          className="w-16 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 text-center outline-none focus:ring-1 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <span className="text-[9px] text-slate-400 font-medium">
-                        (O cliente avança slide a slide até o último para liberar a proposta)
-                      </span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>

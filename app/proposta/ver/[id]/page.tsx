@@ -250,7 +250,7 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
 
   return (
     <>
-      <style href="tenant-theme" precedence="high" dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
+      <style dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
       <ViewClient 
         doc={serializedDoc} 
         fullProposta={serializedFullProposta} 
