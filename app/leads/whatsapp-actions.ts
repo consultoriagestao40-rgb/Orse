@@ -6,9 +6,9 @@ import { revalidatePath } from 'next/cache';
 
 // Mock function until Z-API keys are provided
 async function dispatchZApiMessage(phone: string, text: string, tenantId?: string | null) {
-  let instanceId = process.env.ZAPI_INSTANCE_ID;
-  let token = process.env.ZAPI_TOKEN;
-  let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+  let instanceId: string | null | undefined = null;
+  let token: string | null | undefined = null;
+  let clientToken: string | null | undefined = null;
 
   if (tenantId) {
     const tenant = await prisma.tenant.findUnique({
@@ -16,10 +16,11 @@ async function dispatchZApiMessage(phone: string, text: string, tenantId?: strin
       select: {
         whatsappInstanceId: true,
         whatsappToken: true,
-        whatsappClientToken: true
+        whatsappClientToken: true,
+        whatsappConnected: true,
       }
     });
-    if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+    if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
       instanceId = tenant.whatsappInstanceId;
       token = tenant.whatsappToken;
       clientToken = tenant.whatsappClientToken;
@@ -153,9 +154,9 @@ export async function sendWhatsAppMedia(
     return { success: false, error: 'Falha ao salvar anexo no banco de dados: ' + err.message };
   }
 
-  let instanceId = process.env.ZAPI_INSTANCE_ID;
-  let token = process.env.ZAPI_TOKEN;
-  let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+  let instanceId: string | null | undefined = null;
+  let token: string | null | undefined = null;
+  let clientToken: string | null | undefined = null;
 
   if (user.tenantId) {
     const tenant = await prisma.tenant.findUnique({
@@ -163,10 +164,11 @@ export async function sendWhatsAppMedia(
       select: {
         whatsappInstanceId: true,
         whatsappToken: true,
-        whatsappClientToken: true
+        whatsappClientToken: true,
+        whatsappConnected: true,
       }
     });
-    if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+    if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
       instanceId = tenant.whatsappInstanceId;
       token = tenant.whatsappToken;
       clientToken = tenant.whatsappClientToken;

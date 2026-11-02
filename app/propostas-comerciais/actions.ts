@@ -610,9 +610,9 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
       const cleanPhone = vendedor.celular.replace(/\D/g, '');
       const tenantId = doc.tenantId;
 
-      let instanceId = process.env.ZAPI_INSTANCE_ID;
-      let token = process.env.ZAPI_TOKEN;
-      let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+      let instanceId: string | null | undefined = null;
+      let token: string | null | undefined = null;
+      let clientToken: string | null | undefined = null;
 
       if (tenantId) {
         const tenant = await prisma.tenant.findUnique({
@@ -621,10 +621,11 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
             whatsappInstanceId: true,
             whatsappToken: true,
             whatsappClientToken: true,
+            whatsappConnected: true,
             nomeFantasia: true
           }
         });
-        if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+        if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
           instanceId = tenant.whatsappInstanceId;
           token = tenant.whatsappToken;
           clientToken = tenant.whatsappClientToken;
@@ -772,9 +773,9 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       const cleanPhone = vendedor.celular.replace(/\D/g, '');
       const tenantId = doc.tenantId;
 
-      let instanceId = process.env.ZAPI_INSTANCE_ID;
-      let token = process.env.ZAPI_TOKEN;
-      let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+      let instanceId: string | null | undefined = null;
+      let token: string | null | undefined = null;
+      let clientToken: string | null | undefined = null;
 
       if (tenantId) {
         const tenant = await prisma.tenant.findUnique({
@@ -782,10 +783,11 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
           select: {
             whatsappInstanceId: true,
             whatsappToken: true,
-            whatsappClientToken: true
+            whatsappClientToken: true,
+            whatsappConnected: true,
           }
         });
-        if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+        if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
           instanceId = tenant.whatsappInstanceId;
           token = tenant.whatsappToken;
           clientToken = tenant.whatsappClientToken;

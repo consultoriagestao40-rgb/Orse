@@ -181,38 +181,44 @@ export async function connectWhatsAppInstance() {
       };
  
     } else {
-      // --- MODO DESENVOLVIMENTO / TESTE (FALLBACK DO CRISTIANO) ---
-      // Se não temos um Partner Token, vinculamos as chaves padrão do .env 
-      // para permitir testar a tela de QR Code e envios perfeitamente.
-      console.log('ZAPI_PARTNER_TOKEN não configurado. Utilizando chaves padrão do .env para teste.');
-      
-      const envInstanceId = process.env.ZAPI_INSTANCE_ID;
-      const envToken = process.env.ZAPI_TOKEN;
-      const envClientToken = process.env.ZAPI_CLIENT_TOKEN;
- 
-      if (!envInstanceId || !envToken || !envClientToken) {
+      // Isolamento estrito de instâncias: NUNCA compartilhar a instância da JVS Facilities com novos clientes!
+      const isMasterJvsTenant = tenant.nomeFantasia.toUpperCase().includes('JVS') || tenant.cnpj.includes('0001');
+      if (isMasterJvsTenant) {
+        console.log('Vinculando chaves da JVS Facilities exclusivamente para o tenant matriz JVS.');
+        const envInstanceId = process.env.ZAPI_INSTANCE_ID;
+        const envToken = process.env.ZAPI_TOKEN;
+        const envClientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+        if (!envInstanceId || !envToken || !envClientToken) {
+          return { 
+            success: false, 
+            error: 'Chaves Z-API da matriz não configuradas nas variáveis de ambiente.' 
+          };
+        }
+
+        await prisma.tenant.update({
+          where: { id: user.tenantId },
+          data: {
+            whatsappInstanceId: envInstanceId,
+            whatsappToken: envToken,
+            whatsappClientToken: envClientToken,
+            whatsappConnected: false
+          }
+        });
+
+        revalidatePath('/admin/settings');
         return { 
-          success: false, 
-          error: 'Modo teste ativo, mas chaves Z-API globais não configuradas no arquivo .env.' 
+          success: true, 
+          instanceId: envInstanceId, 
+          message: 'Instância da matriz JVS vinculada com sucesso.' 
+        };
+      } else {
+        // Nova empresa cliente cadastrada no SaaS SmartBid
+        return {
+          success: false,
+          error: 'Para conectar o WhatsApp corporativo da sua empresa, solicite a ativação de uma instância dedicada junto ao suporte SmartBid.'
         };
       }
- 
-      await prisma.tenant.update({
-        where: { id: user.tenantId },
-        data: {
-          whatsappInstanceId: envInstanceId,
-          whatsappToken: envToken,
-          whatsappClientToken: envClientToken,
-          whatsappConnected: false
-        }
-      });
- 
-      revalidatePath('/admin/settings');
-      return { 
-        success: true, 
-        instanceId: envInstanceId, 
-        message: 'Instância de testes vinculada com sucesso.' 
-      };
     }
  
   } catch (error: any) {

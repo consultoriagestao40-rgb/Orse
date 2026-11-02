@@ -787,10 +787,10 @@ export async function notifyAtaPublish(ataId: string) {
     });
     const userCelularMap = new Map(dbUsers.map(u => [u.id, u.celular]));
 
-    // Prepara chaves do Z-API do tenant
-    let instanceId = process.env.ZAPI_INSTANCE_ID;
-    let token = process.env.ZAPI_TOKEN;
-    let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+    // Prepara chaves do Z-API do tenant (isolamento estrito multi-tenant)
+    let instanceId: string | null | undefined = null;
+    let token: string | null | undefined = null;
+    let clientToken: string | null | undefined = null;
 
     if (user.tenantId) {
       const tenant = await prisma.tenant.findUnique({
@@ -798,10 +798,11 @@ export async function notifyAtaPublish(ataId: string) {
         select: {
           whatsappInstanceId: true,
           whatsappToken: true,
-          whatsappClientToken: true
+          whatsappClientToken: true,
+          whatsappConnected: true,
         }
       });
-      if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+      if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
         instanceId = tenant.whatsappInstanceId;
         token = tenant.whatsappToken;
         clientToken = tenant.whatsappClientToken;
