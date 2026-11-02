@@ -190,9 +190,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   // 7) Cesta Básica Assiduidade(+)
   const cestaBasica = Number(cctEfetiva.cestaBasica || 0) || 0;
   
-  // 8) Desconto de VA(-)
+  // 8) Desconto de VA(-) - Incide sobre o benefício mensal concedido (PAT)
   const vaDescPct = Number(cctEfetiva.vaDescPercent || 0) || 0;
-  const descontoVA = ((custoVABruto + vaSobreFerias) * vaDescPct) / 100;
+  const descontoVA = (custoVABruto * vaDescPct) / 100;
   
   // 9) Desconto de VT(-) - Geralmente 6%
   const vtDescPct = (cctEfetiva.vtDescPercent !== undefined && cctEfetiva.vtDescPercent !== null && cctEfetiva.vtDescPercent !== '')

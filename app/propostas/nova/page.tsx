@@ -1419,6 +1419,7 @@ function PropostaEditor() {
       const vaBruto = Number(bC?.va ?? 0);
       const descontoVA = Math.abs(Number(bC?.descontoVA ?? 0));
       const vaLiquido = vaBruto - descontoVA;
+      const vaFerias = Number(bC?.vaFerias ?? 0);
       const vtBruto = Number(bC?.vt ?? 0);
       const descontoVT = Math.abs(Number(bC?.descontoVT ?? 0));
       const vtLiquido = vtBruto - descontoVT;
@@ -1472,6 +1473,7 @@ function PropostaEditor() {
         outrosBlocoA,
         blocoATotal,
         vaLiquido,
+        vaFerias,
         vtLiquido,
         cestaBasica,
         sindicatoAssistencia,
@@ -1500,6 +1502,7 @@ function PropostaEditor() {
         outrosBlocoATotal: outrosBlocoA * qtd,
         blocoATotalTotal: blocoATotal * qtd,
         vaLiquidoTotal: vaLiquido * qtd,
+        vaFeriasTotal: vaFerias * qtd,
         vtLiquidoTotal: vtLiquido * qtd,
         cestaBasicaTotal: cestaBasica * qtd,
         sindicatoAssistenciaTotal: sindicatoAssistencia * qtd,
@@ -1534,6 +1537,7 @@ function PropostaEditor() {
       outrosBlocoATotal: colunasComposicao.reduce((acc, c) => acc + c.outrosBlocoATotal, 0),
       blocoATotalTotal: colunasComposicao.reduce((acc, c) => acc + c.blocoATotalTotal, 0),
       vaLiquidoTotal: colunasComposicao.reduce((acc, c) => acc + c.vaLiquidoTotal, 0),
+      vaFeriasTotal: colunasComposicao.reduce((acc, c) => acc + c.vaFeriasTotal, 0),
       vtLiquidoTotal: colunasComposicao.reduce((acc, c) => acc + c.vtLiquidoTotal, 0),
       cestaBasicaTotal: colunasComposicao.reduce((acc, c) => acc + c.cestaBasicaTotal, 0),
       sindicatoAssistenciaTotal: colunasComposicao.reduce((acc, c) => acc + c.sindicatoAssistenciaTotal, 0),
@@ -1616,6 +1620,9 @@ function PropostaEditor() {
       // Montante C
       rows.push(['--- MONTANTE "C" - CUSTOS DIVERSOS E BENEFÍCIOS ---']);
       addRow('1) Vale Alimentação (Líquido)', c => ({ unit: c.vaLiquido, total: c.vaLiquidoTotal }), { unit: medio(consolidado.vaLiquidoTotal), total: consolidado.vaLiquidoTotal });
+      if (consolidado.vaFeriasTotal > 0) {
+        addRow('1.1) Vale Alimentação Sobre Férias', c => ({ unit: c.vaFerias, total: c.vaFeriasTotal }), { unit: medio(consolidado.vaFeriasTotal), total: consolidado.vaFeriasTotal });
+      }
       addRow('2) Vale Transporte (Líquido)', c => ({ unit: c.vtLiquido, total: c.vtLiquidoTotal }), { unit: medio(consolidado.vtLiquidoTotal), total: consolidado.vtLiquidoTotal });
       addRow('3) Custos com Sindicatos', c => ({ unit: c.sindicatoAssistencia, total: c.sindicatoAssistenciaTotal }), { unit: medio(consolidado.sindicatoAssistenciaTotal), total: consolidado.sindicatoAssistenciaTotal });
       addRow('4) Cesta Básica / Assiduidade', c => ({ unit: c.cestaBasica, total: c.cestaBasicaTotal }), { unit: medio(consolidado.cestaBasicaTotal), total: consolidado.cestaBasicaTotal });
@@ -1928,6 +1935,20 @@ function PropostaEditor() {
                 <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.vaLiquidoTotal))}</td>
                 <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.vaLiquidoTotal)}</td>
               </tr>
+
+              {consolidado.vaFeriasTotal > 0 && (
+                <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
+                  <td className="py-1.5 px-6 font-bold text-slate-800">1.1) Vale Alimentação Sobre Férias</td>
+                  {colunasComposicao.map((c) => (
+                    <React.Fragment key={`va-ferias-${c.id}`}>
+                      <td className="py-1.5 px-3 text-right border-l border-slate-200">{c.vaFerias > 0 ? formatCurrency(c.vaFerias) : '-'}</td>
+                      <td className="py-1.5 px-3 text-right bg-emerald-100/50 font-semibold">{c.vaFeriasTotal > 0 ? formatCurrency(c.vaFeriasTotal) : '-'}</td>
+                    </React.Fragment>
+                  ))}
+                  <td className="py-1.5 px-3 text-right border-l border-slate-300 bg-slate-50">{formatCurrency(medio(consolidado.vaFeriasTotal))}</td>
+                  <td className="py-1.5 px-3 text-right bg-emerald-100/70 font-semibold">{formatCurrency(consolidado.vaFeriasTotal)}</td>
+                </tr>
+              )}
 
               <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50">
                 <td className="py-1.5 px-6 font-bold text-slate-800">2) Vale Transporte (Líquido)</td>

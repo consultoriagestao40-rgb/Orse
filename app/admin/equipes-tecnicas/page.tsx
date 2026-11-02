@@ -219,8 +219,8 @@ export default function AdminEquipesTecnicasPage() {
       ? (Number(cct.vaValor) || 0) * diasEscala 
       : (Number(cct.vaValor) || 0);
     const vaSobreFerias = cct.vaProvisFerias ? (vaBruto / 12) : 0;
-    const descontoVA = ((vaBruto + vaSobreFerias) * (Number(cct.vaDescPercent) || 0)) / 100;
-    const vaLiquido = vaBruto + vaSobreFerias - descontoVA;
+    const descontoVA = (vaBruto * (Number(cct.vaDescPercent) || 0)) / 100;
+    const vaLiquido = vaBruto - descontoVA;
 
     // 4. Vale Transporte (VT) Líquido
     const vtBruto = (Number(cct.vtValor) || 0) * diasEscala;
@@ -372,8 +372,8 @@ export default function AdminEquipesTecnicasPage() {
             ? (Number(cct.vaValor) || 0) * diasEscala 
             : (Number(cct.vaValor) || 0);
           const vaSobreFerias = cct.vaProvisFerias ? (vaBruto / 12) : 0;
-          const descontoVA = ((vaBruto + vaSobreFerias) * (Number(cct.vaDescPercent) || 0)) / 100;
-          const vaLiquido = vaBruto + vaSobreFerias - descontoVA;
+          const descontoVA = (vaBruto * (Number(cct.vaDescPercent) || 0)) / 100;
+          const vaLiquido = vaBruto - descontoVA;
 
           // 4. Benefícios: Vale Transporte (VT) Líquido
           const vtBruto = (Number(cct.vtValor) || 0) * diasEscala;
