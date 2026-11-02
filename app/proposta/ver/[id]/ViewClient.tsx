@@ -191,36 +191,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const [presentationCompleted, setPresentationCompleted] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
 
-  // Controle de Slide Atual da Apresentação
-  const totalSlides = Number(doc.configApresentacao?.totalSlides) > 0 ? Number(doc.configApresentacao?.totalSlides) : 10;
-  const [currentSlide, setCurrentSlide] = useState(1);
-  const isLastSlide = currentSlide >= totalSlides;
-
-  // Escuta de Teclas para Navegação de Slides da Apresentação
-  useEffect(() => {
-    if (activeClientTab === 'apresentacao') {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
-          setCurrentSlide((prev) => Math.min(totalSlides, prev + 1));
-        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-          setCurrentSlide((prev) => Math.max(1, prev - 1));
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [activeClientTab, totalSlides]);
-
-  // Detecção de clique/foco dentro do Canva: se o usuário clicar dentro do iframe do Canva, avançamos o slide!
-  useEffect(() => {
-    const handleCanvaInteraction = () => {
-      if (activeClientTab === 'apresentacao') {
-        setCurrentSlide((prev) => Math.min(totalSlides, prev + 1));
-      }
-    };
-    window.addEventListener('blur', handleCanvaInteraction);
-    return () => window.removeEventListener('blur', handleCanvaInteraction);
-  }, [activeClientTab, totalSlides]);
+  // Controle de Apresentação e Vídeo
 
   // Controle de Tempo e Últimos 10 Segundos do Vídeo
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
@@ -1436,129 +1407,52 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                 />
               </div>
 
-              {/* Mecanismo Ativo de Avançar Slides e Conclusão */}
+              {/* Barra de Ação da Apresentação */}
               {requiresPres && (
-                <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 p-4 sm:p-5 rounded-2xl shadow-xl space-y-3.5 transition-all">
-                  {/* Cabeçalho de Navegação com Indicador de Progresso */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${presentationCompleted || isLastSlide ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-700 font-bold border border-slate-200'}`}>
-                        {presentationCompleted || isLastSlide ? <CheckCircle2 size={20} /> : <span className="font-mono text-xs font-black">{currentSlide}</span>}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                            {presentationCompleted 
-                              ? 'Apresentação Concluída' 
-                              : isLastSlide 
-                                ? '🎉 Último Slide Atingido!' 
-                                : `Navegação da Apresentação — Slide ${currentSlide} de ${totalSlides}`}
-                          </h4>
-                          {isLastSlide && !presentationCompleted && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
-                              ✓ Pronto para Concluir
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-500 font-medium leading-snug">
-                          {presentationCompleted 
-                            ? 'A proposta comercial (A4), planilhas FPV e minutas contratuais foram desbloqueadas no menu.'
-                            : isLastSlide 
-                              ? 'Você visualizou todos os slides! Clique no botão verde para acessar a proposta comercial.'
-                              : 'Clique no botão "Avançar Slide ➔" abaixo ou use as teclas de seta / clique no Canva para navegar.'}
-                        </p>
-                      </div>
+                <div className="bg-white border border-slate-200/90 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-[#1B4D3E] border border-slate-200'}`}>
+                      {presentationCompleted ? <CheckCircle2 size={22} /> : <Presentation size={22} />}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-black text-[#1B4D3E] bg-emerald-50/70 px-3.5 py-1.5 rounded-xl border border-emerald-200/80 shadow-2xs">
-                        Slide {currentSlide} de {totalSlides}
-                      </span>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                        {presentationCompleted 
+                          ? 'Apresentação Concluída' 
+                          : 'Apresentação Institucional'}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium leading-snug">
+                        {presentationCompleted 
+                          ? 'A proposta comercial (A4), planilhas FPV e minutas contratuais estão liberadas no menu.'
+                          : 'Navegue pelos slides diretamente pelos botões e setas do Canva acima.'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Barra de Progresso Visual de Slides */}
-                  {!presentationCompleted && (
-                    <div className="space-y-1.5">
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
-                        <div 
-                          className="bg-[#1B4D3E] h-full transition-all duration-300 rounded-full"
-                          style={{ width: `${Math.round((currentSlide / totalSlides) * 100)}%` }}
-                        />
-                      </div>
-                      {/* Indicadores de slides em miniatura */}
-                      {totalSlides <= 20 && (
-                        <div className="flex items-center justify-between gap-1 pt-0.5">
-                          {Array.from({ length: totalSlides }, (_, i) => i + 1).map((num) => (
-                            <button
-                              key={num}
-                              type="button"
-                              onClick={() => setCurrentSlide(num)}
-                              disabled={presentationCompleted}
-                              title={`Ir para Slide ${num}`}
-                              className={`h-1.5 flex-1 rounded-full transition-all cursor-pointer ${
-                                num === currentSlide
-                                  ? 'bg-[#1B4D3E] ring-2 ring-emerald-600/30'
-                                  : num < currentSlide
-                                  ? 'bg-emerald-300'
-                                  : 'bg-slate-200 hover:bg-slate-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Controles de Ação de Avanço e Conclusão */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentSlide((prev) => Math.max(1, prev - 1))}
-                      disabled={currentSlide <= 1 || presentationCompleted}
-                      className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700 transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      <ChevronLeft size={16} /> Anterior
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      {!presentationCompleted && !isLastSlide && (
-                        <button
-                          type="button"
-                          onClick={() => setCurrentSlide((prev) => Math.min(totalSlides, prev + 1))}
-                          className="px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-2"
-                        >
-                          Avançar Slide <ChevronRight size={16} />
-                        </button>
-                      )}
-
-                      {!presentationCompleted && isLastSlide && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPresentationCompleted(true);
-                            if (typeof window !== 'undefined') {
-                              localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
-                            }
-                            showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
-                            setActiveClientTab('proposta');
-                          }}
-                          className="px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-2 animate-bounce animate-duration-1000"
-                        >
-                          <CheckCircle2 size={16} /> Concluir Apresentação e Liberar Proposta
-                        </button>
-                      )}
-
-                      {presentationCompleted && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveClientTab('proposta')}
-                          className="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-widest rounded-xl border border-emerald-200 flex items-center gap-1.5 transition-all cursor-pointer"
-                        >
-                          <CheckCircle2 size={14} className="text-emerald-600" /> Ver Proposta Comercial ➔
-                        </button>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    {!presentationCompleted ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPresentationCompleted(true);
+                          if (typeof window !== 'undefined') {
+                            localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
+                          }
+                          showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                          setActiveClientTab('proposta');
+                        }}
+                        className="w-full sm:w-auto px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 size={16} /> Concluir Apresentação e Acessar Proposta
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setActiveClientTab('proposta')}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-widest rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <CheckCircle2 size={14} className="text-emerald-600" /> Ver Proposta Comercial ➔
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
