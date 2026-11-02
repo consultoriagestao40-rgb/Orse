@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 // UNIDADES DE MEDIDA
 export async function getUnidadesMedida() {
@@ -573,6 +574,110 @@ export async function testSystemSmtpConnection(targetEmail: string) {
   }
 }
 
+// -------------------------------------------------------------
+// EXPORTAÇÃO INTEGRAL DE DADOS (LGPD / ENCERRAMENTO DE CONTA)
+// -------------------------------------------------------------
+export async function exportFullTenantData() {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Acesso não autorizado ou empresa não identificada.' };
+  }
+  if (user.role !== 'ADMIN') {
+    return { success: false, error: 'Apenas administradores podem realizar o download integral dos dados da empresa.' };
+  }
 
+  try {
+    const tenantId = user.tenantId;
 
+    const [
+      tenant,
+      clientes,
+      propostas,
+      contratos,
+      leads,
+      atas,
+      produtos,
+      ccts,
+      usuarios
+    ] = await Promise.all([
+      prisma.tenant.findUnique({ where: { id: tenantId } }),
+      prisma.client.findMany({ where: { tenantId }, orderBy: { nomeFantasia: 'asc' } }),
+      prisma.proposta.findMany({
+        where: { tenantId },
+        include: {
+          client: true,
+          versoes: {
+            orderBy: { versao: 'desc' },
+            include: { items: true }
+          },
+          documentosComerciais: true
+        },
+        orderBy: { numero: 'desc' }
+      }),
+      prisma.contrato.findMany({
+        where: { tenantId },
+        include: { client: true, empresaEmissora: true, clausulas: { orderBy: { ordem: 'asc' } } },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.lead.findMany({
+        where: { tenantId },
+        include: { stage: true, contacts: true },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.ata.findMany({
+        where: { tenantId, titulo: { not: '__SYSTEM_PLANNING_DATA__' } },
+        include: { acoes: true },
+        orderBy: { dataReuniou: 'desc' }
+      }),
+      prisma.produto.findMany({ where: { tenantId }, orderBy: { codigo: 'asc' } }),
+      prisma.cCT.findMany({ where: { tenantId }, include: { cargos: true }, orderBy: { nome: 'asc' } }),
+      prisma.user.findMany({
+        where: { tenantId },
+        select: { id: true, nome: true, email: true, role: true, ativo: true, cargo: true, createdAt: true }
+      })
+    ]);
 
+    const exportPayload = {
+      exportadoEm: new Date().toISOString(),
+      versaoEsquema: '2.0-LGPD',
+      empresa: {
+        id: tenant?.id,
+        nomeFantasia: tenant?.nomeFantasia || '',
+        razaoSocial: tenant?.razaoSocial || '',
+        cnpj: tenant?.cnpj || '',
+        email: tenant?.email || '',
+        telefone: tenant?.telefone || ''
+      },
+      solicitante: {
+        nome: user.nome,
+        email: user.email,
+        perfil: user.role
+      },
+      estatisticas: {
+        totalClientes: clientes.length,
+        totalPropostas: propostas.length,
+        totalContratos: contratos.length,
+        totalLeads: leads.length,
+        totalAtas: atas.length,
+        totalProdutos: produtos.length,
+        totalCcts: ccts.length,
+        totalUsuarios: usuarios.length
+      },
+      dados: {
+        clientes,
+        propostas,
+        contratos,
+        leads,
+        atas,
+        produtos,
+        ccts,
+        usuarios
+      }
+    };
+
+    return { success: true, data: JSON.parse(JSON.stringify(exportPayload)) };
+  } catch (error: any) {
+    console.error('Erro ao exportar dados do inquilino:', error);
+    return { success: false, error: error.message || 'Erro ao gerar exportação de dados' };
+  }
+}

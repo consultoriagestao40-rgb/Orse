@@ -651,18 +651,25 @@ function PropostaEditor() {
         } else if (loggedUser) {
            console.log('Nova proposta: inicializando com o perfil do vendedor logado...');
            const searchClientId = searchParams.get('clientId');
+           const searchLeadId = searchParams.get('leadId');
+           const searchClienteNome = searchParams.get('clienteNome') || '';
+           const searchCnpj = searchParams.get('cnpj') || '';
+           const searchContato = searchParams.get('contato') || '';
+           const searchEmail = searchParams.get('email') || '';
+           const searchCelular = searchParams.get('telefone') || '';
            const foundClient = searchClientId ? (clientesData || []).find((c: any) => c.id === searchClientId) : null;
            
            const defaultNewProposta = {
               ...proposta,
               cliente: {
                  ...proposta.cliente,
-                 cliente: foundClient?.nomeFantasia || '',
-                 razaoSocial: foundClient?.razaoSocial || '',
-                 cnpj: foundClient?.cnpj || '',
-                 contato: foundClient?.contato || '',
-                 email: foundClient?.email || '',
-                 celular: foundClient?.whatsapp || '',
+                 leadId: searchLeadId || undefined,
+                 cliente: searchClienteNome || foundClient?.nomeFantasia || '',
+                 razaoSocial: foundClient?.razaoSocial || searchClienteNome || '',
+                 cnpj: searchCnpj || foundClient?.cnpj || '',
+                 contato: searchContato || foundClient?.contato || '',
+                 email: searchEmail || foundClient?.email || '',
+                 celular: searchCelular || foundClient?.whatsapp || '',
                  segmento: foundClient?.segmento || '',
                  vendedorNome: loggedUser.nome,
                  vendedorCargo: loggedUser.cargo || (loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),

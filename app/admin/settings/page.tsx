@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
   Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image,
-  Eye, EyeOff, HelpCircle, Clock, Mail, Send, AlertTriangle, ShieldCheck
+  Eye, EyeOff, HelpCircle, Clock, Mail, Send, AlertTriangle, ShieldCheck, Download, FileSpreadsheet, Database, Shield
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
@@ -28,7 +28,7 @@ import {
   updateTipoServico, toggleTipoServico,
   updateSegmento, toggleSegmento,
   getFaqsPadrao, createFaqPadrao, updateFaqPadrao, deleteFaqPadrao, updateUserTimezone,
-  getSystemSmtpSettings, saveSystemSmtpSettings, testSystemSmtpConnection
+  getSystemSmtpSettings, saveSystemSmtpSettings, testSystemSmtpConnection, exportFullTenantData
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 import { 
@@ -42,7 +42,7 @@ import {
   changeTenantLogo, changeTenantTheme
 } from '@/app/admin/empresas/actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias' | 'seguranca' | 'smtp_sistema';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias' | 'seguranca' | 'smtp_sistema' | 'exportacao';
 
 const menuGroups = [
   {
@@ -77,6 +77,7 @@ const menuGroups = [
     title: 'Conta & Segurança',
     items: [
       { id: 'seguranca', label: 'Segurança & Senha', icon: Lock, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'exportacao', label: 'Privacidade & Exportação (LGPD)', icon: Download, roles: ['ADMIN'] },
       { id: 'preferencias', label: 'Fuso Horário & Preferências', icon: Clock, roles: ['ADMIN', 'MANAGER', 'USER'] },
     ]
   }
@@ -230,6 +231,99 @@ export default function SettingsPage() {
   const [smtpTestEmail, setSmtpTestEmail] = useState('');
   const [smtpTestLoading, setSmtpTestLoading] = useState(false);
   const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Exportação de Dados & LGPD
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportError, setExportError] = useState('');
+  const [exportSuccess, setExportSuccess] = useState('');
+  const [exportStats, setExportStats] = useState<any>(null);
+
+  const handleExportFullJson = async () => {
+    setExportLoading(true);
+    setExportError('');
+    setExportSuccess('');
+    try {
+      const res = await exportFullTenantData();
+      if (!res.success || !res.data) {
+        setExportError(res.error || 'Erro ao exportar dados da empresa.');
+        return;
+      }
+      setExportStats(res.data.estatisticas);
+      const jsonStr = JSON.stringify(res.data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const cleanEmpresa = (res.data.empresa?.nomeFantasia || 'smartbid').toLowerCase().replace(/[^a-z0-9]/g, '-');
+      link.href = url;
+      link.download = `smartbid-backup-completo-${cleanEmpresa}-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setExportSuccess('Backup integral em formato JSON gerado e baixado com sucesso!');
+    } catch (err: any) {
+      setExportError(err.message || 'Falha ao processar download do backup.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleExportCsv = async (tipo: 'clientes' | 'propostas' | 'contratos') => {
+    setExportLoading(true);
+    setExportError('');
+    setExportSuccess('');
+    try {
+      const res = await exportFullTenantData();
+      if (!res.success || !res.data) {
+        setExportError(res.error || 'Erro ao exportar dados.');
+        return;
+      }
+      setExportStats(res.data.estatisticas);
+      const items = res.data.dados?.[tipo] || [];
+      if (items.length === 0) {
+        setExportError(`Nenhum registro encontrado para exportar na categoria "${tipo}".`);
+        return;
+      }
+
+      let csvContent = '\uFEFF'; // UTF-8 BOM
+
+      if (tipo === 'clientes') {
+        csvContent += 'Código;Nome Fantasia;Razão Social;CNPJ;Segmento;E-mail;Telefone;Cidade;UF\n';
+        items.forEach((c: any) => {
+          csvContent += `"${c.codigo || ''}";"${(c.nomeFantasia || '').replace(/"/g, '""')}";"${(c.razaoSocial || '').replace(/"/g, '""')}";"${c.cnpj || ''}";"${c.segmento || ''}";"${c.email || ''}";"${c.whatsapp || c.telefone || ''}";"${c.cidade || ''}";"${c.uf || ''}"\n`;
+        });
+      } else if (tipo === 'propostas') {
+        csvContent += 'Número;Cliente;Status;Valor Mensal;Data de Criação\n';
+        items.forEach((p: any) => {
+          const valor = p.versoes?.[0]?.precoVenda || 0;
+          const clienteNome = p.client?.nomeFantasia || p.client?.razaoSocial || 'Não informado';
+          csvContent += `"FPV-${(p.numero || 0).toString().padStart(3, '0')}";"${clienteNome.replace(/"/g, '""')}";"${p.status || ''}";"${valor.toFixed(2).replace('.', ',')}";"${new Date(p.createdAt).toLocaleDateString('pt-BR')}"\n`;
+        });
+      } else if (tipo === 'contratos') {
+        csvContent += 'Código Contrato;Cliente;Empresa Emissora;Status;Valor Mensal;Vigência (Meses);Início;Término\n';
+        items.forEach((ct: any) => {
+          const clienteNome = ct.client?.nomeFantasia || ct.client?.razaoSocial || '';
+          const emissora = ct.empresaEmissora?.nomeFantasia || '';
+          csvContent += `"${ct.codigo || ct.id}";"${clienteNome.replace(/"/g, '""')}";"${emissora.replace(/"/g, '""')}";"${ct.status || ''}";"${(ct.valorMensal || 0).toFixed(2).replace('.', ',')}";"${ct.vigenciaMeses || 12}";"${ct.dataInicio ? new Date(ct.dataInicio).toLocaleDateString('pt-BR') : ''}";"${ct.dataTermino ? new Date(ct.dataTermino).toLocaleDateString('pt-BR') : ''}"\n`;
+        });
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `smartbid-${tipo}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setExportSuccess(`Planilha de ${tipo} exportada com sucesso em formato CSV (Excel)!`);
+    } catch (err: any) {
+      setExportError(err.message || 'Falha ao processar exportação CSV.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   // Status
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -3346,6 +3440,185 @@ export default function SettingsPage() {
                       <span>{smtpTestResult.message}</span>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* ABA DE PRIVACIDADE, EXPORTAÇÃO (LGPD) & ENCERRAMENTO */}
+            {activeTab === 'exportacao' && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-8 relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                      LGPD & Portabilidade Universal (Art. 18)
+                    </span>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight mt-2 font-display">
+                      Privacidade, Exportação & Encerramento
+                    </h2>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Exporte o banco de dados completo da sua empresa a qualquer momento em formatos abertos (JSON e CSV/Excel), sem dependência ou taxas de saída.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <ShieldCheck size={14} className="text-emerald-600" />
+                      100% Compatível c/ LGPD
+                    </span>
+                  </div>
+                </div>
+
+                {/* Banner de Direitos e Transparência */}
+                <div className="bg-gradient-to-r from-emerald-50/60 via-slate-50 to-teal-50/30 p-5 rounded-2xl border border-emerald-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Database size={16} className="text-[#1B4D3E]" />
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-800">Seus Dados Pertencem a Você</span>
+                      <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-md">Portabilidade Total</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+                      Em conformidade com as diretrizes da LGPD (Lei 13.709/2018), você pode extrair integralmente o histórico de clientes, FPVs, contratos, leads do CRM e cadastros da sua organização a qualquer momento.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feedbacks de Sucesso ou Erro */}
+                {exportSuccess && (
+                  <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <CheckCircle2 size={16} className="shrink-0" />
+                    {exportSuccess}
+                  </div>
+                )}
+
+                {exportError && (
+                  <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <X size={16} className="shrink-0" />
+                    {exportError}
+                  </div>
+                )}
+
+                {/* Estatísticas do Último Pacote (se gerado) */}
+                {exportStats && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div className="text-center p-2">
+                      <div className="text-xl font-black text-[#1B4D3E]">{exportStats.totalClientes}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Clientes</div>
+                    </div>
+                    <div className="text-center p-2">
+                      <div className="text-xl font-black text-[#1B4D3E]">{exportStats.totalPropostas}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Propostas / FPV</div>
+                    </div>
+                    <div className="text-center p-2">
+                      <div className="text-xl font-black text-[#1B4D3E]">{exportStats.totalContratos}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contratos</div>
+                    </div>
+                    <div className="text-center p-2">
+                      <div className="text-xl font-black text-[#1B4D3E]">{exportStats.totalLeads}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Leads no CRM</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Grid com as opções de Exportação */}
+                <div className="grid md:grid-cols-2 gap-6 pt-2">
+                  {/* Opção 1: Backup Integral JSON */}
+                  <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#1B4D3E]/40 transition-all space-y-4 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="w-10 h-10 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E]">
+                        <Database size={20} />
+                      </div>
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Backup Integral Completo (JSON)</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Exporta toda a base de dados corporativa em formato universal JSON: clientes, FPVs com composições e itens, contratos, histórico do CRM, produtos, atas e configurações.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleExportFullJson}
+                      disabled={exportLoading}
+                      className="w-full flex items-center justify-center gap-2 bg-[#1B4D3E] hover:bg-[#1B4D3E]/90 text-white py-3 px-4 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      {exportLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Gerando Backup Seguro...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={15} />
+                          Baixar Backup Integral (JSON)
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Opção 2: Planilhas para Excel (CSV) */}
+                  <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#1B4D3E]/40 transition-all space-y-4 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700">
+                        <FileSpreadsheet size={20} />
+                      </div>
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Exportar Planilhas (CSV / Excel)</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Faça o download de tabelas estruturadas compatíveis diretamente com o Microsoft Excel, Google Planilhas e outros sistemas administrativos.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => handleExportCsv('clientes')}
+                        disabled={exportLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Download size={13} />
+                        Exportar Tabela de Clientes (.csv)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleExportCsv('propostas')}
+                        disabled={exportLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Download size={13} />
+                        Exportar Tabela de Propostas FPV (.csv)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleExportCsv('contratos')}
+                        disabled={exportLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Download size={13} />
+                        Exportar Tabela de Contratos (.csv)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção de Encerramento e Expurgo Legal de Dados */}
+                <div className="pt-6 border-t border-slate-100 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Shield size={16} className="text-slate-600" />
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+                      Direito ao Esquecimento & Encerramento de Conta
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
+                    Caso decida descontinuar o uso da SmartBid, você tem o direito garantido de baixar todos os seus dados acima previamente. Após o download, caso deseje o expurgo definitivo e anonimização de dados cadastrais conforme os Arts. 16 e 18 da LGPD (preservadas as obrigações fiscais legais de 5 anos), basta encaminhar a solicitação para o canal oficial de privacidade.
+                  </p>
+                  <div>
+                    <a
+                      href="mailto:privacidade@smartbidhub.com.br?subject=Solicitacao%20de%20Encerramento%20e%20Expurgo%20de%20Dados%20-%20SmartBid"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                    >
+                      <Mail size={14} />
+                      Solicitar Encerramento / Expurgo de Dados (privacidade@smartbidhub.com.br)
+                    </a>
+                  </div>
                 </div>
               </div>
             )}

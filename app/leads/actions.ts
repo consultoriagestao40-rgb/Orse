@@ -250,6 +250,31 @@ export async function getLeadsPageInitData(params?: {
             include: { user: true }
           },
           contacts: true,
+          propostas: {
+            select: {
+              id: true,
+              numero: true,
+              status: true,
+              createdAt: true,
+              versoes: {
+                orderBy: { versao: 'desc' },
+                take: 1,
+                select: {
+                  versao: true,
+                  precoVenda: true,
+                  dataCriacao: true
+                }
+              },
+              documentosComerciais: {
+                select: {
+                  id: true,
+                  status: true,
+                  valorTotal: true,
+                  tipo: true
+                }
+              }
+            }
+          },
           whatsappMessages: {
             where: { direction: 'INBOUND', status: { not: 'READ' } },
             select: {
@@ -334,6 +359,31 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
           include: { user: true }
         },
         contacts: true,
+        propostas: {
+          select: {
+            id: true,
+            numero: true,
+            status: true,
+            createdAt: true,
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 1,
+              select: {
+                versao: true,
+                precoVenda: true,
+                dataCriacao: true
+              }
+            },
+            documentosComerciais: {
+              select: {
+                id: true,
+                status: true,
+                valorTotal: true,
+                tipo: true
+              }
+            }
+          }
+        },
         whatsappMessages: {
           where: { direction: 'INBOUND', status: { not: 'READ' } },
           select: {
@@ -1442,3 +1492,139 @@ export async function syncAllWhatsAppLeadsProfile() {
     return { success: false, error: err.message };
   }
 }
+
+// -------------------------------------------------------------
+// VINCULAÇÃO DE FPV / PROPOSTA COM LEAD DO CRM
+// -------------------------------------------------------------
+export async function linkPropostaToLead(leadId: string, propostaId: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Acesso não autorizado.' };
+  }
+
+  try {
+    const lead = await prisma.lead.findFirst({
+      where: { id: leadId, tenantId: user.tenantId }
+    });
+    if (!lead) return { success: false, error: 'Lead não encontrado.' };
+
+    const proposta = await prisma.proposta.findFirst({
+      where: { id: propostaId, tenantId: user.tenantId },
+      include: {
+        versoes: {
+          orderBy: { versao: 'desc' },
+          take: 1
+        }
+      }
+    });
+    if (!proposta) return { success: false, error: 'Proposta não encontrada.' };
+
+    const valorMensal = proposta.versoes?.[0]?.precoVenda || 0;
+
+    // Vincula a proposta ao lead
+    await prisma.proposta.update({
+      where: { id: propostaId },
+      data: { leadId: lead.id }
+    });
+
+    // Se a proposta tem valor mensal > 0, atualiza automaticamente o valor estimado do lead sem preenchimento manual!
+    if (valorMensal > 0) {
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: { valorEst: valorMensal }
+      });
+    }
+
+    // Registra no histórico do lead
+    await prisma.leadHistory.create({
+      data: {
+        leadId: lead.id,
+        tipo: 'PROPOSTA_LINKED',
+        descricao: `Proposta FPV-${proposta.numero.toString().padStart(3, '0')} vinculada. Valor mensal de R$ ${valorMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} atualizado automaticamente.`
+      }
+    });
+
+    revalidatePath('/leads');
+    revalidatePath('/');
+    return { success: true, valorEst: valorMensal, propostaNumero: proposta.numero };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function unlinkPropostaFromLead(leadId: string, propostaId: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Acesso não autorizado.' };
+  }
+
+  try {
+    const proposta = await prisma.proposta.findFirst({
+      where: { id: propostaId, leadId, tenantId: user.tenantId }
+    });
+    if (!proposta) return { success: false, error: 'Proposta não vinculada a este Lead.' };
+
+    await prisma.proposta.update({
+      where: { id: propostaId },
+      data: { leadId: null }
+    });
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'PROPOSTA_UNLINKED',
+        descricao: `Proposta FPV-${proposta.numero.toString().padStart(3, '0')} desvinculada do Lead.`
+      }
+    });
+
+    revalidatePath('/leads');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getAvailablePropostasForLead() {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, data: [] };
+  }
+
+  try {
+    const propostas = await prisma.proposta.findMany({
+      where: { tenantId: user.tenantId },
+      select: {
+        id: true,
+        numero: true,
+        status: true,
+        leadId: true,
+        createdAt: true,
+        client: {
+          select: { nomeFantasia: true, razaoSocial: true }
+        },
+        versoes: {
+          orderBy: { versao: 'desc' },
+          take: 1,
+          select: { precoVenda: true, versao: true }
+        }
+      },
+      orderBy: { numero: 'desc' }
+    });
+
+    return {
+      success: true,
+      data: propostas.map(p => ({
+        id: p.id,
+        numero: `FPV-${p.numero.toString().padStart(3, '0')}`,
+        status: p.status,
+        leadId: p.leadId,
+        clienteNome: p.client?.nomeFantasia || p.client?.razaoSocial || 'Cliente s/ nome',
+        valorMensal: p.versoes?.[0]?.precoVenda || 0
+      }))
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

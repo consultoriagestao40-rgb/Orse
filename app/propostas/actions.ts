@@ -710,6 +710,39 @@ export async function saveProposta(data: any) {
       revalidatePath('/pic');
     }
 
+    // Sincronização automática com Lead do CRM (se houver leadId ou se a proposta já estiver vinculada)
+    const effectiveLeadId = data.leadId || cliente.leadId || undefined;
+    const currentProp = await prisma.proposta.findUnique({
+      where: { id: propostaId },
+      select: { leadId: true, numero: true }
+    });
+    const targetLeadId = effectiveLeadId || currentProp?.leadId;
+
+    if (effectiveLeadId && effectiveLeadId !== currentProp?.leadId) {
+      await prisma.proposta.update({
+        where: { id: propostaId },
+        data: { leadId: effectiveLeadId }
+      }).catch(() => {});
+    }
+
+    if (targetLeadId) {
+      // Atualiza o valor estimado do Lead no CRM diretamente com o valor final da FPV, sem digitação manual!
+      await prisma.lead.update({
+        where: { id: targetLeadId },
+        data: { valorEst: finalPrecoVenda }
+      }).catch(err => console.error('Erro ao sincronizar valor no Lead:', err));
+
+      await prisma.leadHistory.create({
+        data: {
+          leadId: targetLeadId,
+          tipo: 'PROPOSTA_SYNC',
+          descricao: `Proposta FPV-${formattedNumero} recalculada/salva no valor de R$ ${finalPrecoVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês. Sincronizado automaticamente no Lead.`
+        }
+      }).catch(() => {});
+
+      revalidatePath('/leads');
+    }
+
     await prisma.auditLog.create({
       data: {
         propostaId,
@@ -808,7 +841,21 @@ export async function getPropostas(preFetchedUser?: any) {
 export async function updatePropostaStatus(id: string, status: string) {
   try {
     const loggedUser = await getLoggedUser();
-    await prisma.proposta.update({ where: { id }, data: { status } });
+    const updatedProposta = await prisma.proposta.update({
+      where: { id },
+      data: { status },
+      include: {
+        lead: {
+          include: {
+            pipeline: {
+              include: {
+                stages: { orderBy: { ordem: 'asc' } }
+              }
+            }
+          }
+        }
+      }
+    });
 
     if (loggedUser) {
       await prisma.auditLog.create({
@@ -827,6 +874,8 @@ export async function updatePropostaStatus(id: string, status: string) {
       orderBy: { versao: 'desc' }
     });
 
+    const isAceito = status.toUpperCase().startsWith('ACEIT') || status.toUpperCase().startsWith('APROV');
+
     if (lastVersion) {
       const meta = (lastVersion.metadados as any) || {};
       meta.statusHistory = meta.statusHistory || [];
@@ -834,13 +883,40 @@ export async function updatePropostaStatus(id: string, status: string) {
         status,
         date: new Date().toISOString()
       });
-      if (status.toUpperCase().startsWith('ACEIT') || status.toUpperCase().startsWith('APROV')) {
+      if (isAceito) {
         meta.dataAceitacao = new Date().toISOString();
       }
       await prisma.propostaVersao.update({
         where: { id: lastVersion.id },
         data: { metadados: meta }
       });
+    }
+
+    // Sincroniza com o CRM (Lead) se a proposta estiver vinculada
+    if (updatedProposta.leadId && updatedProposta.lead) {
+      if (isAceito && updatedProposta.lead.pipeline?.stages) {
+        // Encontra o estágio de fechamento/ganho no pipeline do lead
+        const wonStage = updatedProposta.lead.pipeline.stages.find((st: any) => {
+          const s = st.nome.toLowerCase();
+          return s.includes('ganh') || s.includes('aprov') || s.includes('fechad') || s.includes('contrat');
+        });
+        if (wonStage && wonStage.id !== updatedProposta.lead.stageId) {
+          await prisma.lead.update({
+            where: { id: updatedProposta.leadId },
+            data: { stageId: wonStage.id }
+          });
+        }
+      }
+
+      await prisma.leadHistory.create({
+        data: {
+          leadId: updatedProposta.leadId,
+          tipo: 'STATUS_CHANGE',
+          descricao: `Proposta FPV-${updatedProposta.numero.toString().padStart(3, '0')} teve o status atualizado para: "${status}". Sincronizado automaticamente no Radar Comercial.`
+        }
+      }).catch(() => {});
+
+      revalidatePath('/leads');
     }
 
     revalidatePath('/');

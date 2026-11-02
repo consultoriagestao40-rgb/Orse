@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadsPageInitData, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline, syncAllWhatsAppLeadsProfile } from './actions';
+import { getLeads, getLeadsPageInitData, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline, syncAllWhatsAppLeadsProfile, linkPropostaToLead, unlinkPropostaFromLead, getAvailablePropostasForLead } from './actions';
 import { closeWhatsAppChat, reopenWhatsAppChat, addChatParticipant, removeChatParticipant, getLeadParticipants, updateLeadTags } from './whatsapp-actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check, Tag, RefreshCw } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown, UserPlus, XCircle, Check, Tag, RefreshCw, FileText, ExternalLink, Link as LinkIcon, Unlink } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -385,7 +385,25 @@ const LeadCard = ({
 
       {/* Middle Section */}
       <div className="flex items-center justify-between mt-0.5 relative">
-        <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
+          {lead.propostas && lead.propostas.length > 0 && (
+            <span 
+              className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${
+                (lead.propostas[0].status || '').toUpperCase().startsWith('ACEIT') || (lead.propostas[0].status || '').toUpperCase().startsWith('APROV')
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : (lead.propostas[0].status || '').toUpperCase().startsWith('RECUS') || (lead.propostas[0].status || '').toUpperCase().startsWith('PERD')
+                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                  : 'bg-emerald-50/50 text-[#1B4D3E] border-[#1B4D3E]/20'
+              }`}
+              title={`FPV-${lead.propostas[0].numero} • Status: ${lead.propostas[0].status}`}
+            >
+              <FileText size={9} />
+              FPV-{lead.propostas[0].numero}
+              {lead.propostas.length > 1 && ` (+${lead.propostas.length - 1})`}
+            </span>
+          )}
+        </div>
         
         {/* Activity Indicator Circle */}
         <div className="relative">
@@ -759,6 +777,88 @@ export default function LeadsKanban() {
   const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
   const [segmentoOrder, setSegmentoOrder] = useState<string[]>([]);
+
+  // Propostas & FPV Linking States
+  const [showLinkPropostaModal, setShowLinkPropostaModal] = useState(false);
+  const [availablePropostas, setAvailablePropostas] = useState<any[]>([]);
+  const [loadingPropostas, setLoadingPropostas] = useState(false);
+  const [selectedPropostaToLink, setSelectedPropostaToLink] = useState('');
+  const [linkingPropostaLoading, setLinkingPropostaLoading] = useState(false);
+
+  const handleOpenLinkPropostaModal = async () => {
+    setShowLinkPropostaModal(true);
+    setLoadingPropostas(true);
+    try {
+      const res = await getAvailablePropostasForLead();
+      if (res.success) {
+        setAvailablePropostas(res.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingPropostas(false);
+    }
+  };
+
+  const handleConfirmLinkProposta = async () => {
+    if (!selectedLead || !selectedPropostaToLink) return;
+    setLinkingPropostaLoading(true);
+    try {
+      const res = await linkPropostaToLead(selectedLead.id, selectedPropostaToLink);
+      if (res.success) {
+        setShowLinkPropostaModal(false);
+        setSelectedPropostaToLink('');
+        await fetchFilteredLeads(true);
+        // Atualiza o selectedLead local
+        setSelectedLead((prev: any) => {
+          if (!prev) return prev;
+          const linkedProp = availablePropostas.find(p => p.id === selectedPropostaToLink);
+          const currentProps = prev.propostas || [];
+          return {
+            ...prev,
+            valorEst: res.valorEst || prev.valorEst,
+            propostas: [
+              ...currentProps,
+              {
+                id: selectedPropostaToLink,
+                numero: res.propostaNumero,
+                status: linkedProp?.status || 'Em Elaboração',
+                versoes: [{ precoVenda: res.valorEst }]
+              }
+            ]
+          };
+        });
+      } else {
+        alert(res.error || 'Erro ao vincular proposta.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Erro ao vincular proposta.');
+    } finally {
+      setLinkingPropostaLoading(false);
+    }
+  };
+
+  const handleUnlinkProposta = async (propostaId: string) => {
+    if (!selectedLead) return;
+    if (!confirm('Deseja realmente desvincular esta FPV do Lead?')) return;
+    try {
+      const res = await unlinkPropostaFromLead(selectedLead.id, propostaId);
+      if (res.success) {
+        await fetchFilteredLeads(true);
+        setSelectedLead((prev: any) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            propostas: (prev.propostas || []).filter((p: any) => p.id !== propostaId)
+          };
+        });
+      } else {
+        alert(res.error || 'Erro ao desvincular proposta.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Erro ao desvincular proposta.');
+    }
+  };
 
   const knownUnreadMessageIdsRef = React.useRef<Set<string>>(new Set());
   const isFirstLoadRef = React.useRef(true);
@@ -3451,10 +3551,122 @@ export default function LeadsKanban() {
 
                         <div>
                           <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><DollarSign size={10}/> Valor Estimado</div>
-                          <div className="text-sm font-black text-[#1B4D3E]">{fmt(selectedLead.valorEst || 0)}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-black text-[#1B4D3E]">{fmt(selectedLead.valorEst || 0)}</span>
+                            {selectedLead.propostas && selectedLead.propostas.length > 0 && (
+                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full" title="Valor sincronizado com a FPV">
+                                Sincronizado c/ FPV
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </>
                     )}
+
+                    {/* FPVs & Propostas Comerciais Section */}
+                    <div className="pt-4 mt-4 border-t border-slate-50 space-y-3">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between items-center">
+                        <span className="flex items-center gap-1.5 text-slate-700">
+                          <FileText size={12} className="text-[#1B4D3E]" />
+                          FPVs & Propostas ({selectedLead.propostas?.length || 0})
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={handleOpenLinkPropostaModal}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-1 rounded-lg transition-colors flex items-center justify-center cursor-pointer text-[10px] font-bold px-2 gap-1"
+                            title="Vincular FPV existente a este Lead"
+                          >
+                            <LinkIcon size={10} />
+                            Vincular
+                          </button>
+                          <a
+                            href={`/propostas/nova?leadId=${selectedLead.id}&clienteNome=${encodeURIComponent(selectedLead.nomeFantasia || '')}&cnpj=${encodeURIComponent(selectedLead.cnpj || '')}&contato=${encodeURIComponent(selectedLead.contatoNome || '')}&telefone=${encodeURIComponent(selectedLead.telefone || '')}&email=${encodeURIComponent(selectedLead.email || '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 p-1 rounded-lg transition-colors flex items-center justify-center cursor-pointer text-[10px] font-bold px-2 gap-1"
+                            title="Criar nova FPV vinculada a este Lead"
+                          >
+                            <Plus size={10} />
+                            Nova FPV
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* List of Linked Proposals */}
+                      {selectedLead.propostas && selectedLead.propostas.length > 0 ? (
+                        <div className="space-y-2">
+                          {selectedLead.propostas.map((prop: any) => {
+                            const statusUpper = (prop.status || '').toUpperCase();
+                            const isAprov = statusUpper.startsWith('ACEIT') || statusUpper.startsWith('APROV');
+                            const isPerd = statusUpper.startsWith('RECUS') || statusUpper.startsWith('PERD');
+                            const bg = isAprov ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : isPerd ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200';
+                            const valorMensal = prop.versoes?.[0]?.precoVenda || 0;
+                            const docComercial = prop.documentosComerciais?.[0];
+
+                            return (
+                              <div key={prop.id} className="bg-slate-50/70 border border-slate-200/80 p-3 rounded-xl relative group/prop space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-black text-xs text-slate-800">
+                                      FPV-{(prop.numero || 0).toString().padStart(3, '0')}
+                                    </span>
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${bg}`}>
+                                      {prop.status}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUnlinkProposta(prop.id)}
+                                    className="text-slate-400 hover:text-red-500 p-1 rounded transition-colors"
+                                    title="Desvincular FPV do Lead"
+                                  >
+                                    <Unlink size={12} />
+                                  </button>
+                                </div>
+
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-[11px] text-slate-500 font-medium">Valor Mensal:</span>
+                                  <span className="font-bold text-[#1B4D3E]">{fmt(valorMensal)}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-1 border-t border-slate-200/50">
+                                  <a
+                                    href={`/propostas/nova?id=${prop.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 hover:text-[#1B4D3E] bg-white border border-slate-200 px-2 py-1 rounded-md transition-colors shadow-2xs"
+                                  >
+                                    <Edit2 size={10} />
+                                    Editar FPV
+                                  </a>
+                                  {docComercial && (
+                                    <a
+                                      href={`/propostas-comerciais/${docComercial.id}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md transition-colors shadow-2xs"
+                                    >
+                                      <Eye size={10} />
+                                      Ver Proposta
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-3 text-center">
+                          <p className="text-[11px] text-slate-400 font-medium">
+                            Nenhuma FPV vinculada a este Lead.
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Crie uma nova FPV ou vincule uma existente para preencher o valor estimado automaticamente.
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Contatos Adicionais Section */}
                     <div className="pt-4 mt-4 border-t border-slate-50 space-y-3">
@@ -4451,6 +4663,95 @@ export default function LeadsKanban() {
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer"
               >
                 {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA VINCULAR FPV EXISTENTE AO LEAD */}
+      {showLinkPropostaModal && selectedLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-lg w-full border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-0.5">
+                <h3 className="text-base font-black text-slate-800">Vincular FPV ao Lead</h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {selectedLead.nomeFantasia} • Atualizará o valor estimado automaticamente
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowLinkPropostaModal(false);
+                  setSelectedPropostaToLink('');
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {loadingPropostas ? (
+              <div className="py-8 text-center space-y-2">
+                <div className="w-6 h-6 border-2 border-[#1B4D3E] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="text-xs text-slate-400 font-medium">Carregando FPVs disponíveis...</p>
+              </div>
+            ) : availablePropostas.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-500">
+                Nenhuma FPV encontrada no banco de dados.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                  Selecione a FPV
+                </label>
+                <select
+                  value={selectedPropostaToLink}
+                  onChange={(e) => setSelectedPropostaToLink(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                >
+                  <option value="">-- Escolha uma Proposta / FPV --</option>
+                  {availablePropostas.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.numero} - {p.clienteNome} ({p.status}) - R$ {p.valorMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês
+                    </option>
+                  ))}
+                </select>
+
+                <p className="text-[11px] text-slate-500 leading-relaxed bg-emerald-50/70 border border-emerald-100 p-3 rounded-xl">
+                  Ao vincular, o valor estimado do Lead será atualizado automaticamente com base no valor de venda final da FPV calculada.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLinkPropostaModal(false);
+                  setSelectedPropostaToLink('');
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!selectedPropostaToLink || linkingPropostaLoading}
+                onClick={handleConfirmLinkProposta}
+                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#1B4D3E] hover:bg-[#1B4D3E]/90 transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {linkingPropostaLoading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Vinculando...
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    Confirmar Vinculação
+                  </>
+                )}
               </button>
             </div>
           </div>
