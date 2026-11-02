@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ArrowRight, ArrowUpRight, Check, ChevronDown, Lock, Menu, X, Minus,
   MessageSquare, Building2, Eye, TrendingUp
@@ -1415,9 +1416,9 @@ export default function LandingPage() {
             <p className="mt-1">Curitiba/PR · © {new Date().getFullYear()} SmartBid</p>
           </div>
           <div className="flex gap-6 md:items-end">
-            <a href="#" className="hover:text-[#111418]">Termos de uso</a>
-            <a href="#" className="hover:text-[#111418]">Privacidade</a>
-            <a href="mailto:suporte@smartbidhub.com.br" className="hover:text-[#111418]">Central de ajuda</a>
+            <Link href="/termos" className="hover:text-[#111418] transition">Termos de uso</Link>
+            <Link href="/privacidade" className="hover:text-[#111418] transition">Privacidade & LGPD</Link>
+            <a href="mailto:suporte@smartbidhub.com.br" className="hover:text-[#111418] transition">Central de ajuda</a>
           </div>
         </div>
       </footer>

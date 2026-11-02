@@ -5,6 +5,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import PushRegister from "@/components/PushRegister";
 import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -201,6 +202,7 @@ export default async function RootLayout({
         {children}
         <PushRegister />
         <ForcePasswordChangeModal />
+        <CookieConsentBanner />
       </body>
     </html>
   );

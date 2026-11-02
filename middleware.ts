@@ -17,6 +17,8 @@ export function middleware(request: NextRequest) {
     pathname === '/lp' ||
     pathname === '/login' ||
     pathname === '/cadastro' ||
+    pathname === '/privacidade' ||
+    pathname === '/termos' ||
     pathname === '/manifest.json' ||
     pathname === '/sw.js' ||
     pathname === '/icon.svg' ||

@@ -49,6 +49,7 @@ function CadastroForm() {
   const plano = params.get('plano');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [form, setForm] = useState({ nome: '', empresa: '', email: '', celular: '', password: '' });
 
   // Estados do fluxo de verificação de e-mail
@@ -88,6 +89,11 @@ function CadastroForm() {
     e.preventDefault();
     if (!form.nome.trim() || !form.empresa.trim() || !form.email.trim() || !form.password) {
       setError('Preencha todos os campos.');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError('Você precisa ler e concordar com os Termos de Uso e a Política de Privacidade (LGPD) para prosseguir.');
       return;
     }
     if (form.celular.replace(/\D/g, '').length < 10) {
@@ -388,6 +394,30 @@ function CadastroForm() {
                   </p>
                 )}
 
+                {/* Checkbox de Aceite LGPD */}
+                <label className="flex items-start gap-2.5 cursor-pointer pt-1 pb-1 text-left select-none group">
+                  <input
+                    type="checkbox"
+                    id="accept-terms-checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => {
+                      setAcceptedTerms(e.target.checked);
+                      if (e.target.checked) setError('');
+                    }}
+                    className="w-4 h-4 mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                  />
+                  <span className="text-[12px] leading-relaxed" style={{ color: C.muted }}>
+                    Declaro que li e concordo com os{' '}
+                    <Link href="/termos" target="_blank" className="font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-950">
+                      Termos de Uso
+                    </Link>{' '}
+                    e a{' '}
+                    <Link href="/privacidade" target="_blank" className="font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-950">
+                      Política de Privacidade (LGPD)
+                    </Link>.
+                  </span>
+                </label>
+
                 <button
                   id="cadastro-submit"
                   type="submit"
@@ -402,10 +432,6 @@ function CadastroForm() {
                     </>
                   )}
                 </button>
-
-                <p className="text-[12px] leading-relaxed text-center pt-1" style={{ color: C.muted }}>
-                  Ao criar a conta você concorda com os Termos de Uso e a Política de Privacidade do SmartBid.
-                </p>
               </form>
             </div>
           </section>
