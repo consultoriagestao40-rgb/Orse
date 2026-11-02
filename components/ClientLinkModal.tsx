@@ -31,6 +31,23 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [fpv, setFpv] = useState(
     configApresentacao?.clientTabs?.fpv !== false
   );
+  const [fpvTabs, setFpvTabs] = useState<{
+    premissas: boolean;
+    encargos: boolean;
+    equipe: boolean;
+    composicao: boolean;
+    insumos: boolean;
+    extrato: boolean;
+    resumo: boolean;
+  }>({
+    premissas: configApresentacao?.clientTabs?.fpvTabs?.premissas !== false,
+    encargos: configApresentacao?.clientTabs?.fpvTabs?.encargos !== false,
+    equipe: configApresentacao?.clientTabs?.fpvTabs?.equipe !== false,
+    composicao: configApresentacao?.clientTabs?.fpvTabs?.composicao !== false,
+    insumos: configApresentacao?.clientTabs?.fpvTabs?.insumos !== false,
+    extrato: configApresentacao?.clientTabs?.fpvTabs?.extrato !== false,
+    resumo: configApresentacao?.clientTabs?.fpvTabs?.resumo !== false,
+  });
   const [minuta, setMinuta] = useState(
     configApresentacao?.clientTabs?.minuta === true // Padrão falso
   );
@@ -124,6 +141,17 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             setApresentacao(config.clientTabs.apresentacao !== false);
             setProposta(config.clientTabs.proposta !== false);
             setFpv(config.clientTabs.fpv !== false);
+            if (config.clientTabs.fpvTabs) {
+              setFpvTabs({
+                premissas: config.clientTabs.fpvTabs.premissas !== false,
+                encargos: config.clientTabs.fpvTabs.encargos !== false,
+                equipe: config.clientTabs.fpvTabs.equipe !== false,
+                composicao: config.clientTabs.fpvTabs.composicao !== false,
+                insumos: config.clientTabs.fpvTabs.insumos !== false,
+                extrato: config.clientTabs.fpvTabs.extrato !== false,
+                resumo: config.clientTabs.fpvTabs.resumo !== false,
+              });
+            }
             setMinuta(config.clientTabs.minuta === true);
             if (config.clientTabs.minutaTemplateId) {
               setMinutaTemplateId(config.clientTabs.minutaTemplateId);
@@ -255,6 +283,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           apresentacao,
           proposta,
           fpv,
+          fpvTabs,
           minuta,
           minutaTemplateId,
           video,
@@ -440,23 +469,78 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             </label>
 
             {/* 3. FPV DETALHADO (ABAS 2 A 9) */}
-            <label className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all hover:bg-slate-50 select-none ${fpv ? 'border-amber-500/30 bg-amber-50/5' : 'border-slate-200 bg-white'}`}>
-              <input 
-                type="checkbox" 
-                className="mt-1 w-4 h-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer"
-                checked={fpv}
-                onChange={(e) => setFpv(e.target.checked)}
-              />
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
-                  <Calculator size={14} className="text-amber-600" />
-                  3. FPV Detalhado (Abas de Posto Fixo)
+            <div className={`p-4 border rounded-2xl transition-all ${fpv ? 'border-amber-500/30 bg-amber-50/5' : 'border-slate-200 bg-white'}`}>
+              <label className="flex items-start gap-4 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer"
+                  checked={fpv}
+                  onChange={(e) => setFpv(e.target.checked)}
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                    <Calculator size={14} className="text-amber-600" />
+                    3. FPV Detalhado (Planilhas Financeiras)
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Permite o cliente navegar nas planilhas financeiras da FPV (Premissas, Encargos, Equipe, Composição, Insumos, Custos e Resumo).
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
-                  Permite o cliente navegar nas planilhas financeiras (Premissas, Encargos, Quadro, Insumos e Resumos).
-                </p>
-              </div>
-            </label>
+              </label>
+
+              {fpv && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest block">
+                      Telas da FPV Visíveis para o Cliente:
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFpvTabs({
+                          premissas: true, encargos: true, equipe: true, composicao: true, insumos: true, extrato: true, resumo: true
+                        })}
+                        className="text-[9px] font-bold text-amber-700 hover:underline cursor-pointer"
+                      >
+                        Marcar todas
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setFpvTabs({
+                          premissas: false, encargos: false, equipe: false, composicao: false, insumos: false, extrato: false, resumo: true
+                        })}
+                        className="text-[9px] font-bold text-slate-500 hover:underline cursor-pointer"
+                      >
+                        Apenas Resumo
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {[
+                      { key: 'premissas', label: '2. Premissas do Projeto' },
+                      { key: 'encargos', label: '3. Encargos Sociais' },
+                      { key: 'equipe', label: '4. Quadro de Equipe' },
+                      { key: 'composicao', label: '5. Composição de Mão de Obra' },
+                      { key: 'insumos', label: '6-7. Insumos & Benefícios' },
+                      { key: 'extrato', label: '8. Custos / Extrato da Planilha' },
+                      { key: 'resumo', label: '9. Preço & Resumo Executivo' },
+                    ].map((tab) => (
+                      <label key={tab.key} className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200/80 rounded-xl cursor-pointer hover:bg-slate-100/70 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          className="w-3.5 h-3.5 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer"
+                          checked={fpvTabs[tab.key as keyof typeof fpvTabs] !== false}
+                          onChange={(e) => setFpvTabs(prev => ({ ...prev, [tab.key]: e.target.checked }))}
+                        />
+                        <span className="text-[10px] font-bold text-slate-700">{tab.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* 4. MINUTA DO CONTRATO */}
             <div className={`p-4 border rounded-2xl transition-all ${minuta ? 'border-sky-500/30 bg-sky-50/5' : 'border-slate-200 bg-white'}`}>
