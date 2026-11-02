@@ -2996,8 +2996,8 @@ function PropostaEditor() {
 
         {/* NAVEGAÇÃO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
         {activeTab !== 'comercial' && (
-           <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <nav className="flex flex-wrap gap-x-6 gap-y-2 flex-1">
+           <div className="w-full max-w-7xl mb-8 border-b border-slate-200">
+              <nav className="flex flex-wrap items-center gap-x-6 gap-y-2.5 pb-2">
                  {TABS.filter(tab => {
                     if (proposta.cliente.tipoProposta === 'SPOT' && (tab.id === 'dre' || tab.id === 'encargos')) {
                        return false;
@@ -3034,17 +3034,7 @@ function PropostaEditor() {
                     );
                  })}
               </nav>
-              <div className="shrink-0 flex items-center gap-2">
-                 <button
-                   type="button"
-                   onClick={() => handleExportFpv(activeTab)}
-                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1B4D3E] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all shadow-xs cursor-pointer"
-                   title="Exportar somente esta tela em PDF"
-                 >
-                   <Printer size={13} className="text-[#1B4D3E]" />
-                   <span>Exportar Esta Tela (PDF)</span>
-                 </button>
-              </div>
+
            </div>
         )}
 
