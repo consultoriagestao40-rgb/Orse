@@ -152,6 +152,10 @@ model User {
   twoFactorEnabled       Boolean  @default(false)
   twoFactorCode          String?
   twoFactorExpiresAt     DateTime?
+  mustChangePassword     Boolean  @default(true)
+  passwordChangedAt      DateTime?
+  passwordResetToken     String?
+  passwordResetExpiresAt DateTime?
 }
 
 model Client {

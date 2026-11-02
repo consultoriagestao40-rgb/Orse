@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LogIn, Shield, TrendingUp, Briefcase, Mail, Lock, ArrowRight, X, KeyRound, Copy, CheckCircle2 } from 'lucide-react';
+import { LogIn, Shield, TrendingUp, Briefcase, Mail, Lock, ArrowRight, X, KeyRound, Copy, CheckCircle2, Eye, EyeOff, XCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { requestPasswordReset } from '@/app/propostas/actions';
+import { requestPasswordReset, confirmPasswordResetWithCode } from '@/app/propostas/actions';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,27 +16,78 @@ export default function LoginPage() {
   const [step, setStep] = useState<'LOGIN' | '2FA'>('LOGIN');
   const [twoFactorCode, setTwoFactorCode] = useState('');
 
-  // Estados do modal de Esqueci minha Senha Premium
+  // Estados do modal de Esqueci minha Senha por E-mail (OTP)
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState<'EMAIL' | 'CODE_PASSWORD'>('EMAIL');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotCode, setForgotCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotNew, setShowForgotNew] = useState(false);
+  const [showForgotConfirm, setShowForgotConfirm] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState('');
-  const [tempPassword, setTempPassword] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+
+  // Validações da Política Forte de Senhas
+  const forgotHasMinLength = forgotNewPassword.length >= 8;
+  const forgotHasUpper = /[A-Z]/.test(forgotNewPassword);
+  const forgotHasLower = /[a-z]/.test(forgotNewPassword);
+  const forgotHasNumber = /[0-9]/.test(forgotNewPassword);
+  const forgotHasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(forgotNewPassword);
+  const forgotPasswordsMatch = forgotNewPassword.length > 0 && forgotNewPassword === forgotConfirmPassword;
+
+  const isForgotFormValid =
+    forgotCode.trim().length === 6 &&
+    forgotHasMinLength &&
+    forgotHasUpper &&
+    forgotHasLower &&
+    forgotHasNumber &&
+    forgotHasSpecial &&
+    forgotPasswordsMatch;
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotLoading(true);
     setForgotError('');
-    setTempPassword('');
-    setCopied(false);
 
     try {
       const res = await requestPasswordReset(forgotEmail);
-      if (res.success && res.tempPassword) {
-        setTempPassword(res.tempPassword);
+      if (res.success) {
+        setForgotStep('CODE_PASSWORD');
       } else {
         setForgotError(res.error || 'Erro ao processar solicitação.');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'Erro de comunicação com o servidor.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleConfirmReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isForgotFormValid) return;
+
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      const res = await confirmPasswordResetWithCode(forgotEmail, forgotCode, forgotNewPassword);
+      if (res.success) {
+        setForgotSuccess(true);
+        setPassword(forgotNewPassword);
+        setEmail(forgotEmail);
+        setTimeout(() => {
+          setShowForgotModal(false);
+          setForgotSuccess(false);
+          setForgotStep('EMAIL');
+          setForgotCode('');
+          setForgotNewPassword('');
+          setForgotConfirmPassword('');
+        }, 1800);
+      } else {
+        setForgotError(res.error || 'Erro ao redefinir a senha.');
       }
     } catch (err: any) {
       setForgotError(err.message || 'Erro de comunicação com o servidor.');
@@ -361,86 +412,66 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* MODAL ESQUECI MINHA SENHA PREMIUM */}
+      {/* MODAL ESQUECI MINHA SENHA POR E-MAIL & NOVA SENHA FORTE */}
       {showForgotModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-[#1B4D3E] p-8 text-white relative">
-              <h3 className="text-xl font-black tracking-tighter uppercase">
-                Recuperação de <span className="text-[#10B981]">Acesso</span>
-              </h3>
-              <p className="text-emerald-100/60 text-xs mt-1">
-                Gere uma senha temporária imediata para acessar o seu painel CRM.
-              </p>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#1B4D3E] p-6 sm:p-8 text-white relative">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+                  <KeyRound size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase">
+                    Recuperação de <span className="text-[#10B981]">Acesso</span>
+                  </h3>
+                  <p className="text-emerald-100/70 text-xs">
+                    {forgotStep === 'EMAIL' 
+                      ? 'Validação de identidade por código no seu e-mail corporativo.' 
+                      : 'Insira o código recebido e crie sua nova senha forte.'}
+                  </p>
+                </div>
+              </div>
               <button 
-                onClick={() => setShowForgotModal(false)} 
-                className="absolute top-8 right-8 text-white/50 hover:text-white cursor-pointer"
+                onClick={() => {
+                  setShowForgotModal(false);
+                  setForgotStep('EMAIL');
+                  setForgotError('');
+                }} 
+                className="absolute top-6 right-6 text-white/50 hover:text-white cursor-pointer"
                 disabled={forgotLoading}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
-              {tempPassword ? (
-                // Exibe a senha temporária criada com sucesso
-                <div className="space-y-6 text-center animate-in fade-in duration-300">
+            <div className="p-6 sm:p-8 space-y-6">
+              {forgotSuccess ? (
+                <div className="py-6 text-center space-y-3 animate-in fade-in duration-300">
                   <div className="mx-auto w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center border border-emerald-100 shadow-md">
-                    <CheckCircle2 size={28} />
+                    <CheckCircle2 size={30} />
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-base font-black text-slate-800 uppercase tracking-tight">Senha Temporária Gerada!</h4>
-                    <p className="text-xs text-slate-500 font-medium">Use a credencial de segurança abaixo para fazer login no sistema:</p>
-                  </div>
-
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex items-center justify-between gap-4 max-w-xs mx-auto">
-                    <span className="font-mono text-lg font-black text-slate-800 tracking-wider ml-2">{tempPassword}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(tempPassword);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className={`p-3 rounded-xl border transition-all ${
-                        copied 
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
-                      }`}
-                      title="Copiar Senha"
-                    >
-                      {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-
-                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-50 py-2 px-4 rounded-xl max-w-xs mx-auto">
-                    ⚠️ Altere esta senha nas configurações assim que acessar o sistema!
+                  <h4 className="text-base font-black text-slate-800 uppercase tracking-tight">
+                    Senha Redefinida com Sucesso!
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Suas novas credenciais foram atualizadas. Redirecionando para o login...
                   </p>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPassword(tempPassword);
-                      setEmail(forgotEmail);
-                      setShowForgotModal(false);
-                    }}
-                    className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-[#1B4D3E]/10"
-                  >
-                    Preencher e Ir para o Login
-                  </button>
                 </div>
-              ) : (
-                // Formulário para requisitar o reset
+              ) : forgotStep === 'EMAIL' ? (
+                /* PASSO 1: SOLICITAR CÓDIGO POR E-MAIL */
                 <form onSubmit={handleRequestReset} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      E-mail Corporativo
+                    </label>
                     <div className="relative group">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={18} />
                       <input 
                         type="email" 
                         required
-                        placeholder="seu-email@silvaconsultoria.com.br"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
+                        placeholder="seu-email@grupojvsserv.com.br"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 outline-none focus:border-[#1B4D3E] focus:bg-white focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
                         disabled={forgotLoading}
@@ -448,33 +479,194 @@ export default function LoginPage() {
                     </div>
                   </div>
 
+                  <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-500 font-medium flex items-center gap-2.5">
+                    <Mail size={16} className="text-emerald-700 shrink-0" />
+                    <span>Enviaremos um código de 6 dígitos para o e-mail informado para confirmar sua identidade com segurança.</span>
+                  </div>
+
                   {forgotError && (
-                    <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
-                      <Shield size={16} />
+                    <div className="bg-red-50 text-red-600 p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                      <XCircle size={16} className="shrink-0" />
                       {forgotError}
                     </div>
                   )}
 
-                  <div className="pt-2 flex gap-4">
+                  <div className="pt-2 flex gap-3">
                     <button 
                       type="button"
                       onClick={() => setShowForgotModal(false)}
-                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
                       disabled={forgotLoading}
                     >
                       Cancelar
                     </button>
                     <button 
                       type="submit"
-                      disabled={forgotLoading}
-                      className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      disabled={forgotLoading || !forgotEmail}
+                      className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#1B4D3E]/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {forgotLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Enviando Código...
+                        </>
                       ) : (
                         <>
-                          Gerar Senha
-                          <KeyRound size={14} />
+                          Enviar Código por E-mail
+                          <ArrowRight size={14} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* PASSO 2: INSERIR CÓDIGO E CADASTRAR NOVA SENHA FORTE */
+                <form onSubmit={handleConfirmReset} className="space-y-4">
+                  <div className="p-3 bg-emerald-50/70 border border-emerald-200/70 rounded-2xl flex items-center justify-between text-xs text-emerald-900 font-medium">
+                    <span>Código enviado para: <strong>{forgotEmail}</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => setForgotStep('EMAIL')}
+                      className="text-emerald-700 hover:underline font-bold text-[11px] cursor-pointer"
+                    >
+                      Alterar
+                    </button>
+                  </div>
+
+                  {forgotError && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                      <XCircle size={16} className="shrink-0" />
+                      {forgotError}
+                    </div>
+                  )}
+
+                  {/* Código OTP de 6 dígitos */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      Código de Verificação de 6 Dígitos
+                    </label>
+                    <input 
+                      type="text" 
+                      required
+                      maxLength={6}
+                      placeholder="123456"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-center font-mono text-xl font-black text-slate-800 tracking-[8px] outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                      value={forgotCode}
+                      onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, ''))}
+                      disabled={forgotLoading}
+                    />
+                  </div>
+
+                  {/* Nova Senha */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      Nova Senha Forte
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type={showForgotNew ? 'text' : 'password'}
+                        required
+                        placeholder="Digite sua nova senha..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-4 pr-10 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-bold text-slate-800 transition-all"
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        disabled={forgotLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotNew(!showForgotNew)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        {showForgotNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirmar Nova Senha */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      Confirmar Nova Senha
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type={showForgotConfirm ? 'text' : 'password'}
+                        required
+                        placeholder="Repita a nova senha..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-4 pr-10 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-bold text-slate-800 transition-all"
+                        value={forgotConfirmPassword}
+                        onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                        disabled={forgotLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotConfirm(!showForgotConfirm)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        {showForgotConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live Checklist dos Requisitos da Senha */}
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+                    <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 block">
+                      Política Forte de Segurança:
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                      <div className={`flex items-center gap-1 ${forgotHasMinLength ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+                        {forgotHasMinLength ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
+                        <span>8+ caracteres</span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${forgotHasUpper ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+                        {forgotHasUpper ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
+                        <span>Maiúscula (A-Z)</span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${forgotHasLower ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+                        {forgotHasLower ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
+                        <span>Minúscula (a-z)</span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${forgotHasNumber ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+                        {forgotHasNumber ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
+                        <span>Número (0-9)</span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${forgotHasSpecial ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+                        {forgotHasSpecial ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
+                        <span>Especial (!@#$)</span>
+                      </div>
+                      <div className={`flex items-center gap-1 ${forgotPasswordsMatch ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
+                        {forgotPasswordsMatch ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
+                        <span>Senhas conferem</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex gap-3">
+                    <button 
+                      type="button"
+                      onClick={() => setForgotStep('EMAIL')}
+                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+                      disabled={forgotLoading}
+                    >
+                      Voltar
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={forgotLoading || !isForgotFormValid}
+                      className={`flex-[2] py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                        isForgotFormValid && !forgotLoading
+                          ? 'bg-[#1B4D3E] hover:bg-[#13382D] text-white shadow-lg shadow-[#1B4D3E]/20 cursor-pointer active:scale-98'
+                          : 'bg-slate-200 text-slate-400 cursor-not-allowed select-none'
+                      }`}
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Redefinindo...
+                        </>
+                      ) : (
+                        <>
+                          Redefinir e Acessar
+                          <ArrowRight size={14} />
                         </>
                       )}
                     </button>

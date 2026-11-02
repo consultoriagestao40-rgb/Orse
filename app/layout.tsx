@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { cookies } from "next/headers";
 import PushRegister from "@/components/PushRegister";
+import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -199,6 +200,7 @@ export default async function RootLayout({
       <body className={`min-h-full bg-[#F8FAFC] ${isCollapsed ? "sidebar-collapsed" : ""}`}>
         {children}
         <PushRegister />
+        <ForcePasswordChangeModal />
       </body>
     </html>
   );

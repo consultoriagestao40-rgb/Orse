@@ -78,12 +78,14 @@ export async function POST(request: Request) {
     await registerSuccessfulLogin(user.id, password, needsMigration)
 
     const isProduction = process.env.NODE_ENV === 'production'
+    const mustChange = Boolean(user.mustChangePassword);
 
     const userData = {
       id: user.id,
       nome: user.nome,
       role: user.role,
       email: user.email,
+      mustChangePassword: mustChange,
       tenantId: user.tenantId,
       iniciais: user.nome.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().substring(0, 2),
       ...(user.avatarUrl ? { avatarUrl: `/api/user/avatar?email=${encodeURIComponent(user.email)}&v=${user.avatarUrl.length > 30 ? encodeURIComponent(user.avatarUrl.substring(user.avatarUrl.length - 10)) : encodeURIComponent(user.avatarUrl.substring(0, 10))}` } : {}),
@@ -94,11 +96,13 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({
       success: true,
+      mustChangePassword: mustChange,
       user: {
         nome: user.nome,
         role: user.role,
         email: user.email,
-        cargo: user.cargo
+        cargo: user.cargo,
+        mustChangePassword: mustChange
       }
     })
 
@@ -120,6 +124,15 @@ export async function POST(request: Request) {
       ...baseOpts,
       httpOnly: false,
     })
+
+    if (mustChange) {
+      response.cookies.set('sb_must_change_password', '1', {
+        ...baseOpts,
+        httpOnly: false,
+      })
+    } else {
+      response.cookies.delete('sb_must_change_password')
+    }
 
     return response
   } catch (error: any) {

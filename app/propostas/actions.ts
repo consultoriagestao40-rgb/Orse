@@ -1394,7 +1394,12 @@ export async function changeMyPassword(currentPassword: string, newPassword: str
       return { success: false, error: 'A senha atual informada está incorreta.' };
     }
 
-    // Valida complexidade da nova senha
+    // Não permite reutilizar a mesma senha
+    if (currentPassword === newPassword) {
+      return { success: false, error: 'A nova senha deve ser diferente da senha atual.' };
+    }
+
+    // Valida complexidade da nova senha segundo a política corporativa
     const strength = validatePasswordStrength(newPassword);
     if (!strength.valid) {
       return { success: false, error: strength.errors[0] || 'A nova senha não atende aos requisitos de segurança.' };
@@ -1407,10 +1412,37 @@ export async function changeMyPassword(currentPassword: string, newPassword: str
       where: { id: user.id },
       data: { 
         password: hashedPassword,
+        mustChangePassword: false,
+        passwordChangedAt: new Date(),
         failedLoginAttempts: 0,
         lockedUntil: null
       }
     });
+
+    // Atualiza cookie sb_user para remover flag de troca de senha
+    try {
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const sbUser = cookieStore.get('sb_user')?.value;
+      if (sbUser) {
+        let parsed: any = null;
+        try {
+          parsed = JSON.parse(decodeURIComponent(sbUser));
+        } catch {
+          parsed = JSON.parse(sbUser);
+        }
+        if (parsed) {
+          parsed.mustChangePassword = false;
+          cookieStore.set('sb_user', JSON.stringify(parsed), {
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7,
+            sameSite: 'lax',
+          });
+        }
+      }
+      cookieStore.delete('sb_must_change_password');
+    } catch (e) {}
+
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao trocar a senha:', error);
@@ -1437,29 +1469,135 @@ export async function changeMyAvatar(avatarUrl: string) {
 
 export async function requestPasswordReset(email: string) {
   try {
+    const emailNorm = email.trim().toLowerCase();
     const user = await prisma.user.findFirst({
-      where: { email: email.trim().toLowerCase() }
+      where: { email: emailNorm }
     });
     if (!user) {
       return { success: false, error: 'Este e-mail corporativo não está cadastrado na plataforma.' };
     }
 
-    const { hashPassword } = await import('@/lib/security');
-    const tempPass = 'SBH-' + Math.floor(1000 + Math.random() * 9000);
-    const hashedTemp = await hashPassword(tempPass);
+    const { generateOtpCode } = await import('@/lib/security');
+    const { sendMail } = await import('@/lib/mail');
+
+    const resetCode = generateOtpCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     await prisma.user.update({
       where: { id: user.id },
       data: { 
-        password: hashedTemp,
+        passwordResetToken: resetCode,
+        passwordResetExpiresAt: expiresAt
+      }
+    });
+
+    const emailHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="background: #1B4D3E; padding: 28px 32px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;">
+            SmartBid • Segurança Corporativa
+          </h1>
+          <p style="color: #6ee7b7; font-size: 12px; margin: 6px 0 0 0; font-weight: 500;">
+            Recuperação de Senha & Gestão de Acesso
+          </p>
+        </div>
+        <div style="padding: 36px 32px;">
+          <p style="color: #1e293b; font-size: 15px; margin: 0 0 16px 0; font-weight: 600;">
+            Olá, ${user.nome}!
+          </p>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+            Recebemos uma solicitação para redefinir a sua senha de acesso corporativo na plataforma SmartBid. Utilize o código de segurança de 6 dígitos abaixo para cadastrar sua nova senha:
+          </p>
+
+          <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; text-align: center; margin: 0 0 24px 0;">
+            <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 900; letter-spacing: 10px; color: #1B4D3E;">
+              ${resetCode}
+            </span>
+          </div>
+
+          <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 12px; padding: 14px 18px; margin: 0 0 24px 0;">
+            <p style="color: #854d0e; font-size: 12px; margin: 0; line-height: 1.5; font-weight: 500;">
+              ⏱️ <strong>Validade:</strong> Este código expira em <strong>15 minutos</strong>.
+            </p>
+          </div>
+
+          <p style="color: #94a3b8; font-size: 11.5px; line-height: 1.5; margin: 0; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+            Se você não solicitou a recuperação de senha, desconsidere esta mensagem imediatamente. Nenhuma alteração foi realizada na sua conta.
+          </p>
+        </div>
+      </div>
+    `;
+
+    const mailRes = await sendMail({
+      to: user.email,
+      subject: `🔐 Seu Código de Recuperação de Senha: ${resetCode} — SmartBid`,
+      html: emailHtml,
+      text: `Seu código de recuperação de senha SmartBid é: ${resetCode}. Válido por 15 minutos.`
+    });
+
+    return { 
+      success: true, 
+      email: user.email, 
+      simulated: mailRes?.simulated || false,
+      message: 'Código de verificação enviado para o seu e-mail corporativo com sucesso!' 
+    };
+  } catch (error: any) {
+    console.error('Erro ao resetar senha:', error);
+    return { success: false, error: error.message || 'Erro interno no servidor ao enviar e-mail.' };
+  }
+}
+
+export async function confirmPasswordResetWithCode(email: string, code: string, newPassword: string) {
+  try {
+    const emailNorm = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    const user = await prisma.user.findFirst({
+      where: { email: emailNorm }
+    });
+
+    if (!user) {
+      return { success: false, error: 'Usuário não encontrado.' };
+    }
+
+    if (!user.passwordResetToken || user.passwordResetToken !== cleanCode) {
+      return { success: false, error: 'Código de segurança incorreto. Verifique o código de 6 dígitos recebido no seu e-mail.' };
+    }
+
+    if (user.passwordResetExpiresAt && new Date() > user.passwordResetExpiresAt) {
+      return { success: false, error: 'Este código de verificação expirou. Por favor, solicite um novo código.' };
+    }
+
+    const { validatePasswordStrength, hashPassword } = await import('@/lib/security');
+
+    // Validação da Política Forte de Segurança
+    const strength = validatePasswordStrength(newPassword);
+    if (!strength.valid) {
+      return { success: false, error: strength.errors[0] || 'A nova senha não atende aos requisitos de segurança corporativa.' };
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+        mustChangePassword: false,
+        passwordChangedAt: new Date(),
         failedLoginAttempts: 0,
         lockedUntil: null
       }
     });
-    return { success: true, tempPassword: tempPass };
+
+    return { 
+      success: true, 
+      message: 'Sua senha foi redefinida com sucesso! Você já pode fazer login na plataforma.' 
+    };
   } catch (error: any) {
-    console.error('Erro ao resetar senha:', error);
-    return { success: false, error: error.message || 'Erro interno no servidor.' };
+    console.error('Erro ao confirmar nova senha:', error);
+    return { success: false, error: error.message || 'Erro interno ao redefinir a senha.' };
   }
 }
 
