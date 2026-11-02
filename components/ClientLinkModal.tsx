@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle, Lock, ShieldCheck } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
 import { updateConfigApresentacao, uploadClientFileAction, getDocumentoConfigApresentacao } from '@/app/propostas-comerciais/actions';
 import { getFaqsPadrao } from '@/app/admin/settings/actions';
@@ -68,6 +68,17 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     configApresentacao?.validadeDays || ''
   );
 
+  // Regras de Acesso e Bloqueio Condicional
+  const [exigirIdentificacao, setExigirIdentificacao] = useState(
+    configApresentacao?.regrasAcesso?.exigirIdentificacao === true
+  );
+  const [obrigarApresentacao, setObrigarApresentacao] = useState(
+    configApresentacao?.regrasAcesso?.obrigarApresentacao === true
+  );
+  const [obrigarVideo, setObrigarVideo] = useState(
+    configApresentacao?.regrasAcesso?.obrigarVideo === true
+  );
+
   // FAQ States
   const [faq, setFaq] = useState(
     configApresentacao?.clientTabs?.faq === true
@@ -119,6 +130,11 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           if (config.videoUrl) setVideoUrl(config.videoUrl);
           setCanvaEmbedUrl(config.canvaEmbedUrl || DEFAULT_CANVA_URL);
           if (config.validadeDays) setValidadeDays(config.validadeDays);
+          if (config.regrasAcesso) {
+            setExigirIdentificacao(config.regrasAcesso.exigirIdentificacao === true);
+            setObrigarApresentacao(config.regrasAcesso.obrigarApresentacao === true);
+            setObrigarVideo(config.regrasAcesso.obrigarVideo === true);
+          }
         }
       } catch (err) {
         console.error('Erro ao buscar configuração completa:', err);
@@ -237,6 +253,11 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           documentos,
           faq
         },
+        regrasAcesso: {
+          exigirIdentificacao,
+          obrigarApresentacao: apresentacao && obrigarApresentacao,
+          obrigarVideo: video && obrigarVideo
+        },
         videoUrl: videoUrl.trim(),
         fotosList,
         documentosList,
@@ -348,6 +369,24 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                     }}
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
                   />
+
+                  <label className="flex items-start gap-2.5 p-2.5 bg-indigo-50/40 border border-indigo-100/80 rounded-xl cursor-pointer hover:bg-indigo-50/70 transition-all select-none mt-2">
+                    <input 
+                      type="checkbox"
+                      className="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
+                      checked={obrigarApresentacao}
+                      onChange={(e) => setObrigarApresentacao(e.target.checked)}
+                    />
+                    <div className="flex-1">
+                      <span className="text-[11px] font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
+                        <Lock size={12} className="text-indigo-600" />
+                        Obrigar visualização da apresentação
+                      </span>
+                      <span className="text-[9.5px] text-slate-500 font-medium block mt-0.5 leading-snug">
+                        As demais abas (Proposta Comercial A4, FPV e Minuta) ficam bloqueadas com cadeado 🔒 e só liberam após o cliente passar pelos slides.
+                      </span>
+                    </div>
+                  </label>
                 </div>
               )}
             </div>
@@ -464,6 +503,24 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                     onChange={(e) => setVideoUrl(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-red-500"
                   />
+
+                  <label className="flex items-start gap-2.5 p-2.5 bg-red-50/40 border border-red-100/80 rounded-xl cursor-pointer hover:bg-red-50/70 transition-all select-none mt-2">
+                    <input 
+                      type="checkbox"
+                      className="mt-0.5 w-4 h-4 text-red-600 focus:ring-red-500 border-slate-300 rounded cursor-pointer"
+                      checked={obrigarVideo}
+                      onChange={(e) => setObrigarVideo(e.target.checked)}
+                    />
+                    <div className="flex-1">
+                      <span className="text-[11px] font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
+                        <Lock size={12} className="text-red-600" />
+                        Obrigar visualização do vídeo explicativo
+                      </span>
+                      <span className="text-[9.5px] text-slate-500 font-medium block mt-0.5 leading-snug">
+                        As demais abas (Proposta Comercial A4, FPV e Minuta) ficam bloqueadas com cadeado 🔒 e só liberam após o cliente assistir ao vídeo.
+                      </span>
+                    </div>
+                  </label>
                 </div>
               )}
             </div>
@@ -769,6 +826,39 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* 9. RASTREAMENTO REAL & IDENTIFICAÇÃO DO CLIENTE */}
+            <div className="p-4 border rounded-2xl border-slate-200 bg-white space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                  <ShieldCheck size={14} className="text-emerald-600" />
+                  Rastreamento Real & Anti-Vendedor
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Anti-Vendedor Ativo
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium leading-relaxed font-sans">
+                Quando você (vendedor) abrir o link para conferir, o sistema entrará automaticamente em <strong>Modo Preview Interno</strong> sem registrar falsas visualizações e sem disparar alertas.
+              </p>
+
+              <label className="flex items-start gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/70 transition-all select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-0.5 w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 rounded cursor-pointer"
+                  checked={exigirIdentificacao}
+                  onChange={(e) => setExigirIdentificacao(e.target.checked)}
+                />
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-slate-800 block">
+                    Exigir identificação nominal do cliente (Nome e CNPJ / E-mail)
+                  </span>
+                  <span className="text-[9.5px] text-slate-500 font-normal block mt-0.5">
+                    O cliente informará quem é antes de abrir a proposta comercial. Você receberá notificações exatas com o nome e contato de quem está navegando.
+                  </span>
+                </div>
+              </label>
             </div>
           </div>
 

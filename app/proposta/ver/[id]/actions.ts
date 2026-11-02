@@ -277,7 +277,11 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
 /**
  * Server Action para registrar a visualização de uma aba do cliente
  */
-export async function trackDocumentoView(documentoId: string, tabId: string) {
+export async function trackDocumentoView(
+  documentoId: string, 
+  tabId: string,
+  identificacao?: { nome?: string; cnpjOuEmail?: string; isInternal?: boolean }
+) {
   try {
     const doc = await prisma.documentoProposta.findUnique({
       where: { id: documentoId },
@@ -292,6 +296,30 @@ export async function trackDocumentoView(documentoId: string, tabId: string) {
     });
 
     if (!doc) return { success: false, error: 'Documento não encontrado' };
+
+    // 1. Verificar se é acesso interno (vendedor ou equipe conferindo o próprio link)
+    let isInternal = identificacao?.isInternal === true;
+    if (!isInternal) {
+      try {
+        const { getLoggedUser } = await import('@/app/propostas/actions');
+        const user = await getLoggedUser();
+        if (
+          user &&
+          (user.id === doc.proposta?.userId ||
+            user.tenantId === doc.tenantId ||
+            ['ADMIN', 'MANAGER', 'USER', 'LOGISTICA'].includes(user.role))
+        ) {
+          isInternal = true;
+        }
+      } catch (authErr) {
+        // Se falhar o getLoggedUser em contexto anônimo, continua como cliente externo
+      }
+    }
+
+    if (isInternal) {
+      // Acesso do próprio vendedor ou equipe: não contabilizar como visualização do cliente e não disparar alertas
+      return { success: true, isInternalPreview: true };
+    }
 
     const config = (doc.configApresentacao as any) || {};
     const tracking = config.viewTracking || {
@@ -318,14 +346,23 @@ export async function trackDocumentoView(documentoId: string, tabId: string) {
     const isRepeatClick = lastEvent && lastEvent.tab === tabId && (now.getTime() - new Date(lastEvent.viewedAt).getTime() < 3000);
 
     if (!isRepeatClick) {
-      tracking.history.push({
+      const historyItem: any = {
         tab: tabId,
         viewedAt: now.toISOString()
-      });
+      };
+      if (identificacao?.nome) {
+        historyItem.nome = identificacao.nome;
+      }
+      if (identificacao?.cnpjOuEmail) {
+        historyItem.cnpjOuEmail = identificacao.cnpjOuEmail;
+      }
+      tracking.history.push(historyItem);
 
       // Criar notificação para o vendedor dono da proposta
       const numProposta = String(doc.proposta.numero).padStart(3, '0');
-      const clienteNome = doc.client.nomeFantasia || 'Cliente';
+      const clienteNome = identificacao?.nome 
+        ? `${identificacao.nome}${identificacao.cnpjOuEmail ? ` (${identificacao.cnpjOuEmail})` : ''}` 
+        : (doc.client.nomeFantasia || 'Cliente');
       const isFirstAccess = tracking.history.length === 1;
 
       await prisma.notification.create({

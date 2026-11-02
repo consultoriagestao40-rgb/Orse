@@ -1,6 +1,6 @@
 import React from 'react';
 import { getDocumentoPropostaById } from './queries';
-import { getPropostaCompleta } from '@/app/propostas/actions';
+import { getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import ViewClient from './ViewClient';
 import { Metadata } from 'next';
 
@@ -231,10 +231,31 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
 
   const themeStyleHtml = getThemeStyleHtml(color);
 
+  // Identifica se quem está visualizando é o vendedor ou usuário interno da empresa
+  let isInternalUser = false;
+  try {
+    const loggedUser = await getLoggedUser();
+    if (loggedUser) {
+      if (
+        loggedUser.tenantId === res.tenantId ||
+        loggedUser.id === res.proposta?.userId ||
+        ['ADMIN', 'MANAGER', 'USER', 'LOGISTICA'].includes(loggedUser.role)
+      ) {
+        isInternalUser = true;
+      }
+    }
+  } catch (err) {
+    // Acesso anônimo do cliente público
+  }
+
   return (
     <>
       <style href="tenant-theme" precedence="high" dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
-      <ViewClient doc={serializedDoc} fullProposta={serializedFullProposta} />
+      <ViewClient 
+        doc={serializedDoc} 
+        fullProposta={serializedFullProposta} 
+        isInternalUser={isInternalUser} 
+      />
     </>
   );
 }

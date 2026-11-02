@@ -8,7 +8,7 @@ import {
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
   UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle,
-  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle, MessageSquare, FileSpreadsheet
+  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle, MessageSquare, FileSpreadsheet, Lock
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -27,7 +27,7 @@ const formatFaqText = (q: string): string => {
   return trimmed;
 };
 
-export default function ViewClient({ doc, fullProposta }: { doc: any, fullProposta: any }) {
+export default function ViewClient({ doc, fullProposta, isInternalUser = false }: { doc: any, fullProposta: any, isInternalUser?: boolean }) {
   const color = doc.tenant?.primaryColor || '#1B4D3E';
   
   const getThemeColors = (hex: string) => {
@@ -178,6 +178,42 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success', onConfirm?: () => void) => {
     setAlertState({ type, title, message, onConfirm });
   };
+
+  // Regras de Bloqueio Condicional e Rastreio Nominal
+  const regrasAcesso = doc.configApresentacao?.regrasAcesso || {};
+  const requiresPres = !isInternalUser && Boolean(regrasAcesso.obrigarApresentacao && doc.configApresentacao?.clientTabs?.apresentacao !== false);
+  const requiresVideo = !isInternalUser && Boolean(regrasAcesso.obrigarVideo && doc.configApresentacao?.clientTabs?.video === true);
+
+  const [presentationCompleted, setPresentationCompleted] = useState(false);
+  const [videoCompleted, setVideoCompleted] = useState(false);
+
+  const [clientIdent, setClientIdent] = useState<{ nome: string; cnpjOuEmail: string } | null>(null);
+  const [identNomeInput, setIdentNomeInput] = useState('');
+  const [identCnpjEmailInput, setIdentCnpjEmailInput] = useState('');
+  const [identError, setIdentError] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem(`sb_pres_done_${doc.id}`)) {
+        setPresentationCompleted(true);
+      }
+      if (localStorage.getItem(`sb_video_done_${doc.id}`)) {
+        setVideoCompleted(true);
+      }
+      const savedIdent = localStorage.getItem(`sb_client_ident_${doc.id}`);
+      if (savedIdent) {
+        try {
+          const parsed = JSON.parse(savedIdent);
+          if (parsed?.nome) setClientIdent(parsed);
+        } catch {}
+      }
+    }
+  }, [doc.id]);
+
+  const isCommercialLocked = !isInternalUser && (
+    (requiresPres && !presentationCompleted) ||
+    (requiresVideo && !videoCompleted)
+  );
 
   // Real-time Countdown Timer for link validity expiration
   const [timeLeft, setTimeLeft] = useState<{
@@ -640,8 +676,16 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     { id: 'historico', label: '9. Conversa & Negociação', icon: MessageSquare, show: true }
   ].filter(item => item.show);
 
-  // Define a aba ativa padrão inicial
+  // Define a aba ativa padrão inicial com respeito a regras de bloqueio condicional
   const getFirstActiveTab = () => {
+    if (!isInternalUser) {
+      if (requiresVideo && !videoCompleted && tabsConfig.video && doc.configApresentacao?.videoUrl) {
+        return 'video';
+      }
+      if (requiresPres && !presentationCompleted && tabsConfig.apresentacao && hasCanva) {
+        return 'apresentacao';
+      }
+    }
     if (tabsConfig.apresentacao && hasCanva) return 'apresentacao';
     if (tabsConfig.proposta) return 'proposta';
     if (tabsConfig.fpv && fullProposta) return 'fpv';
@@ -723,14 +767,24 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     setActiveClientTab(getFirstActiveTab());
   }, [doc]);
 
-  // 3. Track client tab views in real time (placed safely after activeClientTab initialization)
+  // 3. Track client tab views in real time (com suporte a preview anti-vendedor e identificação nominal)
   useEffect(() => {
     if (doc?.id && activeClientTab) {
-      trackDocumentoView(doc.id, activeClientTab).catch(err =>
+      if (isInternalUser) {
+        trackDocumentoView(doc.id, activeClientTab, { isInternal: true }).catch(() => {});
+        return;
+      }
+      
+      // Se a proposta exigir identificação e o cliente ainda não tiver preenchido, aguarda
+      if (regrasAcesso.exigirIdentificacao && !clientIdent) {
+        return;
+      }
+
+      trackDocumentoView(doc.id, activeClientTab, clientIdent || undefined).catch(err =>
         console.error('Erro ao registrar visualização da aba:', err)
       );
     }
-  }, [activeClientTab, doc?.id]);
+  }, [activeClientTab, doc?.id, isInternalUser, clientIdent]);
 
   // -------------------------------------------------------------
   // CONTROLE DAS PLANILHAS FINANCEIRAS FPV DETALHADAS (ABAS 02 A 09)
@@ -756,6 +810,26 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const totalInsumosDirect = Number(fullProposta?.insumos?.materiais || 0) + Number(fullProposta?.insumos?.maquinas || 0) + Number(fullProposta?.insumos?.descartaveis || 0) + Number(fullProposta?.insumos?.servicos || 0);
 
   const totalFaturamento = versao?.resultado?.faturamentoBruto || doc.valorTotal || 0;
+
+  const handleTabSelect = (tabId: string) => {
+    const isCommercialTab = ['proposta', 'fpv', 'minuta'].includes(tabId);
+    if (!isInternalUser && isCommercialLocked && isCommercialTab) {
+      const missing = [];
+      if (requiresVideo && !videoCompleted) missing.push('assistir ao vídeo de apresentação');
+      if (requiresPres && !presentationCompleted) missing.push('concluir a apresentação de slides');
+      const msg = `Para desbloquear a proposta comercial, planilhas e minutas, é necessário primeiro ${missing.join(' e ')}.`;
+      showAlert('Acesso Bloqueado 🔒', msg, 'warning');
+      if (requiresVideo && !videoCompleted) {
+        setActiveClientTab('video');
+      } else if (requiresPres && !presentationCompleted) {
+        setActiveClientTab('apresentacao');
+      }
+      setMobileMenuOpen(false);
+      return;
+    }
+    setActiveClientTab(tabId);
+    setMobileMenuOpen(false);
+  };
 
   const exportEncargosCSV = () => {
     const rows = [
@@ -870,7 +944,19 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       <style dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
-      <div className="fixed top-0 left-0 right-0 min-h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-4 sm:px-6 z-[9999] shadow-md print:hidden font-sans py-2 sm:py-0">
+      <div className="fixed top-0 left-0 right-0 bg-[#1B4D3E] text-white flex flex-col z-[9999] shadow-md print:hidden font-sans">
+        {isInternalUser && (
+          <div className="bg-amber-400 text-amber-950 px-4 py-1.5 text-[11px] font-black uppercase tracking-wider flex items-center justify-between border-b border-amber-500/50 shadow-inner">
+            <span className="flex items-center gap-2">
+              <span className="text-sm">👁️</span> 
+              <span>MODO PRÉ-VISUALIZAÇÃO DO VENDEDOR — Seus cliques não são contabilizados como do cliente</span>
+            </span>
+            <span className="bg-amber-950/20 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-widest">
+              USO INTERNO
+            </span>
+          </div>
+        )}
+        <div className="min-h-20 flex items-center justify-between px-4 sm:px-6 py-2 sm:py-0">
         {/* Left: Voltar button (mobile only) & Title Info */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {!mobileMenuOpen && (
@@ -943,6 +1029,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
             </div>
           );
         })()}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full">
@@ -1023,23 +1110,30 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
                 {/* Nav Items Collapsed */}
                 <div className="flex flex-col gap-3 mt-6 w-full items-center">
-                  {navItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveClientTab(item.id);
-                        setMobileMenuOpen(false);
-                      }}
-                      title={item.label}
-                      className={`p-3.5 rounded-2xl transition-all flex items-center justify-center active:scale-[0.98] cursor-pointer border ${
-                        activeClientTab === item.id
-                          ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
-                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                      }`}
-                    >
-                      <item.icon size={18} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-                    </button>
-                  ))}
+                  {navItems.map((item) => {
+                    const isLocked = !isInternalUser && isCommercialLocked && ['proposta', 'fpv', 'minuta'].includes(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleTabSelect(item.id)}
+                        title={isLocked ? `${item.label} (Bloqueado)` : item.label}
+                        className={`p-3.5 rounded-2xl transition-all flex items-center justify-center active:scale-[0.98] cursor-pointer border relative ${
+                          activeClientTab === item.id
+                            ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
+                            : isLocked
+                              ? 'bg-slate-50/60 border-transparent text-slate-400 opacity-70 hover:opacity-100'
+                              : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                      >
+                        <item.icon size={18} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : isLocked ? 'text-amber-500' : 'text-slate-400'} />
+                        {isLocked && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[8px] shadow-sm font-bold">
+                            🔒
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1100,26 +1194,34 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
                 {/* Menu de Navegação */}
                 <div className="flex flex-col gap-1.5 px-6 pb-4">
-                  {navItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveClientTab(item.id);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
-                        activeClientTab === item.id
-                          ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
-                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-450'} />
-                        <span>{item.label}</span>
-                      </div>
-                      <ChevronRight size={14} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-350'} />
-                    </button>
-                  ))}
+                  {navItems.map((item) => {
+                    const isLocked = !isInternalUser && isCommercialLocked && ['proposta', 'fpv', 'minuta'].includes(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleTabSelect(item.id)}
+                        className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
+                          activeClientTab === item.id
+                            ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
+                            : isLocked
+                              ? 'bg-slate-50 border-slate-200/60 text-slate-400 opacity-75 hover:opacity-100 hover:bg-amber-50/40 hover:border-amber-200'
+                              : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : isLocked ? 'text-amber-500' : 'text-slate-450'} />
+                          <span className={isLocked ? 'text-slate-500' : ''}>{item.label}</span>
+                        </div>
+                        {isLocked ? (
+                          <span className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-widest">
+                            <Lock size={10} /> Travado
+                          </span>
+                        ) : (
+                          <ChevronRight size={14} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-350'} />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1188,6 +1290,46 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                   allow="fullscreen"
                 />
               </div>
+
+              {/* Botão de Conclusão / Desbloqueio da Apresentação */}
+              {requiresPres && (
+                <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                      {presentationCompleted ? <CheckCircle2 size={20} /> : <Lock size={20} />}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                        {presentationCompleted ? 'Apresentação Concluída' : 'Etapa Obrigatória: Apresentação de Slides'}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium leading-snug">
+                        {presentationCompleted 
+                          ? 'A proposta comercial (A4), planilhas FPV e minutas foram desbloqueadas no menu lateral.'
+                          : 'Navegue pelos slides da proposta e clique em concluir para liberar a Proposta Comercial (A4) e planilhas.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!presentationCompleted ? (
+                    <button
+                      onClick={() => {
+                        setPresentationCompleted(true);
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
+                        }
+                        showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                      }}
+                      className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 size={16} /> Concluir Apresentação e Liberar
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                      ✓ Liberado
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -2245,6 +2387,46 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                   />
                 )}
               </div>
+
+              {/* Botão de Conclusão / Desbloqueio do Vídeo */}
+              {requiresVideo && (
+                <div className="mt-6 bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${videoCompleted ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                      {videoCompleted ? <CheckCircle2 size={20} /> : <Lock size={20} />}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                        {videoCompleted ? 'Vídeo Concluído' : 'Etapa Obrigatória: Vídeo Explicativo'}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium leading-snug">
+                        {videoCompleted 
+                          ? 'A proposta comercial (A4), planilhas FPV e minutas foram desbloqueadas no menu lateral.'
+                          : 'Assista ao vídeo explicativo da proposta e clique abaixo para liberar a Proposta Comercial (A4) e planilhas.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!videoCompleted ? (
+                    <button
+                      onClick={() => {
+                        setVideoCompleted(true);
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem(`sb_video_done_${doc.id}`, 'true');
+                        }
+                        showAlert('Vídeo Concluído!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                      }}
+                      className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 size={16} /> Concluir Vídeo e Liberar Proposta
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                      ✓ Liberado
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -3034,6 +3216,102 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
               </div>
 
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE IDENTIFICAÇÃO DO CLIENTE (PORTÃO DE ACESSO NOMINAL) */}
+      {!isInternalUser && regrasAcesso.exigirIdentificacao && !clientIdent && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100000] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 text-slate-800 font-sans">
+            
+            <div className="bg-[#1B4D3E] px-6 py-6 text-white text-center relative">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <ShieldCheck size={24} className="text-white" />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-wider">
+                Proposta Comercial Interativa
+              </h3>
+              <p className="text-[10px] text-white/70 font-semibold uppercase tracking-widest mt-1">
+                {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Acesso Exclusivo'}
+              </p>
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!identNomeInput.trim()) {
+                  setIdentError('Por favor, informe seu nome completo.');
+                  return;
+                }
+                if (!identCnpjEmailInput.trim()) {
+                  setIdentError('Por favor, informe o CNPJ ou E-mail corporativo da empresa.');
+                  return;
+                }
+                setIdentError('');
+                const identData = {
+                  nome: identNomeInput.trim(),
+                  cnpjOuEmail: identCnpjEmailInput.trim()
+                };
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem(`sb_client_ident_${doc.id}`, JSON.stringify(identData));
+                }
+                setClientIdent(identData);
+                // Registra imediatamente a visualização com os dados do cliente
+                trackDocumentoView(doc.id, activeClientTab, identData).catch(() => {});
+              }}
+              className="p-6 md:p-8 space-y-4"
+            >
+              <div className="text-center space-y-1 mb-2">
+                <p className="text-xs text-slate-600 font-bold">
+                  Identifique-se para visualizar a proposta preparada para a sua empresa.
+                </p>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  Seus dados garantem o registro formal e seguro do seu atendimento.
+                </p>
+              </div>
+
+              {identError && (
+                <div className="bg-red-50 border border-red-200 text-red-650 px-3 py-2 rounded-xl text-xs font-bold text-center">
+                  {identError}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
+                  Seu Nome Completo *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Carlos Oliveira"
+                  value={identNomeInput}
+                  onChange={(e) => setIdentNomeInput(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
+                  CNPJ ou E-mail da Empresa *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 00.000.000/0001-00 ou contato@empresa.com"
+                  value={identCnpjEmailInput}
+                  onChange={(e) => setIdentCnpjEmailInput(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer mt-4"
+              >
+                Acessar Proposta Comercial →
+              </button>
+            </form>
           </div>
         </div>
       )}
