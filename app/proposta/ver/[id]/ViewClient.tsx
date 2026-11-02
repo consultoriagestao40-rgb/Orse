@@ -187,6 +187,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const requiresPres = !isInternalUser && Boolean(regrasAcesso.obrigarApresentacao && doc.configApresentacao?.clientTabs?.apresentacao !== false);
   const requiresVideo = !isInternalUser && Boolean(regrasAcesso.obrigarVideo && doc.configApresentacao?.clientTabs?.video === true);
 
+  const [activeClientTab, setActiveClientTab] = useState<string>('proposta');
   const [presentationCompleted, setPresentationCompleted] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
 
@@ -272,6 +273,8 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
       if (interval) clearInterval(interval);
     };
   }, [activeClientTab, videoNearEnd, videoDuration]);
+
+
 
   // Status de Validação e Identificação do Cliente
   const [isAccessVerified, setIsAccessVerified] = useState(false);
@@ -809,7 +812,6 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
     return 'proposta';
   };
 
-  const [activeClientTab, setActiveClientTab] = useState<string>('proposta');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
