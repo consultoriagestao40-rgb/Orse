@@ -4,6 +4,7 @@ import React, { Suspense, useState } from 'react';
 import { ArrowRight, Eye, EyeOff, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import PasswordInputWithRequirements from '@/components/PasswordInputWithRequirements';
 import { textFont } from '@/components/lp/fonts';
 
 const C = {
@@ -214,58 +215,15 @@ function CadastroForm() {
               <Field label="WhatsApp">
                 <input id="cadastro-whatsapp" type="tel" inputMode="numeric" className={inputCls} style={{ borderColor: C.line }} value={form.celular} onChange={set('celular')} autoComplete="tel" placeholder="(11) 99999-9999" />
               </Field>
-              <Field label="Senha corporativa segura">
-                <div className="relative">
-                  <input
-                    id="cadastro-senha"
-                    type={showPassword ? 'text' : 'password'}
-                    className={`${inputCls} pr-12`}
-                    style={{ borderColor: C.line }}
-                    value={form.password}
-                    onChange={set('password')}
-                    autoComplete="new-password"
-                    placeholder="Mínimo 8 caracteres (A, a, 1, !)"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(s => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 cursor-pointer"
-                    style={{ color: C.muted }}
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                  >
-                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                  </button>
-                </div>
-
-                {/* Medidor visual de força */}
-                {form.password && (
-                  <div className="mt-2 space-y-2">
-                    <div className="flex gap-1 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all duration-300 rounded-full ${
-                          passwordValidCount <= 2 ? 'w-1/4 bg-rose-500' :
-                          passwordValidCount <= 4 ? 'w-3/4 bg-amber-500' :
-                          'w-full bg-emerald-600'
-                        }`}
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      {passwordRules.map((r, i) => (
-                        <span 
-                          key={i}
-                          className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition-colors ${
-                            r.valid 
-                              ? 'bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200' 
-                              : 'bg-slate-100 text-slate-500'
-                          }`}
-                        >
-                          {r.valid ? '✓ ' : '• '}{r.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Field>
+              <div>
+                <PasswordInputWithRequirements
+                  label="Senha corporativa segura"
+                  value={form.password}
+                  onChange={(val) => setForm(f => ({ ...f, password: val }))}
+                  placeholder="Mínimo 8 caracteres (A, a, 1, !)"
+                  required={true}
+                />
+              </div>
 
               {error && (
                 <p className="text-[14px] rounded-xl px-4 py-3" style={{ background: '#FDF0EE', color: '#9B2C1F' }}>

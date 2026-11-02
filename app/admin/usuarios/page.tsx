@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { getUsuarios, createUsuario, deleteUsuario, updateUsuario, getTenantLimit } from './actions';
 import { PERFIS_PRESETS } from './permissoesConstants';
+import PasswordInputWithRequirements from '@/components/PasswordInputWithRequirements';
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -685,17 +686,13 @@ export default function UsuariosPage() {
                         />
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-                          {editingUserId ? 'Alterar Senha' : 'Senha Inicial *'}
-                        </label>
-                        <input 
-                          type="password" 
-                          required={!editingUserId}
-                          placeholder={editingUserId ? "Deixe vazio para manter" : "Mínimo 6 dígitos"}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-medium text-slate-800"
+                      <div className="space-y-1.5 md:col-span-2">
+                        <PasswordInputWithRequirements
+                          label={editingUserId ? 'Alterar Senha' : 'Senha Inicial *'}
                           value={formData.password}
-                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                          onChange={(val) => setFormData({...formData, password: val})}
+                          placeholder={editingUserId ? "Deixe vazio para manter a atual..." : "Mínimo 8 caracteres (A, a, 1, !)"}
+                          required={!editingUserId}
                         />
                       </div>
 

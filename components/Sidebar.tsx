@@ -15,6 +15,7 @@ import { playWhatsAppChime } from '@/lib/sound';
 import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList, uploadChatFileAction, updateUserLastActive } from '@/app/leads/chat-actions';
 import { formatLastSeen } from '@/lib/timezone';
 import { WavAudioRecorder } from '@/lib/WavAudioRecorder';
+import PasswordInputWithRequirements from '@/components/PasswordInputWithRequirements';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -264,7 +265,7 @@ const Sidebar = () => {
     }
 
     try {
-      const res = await changeMyPassword(currentPassword, newPassword);
+      const res = await changeMyPassword(currentPassword, newPassword, confirmPassword);
       if (res.success) {
         setPasswordSuccess('Senha atualizada com sucesso!');
         setCurrentPassword('');
@@ -2010,52 +2011,18 @@ const Sidebar = () => {
                   </div>
                 </div>
 
-                {/* Nova Senha */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Senha Corporativa</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
-                    <input 
-                      type="password" 
-                      placeholder="Mínimo 8 caracteres (A, a, 1, !)"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      disabled={passwordLoading}
-                    />
-                  </div>
-                  {newPassword && (
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {[
-                        { label: '8+ chars', valid: newPassword.length >= 8 },
-                        { label: 'Maiúscula', valid: /[A-Z]/.test(newPassword) },
-                        { label: 'Minúscula', valid: /[a-z]/.test(newPassword) },
-                        { label: 'Número', valid: /[0-9]/.test(newPassword) },
-                        { label: 'Símbolo', valid: /[^A-Za-z0-9]/.test(newPassword) },
-                      ].map((r, i) => (
-                        <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${r.valid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
-                          {r.valid ? '✓ ' : '• '}{r.label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Confirmar Nova Senha */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
-                    <input 
-                      type="password" 
-                      placeholder="Repita a nova senha"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={passwordLoading}
-                    />
-                  </div>
-                </div>
+                {/* Nova Senha e Confirmação com Checklist Visual */}
+                <PasswordInputWithRequirements
+                  label="Nova Senha Corporativa"
+                  value={newPassword}
+                  onChange={setNewPassword}
+                  placeholder="Mínimo 8 caracteres (A, a, 1, !)"
+                  confirmValue={confirmPassword}
+                  onConfirmChange={setConfirmPassword}
+                  showConfirmInput={true}
+                  disabled={passwordLoading}
+                  required={true}
+                />
 
                 {/* Banner de Sucesso */}
                 {passwordSuccess && (

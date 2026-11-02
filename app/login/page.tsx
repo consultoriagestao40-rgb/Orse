@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { LogIn, Shield, TrendingUp, Briefcase, Mail, Lock, ArrowRight, X, KeyRound, Copy, CheckCircle2, Eye, EyeOff, XCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { requestPasswordReset, confirmPasswordResetWithCode } from '@/app/propostas/actions';
+import PasswordInputWithRequirements from '@/components/PasswordInputWithRequirements';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -557,88 +558,18 @@ export default function LoginPage() {
                     />
                   </div>
 
-                  {/* Nova Senha */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                      Nova Senha Forte
-                    </label>
-                    <div className="relative">
-                      <input 
-                        type={showForgotNew ? 'text' : 'password'}
-                        required
-                        placeholder="Digite sua nova senha..."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-4 pr-10 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-bold text-slate-800 transition-all"
-                        value={forgotNewPassword}
-                        onChange={(e) => setForgotNewPassword(e.target.value)}
-                        disabled={forgotLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotNew(!showForgotNew)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                      >
-                        {showForgotNew ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Confirmar Nova Senha */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                      Confirmar Nova Senha
-                    </label>
-                    <div className="relative">
-                      <input 
-                        type={showForgotConfirm ? 'text' : 'password'}
-                        required
-                        placeholder="Repita a nova senha..."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-4 pr-10 outline-none focus:border-[#1B4D3E] focus:bg-white text-xs font-bold text-slate-800 transition-all"
-                        value={forgotConfirmPassword}
-                        onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                        disabled={forgotLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotConfirm(!showForgotConfirm)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                      >
-                        {showForgotConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Live Checklist dos Requisitos da Senha */}
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
-                    <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 block">
-                      Política Forte de Segurança:
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                      <div className={`flex items-center gap-1 ${forgotHasMinLength ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                        {forgotHasMinLength ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
-                        <span>8+ caracteres</span>
-                      </div>
-                      <div className={`flex items-center gap-1 ${forgotHasUpper ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                        {forgotHasUpper ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
-                        <span>Maiúscula (A-Z)</span>
-                      </div>
-                      <div className={`flex items-center gap-1 ${forgotHasLower ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                        {forgotHasLower ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
-                        <span>Minúscula (a-z)</span>
-                      </div>
-                      <div className={`flex items-center gap-1 ${forgotHasNumber ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                        {forgotHasNumber ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
-                        <span>Número (0-9)</span>
-                      </div>
-                      <div className={`flex items-center gap-1 ${forgotHasSpecial ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                        {forgotHasSpecial ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
-                        <span>Especial (!@#$)</span>
-                      </div>
-                      <div className={`flex items-center gap-1 ${forgotPasswordsMatch ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                        {forgotPasswordsMatch ? <CheckCircle2 size={12} className="text-emerald-600" /> : <XCircle size={12} />}
-                        <span>Senhas conferem</span>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Nova Senha e Confirmação com Checklist Visual */}
+                  <PasswordInputWithRequirements
+                    label="Nova Senha Forte"
+                    value={forgotNewPassword}
+                    onChange={setForgotNewPassword}
+                    placeholder="Digite sua nova senha..."
+                    confirmValue={forgotConfirmPassword}
+                    onConfirmChange={setForgotConfirmPassword}
+                    showConfirmInput={true}
+                    disabled={forgotLoading}
+                    required={true}
+                  />
 
                   <div className="pt-2 flex gap-3">
                     <button 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, ShieldAlert, CheckCircle2, XCircle, Eye, EyeOff, KeyRound, Loader2, ArrowRight } from 'lucide-react';
 import { changeMyPassword } from '@/app/propostas/actions';
+import PasswordInputWithRequirements from './PasswordInputWithRequirements';
 
 export default function ForcePasswordChangeModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -186,86 +187,24 @@ export default function ForcePasswordChangeModal() {
                 </div>
               </div>
 
-              {/* Nova Senha */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
-                  Nova Senha Forte
-                </label>
-                <div className="relative">
-                  <input
-                    type={showNew ? 'text' : 'password'}
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Cadastre sua nova senha forte..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white pr-10 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNew(!showNew)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
+              {/* Nova Senha e Confirmação com Checklist Visual */}
+              <PasswordInputWithRequirements
+                label="Nova Senha Forte"
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Cadastre sua nova senha forte..."
+                confirmValue={confirmPassword}
+                onConfirmChange={setConfirmPassword}
+                showConfirmInput={true}
+                disabled={loading}
+                required={true}
+              />
 
-              {/* Confirmar Nova Senha */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
-                  Confirmar Nova Senha
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirm ? 'text' : 'password'}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repita a nova senha exatamente igual..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white pr-10 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Checklist da Política Forte de Segurança */}
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 block">
-                  Requisitos da Política de Segurança:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-medium">
-                  <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                    {hasMinLength ? <CheckCircle2 size={14} className="text-emerald-600" /> : <XCircle size={14} />}
-                    <span>Mínimo 8 caracteres</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${hasUpper ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                    {hasUpper ? <CheckCircle2 size={14} className="text-emerald-600" /> : <XCircle size={14} />}
-                    <span>Letra maiúscula (A-Z)</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${hasLower ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                    {hasLower ? <CheckCircle2 size={14} className="text-emerald-600" /> : <XCircle size={14} />}
-                    <span>Letra minúscula (a-z)</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                    {hasNumber ? <CheckCircle2 size={14} className="text-emerald-600" /> : <XCircle size={14} />}
-                    <span>Pelo menos 1 número</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${hasSpecial ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                    {hasSpecial ? <CheckCircle2 size={14} className="text-emerald-600" /> : <XCircle size={14} />}
-                    <span>Caractere especial (!@#$)</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${passwordsMatch ? 'text-emerald-700 font-bold' : 'text-slate-400'}`}>
-                    {passwordsMatch ? <CheckCircle2 size={14} className="text-emerald-600" /> : <XCircle size={14} />}
-                    <span>Senhas conferem</span>
-                  </div>
-                </div>
-              </div>
+              {currentPassword && newPassword && currentPassword === newPassword && (
+                <p className="text-[11px] font-bold text-amber-600 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                  ⚠️ A nova senha deve ser diferente da senha atual.
+                </p>
+              )}
 
               {/* Botão de Envio */}
               <button
