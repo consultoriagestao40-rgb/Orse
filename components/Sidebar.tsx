@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers, UserCheck } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers, UserCheck, Building2, CreditCard } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -1434,17 +1434,23 @@ const Sidebar = () => {
     });
   };
 
+  const saasNavItems = isPlatformAccountGlobally
+    ? [
+        { icon: Building2, label: 'Inquilinos SaaS', href: '/admin/empresas?tab=empresas' },
+        { icon: CreditCard, label: 'Faturamento & Cobranças', href: '/admin/empresas?tab=faturamento' },
+        { icon: Mail, label: 'E-mail do Sistema (SMTP)', href: '/admin/empresas?tab=smtp' },
+        { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
+      ]
+    : [
+        { icon: Home, label: 'Voltar ao CRM', href: '/' },
+        { icon: Building2, label: 'Inquilinos SaaS', href: '/admin/empresas?tab=empresas' },
+        { icon: CreditCard, label: 'Faturamento & Cobranças', href: '/admin/empresas?tab=faturamento' },
+        { icon: Mail, label: 'E-mail do Sistema (SMTP)', href: '/admin/empresas?tab=smtp' },
+        { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
+      ];
+
   const renderedMenuItems = isSaaSArea
-    ? isPlatformAccountGlobally
-      ? [
-          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
-        ]
-      : [
-          { icon: Home, label: 'Voltar ao CRM', href: '/' },
-          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-          { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
-        ]
+    ? saasNavItems
     : filterMenuItems(menuItems);
 
   const [orderedItems, setOrderedItems] = useState<any[]>([]);
@@ -1456,16 +1462,7 @@ const Sidebar = () => {
   // Sincroniza e ordena os itens do menu
   useEffect(() => {
     const baseItems = isSaaSArea
-      ? isPlatformAccountGlobally
-        ? [
-            { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-            { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
-          ]
-        : [
-            { icon: Home, label: 'Voltar ao CRM', href: '/' },
-            { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-            { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
-          ]
+      ? saasNavItems
       : filterMenuItems(menuItems);
 
 
@@ -1642,7 +1639,13 @@ const Sidebar = () => {
             ? pathname === '/'
             : item.href === '/pipeline'
               ? (pathname === '/pipeline' || ((pathname.startsWith('/propostas') || pathname.startsWith('/proposta')) && !pathname.startsWith('/propostas-comerciais')))
-              : pathname === item.href;
+              : item.href.includes('?')
+                ? (pathname === item.href.split('?')[0] && (
+                    typeof window !== 'undefined'
+                      ? (window.location.search === `?${item.href.split('?')[1]}` || (!window.location.search && item.href.endsWith('tab=empresas')))
+                      : item.href.endsWith('tab=empresas')
+                  ))
+                : pathname === item.href;
 
           const isDragOver = dragOverIndex === index;
           const isDraggingUp = draggedIndex !== null && draggedIndex > index;

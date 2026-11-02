@@ -8,7 +8,7 @@ import {
   ArrowLeft, CheckCircle2, Lock, Unlock, Layers,
   Mail, Send, AlertTriangle, Eye, EyeOff, Save
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   getTenantsWithStats, createTenantAction, 
   updateTenantAction, deleteTenantAction,
@@ -38,8 +38,11 @@ interface TenantItem {
   };
 }
 
-export default function TenantManagerDashboard() {
+function TenantManagerDashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') as 'empresas' | 'faturamento' | 'smtp' | null;
+
   // Auth é garantida pelo layout.tsx Server Component
   // Se chegou aqui, o usuário já é Super Admin verificado no servidor
   const [loading, setLoading] = useState(true);
@@ -97,7 +100,21 @@ export default function TenantManagerDashboard() {
   const [taxaWhatsapp, setTaxaWhatsapp] = useState<number>(130.0);
   
   // Faturamento SaaS Admin States
-  const [adminTab, setAdminTab] = useState<'empresas' | 'faturamento' | 'smtp'>('empresas');
+  const [adminTab, setAdminTab] = useState<'empresas' | 'faturamento' | 'smtp'>(() => {
+    if (tabFromUrl && ['empresas', 'faturamento', 'smtp'].includes(tabFromUrl)) {
+      return tabFromUrl;
+    }
+    return 'empresas';
+  });
+
+  useEffect(() => {
+    if (tabFromUrl && ['empresas', 'faturamento', 'smtp'].includes(tabFromUrl)) {
+      setAdminTab(tabFromUrl);
+    } else if (!tabFromUrl) {
+      setAdminTab('empresas');
+    }
+  }, [tabFromUrl]);
+
   const [financialMetrics, setFinancialMetrics] = useState<any>(null);
   const [allCobrancas, setAllCobrancas] = useState<any[]>([]);
 
@@ -401,41 +418,7 @@ export default function TenantManagerDashboard() {
             </div>
           </header>
 
-            {/* SWITCHER DE ABA SUPER ADMIN */}
-            <div className="flex flex-wrap bg-slate-200/60 p-1.5 rounded-2xl border border-slate-300/80 max-w-2xl gap-1 shadow-xs">
-              <button
-                onClick={() => setAdminTab('empresas')}
-                className={`flex-1 min-w-[160px] py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  adminTab === 'empresas'
-                    ? 'bg-[#1B4D3E] text-white shadow-sm font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🏢 Inquilinos SaaS ({tenants.length})
-              </button>
-              <button
-                onClick={() => setAdminTab('faturamento')}
-                className={`flex-1 min-w-[180px] py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  adminTab === 'faturamento'
-                    ? 'bg-[#1B4D3E] text-white shadow-sm font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                💰 Faturamento & Cobranças
-              </button>
-              <button
-                onClick={() => setAdminTab('smtp')}
-                className={`flex-1 min-w-[200px] py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  adminTab === 'smtp'
-                    ? 'bg-[#1B4D3E] text-white shadow-sm font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                ✉️ E-mail do Sistema (Hostinger)
-              </button>
-            </div>
-
-            {adminTab === 'empresas' && (
+          {adminTab === 'empresas' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 {/* CARDS DE KPIS */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1651,5 +1634,24 @@ export default function TenantManagerDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TenantManagerDashboard() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex min-h-screen bg-[#F8FAFC] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin"></div>
+            <span className="text-xs font-black uppercase tracking-widest text-[#1B4D3E]">
+              Carregando Painel Admin...
+            </span>
+          </div>
+        </div>
+      }
+    >
+      <TenantManagerDashboardContent />
+    </React.Suspense>
   );
 }
