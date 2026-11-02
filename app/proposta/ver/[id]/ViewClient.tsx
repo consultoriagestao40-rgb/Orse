@@ -191,68 +191,33 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const [presentationCompleted, setPresentationCompleted] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
 
-  // Controle de Slide Atual da Apresentação
-  const totalSlides = Number(doc.configApresentacao?.totalSlides) > 0 ? Number(doc.configApresentacao?.totalSlides) : 10;
-  const [currentSlide, setCurrentSlide] = useState(1);
+  // Tempo Mínimo Obrigatório de Leitura da Apresentação (sem botões de atalho)
+  const tempoMinimoPresSegundos = Number(regrasAcesso.tempoMinimoApresentacaoSegundos) > 0 
+    ? Number(regrasAcesso.tempoMinimoApresentacaoSegundos) 
+    : 30;
   const [presWatchSeconds, setPresWatchSeconds] = useState(0);
-  const [presCanComplete, setPresCanComplete] = useState(false);
-  const isLastSlide = currentSlide >= totalSlides || presCanComplete || presWatchSeconds >= 10;
+  const presSecondsLeft = Math.max(0, tempoMinimoPresSegundos - presWatchSeconds);
+  const presProgressPct = Math.min(100, Math.round((presWatchSeconds / tempoMinimoPresSegundos) * 100));
+  const isPresUnlocked = presentationCompleted || presSecondsLeft === 0;
+
+  // Temporizador ininterrupto de permanência na apresentação do Canva
+  useEffect(() => {
+    let interval: any = null;
+    if (activeClientTab === 'apresentacao' && !presentationCompleted && presSecondsLeft > 0) {
+      interval = setInterval(() => {
+        setPresWatchSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeClientTab, presentationCompleted, presSecondsLeft]);
 
   // Controle de Tempo e Últimos 10 Segundos do Vídeo
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   const [videoNearEnd, setVideoNearEnd] = useState(false);
   const [videoWatchSeconds, setVideoWatchSeconds] = useState(0);
-
-  // Escuta de Teclas para Navegação de Slides da Apresentação
-  useEffect(() => {
-    if (activeClientTab === 'apresentacao') {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
-          setCurrentSlide((prev) => Math.min(totalSlides, prev + 1));
-        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-          setCurrentSlide((prev) => Math.max(1, prev - 1));
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [activeClientTab, totalSlides]);
-
-  // Temporizador de leitura e permanência na apresentação do Canva (habilita conclusão após 10s)
-  useEffect(() => {
-    let interval: any = null;
-    if (activeClientTab === 'apresentacao' && !presentationCompleted) {
-      interval = setInterval(() => {
-        setPresWatchSeconds((prev) => {
-          const next = prev + 1;
-          if (next >= 10) {
-            setPresCanComplete(true);
-          }
-          return next;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeClientTab, presentationCompleted]);
-
-  // Detecção de clique/foco dentro do iframe do Canva (evento blur na janela pai)
-  useEffect(() => {
-    const handleCanvaInteraction = () => {
-      if (activeClientTab === 'apresentacao') {
-        setPresWatchSeconds((prev) => {
-          const next = prev + 3;
-          if (next >= 6) setPresCanComplete(true);
-          return next;
-        });
-        setCurrentSlide((prev) => Math.min(totalSlides, prev + 1));
-      }
-    };
-    window.addEventListener('blur', handleCanvaInteraction);
-    return () => window.removeEventListener('blur', handleCanvaInteraction);
-  }, [activeClientTab, totalSlides]);
 
   // Escuta de postMessages do YouTube / Vimeo para detectar últimos 10 segundos
   useEffect(() => {
@@ -1462,126 +1427,83 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                 />
               </div>
 
-              {/* Barra de Navegação e Controle de Slides */}
-              {requiresPres && !presentationCompleted && (
-                <div className="bg-slate-50 border border-slate-200/80 p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Progresso dos Slides:</span>
-                    <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-black text-[#1B4D3E] shadow-2xs">
-                      Slide {currentSlide} de {totalSlides}
-                    </span>
-                    {isLastSlide ? (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
-                        ✓ Último Slide Atingido!
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
-                        🔒 Avance até o slide {totalSlides}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentSlide((prev) => Math.max(1, prev - 1))}
-                      disabled={currentSlide <= 1}
-                      className="px-3 py-1.5 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-700 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
-                    >
-                      <ChevronLeft size={13} /> Anterior
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setCurrentSlide((prev) => Math.min(totalSlides, prev + 1))}
-                      disabled={isLastSlide}
-                      className="px-3 py-1.5 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-700 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
-                    >
-                      Próximo <ChevronRight size={13} />
-                    </button>
-
-                    {!isLastSlide && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCurrentSlide(totalSlides);
-                          setPresCanComplete(true);
-                        }}
-                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
-                        title="Se você já visualizou os slides pelo Canva, clique aqui para habilitar a liberação"
-                      >
-                        Já estou no Último Slide ⏭
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Botão de Conclusão / Desbloqueio da Apresentação */}
+              {/* Barra de Progresso e Conclusão de Leitura Obrigatória */}
               {requiresPres && (
-                <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted ? 'bg-emerald-50 text-emerald-600' : isLastSlide ? 'bg-emerald-50 text-emerald-600 animate-bounce' : 'bg-slate-100 text-slate-400'}`}>
-                      {presentationCompleted || isLastSlide ? <CheckCircle2 size={20} /> : <Lock size={20} />}
+                <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl shadow-sm space-y-4">
+                  {/* Informação e Barra de Progresso */}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isPresUnlocked ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                          {isPresUnlocked ? <CheckCircle2 size={18} /> : <Clock size={18} className="animate-spin" />}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                            {presentationCompleted 
+                              ? 'Apresentação Concluída com Sucesso' 
+                              : isPresUnlocked 
+                                ? 'Tempo de Visualização Concluído!' 
+                                : `Visualização Obrigatória da Apresentação (${presWatchSeconds}s de ${tempoMinimoPresSegundos}s)`}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            {presentationCompleted 
+                              ? 'A proposta comercial (A4), planilhas FPV e minutas contratuais estão liberadas no menu.'
+                              : isPresUnlocked 
+                                ? 'Clique no botão verde abaixo para confirmar e liberar o acesso à proposta comercial.'
+                                : `Por favor, acompanhe a apresentação de nossa proposta. A liberação ocorrerá em ${presSecondsLeft} segundos.`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-xs font-mono font-black text-[#1B4D3E]">
+                          {presProgressPct}%
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                        {presentationCompleted 
-                          ? 'Apresentação Concluída' 
-                          : isLastSlide 
-                            ? '🎉 Apresentação Pronta para Conclusão!' 
-                            : `Visualização Obrigatória (${presWatchSeconds > 0 ? presWatchSeconds + 's' : currentSlide + '/' + totalSlides})`}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 font-medium leading-snug">
-                        {presentationCompleted 
-                          ? 'A proposta comercial (A4), planilhas FPV e minutas foram desbloqueadas no menu lateral.'
-                          : isLastSlide 
-                            ? 'Clique no botão ao lado para confirmar a conclusão e liberar a Proposta Comercial (A4) e planilhas.'
-                            : 'Navegue pelos slides no Canva acima ou aguarde alguns instantes para habilitar a liberação.'}
-                      </p>
-                    </div>
+
+                    {/* Barra de Progresso Visual */}
+                    {!presentationCompleted && (
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                        <div 
+                          className="bg-[#1B4D3E] h-full transition-all duration-1000 ease-linear rounded-full"
+                          style={{ width: `${presProgressPct}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  {!presentationCompleted ? (
-                    isLastSlide ? (
-                      <button
-                        onClick={() => {
-                          setPresentationCompleted(true);
-                          if (typeof window !== 'undefined') {
-                            localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
-                          }
-                          showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
-                        }}
-                        className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2 animate-bounce animate-duration-1000"
-                      >
-                        <CheckCircle2 size={16} /> Concluir Apresentação e Liberar
-                      </button>
-                    ) : (
-                      <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                  {/* Botão de Ação */}
+                  <div className="pt-2 flex justify-end">
+                    {!presentationCompleted ? (
+                      isPresUnlocked ? (
                         <button
-                          type="button"
                           onClick={() => {
-                            setCurrentSlide(totalSlides);
-                            setPresCanComplete(true);
+                            setPresentationCompleted(true);
+                            if (typeof window !== 'undefined') {
+                              localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
+                            }
+                            showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
                           }}
-                          className="w-full sm:w-auto px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-[11px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 transition-all shadow-2xs"
-                          title="Clique se você já passou os slides pelo player do Canva"
+                          className="w-full sm:w-auto px-6 py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-2 animate-bounce animate-duration-1000"
                         >
-                          <Check size={14} className="text-amber-700" /> Já vi os slides no Canva
+                          <CheckCircle2 size={16} /> Concluir Apresentação e Liberar Proposta
                         </button>
+                      ) : (
                         <button
                           disabled
-                          className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 shrink-0 select-none opacity-80"
+                          className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 select-none opacity-85"
+                          title="Aguarde o tempo de leitura para liberar"
                         >
-                          <Lock size={14} className="text-slate-400" /> Libera em {Math.max(1, 10 - presWatchSeconds)}s
+                          <Lock size={14} className="text-slate-400" /> Aguarde {presSecondsLeft}s para liberar
                         </button>
-                      </div>
-                    )
-                  ) : (
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-                      ✓ Liberado
-                    </span>
-                  )}
+                      )
+                    ) : (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200 flex items-center gap-1.5">
+                        <CheckCircle2 size={14} /> Apresentação Validada
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

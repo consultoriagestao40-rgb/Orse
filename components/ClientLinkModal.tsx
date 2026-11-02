@@ -98,6 +98,9 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [obrigarApresentacao, setObrigarApresentacao] = useState(
     configApresentacao?.regrasAcesso?.obrigarApresentacao === true
   );
+  const [tempoMinimoApresentacaoSegundos, setTempoMinimoApresentacaoSegundos] = useState<number>(
+    configApresentacao?.regrasAcesso?.tempoMinimoApresentacaoSegundos || 30
+  );
   const [obrigarVideo, setObrigarVideo] = useState(
     configApresentacao?.regrasAcesso?.obrigarVideo === true
   );
@@ -169,6 +172,9 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             setExigirIdentificacao(config.regrasAcesso.exigirIdentificacao !== false);
             setCodigoAcessoCustom(config.regrasAcesso.codigoAcessoCustom || '');
             setObrigarApresentacao(config.regrasAcesso.obrigarApresentacao === true);
+            if (config.regrasAcesso.tempoMinimoApresentacaoSegundos) {
+              setTempoMinimoApresentacaoSegundos(Number(config.regrasAcesso.tempoMinimoApresentacaoSegundos));
+            }
             setObrigarVideo(config.regrasAcesso.obrigarVideo === true);
           }
         }
@@ -295,6 +301,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           exigirIdentificacao,
           codigoAcessoCustom: codigoAcessoCustom.trim(),
           obrigarApresentacao: apresentacao && obrigarApresentacao,
+          tempoMinimoApresentacaoSegundos: Number(tempoMinimoApresentacaoSegundos) || 30,
           obrigarVideo: video && obrigarVideo
         },
         videoUrl: videoUrl.trim(),
@@ -428,20 +435,23 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                   </label>
 
                   {obrigarApresentacao && (
-                    <div className="flex items-center gap-2 pl-3 pt-1">
-                      <label className="text-[10px] font-bold text-slate-700">
-                        Total de Slides da Apresentação:
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={totalSlides}
-                        onChange={(e) => setTotalSlides(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 1)}
-                        className="w-16 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 text-center outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 pl-3 pt-1">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-slate-700">
+                          Tempo Mínimo de Visualização Obrigatória:
+                        </label>
+                        <input
+                          type="number"
+                          min="5"
+                          max="300"
+                          value={tempoMinimoApresentacaoSegundos}
+                          onChange={(e) => setTempoMinimoApresentacaoSegundos(Math.max(5, parseInt(e.target.value, 10) || 5))}
+                          className="w-16 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 text-center outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <span className="text-[10px] text-slate-500 font-bold">segundos</span>
+                      </div>
                       <span className="text-[9px] text-slate-400 font-medium">
-                        (Libera apenas no último slide)
+                        (O cliente precisa permanecer este tempo na apresentação para liberar a proposta)
                       </span>
                     </div>
                   )}
