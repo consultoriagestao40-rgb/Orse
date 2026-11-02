@@ -348,9 +348,9 @@ export default function LoginPage() {
                     <button 
                       type="button"
                       onClick={() => {
-                        setForgotEmail('');
+                        setForgotEmail(email || '');
                         setForgotError('');
-                        setTempPassword('');
+                        setForgotStep('EMAIL');
                         setShowForgotModal(true);
                       }}
                       className="text-[10px] font-bold text-[#1B4D3E] uppercase hover:underline cursor-pointer"
