@@ -135,7 +135,21 @@ function PropostaEditor() {
              cctBase: (ccts || []).find((c: any) => c.id === savedSindicatoId) || {}
           })),
           versao: fullData.versao,
-          insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+          insumos: (() => {
+            const rawInsumos = (fullData as any).insumos || {};
+            return {
+              ...rawInsumos,
+              materiais: rawInsumos.materiais || 0,
+              maquinas: rawInsumos.maquinas || 0,
+              descartaveis: rawInsumos.descartaveis || 0,
+              servicos: rawInsumos.servicos || 0,
+              servicosDescricao: rawInsumos.servicosDescricao || '',
+              outrosCustos: Array.isArray(rawInsumos.outrosCustos) ? rawInsumos.outrosCustos : (rawInsumos.servicos ? [{ id: '1', descricao: rawInsumos.servicosDescricao || 'Serviços Terceirizados', valor: rawInsumos.servicos }] : []),
+              detalheMateriais: rawInsumos.detalheMateriais || [],
+              detalheMaquinas: rawInsumos.detalheMaquinas || [],
+              detalheDescartaveis: rawInsumos.detalheDescartaveis || []
+            };
+          })(),
           cliente: {
             ...proposta.cliente,
             cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '',
@@ -303,6 +317,7 @@ function PropostaEditor() {
       descartaveis: 0,
       servicos: 0,
       servicosDescricao: '',
+      outrosCustos: [],
       detalheMateriais: [],
       detalheMaquinas: [],
       detalheDescartaveis: []
@@ -539,6 +554,7 @@ function PropostaEditor() {
                   descartaveis: fullData.insumos?.descartaveis || 0,
                   servicos: fullData.insumos?.servicos || 0,
                   servicosDescricao: fullData.insumos?.servicosDescricao || '',
+                  outrosCustos: Array.isArray(fullData.insumos?.outrosCustos) ? fullData.insumos.outrosCustos : (fullData.insumos?.servicos ? [{ id: '1', descricao: fullData.insumos?.servicosDescricao || 'Serviços Terceirizados', valor: fullData.insumos?.servicos }] : []),
                   detalheMateriais: fullData.insumos?.detalheMateriais || [],
                   detalheMaquinas: fullData.insumos?.detalheMaquinas || [],
                   detalheDescartaveis: fullData.insumos?.detalheDescartaveis || [],
@@ -742,7 +758,9 @@ function PropostaEditor() {
           materiais: proposta.insumos.materiais,
           maquinas: proposta.insumos.maquinas,
           descartaveis: proposta.insumos.descartaveis,
-          servicos: proposta.insumos.servicos
+          servicos: Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
+            ? proposta.insumos.outrosCustos.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0)
+            : Number(proposta.insumos.servicos || 0)
         }
       };
       setResultado(calculateEnterprisePrice(calcInput));
@@ -1223,6 +1241,53 @@ function PropostaEditor() {
         [tipoTotal]: total
       }
     });
+  };
+
+  const handleAddOutroCusto = () => {
+    const newItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      descricao: '',
+      valor: 0
+    };
+    const currentList = Array.isArray(proposta.insumos?.outrosCustos) ? proposta.insumos.outrosCustos : [];
+    const updatedList = [...currentList, newItem];
+    const totalVal = updatedList.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0);
+    setProposta((prev: any) => ({
+      ...prev,
+      insumos: {
+        ...prev.insumos,
+        outrosCustos: updatedList,
+        servicos: totalVal
+      }
+    }));
+  };
+
+  const handleUpdateOutroCusto = (id: string, field: 'descricao' | 'valor', value: any) => {
+    const currentList = Array.isArray(proposta.insumos?.outrosCustos) ? proposta.insumos.outrosCustos : [];
+    const updatedList = currentList.map((it: any) => it.id === id ? { ...it, [field]: value } : it);
+    const totalVal = updatedList.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0);
+    setProposta((prev: any) => ({
+      ...prev,
+      insumos: {
+        ...prev.insumos,
+        outrosCustos: updatedList,
+        servicos: totalVal
+      }
+    }));
+  };
+
+  const handleRemoveOutroCusto = (id: string) => {
+    const currentList = Array.isArray(proposta.insumos?.outrosCustos) ? proposta.insumos.outrosCustos : [];
+    const updatedList = currentList.filter((it: any) => it.id !== id);
+    const totalVal = updatedList.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0);
+    setProposta((prev: any) => ({
+      ...prev,
+      insumos: {
+        ...prev.insumos,
+        outrosCustos: updatedList,
+        servicos: totalVal
+      }
+    }));
   };
 
   const renderInsumosTab = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', categorias: string[], titulo: string) => {
@@ -2471,104 +2536,136 @@ function PropostaEditor() {
 
                         {/* MONTANTE B */}
                         <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                           <th colSpan={isSpot ? 5 : 4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "B" - Insumos</th>
+                           <th colSpan={isSpot ? 5 : 4} className="py-2.5 px-6">
+                              <div className="flex items-center justify-between">
+                                 <span className="uppercase tracking-widest font-bold">Montante "B" - Insumos</span>
+                                 {!isSpot && (
+                                    <button
+                                       type="button"
+                                       onClick={handleAddOutroCusto}
+                                       className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded text-xs font-bold border border-white/40 transition-all cursor-pointer shadow-xs"
+                                       title="Adicionar nova linha de custo ou serviço"
+                                    >
+                                       <Plus className="w-3.5 h-3.5" />
+                                       <span>Adicionar Linha</span>
+                                    </button>
+                                 )}
+                              </div>
+                           </th>
                         </tr>
                         {(() => {
                            const b = resultado?.items?.reduce((acc: any, i: any) => {
                                const d = i.detalhes?.detalheBlocoB;
                                return {
-                                  ativos: acc.ativos + (i.detalhes?.ativos || 0) * i.quantidade,
-                                  materiais: acc.materiais + (d?.materiais || 0) * i.quantidade,
-                                  maquinas: acc.maquinas + (d?.maquinas || 0) * i.quantidade,
-                                  descartaveis: acc.descartaveis + (d?.descartaveis || 0) * i.quantidade,
-                                  servicos: acc.servicos + (d?.servicos || 0) * i.quantidade,
+                                  ativos: acc.ativos + (i.detalhes?.ativos || 0) * (i.quantidade || 1),
+                                  materiais: acc.materiais + (d?.materiais || 0) * (i.quantidade || 1),
+                                  maquinas: acc.maquinas + (d?.maquinas || 0) * (i.quantidade || 1),
+                                  descartaveis: acc.descartaveis + (d?.descartaveis || 0) * (i.quantidade || 1),
+                                  servicos: acc.servicos + (d?.servicos || 0) * (i.quantidade || 1),
                                };
-                           }, { ativos: 0, materiais:0, maquinas:0, descartaveis:0, servicos:0 }) || { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 };
+                           }, { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 }) || { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 };
 
-                           const rawRows = [
-                              ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos, isEditable: false }] : []),
-                              { label: 'Materiais e produtos de limpeza', val: proposta.insumos.materiais, isEditable: false },
+                           const baseRows = [
+                              ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos }] : []),
+                              { label: 'Materiais e produtos de limpeza', val: proposta.insumos.materiais },
                               { 
                                 label: 'Máquinas e equipamentos', 
                                 val: isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas,
-                                isEditable: false
                               },
-                              { label: 'Descartáveis', val: proposta.insumos.descartaveis, isEditable: false },
-                              { 
-                                label: isSpot ? 'Equipamentos Locados' : 'Serviços (Descriminar)', 
-                                val: isSpot ? totalMaquinasLocadas : (proposta.insumos.servicos || 0),
-                                isEditable: !isSpot
-                              },
+                              { label: 'Descartáveis', val: proposta.insumos.descartaveis },
+                              ...(isSpot ? [{ label: 'Equipamentos Locados', val: totalMaquinasLocadas }] : []),
                            ];
-                           const rows = rawRows.map((r, idx) => ({
-                              ...r,
-                              indexNumber: idx + 1,
-                              label: `${idx + 1}) ${r.label}`,
-                           }));
 
-                           return rows.map((row, i) => (
-                              <tr key={i} className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 transition-colors">
-                                 <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 font-bold text-slate-800">
-                                    {row.isEditable ? (
-                                       <div className="flex items-center gap-2">
-                                          <span className="text-slate-600 font-extrabold">{row.indexNumber})</span>
-                                          <input
-                                             type="text"
-                                             value={proposta.insumos.servicosDescricao !== undefined && proposta.insumos.servicosDescricao !== null ? proposta.insumos.servicosDescricao : 'Serviços (Descriminar)'}
-                                             onChange={(e) => setProposta((prev: any) => ({
-                                                ...prev,
-                                                insumos: {
-                                                   ...prev.insumos,
-                                                   servicosDescricao: e.target.value
-                                                }
-                                             }))}
-                                             placeholder="Descrição do serviço (ex: Serviços Terceirizados)"
-                                             className="px-2.5 py-1 border border-slate-300 rounded-md font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs w-full max-w-md shadow-xs transition-all"
-                                          />
-                                       </div>
-                                    ) : (
-                                       row.label
-                                    )}
-                                 </td>
-                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
-                                    {row.isEditable ? (
-                                       <div className="flex items-center justify-end gap-1.5">
-                                          <span className="text-xs text-slate-500 font-extrabold">R$</span>
-                                          <input
-                                             type="number"
-                                             step="0.01"
-                                             min="0"
-                                             value={proposta.insumos.servicos || 0}
-                                             onChange={(e) => {
-                                                const val = parseFloat(e.target.value) || 0;
-                                                setProposta((prev: any) => ({
-                                                   ...prev,
-                                                   insumos: {
-                                                      ...prev.insumos,
-                                                      servicos: val
-                                                   }
-                                                }));
-                                             }}
-                                             className="w-32 px-2.5 py-1 border border-slate-300 rounded-md text-right font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
-                                          />
-                                       </div>
-                                    ) : (
-                                       formatCurrency(row.val)
-                                    )}
-                                 </td>
-                              </tr>
-                           ));
+                           const outros = (!isSpot && Array.isArray(proposta.insumos?.outrosCustos)) ? proposta.insumos.outrosCustos : [];
+
+                           return (
+                              <>
+                                 {baseRows.map((row, idx) => (
+                                    <tr key={`base-${idx}`} className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 transition-colors">
+                                       <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 font-bold text-slate-800">
+                                          {idx + 1}) {row.label}
+                                       </td>
+                                       <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                                          {formatCurrency(row.val)}
+                                       </td>
+                                    </tr>
+                                 ))}
+
+                                 {!isSpot && outros.map((item: any, idx: number) => {
+                                    const rowNumber = baseRows.length + idx + 1;
+                                    return (
+                                       <tr key={item.id || idx} className="border-b border-slate-200 border-dotted hover:bg-emerald-50/30 transition-colors">
+                                          <td colSpan={3} className="py-1.5 px-6">
+                                             <div className="flex items-center gap-2">
+                                                <span className="text-slate-600 font-extrabold text-xs">{rowNumber})</span>
+                                                <input
+                                                   type="text"
+                                                   value={item.descricao || ''}
+                                                   onChange={(e) => handleUpdateOutroCusto(item.id, 'descricao', e.target.value)}
+                                                   placeholder="Descrição do serviço ou custo adicional..."
+                                                   className="flex-1 max-w-md px-2.5 py-1 border border-slate-300 rounded-md font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                                />
+                                                <button
+                                                   type="button"
+                                                   onClick={() => handleRemoveOutroCusto(item.id)}
+                                                   className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                                                   title="Excluir linha"
+                                                >
+                                                   <Trash2 className="w-4 h-4" />
+                                                </button>
+                                             </div>
+                                          </td>
+                                          <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                                             <div className="flex items-center justify-end gap-1.5">
+                                                <span className="text-xs text-slate-500 font-extrabold">R$</span>
+                                                <input
+                                                   type="number"
+                                                   step="0.01"
+                                                   min="0"
+                                                   value={item.valor ?? 0}
+                                                   onChange={(e) => {
+                                                      const val = parseFloat(e.target.value) || 0;
+                                                      handleUpdateOutroCusto(item.id, 'valor', val);
+                                                   }}
+                                                   className="w-32 px-2.5 py-1 border border-slate-300 rounded-md text-right font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                                />
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    );
+                                 })}
+
+                                 {!isSpot && (
+                                    <tr className="border-b border-slate-200 bg-slate-50/60">
+                                       <td colSpan={4} className="py-2 px-6">
+                                          <button
+                                             type="button"
+                                             onClick={handleAddOutroCusto}
+                                             className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                                          >
+                                             <Plus className="w-3.5 h-3.5" />
+                                             <span>+ Adicionar nova linha no Montante "B" (sem limite)</span>
+                                          </button>
+                                       </td>
+                                    </tr>
+                                 )}
+                              </>
+                           );
                         })()}
 
                         <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
                            <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
                            <td className="py-2.5 px-6 text-right">
                               {formatCurrency(
-                                 resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) + 
-                                 proposta.insumos.materiais + 
-                                 (isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas) + 
-                                 proposta.insumos.descartaveis + 
-                                 (isSpot ? 0 : proposta.insumos.servicos)
+                                 (resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * (i.quantidade || 1)), 0) || 0) + 
+                                 (proposta.insumos.materiais || 0) + 
+                                 (isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : (proposta.insumos.maquinas || 0)) + 
+                                 (proposta.insumos.descartaveis || 0) + 
+                                 (isSpot ? 0 : (
+                                    Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
+                                       ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
+                                       : (proposta.insumos.servicos || 0)
+                                 ))
                               )}
                            </td>
                         </tr>
@@ -2834,15 +2931,37 @@ function PropostaEditor() {
                               {fc(applyCascata(proposta.insumos.descartaveis))}
                             </td>
                           </tr>
-                          <tr className="border-b border-slate-200 hover:bg-slate-50">
-                            <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
-                            <td className="px-6 py-2.5 font-semibold text-slate-700">
-                              {isSpot ? 'Equipamentos Locados' : `Serviços ${proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}`}
-                            </td>
-                            <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyCascata(isSpot ? totalMaquinasLocadas : proposta.insumos.servicos))}
-                            </td>
-                          </tr>
+                          {isSpot ? (
+                            <tr className="border-b border-slate-200 hover:bg-slate-50">
+                              <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
+                              <td className="px-6 py-2.5 font-semibold text-slate-700">Equipamentos Locados</td>
+                              <td className="px-6 py-2.5 text-right font-bold text-slate-800">
+                                {fc(applyCascata(totalMaquinasLocadas))}
+                              </td>
+                            </tr>
+                          ) : (
+                            (Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0) ? (
+                              proposta.insumos.outrosCustos.map((item: any, idx: number) => (
+                                <tr key={item.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
+                                  <td className="px-6 py-2.5 text-center font-bold text-slate-500">{5 + idx}</td>
+                                  <td className="px-6 py-2.5 font-semibold text-slate-700">{item.descricao || 'Custo / Serviço Adicional'}</td>
+                                  <td className="px-6 py-2.5 text-right font-bold text-slate-800">
+                                    {fc(applyCascata(Number(item.valor) || 0))}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : ((proposta.insumos?.servicos || 0) > 0 ? (
+                              <tr className="border-b border-slate-200 hover:bg-slate-50">
+                                <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
+                                <td className="px-6 py-2.5 font-semibold text-slate-700">
+                                  {proposta.insumos?.servicosDescricao ? `Serviços (${proposta.insumos.servicosDescricao})` : 'Serviços'}
+                                </td>
+                                <td className="px-6 py-2.5 text-right font-bold text-slate-800">
+                                  {fc(applyCascata(proposta.insumos.servicos))}
+                                </td>
+                              </tr>
+                            ) : null)
+                          )}
                         </tbody>
                         <tfoot>
                           <tr className="bg-[#0B2E24] text-white font-black">
@@ -2852,7 +2971,11 @@ function PropostaEditor() {
                                 Number(proposta.insumos.materiais || 0) + 
                                 Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas || 0) + 
                                 Number(proposta.insumos.descartaveis || 0) + 
-                                Number(isSpot ? 0 : proposta.insumos.servicos || 0)
+                                Number(isSpot ? 0 : (
+                                  Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
+                                    ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
+                                    : (proposta.insumos.servicos || 0)
+                                ))
                               ))}
                             </td>
                           </tr>

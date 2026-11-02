@@ -457,12 +457,21 @@ export async function saveProposta(data: any) {
       descartaveis: (inputInsumos && inputInsumos.descartaveis !== undefined)
         ? Number(inputInsumos.descartaveis || 0)
         : Number(previousInsumos.descartaveis || 0),
-      servicos: (inputInsumos && inputInsumos.servicos !== undefined)
-        ? Number(inputInsumos.servicos || 0)
-        : Number(previousInsumos.servicos || 0),
+      servicos: (() => {
+        if (inputInsumos && Array.isArray(inputInsumos.outrosCustos) && inputInsumos.outrosCustos.length > 0) {
+          return inputInsumos.outrosCustos.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0);
+        }
+        if (inputInsumos && inputInsumos.servicos !== undefined) {
+          return Number(inputInsumos.servicos || 0);
+        }
+        return Number(previousInsumos.servicos || 0);
+      })(),
       servicosDescricao: (inputInsumos && inputInsumos.servicosDescricao !== undefined)
         ? inputInsumos.servicosDescricao
         : (previousInsumos.servicosDescricao || ''),
+      outrosCustos: (inputInsumos && Array.isArray(inputInsumos.outrosCustos))
+        ? inputInsumos.outrosCustos
+        : (previousInsumos.outrosCustos || []),
       detalheMateriais: (inputInsumos && Array.isArray(inputInsumos.detalheMateriais))
         ? inputInsumos.detalheMateriais
         : (previousInsumos.detalheMateriais || []),
@@ -943,6 +952,9 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         descartaveis: meta.insumos?.descartaveis || 0,
         servicos: meta.insumos?.servicos || 0,
         servicosDescricao: meta.insumos?.servicosDescricao || '',
+        outrosCustos: Array.isArray(meta.insumos?.outrosCustos) 
+          ? meta.insumos.outrosCustos 
+          : (meta.insumos?.servicos ? [{ id: '1', descricao: meta.insumos?.servicosDescricao || 'Serviços Terceirizados', valor: meta.insumos?.servicos }] : []),
         detalheMateriais: meta.insumos?.detalheMateriais || [],
         detalheMaquinas: meta.insumos?.detalheMaquinas || [],
         detalheDescartaveis: meta.insumos?.detalheDescartaveis || []

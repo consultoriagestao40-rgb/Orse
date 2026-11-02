@@ -613,6 +613,20 @@ export default function FpvPdfDocument({
                     <td className="py-0.5 px-2 font-semibold">4) Descartáveis</td>
                     <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(proposta.insumos?.descartaveis || 0)}</td>
                   </tr>
+                  {/* Linhas dinâmicas adicionais */}
+                  {Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0 ? (
+                    proposta.insumos.outrosCustos.map((item: any, idx: number) => (
+                      <tr key={item.id || idx}>
+                        <td className="py-0.5 px-2 font-semibold">{5 + idx}) {item.descricao || 'Custo / Serviço Adicional'}</td>
+                        <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(Number(item.valor) || 0)}</td>
+                      </tr>
+                    ))
+                  ) : ((proposta.insumos?.servicos || 0) > 0 ? (
+                    <tr>
+                      <td className="py-0.5 px-2 font-semibold">5) {proposta.insumos?.servicosDescricao || 'Serviços'}</td>
+                      <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(proposta.insumos?.servicos || 0)}</td>
+                    </tr>
+                  ) : null)}
                   <tr className="bg-[#1B4D3E] text-white font-black text-[9px]">
                     <td className="py-0.5 px-2 uppercase text-right">Total Montante "B" (Insumos)</td>
                     <td className="py-0.5 px-2 text-right font-black">
@@ -620,7 +634,10 @@ export default function FpvPdfDocument({
                         (resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.ativos || 0) * (i.quantidade || 1)), 0) || 0) +
                         (proposta.insumos?.materiais || 0) +
                         (proposta.insumos?.maquinas || 0) +
-                        (proposta.insumos?.descartaveis || 0)
+                        (proposta.insumos?.descartaveis || 0) +
+                        (Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
+                          ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
+                          : (proposta.insumos?.servicos || 0))
                       )}
                     </td>
                   </tr>
@@ -717,7 +734,10 @@ export default function FpvPdfDocument({
                         (resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.ativos || 0) * (i.quantidade || 1)), 0) || 0) +
                         (proposta.insumos?.materiais || 0) +
                         (proposta.insumos?.maquinas || 0) +
-                        (proposta.insumos?.descartaveis || 0)
+                        (proposta.insumos?.descartaveis || 0) +
+                        (Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
+                          ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
+                          : (proposta.insumos?.servicos || 0))
                       )}
                     </td>
                   </tr>
