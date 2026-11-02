@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Building2, TrendingUp, ShieldCheck, UserCheck, 
   FileText, PieChart, Save, Plus, Trash2, ClipboardList, X,
-  Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
+  Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, Eye, RefreshCw, ArrowUpRight, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { calculateEnterprisePrice } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
@@ -13,7 +13,7 @@ import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
 import { createCliente, getClientes } from '@/app/clientes/actions';
 import { createProduto } from '@/app/produtos/actions';
-import { saveProposta, getPropostaCompleta, getLoggedUser, getProposalPageInitData } from '@/app/propostas/actions';
+import { saveProposta, getPropostaCompleta, getLoggedUser, getProposalPageInitData, logPropostaAction, getHistoricoProposta } from '@/app/propostas/actions';
 import { getTiposServico, getSegmentos, createTipoServico, createSegmento } from '@/app/admin/settings/actions';
 import { getEquipesTecnicas } from '@/app/admin/equipes-tecnicas/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -37,7 +37,8 @@ const TABS = [
   { id: 'descartaveis', label: '8. Descartáveis', icon: Trash },
   { id: 'extrato', label: '9. Extrato de Custos', icon: FileText },
   { id: 'resumo', label: '10. Resumo da Proposta', icon: ClipboardList },
-  { id: 'dre', label: '11. DRE Projeto', icon: PieChart }
+  { id: 'dre', label: '11. DRE Projeto', icon: PieChart },
+  { id: 'historico', label: '12. Histórico & Auditoria', icon: History }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -53,6 +54,24 @@ function PropostaEditor() {
   const [fpvExportMode, setFpvExportMode] = useState<string | null>(null);
   const [showFpvExportMenu, setShowFpvExportMenu] = useState(false);
   const [composicaoViewMode, setComposicaoViewMode] = useState<'BOTH' | 'UNIT' | 'TOTAL'>('BOTH');
+  const [historicoData, setHistoricoData] = useState<any>(null);
+  const [loadingHistorico, setLoadingHistorico] = useState(false);
+  const [filtroHistorico, setFiltroHistorico] = useState<'TODOS' | 'ACESSOS' | 'ALTERACOES' | 'IMPRESSOES_EXPORTACOES'>('TODOS');
+
+  const carregarHistorico = async () => {
+    if (!id) return;
+    setLoadingHistorico(true);
+    try {
+      const res = await getHistoricoProposta(id);
+      if (res?.success) {
+        setHistoricoData(res);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar histórico:', e);
+    } finally {
+      setLoadingHistorico(false);
+    }
+  };
 
   const handleExportFpv = (mode: 'ALL' | string) => {
     const numRaw = proposta?.cliente?.numeroProposta;
@@ -69,6 +88,9 @@ function PropostaEditor() {
       fileName = ("FPV - " + num + "-" + rev + " - " + clientName + " - " + tabName).toUpperCase();
     }
     
+    if (id) {
+      logPropostaAction(id, mode === 'ALL' ? 'EXPORT_PDF' : 'PRINT', { tela: mode });
+    }
     setFpvExportMode(mode);
     document.title = fileName;
     
@@ -503,6 +525,8 @@ function PropostaEditor() {
 
         if (id) {
           console.log('Proposta ID recebido:', id);
+          logPropostaAction(id, 'ACCESS', { tela: 'FPV' });
+          getHistoricoProposta(id).then(res => { if (res?.success) setHistoricoData(res); }).catch(() => {});
           if (fullData) {
             console.log('Proposta encontrada. Mapeando dados...');
             const clientObj = (clientesData || []).find((c: any) => c.id === fullData.clientId);
@@ -1118,6 +1142,7 @@ function PropostaEditor() {
         novaVersao 
       });
       if (res.success) {
+        carregarHistorico();
         const msg = novaVersao
           ? `Nova Revisão R${String(res.versao).padStart(2, '0')} salva com sucesso!`
           : `Proposta salva na mesma versão R${String(res.versao).padStart(2, '0')}.`;
@@ -1390,6 +1415,468 @@ function PropostaEditor() {
     }));
   };
 
+
+  const renderHistoricoTab = () => {
+    if (!id) {
+      return (
+        <div className="w-full bg-white border border-slate-200 rounded-xl p-12 text-center shadow-xs">
+          <div className="w-16 h-16 bg-emerald-50 text-[#1B4D3E] rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+            <History size={32} />
+          </div>
+          <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider mb-2">Trilha de Auditoria e Histórico da FPV</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto mb-6">
+            Esta é uma proposta nova em elaboração. Para ativar a auditoria completa de acessos, alterações, impressões, exportações e controle de versões, salve a FPV pela primeira vez.
+          </p>
+          <button 
+            type="button" 
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-sm transition-all"
+          >
+            <Save size={15} /> {saving ? 'Salvando...' : 'Salvar FPV Agora'}
+          </button>
+        </div>
+      );
+    }
+
+    const resumo = historicoData?.resumo || {
+      totalVersoes: 1,
+      versaoAtual: 1,
+      totalAcessos: 0,
+      totalImpressoes: 0,
+      totalExportacoes: 0,
+      totalAlteracoes: 0,
+      dataCriacao: new Date().toISOString(),
+      ultimaModificacao: new Date().toISOString()
+    };
+
+    const logs: any[] = historicoData?.logs || [];
+    const versoes: any[] = historicoData?.versoes || [];
+    const usuariosAcesso: any[] = historicoData?.usuariosAcesso || [];
+
+    const logsFiltrados = logs.filter(l => {
+      if (filtroHistorico === 'TODOS') return true;
+      if (filtroHistorico === 'ACESSOS') return l.action === 'ACCESS';
+      if (filtroHistorico === 'ALTERACOES') return ['CREATE', 'VERSION_SAVE', 'VERSION_UPDATE', 'STATUS_CHANGE', 'TRANSFER', 'SHARE', 'UNSHARE'].includes(l.action);
+      if (filtroHistorico === 'IMPRESSOES_EXPORTACOES') return ['PRINT', 'EXPORT_CSV', 'EXPORT_PDF'].includes(l.action);
+      return true;
+    });
+
+    const formatDataHora = (isoStr: string) => {
+      if (!isoStr) return '-';
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch {
+        return isoStr;
+      }
+    };
+
+    const getActionBadge = (action: string) => {
+      switch (action) {
+        case 'ACCESS':
+          return { label: 'Acesso à FPV', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: '👁️' };
+        case 'CREATE':
+          return { label: 'Proposta Criada', bg: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold', icon: '✨' };
+        case 'VERSION_SAVE':
+          return { label: 'Nova Versão Gerada', bg: 'bg-emerald-100 text-[#1B4D3E] border-emerald-300 font-bold', icon: '💾' };
+        case 'VERSION_UPDATE':
+          return { label: 'Versão Atualizada', bg: 'bg-teal-50 text-teal-700 border-teal-200', icon: '📝' };
+        case 'STATUS_CHANGE':
+          return { label: 'Status Alterado', bg: 'bg-amber-50 text-amber-800 border-amber-300', icon: '🔄' };
+        case 'PRINT':
+          return { label: 'Impressão Realizada', bg: 'bg-purple-50 text-purple-700 border-purple-200', icon: '🖨️' };
+        case 'EXPORT_CSV':
+          return { label: 'Exportação CSV', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: '📊' };
+        case 'EXPORT_PDF':
+          return { label: 'Exportação PDF', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: '📄' };
+        case 'SHARE':
+          return { label: 'Compartilhamento', bg: 'bg-cyan-50 text-cyan-700 border-cyan-200', icon: '👥' };
+        case 'TRANSFER':
+          return { label: 'Transferência de Dono', bg: 'bg-orange-50 text-orange-700 border-orange-200', icon: '🔁' };
+        default:
+          return { label: action, bg: 'bg-slate-100 text-slate-700 border-slate-300', icon: '📌' };
+      }
+    };
+
+    return (
+      <div className="w-full space-y-6">
+        
+        {/* CABEÇALHO DO HISTÓRICO */}
+        <div className="bg-white border border-[#1B4D3E]/20 shadow-sm rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-[#1B4D3E] border border-emerald-200 flex items-center justify-center shrink-0 shadow-xs">
+              <History size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Histórico & Auditoria da FPV</h2>
+                <span className="bg-[#1B4D3E] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {proposta?.cliente?.numeroProposta ? `FPV-${String(proposta.cliente.numeroProposta).padStart(3, '0')}` : 'FPV Ativa'}
+                </span>
+                <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                  v{resumo.versaoAtual}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Rastreabilidade de alterações de custos, acessos de colaboradores, impressões e exportações desta proposta.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={carregarHistorico}
+              disabled={loadingHistorico}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              title="Recarregar registros de auditoria"
+            >
+              <RefreshCw size={13} className={loadingHistorico ? 'animate-spin text-[#1B4D3E]' : 'text-slate-500'} />
+              <span>{loadingHistorico ? 'Atualizando...' : 'Atualizar Dados'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 CARDS RESUMO / KPIS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Versões */}
+          <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Versões Geradas</div>
+              <div className="text-2xl font-black text-slate-900 mt-1 flex items-baseline gap-2">
+                <span>{resumo.totalVersoes}</span>
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                  Ativa: v{resumo.versaoAtual}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Última: {formatDataHora(resumo.ultimaModificacao)}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-[#1B4D3E] flex items-center justify-center shrink-0 border border-emerald-100">
+              <ClipboardList size={20} />
+            </div>
+          </div>
+
+          {/* Card 2: Acessos */}
+          <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Acessos à FPV</div>
+              <div className="text-2xl font-black text-slate-900 mt-1 flex items-baseline gap-2">
+                <span>{resumo.totalAcessos}</span>
+                <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                  {usuariosAcesso.length} {usuariosAcesso.length === 1 ? 'usuário' : 'usuários'}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Visualizações registradas
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+              <Eye size={20} />
+            </div>
+          </div>
+
+          {/* Card 3: Impressões */}
+          <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Impressões</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">
+                {resumo.totalImpressoes}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Extratos e telas impressas
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 border border-purple-100">
+              <Printer size={20} />
+            </div>
+          </div>
+
+          {/* Card 4: Exportações */}
+          <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Exportações</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">
+                {resumo.totalExportacoes}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Downloads em CSV e PDFs
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-100">
+              <FileDown size={20} />
+            </div>
+          </div>
+
+        </div>
+
+        {/* PAINEL DIVIDIDO: USUÁRIOS QUE ACESSARAM & HISTÓRICO DE VERSÕES */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* TABELA DE USUÁRIOS QUE ACESSARAM */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-[#1B4D3E]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Usuários que Acessaram a FPV</h3>
+              </div>
+              <span className="text-[11px] font-bold text-slate-500">{usuariosAcesso.length} registrados</span>
+            </div>
+            
+            <div className="p-0 overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100/60 text-slate-500 text-[10px] uppercase font-bold tracking-wider border-b border-slate-200">
+                    <th className="py-2.5 px-4">Colaborador</th>
+                    <th className="py-2.5 px-4 text-center">Acessos</th>
+                    <th className="py-2.5 px-4 text-right">Último Acesso</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {usuariosAcesso.map((item, idx) => (
+                    <tr key={item.user.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          {item.user.avatarUrl ? (
+                            <img src={item.user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-emerald-100 text-[#1B4D3E] font-bold text-[10px] flex items-center justify-center border border-emerald-200">
+                              {(item.user.nome || 'U').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-bold text-slate-800">{item.user.nome || 'Usuário'}</div>
+                            <div className="text-[10px] text-slate-400">{item.user.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-block bg-blue-50 text-blue-700 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-blue-200">
+                          {item.totalAcessos}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium text-slate-600 text-[11px]">
+                        {formatDataHora(item.ultimoAcesso)}
+                      </td>
+                    </tr>
+                  ))}
+                  {usuariosAcesso.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="py-8 text-center text-slate-400 text-xs">
+                        Nenhum acesso registrado ainda.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABELA DE VERSÕES GERADAS */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+            <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ClipboardList size={16} className="text-[#1B4D3E]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Versões Geradas da FPV</h3>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                Total: {versoes.length}
+              </span>
+            </div>
+
+            <div className="p-0 overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100/60 text-slate-500 text-[10px] uppercase font-bold tracking-wider border-b border-slate-200">
+                    <th className="py-2.5 px-4">Versão</th>
+                    <th className="py-2.5 px-4 text-right">Faturamento Mensal</th>
+                    <th className="py-2.5 px-4 text-right">Custo Direto</th>
+                    <th className="py-2.5 px-4 text-right">Data de Geração</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {versoes.map((v, idx) => (
+                    <tr key={v.id || idx} className={`hover:bg-slate-50/80 transition-colors ${idx === 0 ? 'bg-emerald-50/30' : ''}`}>
+                      <td className="py-3 px-4 font-bold text-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-[#1B4D3E] text-white text-[10px] font-black px-2 py-0.5 rounded">
+                            v{v.versao}
+                          </span>
+                          {idx === 0 && (
+                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded uppercase">
+                              Atual
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-extrabold text-[#1B4D3E]">
+                        {formatCurrency(v.precoVenda || 0)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold text-slate-600">
+                        {formatCurrency(v.custoTotal || 0)}
+                      </td>
+                      <td className="py-3 px-4 text-right text-slate-500 text-[11px]">
+                        {formatDataHora(v.dataCriacao)}
+                      </td>
+                    </tr>
+                  ))}
+                  {versoes.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-400 text-xs">
+                        Nenhuma versão registrada no banco.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        {/* FEED / TRILHA COMPLETA DE AUDITORIA */}
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+          
+          {/* CABEÇALHO DO FEED COM FILTROS */}
+          <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Trilha Completa de Ações e Auditoria</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Histórico cronológico detalhado de todas as operações realizadas nesta FPV.</p>
+            </div>
+
+            {/* BOTÕES DE FILTRO */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { id: 'TODOS', label: 'Todas as Ações' },
+                { id: 'ACESSOS', label: '👁️ Acessos' },
+                { id: 'ALTERACOES', label: '✏️ Alterações & Versões' },
+                { id: 'IMPRESSOES_EXPORTACOES', label: '🖨️ Impressões & Exportações' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFiltroHistorico(f.id as any)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                    filtroHistorico === f.id
+                      ? 'bg-[#1B4D3E] text-white border-[#1B4D3E] shadow-xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* LISTA DO FEED */}
+          <div className="p-6">
+            <div className="relative pl-6 border-l-2 border-slate-200 space-y-6">
+              {logsFiltrados.map((log, idx) => {
+                const badge = getActionBadge(log.action);
+                const user = log.user || { nome: 'Usuário', email: '' };
+                const details = log.details || {};
+                
+                return (
+                  <div key={log.id || idx} className="relative group">
+                    {/* Marcador na linha */}
+                    <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white border-2 border-[#1B4D3E] flex items-center justify-center shadow-xs">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#1B4D3E]" />
+                    </div>
+
+                    <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 hover:border-slate-300 transition-all shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.bg}`}>
+                            <span>{badge.icon}</span>
+                            <span>{badge.label}</span>
+                          </span>
+                          <span className="text-xs font-bold text-slate-800">{user.nome}</span>
+                          {user.cargo && (
+                            <span className="text-[10px] text-slate-400 font-medium">({user.cargo})</span>
+                          )}
+                        </div>
+
+                        <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                          <Clock size={12} />
+                          <span>{formatDataHora(log.createdAt)}</span>
+                        </div>
+                      </div>
+
+                      {/* DETALHES DO LOG */}
+                      <div className="text-xs text-slate-600 mt-1 pl-1">
+                        {log.action === 'ACCESS' && (
+                          <span>Visualizou e consultou os dados da FPV no sistema.</span>
+                        )}
+                        {log.action === 'CREATE' && (
+                          <span className="font-semibold text-emerald-800">
+                            Criação inicial da proposta comercial no sistema (Versão 1).
+                          </span>
+                        )}
+                        {log.action === 'VERSION_SAVE' && (
+                          <span>
+                            Gerou e salvou nova versão oficial da proposta: <strong className="text-emerald-800">Versão {details.versao || ''}</strong>.
+                            {details.changelog && <span className="italic text-slate-500 block mt-0.5">"{details.changelog}"</span>}
+                          </span>
+                        )}
+                        {log.action === 'VERSION_UPDATE' && (
+                          <span>
+                            Atualizou os parâmetros da <strong className="text-teal-800">Versão {details.versao || ''}</strong>.
+                            {details.changelog && <span className="italic text-slate-500 block mt-0.5">"{details.changelog}"</span>}
+                          </span>
+                        )}
+                        {log.action === 'STATUS_CHANGE' && (
+                          <span>
+                            Alterou o status da proposta para <strong className="text-amber-800">{details.newStatus}</strong>.
+                          </span>
+                        )}
+                        {log.action === 'PRINT' && (
+                          <span>
+                            Disparou a impressão de relatório da FPV {details.tela ? `(Aba: ${details.tela})` : ''}.
+                          </span>
+                        )}
+                        {log.action === 'EXPORT_CSV' && (
+                          <span>
+                            Exportou a planilha de composição de custos em formato CSV {details.tela ? `(${details.tela})` : ''}.
+                          </span>
+                        )}
+                        {log.action === 'EXPORT_PDF' && (
+                          <span>
+                            Gerou e exportou documento da proposta em formato PDF {details.tela ? `(${details.tela})` : ''}.
+                          </span>
+                        )}
+                        {log.action === 'SHARE' && (
+                          <span>
+                            Compartilhou acesso da proposta com <strong>{details.sharedWithUserName || details.sharedWithUserId}</strong> ({details.role || 'PARTICIPANTE'}).
+                          </span>
+                        )}
+                        {log.action === 'TRANSFER' && (
+                          <span>
+                            Transferiu a titularidade da proposta de <strong>{details.fromUserName}</strong> para <strong>{details.toUserName}</strong>.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {logsFiltrados.length === 0 && (
+                <div className="py-12 text-center text-slate-400 text-xs">
+                  Nenhum registro de auditoria encontrado para o filtro selecionado.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    );
+  };
+
+
   const renderComposicaoMaoDeObra = () => {
     const colunasComposicao = proposta.equipe.map((p: any, idx: number) => {
       const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
@@ -1656,6 +2143,9 @@ function PropostaEditor() {
       addRow('Valor Total Mensal da Função', c => ({ unit: c.precoVendaTotal, total: c.precoVendaTotal }), { unit: consolidado.precoVendaTotal, total: consolidado.precoVendaTotal });
       addRow('Valor Total Anual da Função (12 Meses)', c => ({ unit: c.precoVendaAnual, total: c.precoVendaAnual }), { unit: consolidado.precoVendaAnual, total: consolidado.precoVendaAnual });
 
+      if (id) {
+        logPropostaAction(id, 'EXPORT_CSV', { tela: 'Composição Mão de Obra' });
+      }
       const csvContent = rows.map(r => r.join(sep)).join('\r\n');
       const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -2527,6 +3017,9 @@ function PropostaEditor() {
                                 return;
                              }
                              setActiveTab(tab.id);
+                             if (tab.id === "historico") {
+                                carregarHistorico();
+                             }
                           }} 
                           className={`
                              whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
@@ -4696,6 +5189,8 @@ function PropostaEditor() {
                   </div>
                );
             })()}
+
+            {activeTab === 'historico' && renderHistoricoTab()}
 
             {activeTab === 'comercial' && (
                <div className="space-y-8 animate-fadeIn">

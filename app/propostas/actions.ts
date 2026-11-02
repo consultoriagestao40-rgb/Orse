@@ -1552,4 +1552,138 @@ export async function getProposalPageInitData(propostaId?: string, versionId?: s
   }
 }
 
+export async function logPropostaAction(propostaId: string, action: string, details?: any) {
+  try {
+    if (!propostaId) return { success: false, error: 'PropostaId inválido' };
+
+    const proposta = await prisma.proposta.findUnique({
+      where: { id: propostaId },
+      select: { id: true, userId: true }
+    });
+    if (!proposta) return { success: false, error: 'Proposta não encontrada' };
+
+    const loggedUser = await getLoggedUser();
+    const effectiveUserId = loggedUser?.id || proposta.userId;
+
+    // Para evitar flooding de acessos sucessivos no mesmo minuto
+    if (action === 'ACCESS') {
+      const tresMinutosAtras = new Date(Date.now() - 3 * 60 * 1000);
+      const recentAccess = await prisma.auditLog.findFirst({
+        where: {
+          propostaId,
+          userId: effectiveUserId,
+          action: 'ACCESS',
+          createdAt: { gte: tresMinutosAtras }
+        }
+      });
+      if (recentAccess) {
+        return { success: true, debounced: true };
+      }
+    }
+
+    const log = await prisma.auditLog.create({
+      data: {
+        propostaId,
+        userId: effectiveUserId,
+        action,
+        details: details || {}
+      },
+      include: {
+        user: {
+          select: { id: true, nome: true, email: true, cargo: true, avatarUrl: true }
+        }
+      }
+    });
+
+    return { success: true, log };
+  } catch (error: any) {
+    console.error('Erro ao registrar log de auditoria da proposta:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getHistoricoProposta(propostaId: string) {
+  try {
+    if (!propostaId) return { success: false, error: 'PropostaId inválido' };
+
+    const proposta = await prisma.proposta.findUnique({
+      where: { id: propostaId },
+      include: {
+        user: { select: { id: true, nome: true, email: true, cargo: true, avatarUrl: true } },
+        client: { select: { id: true, nomeFantasia: true, razaoSocial: true, cnpj: true } },
+        versoes: {
+          orderBy: { versao: 'desc' },
+          select: {
+            id: true,
+            versao: true,
+            precoVenda: true,
+            custoTotal: true,
+            dataCriacao: true,
+            margens: true,
+            metadados: true
+          }
+        },
+        auditLogs: {
+          orderBy: { createdAt: 'desc' },
+          take: 200,
+          include: {
+            user: { select: { id: true, nome: true, email: true, cargo: true, avatarUrl: true } }
+          }
+        }
+      }
+    });
+
+    if (!proposta) return { success: false, error: 'Proposta não encontrada' };
+
+    const logs = proposta.auditLogs || [];
+    const totalAcessos = logs.filter(l => l.action === 'ACCESS').length;
+    const totalImpressoes = logs.filter(l => l.action === 'PRINT').length;
+    const totalExportacoes = logs.filter(l => l.action === 'EXPORT_CSV' || l.action === 'EXPORT_PDF').length;
+    const totalAlteracoes = logs.filter(l => ['CREATE', 'VERSION_SAVE', 'VERSION_UPDATE', 'STATUS_CHANGE', 'TRANSFER', 'SHARE'].includes(l.action)).length;
+
+    // Mapa consolidado de usuários que acessaram
+    const mapUsuarios: Record<string, { user: any; totalAcessos: number; ultimoAcesso: Date }> = {};
+    logs.forEach(l => {
+      const u = l.user;
+      if (u) {
+        if (!mapUsuarios[u.id]) {
+          mapUsuarios[u.id] = { user: u, totalAcessos: 0, ultimoAcesso: l.createdAt };
+        }
+        if (l.action === 'ACCESS') {
+          mapUsuarios[u.id].totalAcessos += 1;
+        }
+        if (new Date(l.createdAt) > new Date(mapUsuarios[u.id].ultimoAcesso)) {
+          mapUsuarios[u.id].ultimoAcesso = l.createdAt;
+        }
+      }
+    });
+
+    const usuariosAcesso = Object.values(mapUsuarios).sort((a, b) => b.totalAcessos - a.totalAcessos);
+
+    return JSON.parse(JSON.stringify({
+      success: true,
+      resumo: {
+        totalVersoes: proposta.versoes.length,
+        versaoAtual: proposta.versoes[0]?.versao || 1,
+        totalAcessos,
+        totalImpressoes,
+        totalExportacoes,
+        totalAlteracoes,
+        dataCriacao: proposta.createdAt,
+        ultimaModificacao: proposta.versoes[0]?.dataCriacao || proposta.createdAt,
+        autorOriginal: proposta.user,
+        statusAtual: proposta.status,
+        numero: proposta.numero
+      },
+      versoes: proposta.versoes,
+      usuariosAcesso,
+      logs
+    }));
+  } catch (error: any) {
+    console.error('Erro ao buscar histórico da proposta:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
 
