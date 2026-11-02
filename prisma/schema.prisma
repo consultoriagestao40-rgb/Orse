@@ -1324,3 +1324,79 @@ model PushSubscription {
   user      User     @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
+
+model SaasLead {
+  id              String         @id @default(cuid())
+  nome            String
+  empresa         String
+  email           String
+  telefone        String
+  cargo           String?
+  tamanhoEmpresa  String?        // ex: "1-10", "11-50", "51-200", "200+"
+  origem          String         @default("LP") // "LP", "WHATSAPP", "GOOGLE_ADS", "META_ADS", "INDICACAO"
+  status          String         @default("NOVO") // "NOVO", "QUALIFICADO", "DEMO_AGENDADA", "PROPOSTA_ENVIADA", "FECHADO", "PERDIDO"
+  valorMensal     Float?         @default(0)
+  valorSetup      Float?         @default(0)
+  notas           String?        @db.Text
+  tags            String?        // comma-separated tags
+  propostas       SaasProposta[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model SaasProposta {
+  id                  String     @id @default(cuid())
+  token               String     @unique @default(cuid())
+  leadId              String?
+  lead                SaasLead?  @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  empresaNome         String
+  cnpj                String?
+  contatoNome         String
+  contatoEmail        String
+  contatoTelefone     String
+  modulos             String     @db.Text // JSON array of modules
+  plano               String     @default("MENSAL") // "MENSAL", "SEMESTRAL", "ANUAL"
+  valorMensal         Float      @default(0)
+  valorSetup          Float      @default(0)
+  descontoSetup       Float      @default(0)
+  maxUsuarios         Int        @default(5)
+  condicoesEspeciais  String?    @db.Text
+  status              String     @default("ENVIADA") // "ENVIADA", "VISUALIZADA", "ASSINADA", "PAGA", "CANCELADA"
+  assinadoEm          DateTime?
+  assinadoPorNome     String?
+  assinadoPorCpf      String?
+  assinadoPorIp       String?
+  asaasPaymentId      String?
+  asaasPixQrCode      String?    @db.Text
+  asaasPixCopiaECola  String?    @db.Text
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
+
+model TrafficKeyword {
+  id                String    @id @default(cuid())
+  termo             String    @unique
+  origem            String    @default("GOOGLE_ADS")
+  cliques           Int       @default(0)
+  impressoes        Int       @default(0)
+  custoTotal        Float     @default(0)
+  conversoes        Int       @default(0)
+  status            String    @default("ATIVA") // "ATIVA", "PAUSADA", "NEGATIVADA"
+  motivoNegativacao String?
+  negativadaEm      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model TrafficCompetitor {
+  id              String   @id @default(cuid())
+  dominio         String   @unique
+  nomeEmpresa     String
+  impressoesShare Float    @default(0) // % de impressões no leilão
+  sobreposicao    Float    @default(0) // % de sobreposição
+  posicaoSuperior Float    @default(0) // % topo da página
+  lanceEstimado   Float    @default(0) // CPC médio estimado
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+

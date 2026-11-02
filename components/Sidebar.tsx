@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers, UserCheck, Building2, CreditCard } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, BarChart3, Sliders, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, XCircle, Smartphone, MessageCircle, MessageSquare, UserCog, UserPlus, Archive, Check, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck, Paperclip, RefreshCw, Mic, Trash, Download, Brain, Phone, Edit2, Plus, GripVertical, Link, Layers, UserCheck, Building2, CreditCard } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -1329,9 +1329,10 @@ const Sidebar = () => {
     { icon: Link, label: 'Integração ERPFlex', href: '/integracoes/erpflex', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Layers, label: 'Gestão de Módulos', href: '/admin/modulos', roles: ['SUPER_ADMIN'] },
     { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
+    { icon: Target, label: 'Comercial & Tráfego SaaS', href: '/admin/saas-crm', roles: ['SUPER_ADMIN'] },
   ];
 
-  const isSaaSArea = pathname.startsWith('/admin/empresas') || pathname.startsWith('/admin/modulos');
+  const isSaaSArea = pathname.startsWith('/admin/empresas') || pathname.startsWith('/admin/modulos') || pathname.startsWith('/admin/saas-crm');
   const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
   const isPlatformAccountGlobally = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
   const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && !isPlatformAccountGlobally;
@@ -1438,6 +1439,10 @@ const Sidebar = () => {
   const saasNavItems = isPlatformAccountGlobally
     ? [
         { icon: Building2, label: 'Inquilinos SaaS', href: '/admin/empresas?tab=empresas' },
+        { icon: Target, label: 'CRM de Vendas SmartBid', href: '/admin/saas-crm?tab=crm' },
+        { icon: Layers, label: 'Propostas SmartBid (CPQ)', href: '/admin/saas-crm?tab=propostas' },
+        { icon: BarChart3, label: 'Tráfego & Métricas SaaS', href: '/admin/saas-crm?tab=trafego' },
+        { icon: Sliders, label: 'Palavras-Chave & Leilão', href: '/admin/saas-crm?tab=palavras' },
         { icon: CreditCard, label: 'Faturamento & Cobranças', href: '/admin/empresas?tab=faturamento' },
         { icon: Mail, label: 'E-mail do Sistema (SMTP)', href: '/admin/empresas?tab=smtp' },
         { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
@@ -1445,6 +1450,10 @@ const Sidebar = () => {
     : [
         { icon: Home, label: 'Voltar ao CRM', href: '/' },
         { icon: Building2, label: 'Inquilinos SaaS', href: '/admin/empresas?tab=empresas' },
+        { icon: Target, label: 'CRM de Vendas SmartBid', href: '/admin/saas-crm?tab=crm' },
+        { icon: Layers, label: 'Propostas SmartBid (CPQ)', href: '/admin/saas-crm?tab=propostas' },
+        { icon: BarChart3, label: 'Tráfego & Métricas SaaS', href: '/admin/saas-crm?tab=trafego' },
+        { icon: Sliders, label: 'Palavras-Chave & Leilão', href: '/admin/saas-crm?tab=palavras' },
         { icon: CreditCard, label: 'Faturamento & Cobranças', href: '/admin/empresas?tab=faturamento' },
         { icon: Mail, label: 'E-mail do Sistema (SMTP)', href: '/admin/empresas?tab=smtp' },
         { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
