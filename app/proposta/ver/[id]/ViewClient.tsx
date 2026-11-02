@@ -192,11 +192,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const [videoCompleted, setVideoCompleted] = useState(false);
 
   // Slides Nativos da Apresentação
-  const rawSlides: string[] = doc.configApresentacao?.slidesList || [];
-  const defaultJvsSlides = doc.id === 'cmtlv1jkb00000agmpwk56wrw'
-    ? Array.from({ length: 14 }, (_, i) => `/slides/cmtlv1jkb00000agmpwk56wrw/${i + 1}.png`)
-    : [];
-  const slidesList = rawSlides.length > 0 ? rawSlides : defaultJvsSlides;
+  const slidesList: string[] = doc.configApresentacao?.slidesList || [];
   const hasNativeSlides = slidesList.length > 0;
   const [nativeSlideIndex, setNativeSlideIndex] = useState(0);
   const isLastNativeSlide = nativeSlideIndex >= slidesList.length - 1;
