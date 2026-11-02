@@ -203,9 +203,9 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
 
   // Precarregamento dos slides para troca instantânea sem flash
   useEffect(() => {
-    if (slidesList.length > 0 && typeof window !== 'undefined') {
+    if (slidesList.length > 0 && typeof window !== 'undefined' && typeof window.Image === 'function') {
       slidesList.forEach((url) => {
-        const img = new Image();
+        const img = new window.Image();
         img.src = url;
       });
     }
