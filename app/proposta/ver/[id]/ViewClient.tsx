@@ -191,7 +191,42 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const [presentationCompleted, setPresentationCompleted] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
 
-  // Controle de Apresentação e Vídeo
+  // Slides Nativos da Apresentação
+  const rawSlides: string[] = doc.configApresentacao?.slidesList || [];
+  const defaultJvsSlides = doc.id === 'cmtlv1jkb00000agmpwk56wrw'
+    ? Array.from({ length: 14 }, (_, i) => `/slides/cmtlv1jkb00000agmpwk56wrw/${i + 1}.png`)
+    : [];
+  const slidesList = rawSlides.length > 0 ? rawSlides : defaultJvsSlides;
+  const hasNativeSlides = slidesList.length > 0;
+  const [nativeSlideIndex, setNativeSlideIndex] = useState(0);
+  const isLastNativeSlide = nativeSlideIndex >= slidesList.length - 1;
+
+  // Precarregamento dos slides para troca instantânea sem flash
+  useEffect(() => {
+    if (slidesList.length > 0 && typeof window !== 'undefined') {
+      slidesList.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+      });
+    }
+  }, [slidesList]);
+
+  // Teclas direcionais para navegação dos slides nativos
+  useEffect(() => {
+    if (activeClientTab === 'apresentacao' && hasNativeSlides) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+          e.preventDefault();
+          setNativeSlideIndex((prev) => Math.min(slidesList.length - 1, prev + 1));
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          setNativeSlideIndex((prev) => Math.max(0, prev - 1));
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [activeClientTab, hasNativeSlides, slidesList.length]);
 
   // Controle de Tempo e Últimos 10 Segundos do Vídeo
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
@@ -761,8 +796,10 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const documentosList = doc.configApresentacao?.documentosList || [];
   const faqList = doc.configApresentacao?.faqList || [];
 
+  const hasApresentacao = hasNativeSlides || hasCanva;
+
   const navItems = [
-    { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasCanva },
+    { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasApresentacao },
     { id: 'proposta', label: '2. Proposta Comercial (A4)', icon: FileText, show: tabsConfig.proposta },
     { id: 'fpv', label: '3. Planilhas FPV Detalhada', icon: Calculator, show: tabsConfig.fpv && !!fullProposta },
     { id: 'minuta', label: '4. Minuta de Contrato', icon: BookOpen, show: tabsConfig.minuta && !!doc.configApresentacao?.clientTabs?.minutaTemplateId },
@@ -779,11 +816,11 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
       if (requiresVideo && !videoCompleted && tabsConfig.video && doc.configApresentacao?.videoUrl) {
         return 'video';
       }
-      if (requiresPres && !presentationCompleted && tabsConfig.apresentacao && hasCanva) {
+      if (requiresPres && !presentationCompleted && tabsConfig.apresentacao && hasApresentacao) {
         return 'apresentacao';
       }
     }
-    if (tabsConfig.apresentacao && hasCanva) return 'apresentacao';
+    if (tabsConfig.apresentacao && hasApresentacao) return 'apresentacao';
     if (tabsConfig.proposta) return 'proposta';
     if (tabsConfig.fpv && fullProposta) return 'fpv';
     if (tabsConfig.minuta && doc.configApresentacao?.clientTabs?.minutaTemplateId) return 'minuta';
@@ -1392,58 +1429,152 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
           mobileMenuOpen ? 'hidden' : 'block'
         } md:block`}>
 
-          {/* 1. ABA: APRESENTAÇÃO CANVA */}
-          {activeClientTab === 'apresentacao' && hasCanva && (
+          {/* 1. ABA: APRESENTAÇÃO DE SLIDES */}
+          {activeClientTab === 'apresentacao' && hasApresentacao && (
             <div className="space-y-6 animate-fadeIn print:hidden">
 
-              {/* Iframe 16:9 */}
-              <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 shadow-emerald-950/5">
-                <iframe
-                  src={canvaUrl}
-                  loading="lazy"
-                  className="absolute inset-0 w-full h-full border-none p-0 m-0"
-                  allowFullScreen
-                  allow="fullscreen"
-                />
-              </div>
+              {hasNativeSlides ? (
+                /* Player Nativo de Slides (16:9 Widescreen) */
+                <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 select-none group">
+                  {/* Imagem do Slide em Alta Definição */}
+                  <img
+                    src={slidesList[nativeSlideIndex]}
+                    alt={`Slide ${nativeSlideIndex + 1}`}
+                    className="w-full h-full object-contain pointer-events-none transition-all duration-200"
+                  />
+
+                  {/* Zonas de clique para navegação intuitiva */}
+                  <div 
+                    className="absolute inset-y-0 left-0 w-1/4 cursor-pointer z-10" 
+                    onClick={() => setNativeSlideIndex(prev => Math.max(0, prev - 1))}
+                    title="Slide anterior (←)"
+                  />
+                  <div 
+                    className="absolute inset-y-0 right-0 w-3/4 cursor-pointer z-10" 
+                    onClick={() => setNativeSlideIndex(prev => Math.min(slidesList.length - 1, prev + 1))}
+                    title="Próximo slide (→)"
+                  />
+
+                  {/* Botão Anterior */}
+                  {nativeSlideIndex > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setNativeSlideIndex(prev => Math.max(0, prev - 1));
+                      }}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer shadow-lg border border-white/10"
+                      title="Slide Anterior (←)"
+                    >
+                      <ChevronLeft size={28} />
+                    </button>
+                  )}
+
+                  {/* Botão Próximo */}
+                  {!isLastNativeSlide && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setNativeSlideIndex(prev => Math.min(slidesList.length - 1, prev + 1));
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-90 hover:opacity-100 hover:scale-105 cursor-pointer shadow-lg border border-white/10 animate-pulse"
+                      title="Próximo Slide (→)"
+                    >
+                      <ChevronRight size={28} />
+                    </button>
+                  )}
+
+                  {/* Indicador Flutuante do Slide Atual */}
+                  <div className="absolute top-4 right-4 z-20 bg-black/70 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-mono font-bold border border-white/10 shadow-lg flex items-center gap-2">
+                    <span className="text-emerald-400 font-black">{nativeSlideIndex + 1}</span>
+                    <span className="text-slate-400">/</span>
+                    <span>{slidesList.length}</span>
+                  </div>
+
+                  {/* Barra de Progresso no Rodapé do Player */}
+                  <div className="absolute bottom-0 inset-x-0 h-1.5 bg-black/50 z-20">
+                    <div 
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${Math.round(((nativeSlideIndex + 1) / slidesList.length) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* Fallback para Iframe do Canva */
+                <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 shadow-emerald-950/5">
+                  <iframe
+                    src={canvaUrl}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full border-none p-0 m-0"
+                    allowFullScreen
+                    allow="fullscreen"
+                  />
+                </div>
+              )}
 
               {/* Barra de Ação da Apresentação */}
               {requiresPres && (
                 <div className="bg-white border border-slate-200/90 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-[#1B4D3E] border border-slate-200'}`}>
-                      {presentationCompleted ? <CheckCircle2 size={22} /> : <Presentation size={22} />}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted || (hasNativeSlides && isLastNativeSlide) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                      {presentationCompleted || (hasNativeSlides && isLastNativeSlide) ? <CheckCircle2 size={22} /> : <Lock size={20} />}
                     </div>
                     <div>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                        {presentationCompleted 
-                          ? 'Apresentação Concluída' 
-                          : 'Apresentação Institucional'}
-                      </h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                          {presentationCompleted 
+                            ? 'Apresentação Concluída' 
+                            : (hasNativeSlides && isLastNativeSlide)
+                              ? '🎉 Apresentação Concluída!' 
+                              : hasNativeSlides 
+                                ? `Navegação dos Slides — ${nativeSlideIndex + 1} de ${slidesList.length}`
+                                : 'Apresentação Institucional'}
+                        </h4>
+                        {hasNativeSlides && isLastNativeSlide && !presentationCompleted && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
+                            ✓ Pronto para Liberar
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-slate-500 font-medium leading-snug">
                         {presentationCompleted 
                           ? 'A proposta comercial (A4), planilhas FPV e minutas contratuais estão liberadas no menu.'
-                          : 'Navegue pelos slides diretamente pelos botões e setas do Canva acima.'}
+                          : (hasNativeSlides && isLastNativeSlide)
+                            ? 'Você visualizou todos os slides! Clique no botão verde para acessar a proposta comercial.'
+                            : hasNativeSlides
+                              ? `Avance até o slide final (${slidesList.length}) usando as setas da tela ou do teclado para liberar a proposta.`
+                              : 'Navegue pelos slides diretamente pelos botões e setas do Canva acima.'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                     {!presentationCompleted ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPresentationCompleted(true);
-                          if (typeof window !== 'undefined') {
-                            localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
-                          }
-                          showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
-                          setActiveClientTab('proposta');
-                        }}
-                        className="w-full sm:w-auto px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle2 size={16} /> Concluir Apresentação e Acessar Proposta
-                      </button>
+                      (!hasNativeSlides || isLastNativeSlide) ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPresentationCompleted(true);
+                            if (typeof window !== 'undefined') {
+                              localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
+                            }
+                            showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                            setActiveClientTab('proposta');
+                          }}
+                          className="w-full sm:w-auto px-6 py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-2 animate-bounce animate-duration-1000"
+                        >
+                          <CheckCircle2 size={16} /> Concluir Apresentação e Acessar Proposta
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 select-none opacity-85"
+                          title="Avance até o slide final para liberar"
+                        >
+                          <Lock size={14} className="text-slate-400" /> Avance até o slide {slidesList.length} para liberar
+                        </button>
+                      )
                     ) : (
                       <button
                         type="button"
