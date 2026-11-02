@@ -615,7 +615,8 @@ export async function saveProposta(data: any) {
         configFinanceira: (item.cargo || item.configFinanceira || {}) as any,
         ativosConfig: {
           ...(item.ativosConfig || {}),
-          parametrosPosto: item.parametrosPosto
+          parametrosPosto: item.parametrosPosto,
+          identificacao: item.identificacao || ''
         } as any,
         custoDireto: itemRes?.detalhes?.remuneracao || item.custoDireto || 0,
         custoTotalItem: itemRes?.custoTotal || item.custoTotalItem || 0,
@@ -1001,6 +1002,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         return {
           id: i.id,
           nomeCargo: i.nomeCargo,
+          identificacao: itemAtivosConfig.identificacao || '',
           quantidade: i.quantidade,
           escala: i.escala,
           cargo: i.configFinanceira,

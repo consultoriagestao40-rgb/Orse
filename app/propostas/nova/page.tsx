@@ -1456,6 +1456,7 @@ function PropostaEditor() {
         id: p.id,
         indice: idx + 1,
         cargoNome: p.nomeCargo || `Função ${idx + 1}`,
+        identificacao: p.identificacao || '',
         escala: p.escala || '44h',
         quantidade: qtd,
         temPeric,
@@ -1565,7 +1566,8 @@ function PropostaEditor() {
 
       colunasComposicao.forEach(c => {
         h1.push(`FUNÇÃO ${c.indice}`, `FUNÇÃO ${c.indice}`);
-        h2.push(c.cargoNome, c.cargoNome);
+        const labelNome = c.identificacao ? `${c.cargoNome} (${c.identificacao})` : c.cargoNome;
+        h2.push(labelNome, labelNome);
         h3.push(`${c.quantidade} posto(s)`, `${c.quantidade} posto(s)`);
       });
       h1.push('TOTAL CONTRATO', 'TOTAL CONTRATO');
@@ -1728,7 +1730,12 @@ function PropostaEditor() {
                 {colunasComposicao.map((c) => (
                   <th key={`h-${c.id}`} colSpan={2} className="py-2 px-3 text-center border-l border-slate-300">
                     <div className="font-extrabold text-slate-800 text-xs">{c.cargoNome}</div>
-                    <div className="text-[10px] text-slate-500 font-semibold normal-case">
+                    {c.identificacao && (
+                      <div className="text-[10px] text-[#1B4D3E] font-bold tracking-wider mt-0.5 bg-emerald-50 border border-emerald-200/80 rounded px-1.5 py-0.5 inline-block">
+                        {c.identificacao}
+                      </div>
+                    )}
+                    <div className="text-[10px] text-slate-500 font-semibold normal-case mt-0.5">
                       {c.quantidade} {c.quantidade > 1 ? 'postos' : 'posto'} ({c.escala})
                     </div>
                   </th>
@@ -2978,6 +2985,7 @@ function PropostaEditor() {
                                   escala: 'SPOT', 
                                   cargo: {}, 
                                   cctBase: {},
+                                  identificacao: '',
                                   parametrosPosto: {
                                      diasTrabalhadosMes: 22,
                                      periculosidade: false,
@@ -3160,6 +3168,7 @@ function PropostaEditor() {
                               <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                                  <th className="px-6 py-3 w-28 text-center">Qtd.</th>
                                  <th className="px-6 py-3">Função Vinculada à CCT</th>
+                                 <th className="px-6 py-3">Identificação / Posto</th>
                                  <th className="px-6 py-3">Escala</th>
                                  <th className="px-6 py-3 text-right">Ação</th>
                               </tr>
@@ -3226,6 +3235,15 @@ function PropostaEditor() {
                                                 }
                                                 return opts;
                                              })()}
+                                          />
+                                       </td>
+                                       <td className="px-6 py-4">
+                                          <input
+                                             type="text"
+                                             placeholder="Ex: Portaria Principal, Bloco A..."
+                                             className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all shadow-xs"
+                                             value={p.identificacao || ''}
+                                             onChange={(e) => updatePosto(p.id, 'identificacao', e.target.value)}
                                           />
                                        </td>
                                        <td className="px-6 py-4">
@@ -3300,7 +3318,7 @@ function PropostaEditor() {
                               })}
                               {proposta.equipe.length === 0 && (
                                  <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-sm">
                                        Nenhum posto adicionado. Clique em "Inserir Posto" para começar.
                                     </td>
                                  </tr>
@@ -3352,7 +3370,14 @@ function PropostaEditor() {
                            const totalLinha = isSpotItem ? custoTotal : (custoTotal * qty);
                            return (
                               <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50">
-                                 <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
+                                 <td className="py-1.5 px-6 font-semibold text-slate-800">
+                                    <div>{p.nomeCargo}</div>
+                                    {p.identificacao && (
+                                       <span className="text-[10px] font-normal text-slate-500 italic block">
+                                          {p.identificacao}
+                                       </span>
+                                    )}
+                                 </td>
                                  <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
                                  {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
                                  <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
