@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import dynamic from 'next/dynamic';
-import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMinutaTemplateById, registrarAjusteAction } from './actions';
+import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMinutaTemplateById, registrarAjusteAction, solicitarCodigoAcessoEmailAction, validarCodigoAcessoEmailAction, validarIdentificacaoCnpjOrPinAction } from './actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
   UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle,
-  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle, MessageSquare, FileSpreadsheet, Lock
+  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle, MessageSquare, FileSpreadsheet, Lock,
+  Building2, KeyRound, Send, ArrowRight, ShieldAlert, Sparkles, Check, Key, Loader2
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -181,16 +182,37 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
 
   // Regras de Bloqueio Condicional e Rastreio Nominal
   const regrasAcesso = doc.configApresentacao?.regrasAcesso || {};
+  // Exigência de validação de acesso: padrão ativo para qualquer cliente externo
+  const exigirIdentificacao = regrasAcesso.exigirIdentificacao !== false;
   const requiresPres = !isInternalUser && Boolean(regrasAcesso.obrigarApresentacao && doc.configApresentacao?.clientTabs?.apresentacao !== false);
   const requiresVideo = !isInternalUser && Boolean(regrasAcesso.obrigarVideo && doc.configApresentacao?.clientTabs?.video === true);
 
   const [presentationCompleted, setPresentationCompleted] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
 
+  // Status de Validação e Identificação do Cliente
+  const [isAccessVerified, setIsAccessVerified] = useState(false);
+  const [showSimulatedWelcome, setShowSimulatedWelcome] = useState(false);
   const [clientIdent, setClientIdent] = useState<{ nome: string; cnpjOuEmail: string } | null>(null);
-  const [identNomeInput, setIdentNomeInput] = useState('');
-  const [identCnpjEmailInput, setIdentCnpjEmailInput] = useState('');
-  const [identError, setIdentError] = useState('');
+
+  // Estados dos Formulários da Tela de Boas-Vindas
+  const [valTab, setValTab] = useState<'cnpj' | 'email'>('cnpj');
+  
+  // Aba CNPJ / PIN
+  const [valNome, setValNome] = useState('');
+  const [valCnpjPin, setValCnpjPin] = useState('');
+  const [valLoading, setValLoading] = useState(false);
+  const [valError, setValError] = useState('');
+
+  // Aba E-mail OTP
+  const [emailNome, setEmailNome] = useState('');
+  const [emailDestino, setEmailDestino] = useState('');
+  const [emailStep, setEmailStep] = useState<'request' | 'verify'>('request');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccessMsg, setOtpSuccessMsg] = useState('');
+  const [simulatedCodeTip, setSimulatedCodeTip] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -200,11 +222,18 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
       if (localStorage.getItem(`sb_video_done_${doc.id}`)) {
         setVideoCompleted(true);
       }
+      if (localStorage.getItem(`sb_access_verified_${doc.id}`) === 'true') {
+        setIsAccessVerified(true);
+      }
       const savedIdent = localStorage.getItem(`sb_client_ident_${doc.id}`);
       if (savedIdent) {
         try {
           const parsed = JSON.parse(savedIdent);
-          if (parsed?.nome) setClientIdent(parsed);
+          if (parsed?.nome) {
+            setClientIdent(parsed);
+            setValNome(parsed.nome);
+            setEmailNome(parsed.nome);
+          }
         } catch {}
       }
     }
@@ -775,8 +804,8 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
         return;
       }
       
-      // Se a proposta exigir identificação e o cliente ainda não tiver preenchido, aguarda
-      if (regrasAcesso.exigirIdentificacao && !clientIdent) {
+      // Se a proposta exigir validação e o cliente ainda não tiver validado, aguarda a confirmação
+      if (exigirIdentificacao && (!isAccessVerified || !clientIdent)) {
         return;
       }
 
@@ -784,7 +813,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
         console.error('Erro ao registrar visualização da aba:', err)
       );
     }
-  }, [activeClientTab, doc?.id, isInternalUser, clientIdent]);
+  }, [activeClientTab, doc?.id, isInternalUser, clientIdent, isAccessVerified, exigirIdentificacao]);
 
   // -------------------------------------------------------------
   // CONTROLE DAS PLANILHAS FINANCEIRAS FPV DETALHADAS (ABAS 02 A 09)
@@ -951,9 +980,19 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
               <span className="text-sm">👁️</span> 
               <span>MODO PRÉ-VISUALIZAÇÃO DO VENDEDOR — Seus cliques não são contabilizados como do cliente</span>
             </span>
-            <span className="bg-amber-950/20 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-widest">
-              USO INTERNO
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSimulatedWelcome(true)}
+                className="bg-amber-950 text-white hover:bg-amber-900 px-3 py-1 rounded-lg text-[10px] font-extrabold tracking-wider transition-all cursor-pointer shadow-sm active:scale-95"
+                title="Visualizar a tela de boas-vindas e confirmação exatamente como o cliente verá"
+              >
+                👁️ Testar Tela de Boas-Vindas
+              </button>
+              <span className="bg-amber-950/20 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-widest">
+                USO INTERNO
+              </span>
+            </div>
           </div>
         )}
         <div className="min-h-20 flex items-center justify-between px-4 sm:px-6 py-2 sm:py-0">
@@ -3220,98 +3259,429 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
         </div>
       )}
 
-      {/* MODAL DE IDENTIFICAÇÃO DO CLIENTE (PORTÃO DE ACESSO NOMINAL) */}
-      {!isInternalUser && regrasAcesso.exigirIdentificacao && !clientIdent && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100000] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200 text-slate-800 font-sans">
+      {/* ============================================================== */}
+      {/* TELA DE BOAS-VINDAS & VALIDAÇÃO DE ACESSO DO CLIENTE (PORTAL)    */}
+      {/* ============================================================== */}
+      {((!isInternalUser && exigirIdentificacao && !isAccessVerified) || showSimulatedWelcome) && (
+        <div className="fixed inset-0 z-[999999] bg-gradient-to-br from-slate-950 via-[#0a1a15] to-slate-950 flex flex-col justify-center items-center p-4 sm:p-6 overflow-y-auto font-sans select-none animate-in fade-in duration-300">
+          
+          {/* Luzes e Efeitos de Fundo Premium */}
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1B4D3E]/25 rounded-full blur-[140px] pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+          {/* Botão de Fechar Modo Simulação (para o Vendedor) */}
+          {showSimulatedWelcome && (
+            <div className="fixed top-4 right-4 z-[1000000]">
+              <button
+                onClick={() => setShowSimulatedWelcome(false)}
+                className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                <X size={16} /> Fechar Simulação
+              </button>
+            </div>
+          )}
+
+          {/* Card Central de Boas-Vindas */}
+          <div className="relative z-10 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-3xl sm:rounded-[32px] shadow-2xl max-w-lg w-full overflow-hidden text-slate-800 my-auto animate-in zoom-in-95 duration-300">
             
-            <div className="bg-[#1B4D3E] px-6 py-6 text-white text-center relative">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto mb-3 shadow-inner">
-                <ShieldCheck size={24} className="text-white" />
+            {/* Header da Empresa Emissora */}
+            <div className="bg-[#1B4D3E] text-white p-6 sm:p-8 text-center relative overflow-hidden">
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+              
+              {/* Logo / Badge */}
+              <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white/10 border border-white/20 shadow-inner mb-3">
+                <ShieldCheck size={28} className="text-white" />
               </div>
-              <h3 className="text-sm font-black uppercase tracking-wider">
-                Proposta Comercial Interativa
-              </h3>
-              <p className="text-[10px] text-white/70 font-semibold uppercase tracking-widest mt-1">
-                {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Acesso Exclusivo'}
-              </p>
+
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block">
+                  {doc.empresaEmissora?.nomeFantasia || 'SmartBid Propostas'}
+                </span>
+                <h2 className="text-lg sm:text-xl font-black uppercase tracking-tight">
+                  Proposta Comercial Interativa
+                </h2>
+                <div className="inline-block bg-black/20 border border-white/15 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider mt-1">
+                  FPV-{String(doc.proposta?.numero || '000').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
+                </div>
+              </div>
             </div>
 
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!identNomeInput.trim()) {
-                  setIdentError('Por favor, informe seu nome completo.');
-                  return;
-                }
-                if (!identCnpjEmailInput.trim()) {
-                  setIdentError('Por favor, informe o CNPJ ou E-mail corporativo da empresa.');
-                  return;
-                }
-                setIdentError('');
-                const identData = {
-                  nome: identNomeInput.trim(),
-                  cnpjOuEmail: identCnpjEmailInput.trim()
-                };
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem(`sb_client_ident_${doc.id}`, JSON.stringify(identData));
-                }
-                setClientIdent(identData);
-                // Registra imediatamente a visualização com os dados do cliente
-                trackDocumentoView(doc.id, activeClientTab, identData).catch(() => {});
-              }}
-              className="p-6 md:p-8 space-y-4"
-            >
-              <div className="text-center space-y-1 mb-2">
-                <p className="text-xs text-slate-600 font-bold">
-                  Identifique-se para visualizar a proposta preparada para a sua empresa.
+            {/* Conteúdo & Boas-Vindas */}
+            <div className="p-6 sm:p-8 space-y-6">
+              
+              {/* Destinatário da Proposta */}
+              <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl text-center space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">
+                  Proposta desenvolvida exclusivamente para:
+                </span>
+                <p className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-tight leading-snug">
+                  {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Cliente'}
                 </p>
-                <p className="text-[10px] text-slate-400 font-medium">
-                  Seus dados garantem o registro formal e seguro do seu atendimento.
+                <p className="text-[10px] text-slate-500 font-medium leading-relaxed pt-1">
+                  Para sua segurança, conformidade e confidencialidade, confirme seus dados para acessar.
                 </p>
               </div>
 
-              {identError && (
-                <div className="bg-red-50 border border-red-200 text-red-650 px-3 py-2 rounded-xl text-xs font-bold text-center">
-                  {identError}
+              {/* Seletor de Abas de Validação */}
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1.5 border border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={() => { setValTab('cnpj'); setValError(''); }}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    valTab === 'cnpj'
+                      ? 'bg-white text-[#1B4D3E] shadow-sm border border-slate-200/60'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Building2 size={14} className={valTab === 'cnpj' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                  <span>CNPJ ou Código</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setValTab('email'); setOtpError(''); }}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    valTab === 'email'
+                      ? 'bg-white text-[#1B4D3E] shadow-sm border border-slate-200/60'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Mail size={14} className={valTab === 'email' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                  <span>Código por E-mail</span>
+                </button>
+              </div>
+
+              {/* ============================================== */}
+              {/* ABA 1: VALIDAÇÃO POR CNPJ / PIN               */}
+              {/* ============================================== */}
+              {valTab === 'cnpj' && (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!valNome.trim()) {
+                      setValError('Por favor, informe seu nome completo.');
+                      return;
+                    }
+                    if (!valCnpjPin.trim()) {
+                      setValError('Por favor, informe o CNPJ ou Código de Acesso.');
+                      return;
+                    }
+                    setValError('');
+                    setValLoading(true);
+                    try {
+                      const res = await validarIdentificacaoCnpjOrPinAction(doc.id, valCnpjPin, valNome);
+                      if (res.success) {
+                        const identData = {
+                          nome: valNome.trim(),
+                          cnpjOuEmail: valCnpjPin.trim()
+                        };
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem(`sb_access_verified_${doc.id}`, 'true');
+                          localStorage.setItem(`sb_client_ident_${doc.id}`, JSON.stringify(identData));
+                        }
+                        setIsAccessVerified(true);
+                        setShowSimulatedWelcome(false);
+                        setClientIdent(identData);
+                        showAlert('Acesso Validado!', 'Seja muito bem-vindo à proposta comercial interativa.', 'success');
+                      } else {
+                        setValError(res.error || 'Dados inválidos. Verifique o CNPJ ou utilize a confirmação por e-mail.');
+                      }
+                    } catch (err: any) {
+                      setValError('Erro ao validar acesso: ' + (err.message || 'Tente novamente'));
+                    } finally {
+                      setValLoading(false);
+                    }
+                  }}
+                  className="space-y-4 animate-fadeIn"
+                >
+                  {valError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-2xl text-xs font-bold leading-relaxed flex items-start gap-2">
+                      <ShieldAlert size={16} className="text-red-600 shrink-0 mt-0.5" />
+                      <span>{valError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                      Seu Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Carlos Oliveira"
+                      value={valNome}
+                      onChange={(e) => setValNome(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                      CNPJ da Empresa ou Código de Acesso *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: 00.000.000/0001-00 ou Código PIN"
+                      value={valCnpjPin}
+                      onChange={(e) => setValCnpjPin(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] font-mono transition-all"
+                    />
+                    <span className="text-[9.5px] text-slate-400 font-medium block leading-snug">
+                      Informe o CNPJ da empresa ou o código de acesso fornecido pelo seu consultor.
+                    </span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={valLoading}
+                    className="w-full py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] disabled:bg-slate-300 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2 mt-2"
+                  >
+                    {valLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Validando Acesso...
+                      </>
+                    ) : (
+                      <>
+                        Acessar Proposta Comercial <ArrowRight size={16} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* ============================================== */}
+              {/* ABA 2: CONFIRMAÇÃO VIA CÓDIGO POR E-MAIL (OTP) */}
+              {/* ============================================== */}
+              {valTab === 'email' && (
+                <div className="space-y-4 animate-fadeIn">
+                  {otpError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-2xl text-xs font-bold leading-relaxed flex items-start gap-2">
+                      <ShieldAlert size={16} className="text-red-600 shrink-0 mt-0.5" />
+                      <span>{otpError}</span>
+                    </div>
+                  )}
+
+                  {otpSuccessMsg && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2.5 rounded-2xl text-xs font-bold leading-relaxed flex items-start gap-2">
+                      <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{otpSuccessMsg}</span>
+                    </div>
+                  )}
+
+                  {simulatedCodeTip && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-2xl text-xs font-bold flex items-center justify-between">
+                      <span>💡 Código de teste: <strong className="font-mono text-sm underline">{simulatedCodeTip}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => setOtpCode(simulatedCodeTip)}
+                        className="text-[10px] uppercase font-black bg-amber-200 px-2 py-1 rounded-lg text-amber-900 hover:bg-amber-300"
+                      >
+                        Preencher
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ETAPA 1: SOLICITAR ENVIO DO CÓDIGO */}
+                  {emailStep === 'request' ? (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!emailNome.trim()) {
+                          setOtpError('Por favor, informe seu nome completo.');
+                          return;
+                        }
+                        if (!emailDestino.trim() || !emailDestino.includes('@')) {
+                          setOtpError('Por favor, informe um e-mail corporativo válido.');
+                          return;
+                        }
+                        setOtpError('');
+                        setOtpLoading(true);
+                        try {
+                          const res = await solicitarCodigoAcessoEmailAction(doc.id, emailDestino, emailNome);
+                          if (res.success) {
+                            setEmailStep('verify');
+                            setOtpSuccessMsg(`Código de 6 dígitos enviado para ${emailDestino}.`);
+                            if (res.simulatedCode) {
+                              setSimulatedCodeTip(res.simulatedCode);
+                            }
+                          } else {
+                            setOtpError(res.error || 'Erro ao enviar código de acesso.');
+                          }
+                        } catch (err: any) {
+                          setOtpError('Erro ao enviar código: ' + (err.message || 'Tente novamente'));
+                        } finally {
+                          setOtpLoading(false);
+                        }
+                      }}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                          Seu Nome Completo *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ex: Carlos Oliveira"
+                          value={emailNome}
+                          onChange={(e) => setEmailNome(e.target.value)}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] transition-all"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                          Seu E-mail Corporativo *
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          placeholder="Ex: seu.nome@empresa.com.br"
+                          value={emailDestino}
+                          onChange={(e) => setEmailDestino(e.target.value)}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] transition-all"
+                        />
+                        <span className="text-[9.5px] text-slate-400 font-medium block leading-snug">
+                          Enviaremos um código de segurança de 6 dígitos instantaneamente para este e-mail.
+                        </span>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={otpLoading}
+                        className="w-full py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] disabled:bg-slate-300 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2 mt-2"
+                      >
+                        {otpLoading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Enviando Código...
+                          </>
+                        ) : (
+                          <>
+                            <Send size={16} /> Enviar Código por E-mail
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  ) : (
+                    /* ETAPA 2: DIGITAR O CÓDIGO RECEBIDO */
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!otpCode.trim() || otpCode.trim().length < 6) {
+                          setOtpError('Por favor, informe o código de 6 dígitos completo.');
+                          return;
+                        }
+                        setOtpError('');
+                        setOtpLoading(true);
+                        try {
+                          const res = await validarCodigoAcessoEmailAction(doc.id, emailDestino, otpCode, emailNome);
+                          if (res.success) {
+                            const identData = {
+                              nome: emailNome.trim(),
+                              cnpjOuEmail: emailDestino.trim()
+                            };
+                            if (typeof window !== 'undefined') {
+                              localStorage.setItem(`sb_access_verified_${doc.id}`, 'true');
+                              localStorage.setItem(`sb_client_ident_${doc.id}`, JSON.stringify(identData));
+                            }
+                            setIsAccessVerified(true);
+                            setShowSimulatedWelcome(false);
+                            setClientIdent(identData);
+                            showAlert('Código Confirmado!', 'Identidade confirmada com sucesso. Bem-vindo à proposta comercial!', 'success');
+                          } else {
+                            setOtpError(res.error || 'Código inválido ou expirado.');
+                          }
+                        } catch (err: any) {
+                          setOtpError('Erro ao validar código: ' + (err.message || 'Tente novamente'));
+                        } finally {
+                          setOtpLoading(false);
+                        }
+                      }}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-2 text-center">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                          Digite o Código de 6 Dígitos
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          autoFocus
+                          placeholder="000000"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                          className="w-full max-w-[240px] mx-auto px-4 py-3 bg-slate-50 border-2 border-[#1B4D3E] rounded-2xl text-2xl font-black font-mono tracking-[0.4em] text-center text-slate-800 outline-none shadow-inner"
+                        />
+                        <span className="text-[10px] text-slate-500 font-medium block">
+                          Código enviado para <strong>{emailDestino}</strong>
+                        </span>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={otpLoading || otpCode.length < 6}
+                        className="w-full py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] disabled:bg-slate-300 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        {otpLoading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Verificando...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 size={16} /> Confirmar Código e Acessar
+                          </>
+                        )}
+                      </button>
+
+                      <div className="flex justify-between items-center pt-2 text-[10px] font-bold text-slate-500">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmailStep('request');
+                            setOtpCode('');
+                            setOtpError('');
+                            setOtpSuccessMsg('');
+                          }}
+                          className="hover:text-slate-800 underline cursor-pointer"
+                        >
+                          ← Alterar e-mail
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setOtpError('');
+                            setOtpLoading(true);
+                            try {
+                              const res = await solicitarCodigoAcessoEmailAction(doc.id, emailDestino, emailNome);
+                              if (res.success) {
+                                setOtpSuccessMsg('Novo código enviado!');
+                                if (res.simulatedCode) setSimulatedCodeTip(res.simulatedCode);
+                              }
+                            } finally {
+                              setOtpLoading(false);
+                            }
+                          }}
+                          className="hover:text-[#1B4D3E] underline cursor-pointer"
+                        >
+                          Reenviar código
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
-                  Seu Nome Completo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Carlos Oliveira"
-                  value={identNomeInput}
-                  onChange={(e) => setIdentNomeInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E]"
-                />
-              </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
-                  CNPJ ou E-mail da Empresa *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: 00.000.000/0001-00 ou contato@empresa.com"
-                  value={identCnpjEmailInput}
-                  onChange={(e) => setIdentCnpjEmailInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E]"
-                />
-              </div>
+            {/* Rodapé Seguro */}
+            <div className="bg-slate-50 border-t border-slate-200/80 px-6 py-4 text-center">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center justify-center gap-1.5">
+                <Lock size={11} className="text-slate-400" />
+                Ambiente Criptografado & Rastreamento Seguro
+              </span>
+            </div>
 
-              <button
-                type="submit"
-                className="w-full py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer mt-4"
-              >
-                Acessar Proposta Comercial →
-              </button>
-            </form>
           </div>
         </div>
       )}

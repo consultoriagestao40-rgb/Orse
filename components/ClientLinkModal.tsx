@@ -70,7 +70,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
   // Regras de Acesso e Bloqueio Condicional
   const [exigirIdentificacao, setExigirIdentificacao] = useState(
-    configApresentacao?.regrasAcesso?.exigirIdentificacao === true
+    configApresentacao?.regrasAcesso?.exigirIdentificacao !== false
+  );
+  const [codigoAcessoCustom, setCodigoAcessoCustom] = useState(
+    configApresentacao?.regrasAcesso?.codigoAcessoCustom || ''
   );
   const [obrigarApresentacao, setObrigarApresentacao] = useState(
     configApresentacao?.regrasAcesso?.obrigarApresentacao === true
@@ -131,7 +134,8 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           setCanvaEmbedUrl(config.canvaEmbedUrl || DEFAULT_CANVA_URL);
           if (config.validadeDays) setValidadeDays(config.validadeDays);
           if (config.regrasAcesso) {
-            setExigirIdentificacao(config.regrasAcesso.exigirIdentificacao === true);
+            setExigirIdentificacao(config.regrasAcesso.exigirIdentificacao !== false);
+            setCodigoAcessoCustom(config.regrasAcesso.codigoAcessoCustom || '');
             setObrigarApresentacao(config.regrasAcesso.obrigarApresentacao === true);
             setObrigarVideo(config.regrasAcesso.obrigarVideo === true);
           }
@@ -255,6 +259,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         },
         regrasAcesso: {
           exigirIdentificacao,
+          codigoAcessoCustom: codigoAcessoCustom.trim(),
           obrigarApresentacao: apresentacao && obrigarApresentacao,
           obrigarVideo: video && obrigarVideo
         },
@@ -852,13 +857,31 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                 />
                 <div className="flex-1">
                   <span className="text-xs font-bold text-slate-800 block">
-                    Exigir identificação nominal do cliente (Nome e CNPJ / E-mail)
+                    Exigir tela de boas-vindas com validação de acesso
                   </span>
                   <span className="text-[9.5px] text-slate-500 font-normal block mt-0.5">
-                    O cliente informará quem é antes de abrir a proposta comercial. Você receberá notificações exatas com o nome e contato de quem está navegando.
+                    O cliente visualiza uma tela de boas-vindas e confirma sua identidade (por CNPJ, código PIN ou código por e-mail) antes de abrir a proposta.
                   </span>
                 </div>
               </label>
+
+              {exigirIdentificacao && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 animate-fadeIn">
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
+                    Código de Acesso / PIN Personalizado (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 1234 ou senha que preferir passar ao cliente..."
+                    value={codigoAcessoCustom}
+                    onChange={(e) => setCodigoAcessoCustom(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                  <span className="text-[9px] text-slate-400 font-medium block">
+                    Se preenchido, o cliente poderá digitar este PIN direto para acessar, além do CNPJ ou código enviado por e-mail.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

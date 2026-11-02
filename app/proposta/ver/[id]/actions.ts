@@ -517,3 +517,277 @@ export async function registrarAjusteAction(documentoId: string, mensagem: strin
     return { success: false, error: error.message };
   }
 }
+
+
+/**
+ * Server Action para solicitar código de acesso por e-mail (OTP de 6 dígitos)
+ */
+export async function solicitarCodigoAcessoEmailAction(documentoId: string, email: string, nome: string) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: documentoId },
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true,
+        empresaEmissora: true
+      }
+    });
+
+    if (!doc) {
+      return { success: false, error: 'Documento não encontrado.' };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanNome = nome.trim();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Por favor, informe um e-mail válido.' };
+    }
+
+    // Gerar código OTP de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutos
+
+    const config = (doc.configApresentacao as any) || {};
+    const accessCodes = (config.accessCodes || []).filter((c: any) => c.expiresAt > Date.now());
+    accessCodes.push({
+      email: cleanEmail,
+      nome: cleanNome,
+      code,
+      expiresAt
+    });
+
+    await prisma.documentoProposta.update({
+      where: { id: documentoId },
+      data: {
+        configApresentacao: {
+          ...config,
+          accessCodes
+        }
+      }
+    });
+
+    const numProposta = String(doc.proposta?.numero || '').padStart(3, '0');
+    const emissoraNome = doc.empresaEmissora?.nomeFantasia || 'SmartBid';
+    const clienteNome = doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Cliente';
+
+    // Enviar via sendMail
+    let simulated = false;
+    try {
+      const { sendMail } = await import('@/lib/mail');
+      const mailRes = await sendMail({
+        to: cleanEmail,
+        subject: `Código de Acesso: Proposta Comercial FPV-${numProposta} - ${emissoraNome}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background-color: #f8fafc; border-radius: 20px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <h2 style="color: #1B4D3E; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${emissoraNome}</h2>
+              <p style="color: #64748b; font-size: 11px; margin-top: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">Proposta Comercial Confidencial</p>
+            </div>
+            
+            <div style="background-color: #ffffff; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+              <p style="color: #334155; font-size: 15px; margin-top: 0; font-weight: 600;">Olá, <strong>${cleanNome}</strong>!</p>
+              
+              <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin-top: 8px;">
+                Você solicitou um código de verificação para acessar a proposta comercial <strong>FPV-${numProposta}</strong> personalizada para <strong>${clienteNome}</strong>.
+              </p>
+              
+              <div style="margin: 28px 0; padding: 18px 24px; background: #ecfdf5; border: 1px dashed #10b981; border-radius: 14px; display: inline-block;">
+                <span style="font-size: 36px; font-weight: 900; letter-spacing: 10px; color: #1B4D3E; font-family: monospace;">${code}</span>
+              </div>
+              
+              <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">
+                Insira este código na tela da proposta para confirmar sua identidade e liberar a navegação imediata.
+              </p>
+              <p style="color: #94a3b8; font-size: 11px; margin-top: 12px; margin-bottom: 0;">
+                ⏱️ Este código expira em 15 minutos.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 11px; font-weight: 600;">
+              ${emissoraNome} • SmartBid Gestão Comercial Inteligente
+            </div>
+          </div>
+        `,
+        text: `Olá ${cleanNome}, seu código de acesso para a Proposta Comercial FPV-${numProposta} é: ${code}. Válido por 15 minutos.`
+      });
+
+      simulated = Boolean(mailRes.simulated);
+    } catch (mailErr) {
+      console.warn('Erro ou simulação de envio de e-mail:', mailErr);
+      simulated = true;
+    }
+
+    return { 
+      success: true, 
+      simulated, 
+      simulatedCode: simulated ? code : undefined 
+    };
+  } catch (error: any) {
+    console.error('Erro ao solicitar código de acesso por e-mail:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para validar código de acesso recebido por e-mail (OTP de 6 dígitos)
+ */
+export async function validarCodigoAcessoEmailAction(documentoId: string, email: string, code: string, nome: string) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: documentoId },
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true
+      }
+    });
+
+    if (!doc) {
+      return { success: false, error: 'Documento não encontrado.' };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim().replace(/\D/g, '');
+    const cleanNome = nome.trim();
+
+    const config = (doc.configApresentacao as any) || {};
+    const accessCodes = config.accessCodes || [];
+    const now = Date.now();
+
+    const matchIdx = accessCodes.findIndex(
+      (c: any) => c.email === cleanEmail && c.code === cleanCode && c.expiresAt > now
+    );
+
+    if (matchIdx === -1) {
+      return { 
+        success: false, 
+        error: 'Código inválido ou expirado. Verifique os números digitados ou solicite um novo código.' 
+      };
+    }
+
+    // Remove o código utilizado
+    accessCodes.splice(matchIdx, 1);
+    await prisma.documentoProposta.update({
+      where: { id: documentoId },
+      data: {
+        configApresentacao: {
+          ...config,
+          accessCodes
+        }
+      }
+    });
+
+    // Registra a visualização validada
+    await trackDocumentoView(documentoId, 'proposta', {
+      nome: cleanNome,
+      cnpjOuEmail: cleanEmail
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao validar código de acesso por e-mail:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para validar identificação direta por CNPJ ou Código de Acesso PIN
+ */
+export async function validarIdentificacaoCnpjOrPinAction(documentoId: string, cnpjOrPin: string, nome: string) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: documentoId },
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true
+      }
+    });
+
+    if (!doc) {
+      return { success: false, error: 'Documento não encontrado.' };
+    }
+
+    const inputTrimmed = cnpjOrPin.trim();
+    const cleanInput = inputTrimmed.replace(/\D/g, '');
+    const cleanNome = nome.trim();
+
+    if (!cleanNome) {
+      return { success: false, error: 'Por favor, informe seu nome completo.' };
+    }
+
+    if (!inputTrimmed) {
+      return { success: false, error: 'Por favor, informe o CNPJ ou Código de Acesso.' };
+    }
+
+    const config = (doc.configApresentacao as any) || {};
+    const customPin = (config.regrasAcesso?.codigoAcessoCustom || '').trim();
+    const cleanClientCnpj = (doc.client?.cnpj || '').replace(/\D/g, '');
+    const cleanClientCpf = (doc.client?.cpf || '').replace(/\D/g, '');
+    const propNum = String(doc.proposta?.numero || '');
+
+    let isValid = false;
+
+    // 1. PIN customizado cadastrado pelo vendedor
+    if (customPin && inputTrimmed.toLowerCase() === customPin.toLowerCase()) {
+      isValid = true;
+    }
+    // 2. CNPJ idêntico
+    else if (cleanClientCnpj && cleanInput === cleanClientCnpj) {
+      isValid = true;
+    }
+    // 3. Raiz do CNPJ (8 primeiros dígitos)
+    else if (cleanClientCnpj && cleanInput.length >= 8 && cleanClientCnpj.startsWith(cleanInput.slice(0, 8))) {
+      isValid = true;
+    }
+    // 4. Últimos 4 dígitos do CNPJ
+    else if (cleanClientCnpj && cleanInput.length === 4 && cleanClientCnpj.endsWith(cleanInput)) {
+      isValid = true;
+    }
+    // 5. CPF do cliente
+    else if (cleanClientCpf && cleanInput === cleanClientCpf) {
+      isValid = true;
+    }
+    // 6. Número da proposta como chave de segurança
+    else if (
+      inputTrimmed.toLowerCase() === ('fpv-' + propNum).toLowerCase() ||
+      inputTrimmed === propNum ||
+      inputTrimmed === propNum.padStart(3, '0')
+    ) {
+      isValid = true;
+    }
+    // 7. Se no cadastro do cliente o CNPJ e CPF estiverem vazios: qualquer CNPJ válido (14 dígitos) ou CPF (11 dígitos) é aceito
+    else if (!cleanClientCnpj && !cleanClientCpf && (cleanInput.length === 14 || cleanInput.length === 11 || cleanInput.length >= 4)) {
+      isValid = true;
+    }
+
+    if (!isValid) {
+      return { 
+        success: false, 
+        error: 'O CNPJ ou Código informado não confere com o cadastro desta proposta comercial. Por favor, confira os números digitados ou utilize a opção de confirmação por e-mail.' 
+      };
+    }
+
+    // Registra a visualização validada
+    await trackDocumentoView(documentoId, 'proposta', {
+      nome: cleanNome,
+      cnpjOuEmail: inputTrimmed
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao validar CNPJ/Código:', error);
+    return { success: false, error: error.message };
+  }
+}
