@@ -1431,16 +1431,16 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
 
           {/* 1. ABA: APRESENTAÇÃO DE SLIDES */}
           {activeClientTab === 'apresentacao' && hasApresentacao && (
-            <div className="space-y-6 animate-fadeIn print:hidden">
+            <div className="max-w-[1240px] mx-auto space-y-4 animate-fadeIn print:hidden">
 
               {hasNativeSlides ? (
-                /* Player Nativo de Slides (16:9 Widescreen) */
-                <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 select-none group">
-                  {/* Imagem do Slide em Alta Definição */}
+                /* Player Nativo de Slides (16:9 Widescreen Perfeito) */
+                <div className="w-full aspect-[16/9] bg-slate-900 overflow-hidden relative rounded-2xl shadow-xl border border-slate-200/80 select-none group">
+                  {/* Imagem do Slide com Ajuste Perfeito Borda a Borda */}
                   <img
                     src={slidesList[nativeSlideIndex]}
                     alt={`Slide ${nativeSlideIndex + 1}`}
-                    className="w-full h-full object-contain pointer-events-none transition-all duration-200"
+                    className="w-full h-full object-cover pointer-events-none transition-all duration-150 block"
                   />
 
                   {/* Zonas de clique para navegação intuitiva */}
@@ -1463,10 +1463,10 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                         e.stopPropagation();
                         setNativeSlideIndex(prev => Math.max(0, prev - 1));
                       }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer shadow-lg border border-white/10"
+                      className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer shadow-lg border border-white/20"
                       title="Slide Anterior (←)"
                     >
-                      <ChevronLeft size={28} />
+                      <ChevronLeft size={26} />
                     </button>
                   )}
 
@@ -1478,15 +1478,15 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                         e.stopPropagation();
                         setNativeSlideIndex(prev => Math.min(slidesList.length - 1, prev + 1));
                       }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-90 hover:opacity-100 hover:scale-105 cursor-pointer shadow-lg border border-white/10 animate-pulse"
+                      className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-90 hover:opacity-100 hover:scale-105 cursor-pointer shadow-lg border border-white/20 animate-pulse"
                       title="Próximo Slide (→)"
                     >
-                      <ChevronRight size={28} />
+                      <ChevronRight size={26} />
                     </button>
                   )}
 
                   {/* Indicador Flutuante do Slide Atual */}
-                  <div className="absolute top-4 right-4 z-20 bg-black/70 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-mono font-bold border border-white/10 shadow-lg flex items-center gap-2">
+                  <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/75 backdrop-blur-md text-white px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-mono font-bold border border-white/15 shadow-lg flex items-center gap-1.5">
                     <span className="text-emerald-400 font-black">{nativeSlideIndex + 1}</span>
                     <span className="text-slate-400">/</span>
                     <span>{slidesList.length}</span>
@@ -1502,7 +1502,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                 </div>
               ) : (
                 /* Fallback para Iframe do Canva */
-                <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 shadow-emerald-950/5">
+                <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-2xl shadow-xl border border-white/10">
                   <iframe
                     src={canvaUrl}
                     loading="lazy"

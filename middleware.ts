@@ -23,6 +23,8 @@ export function middleware(request: NextRequest) {
     pathname === '/icon-192.png' ||
     pathname === '/icon-512.png' ||
     pathname.startsWith('/proposta/ver/') ||
+    pathname.startsWith('/slides/') ||
+    pathname.startsWith('/uploads/') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next') ||
     pathname.includes('favicon')
@@ -35,5 +37,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg).*)'],
 }
