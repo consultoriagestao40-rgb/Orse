@@ -38,8 +38,21 @@ export async function sendMail({ to, subject, html, text, smtpAccountId, fromNam
         fromEmail = dbAccount.fromEmail;
         fromName = customFromName || dbAccount.fromName || "SmartBid";
       }
+    } else {
+      // Busca conta dedicada configurada para o Sistema SaaS (Hostinger, etc.)
+      const systemAccount = await prisma.smtpAccount.findFirst({
+        where: { isSystem: true, active: true }
+      });
+
+      if (systemAccount) {
+        host = systemAccount.host;
+        port = systemAccount.port;
+        user = systemAccount.user;
+        pass = systemAccount.password;
+        fromEmail = systemAccount.fromEmail;
+        fromName = customFromName || systemAccount.fromName || "SmartBid";
+      }
     }
-    // Se não passou smtpAccountId, utiliza estritamente as credenciais do sistema SaaS configuradas no .env
   } catch (error) {
     console.warn("⚠️ Error fetching SMTP account from DB, falling back to env:", error);
   }

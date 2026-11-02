@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
   Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image,
-  Eye, EyeOff, HelpCircle, Clock
+  Eye, EyeOff, HelpCircle, Clock, Mail, Send, AlertTriangle, ShieldCheck
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
@@ -27,7 +27,8 @@ import {
   updateCategoria, toggleCategoria,
   updateTipoServico, toggleTipoServico,
   updateSegmento, toggleSegmento,
-  getFaqsPadrao, createFaqPadrao, updateFaqPadrao, deleteFaqPadrao, updateUserTimezone
+  getFaqsPadrao, createFaqPadrao, updateFaqPadrao, deleteFaqPadrao, updateUserTimezone,
+  getSystemSmtpSettings, saveSystemSmtpSettings, testSystemSmtpConnection
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 import { 
@@ -41,7 +42,7 @@ import {
   changeTenantLogo, changeTenantTheme
 } from '@/app/admin/empresas/actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias' | 'seguranca';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias' | 'seguranca' | 'smtp_sistema';
 
 const menuGroups = [
   {
@@ -68,6 +69,7 @@ const menuGroups = [
     title: 'Integrações & Finanças',
     items: [
       { id: 'whatsapp', label: 'Integração WhatsApp', icon: MessageSquare, roles: ['ADMIN', 'MANAGER'] },
+      { id: 'smtp_sistema', label: 'E-mail do Sistema (SMTP)', icon: Mail, roles: ['ADMIN'] },
       { id: 'faturamento', label: 'Assinatura & Faturamento', icon: CreditCard, roles: ['ADMIN', 'MANAGER'] },
     ]
   },
@@ -211,6 +213,23 @@ export default function SettingsPage() {
   const [secLoading, setSecLoading] = useState(false);
   const [secError, setSecError] = useState('');
   const [secSuccess, setSecSuccess] = useState('');
+
+  // Estados de E-mail do Sistema (SaaS SMTP Hostinger)
+  const [smtpHost, setSmtpHost] = useState('smtp.hostinger.com');
+  const [smtpPort, setSmtpPort] = useState(465);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPassword, setSmtpPassword] = useState('');
+  const [smtpFromEmail, setSmtpFromEmail] = useState('');
+  const [smtpFromName, setSmtpFromName] = useState('SmartBid • Notificações');
+  const [smtpActive, setSmtpActive] = useState(true);
+  const [smtpConfigured, setSmtpConfigured] = useState(false);
+  const [smtpLoading, setSmtpLoading] = useState(false);
+  const [smtpError, setSmtpError] = useState('');
+  const [smtpSuccess, setSmtpSuccess] = useState('');
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+  const [smtpTestEmail, setSmtpTestEmail] = useState('');
+  const [smtpTestLoading, setSmtpTestLoading] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Status
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -916,6 +935,17 @@ export default function SettingsPage() {
       } else if (activeTab === 'faq') {
         const data = await getFaqsPadrao();
         setFaqs(data || []);
+      } else if (activeTab === 'smtp_sistema') {
+        const data = await getSystemSmtpSettings();
+        if (data && !('error' in data)) {
+          setSmtpHost(data.host || 'smtp.hostinger.com');
+          setSmtpPort(data.port || 465);
+          setSmtpUser(data.user || '');
+          setSmtpFromEmail(data.fromEmail || data.user || '');
+          setSmtpFromName(data.fromName || 'SmartBid • Notificações');
+          setSmtpActive(data.active ?? true);
+          setSmtpConfigured(Boolean(data.configured));
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -3002,6 +3032,321 @@ export default function SettingsPage() {
                     )}
                   </button>
                 </form>
+              </div>
+            )}
+
+            {/* ABA DE E-MAIL DO SISTEMA (SAAS SMTP HOSTINGER) */}
+            {activeTab === 'smtp_sistema' && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-8 relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                      Infraestrutura & Gestão SaaS
+                    </span>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight mt-2 font-display">
+                      E-mail do Sistema (SMTP Hostinger)
+                    </h2>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Servidor oficial do SaaS para envio de códigos de recuperação de senha (OTP de 6 dígitos), convites de novos usuários e avisos de segurança corporativa.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {smtpConfigured ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <CheckCircle2 size={14} className="text-emerald-600" />
+                        Servidor Configurado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <AlertTriangle size={14} className="text-amber-600" />
+                        Pendente de Configuração
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Banner de Preset Rápido Hostinger */}
+                <div className="bg-gradient-to-r from-slate-50 to-emerald-50/40 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700">Preset Hostinger Oficial</span>
+                      <span className="text-[10px] font-bold bg-[#1B4D3E] text-white px-2 py-0.5 rounded-md">Recomendado</span>
+                    </div>
+                    <p className="text-xs text-slate-600">
+                      Preenche automaticamente o servidor seguro da Hostinger (<code>smtp.hostinger.com</code> na porta <code>465 SSL</code>).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSmtpHost('smtp.hostinger.com');
+                      setSmtpPort(465);
+                      if (!smtpFromName) setSmtpFromName('SmartBid • Notificações');
+                    }}
+                    className="px-4 py-2.5 bg-white hover:bg-slate-50 text-[#1B4D3E] border border-slate-200 hover:border-[#1B4D3E] rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                  >
+                    ⚡ Aplicar Padrão Hostinger
+                  </button>
+                </div>
+
+                {/* Formulário Principal de Configuração */}
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setSmtpLoading(true);
+                    setSmtpError('');
+                    setSmtpSuccess('');
+
+                    try {
+                      const res = await saveSystemSmtpSettings({
+                        host: smtpHost,
+                        port: Number(smtpPort) || 465,
+                        user: smtpUser,
+                        password: smtpPassword,
+                        fromEmail: smtpFromEmail || smtpUser,
+                        fromName: smtpFromName || 'SmartBid',
+                        active: smtpActive
+                      });
+
+                      if (res.success) {
+                        setSmtpSuccess('Configurações de SMTP do sistema salvas com sucesso!');
+                        setSmtpConfigured(true);
+                        setSmtpPassword(''); // limpa do state local após salvar
+                      } else {
+                        setSmtpError(res.error || 'Erro ao salvar configurações.');
+                      }
+                    } catch (err: any) {
+                      setSmtpError(err.message || 'Erro de comunicação com o servidor.');
+                    } finally {
+                      setSmtpLoading(false);
+                    }
+                  }}
+                  className="space-y-6 max-w-2xl pt-2"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Servidor Host */}
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        Servidor SMTP
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="smtp.hostinger.com"
+                        value={smtpHost}
+                        onChange={(e) => setSmtpHost(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all font-mono"
+                      />
+                    </div>
+
+                    {/* Porta */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        Porta
+                      </label>
+                      <select
+                        value={smtpPort}
+                        onChange={(e) => setSmtpPort(Number(e.target.value))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all cursor-pointer"
+                      >
+                        <option value={465}>465 (SSL Seguro)</option>
+                        <option value={587}>587 (TLS)</option>
+                        <option value={25}>25</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* E-mail / Usuário */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        E-mail / Usuário Hostinger
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="suporte@smartbidhub.com.br"
+                        value={smtpUser}
+                        onChange={(e) => {
+                          setSmtpUser(e.target.value);
+                          if (!smtpFromEmail) setSmtpFromEmail(e.target.value);
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Senha */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        Senha do E-mail
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showSmtpPassword ? 'text' : 'password'}
+                          placeholder={smtpConfigured ? '•••••••• (Preencha para alterar)' : 'Digite a senha da caixa postal'}
+                          value={smtpPassword}
+                          onChange={(e) => setSmtpPassword(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          {showSmtpPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Nome do Remetente */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        Nome de Exibição do Remetente
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="SmartBid • Notificações"
+                        value={smtpFromName}
+                        onChange={(e) => setSmtpFromName(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* E-mail From */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        E-mail de Remetente (From)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="suporte@smartbidhub.com.br"
+                        value={smtpFromEmail}
+                        onChange={(e) => setSmtpFromEmail(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Feedback Messages */}
+                  {smtpSuccess && (
+                    <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-xl text-xs font-bold flex items-center gap-2">
+                      <CheckCircle2 size={16} className="shrink-0" />
+                      {smtpSuccess}
+                    </div>
+                  )}
+
+                  {smtpError && (
+                    <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl text-xs font-bold flex items-center gap-2">
+                      <X size={16} className="shrink-0" />
+                      {smtpError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={smtpLoading}
+                    className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#1B4D3E]/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {smtpLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Salvando Credenciais...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} />
+                        Salvar Configurações SMTP do SaaS
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Seção de Teste de Conexão em Tempo Real */}
+                <div className="pt-8 border-t border-slate-100 max-w-2xl space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <Send size={16} className="text-[#1B4D3E]" />
+                      Testar Conexão em Tempo Real
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Dispara um e-mail de teste seguro com autenticação direta no seu servidor da Hostinger para certificar que o envio está operacional.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="email"
+                      placeholder="Digite seu e-mail para receber o teste..."
+                      value={smtpTestEmail}
+                      onChange={(e) => setSmtpTestEmail(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                    />
+                    <button
+                      type="button"
+                      disabled={smtpTestLoading || !smtpTestEmail.trim()}
+                      onClick={async () => {
+                        if (!smtpTestEmail.trim()) return;
+                        setSmtpTestLoading(true);
+                        setSmtpTestResult(null);
+
+                        try {
+                          const res = await testSystemSmtpConnection(smtpTestEmail);
+                          if (res.success) {
+                            setSmtpTestResult({
+                              success: true,
+                              message: `E-mail de teste enviado com sucesso para ${smtpTestEmail}! Verifique sua caixa de entrada e spam.`
+                            });
+                          } else {
+                            setSmtpTestResult({
+                              success: false,
+                              message: res.error || 'Falha ao autenticar na Hostinger. Verifique se o e-mail e senha estão corretos.'
+                            });
+                          }
+                        } catch (err: any) {
+                          setSmtpTestResult({
+                            success: false,
+                            message: err.message || 'Erro inesperado ao realizar teste.'
+                          });
+                        } finally {
+                          setSmtpTestLoading(false);
+                        }
+                      }}
+                      className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
+                    >
+                      {smtpTestLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Testando...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={14} />
+                          Disparar Teste
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {smtpTestResult && (
+                    <div
+                      className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                        smtpTestResult.success
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-50 text-red-600 border border-red-200'
+                      }`}
+                    >
+                      {smtpTestResult.success ? (
+                        <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                      ) : (
+                        <X size={16} className="shrink-0 text-red-500" />
+                      )}
+                      <span>{smtpTestResult.message}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

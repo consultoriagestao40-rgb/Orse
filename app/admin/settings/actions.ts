@@ -441,5 +441,138 @@ export async function updateUserTimezone(timezone: string) {
   }
 }
 
+// ==========================================
+// CONFIGURAÇÃO DE E-MAIL DO SISTEMA (SAAS SMTP)
+// ==========================================
+export async function getSystemSmtpSettings() {
+  try {
+    const account = await prisma.smtpAccount.findFirst({
+      where: { isSystem: true }
+    });
+
+    if (!account) {
+      return {
+        configured: false,
+        host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+        port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465,
+        user: process.env.SMTP_USER || '',
+        fromEmail: process.env.SMTP_FROM_EMAIL || '',
+        fromName: process.env.SMTP_FROM_NAME || 'SmartBid • Notificações',
+        active: true
+      };
+    }
+
+    return {
+      configured: true,
+      id: account.id,
+      host: account.host,
+      port: account.port,
+      user: account.user,
+      fromEmail: account.fromEmail,
+      fromName: account.fromName,
+      active: account.active
+    };
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações SMTP do sistema:', error);
+    return { error: error.message };
+  }
+}
+
+export async function saveSystemSmtpSettings(data: {
+  host: string;
+  port: number;
+  user: string;
+  password?: string;
+  fromEmail: string;
+  fromName: string;
+  active?: boolean;
+}) {
+  try {
+    const existing = await prisma.smtpAccount.findFirst({
+      where: { isSystem: true }
+    });
+
+    const updateData: any = {
+      nome: 'E-mail Oficial do Sistema SaaS',
+      host: data.host.trim(),
+      port: Number(data.port) || 465,
+      user: data.user.trim(),
+      fromEmail: data.fromEmail.trim(),
+      fromName: data.fromName.trim() || 'SmartBid',
+      active: data.active ?? true,
+      isSystem: true
+    };
+
+    if (data.password && data.password.trim().length > 0) {
+      updateData.password = data.password.trim();
+    }
+
+    if (existing) {
+      const res = await prisma.smtpAccount.update({
+        where: { id: existing.id },
+        data: updateData
+      });
+      revalidatePath('/admin/settings');
+      return { success: true, data: res };
+    } else {
+      if (!data.password || data.password.trim().length === 0) {
+        return { success: false, error: 'A senha do e-mail é obrigatória para a primeira configuração.' };
+      }
+      updateData.password = data.password.trim();
+      const res = await prisma.smtpAccount.create({
+        data: updateData
+      });
+      revalidatePath('/admin/settings');
+      return { success: true, data: res };
+    }
+  } catch (error: any) {
+    console.error('Erro ao salvar SMTP do sistema:', error);
+    return { success: false, error: error.message || 'Erro ao salvar configurações' };
+  }
+}
+
+export async function testSystemSmtpConnection(targetEmail: string) {
+  try {
+    const { sendMail } = await import('@/lib/mail');
+    const res = await sendMail({
+      to: targetEmail.trim(),
+      fromName: 'SmartBid • Teste de Sistema',
+      subject: '✅ Teste de Conexão SMTP Bem-Sucedido — SmartBid',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 28px; border: 1px solid #e2e8f0; border-radius: 16px; max-width: 500px; margin: 0 auto;">
+          <div style="background: #1B4D3E; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 18px; text-transform: uppercase;">SmartBid • Conexão SMTP OK</h2>
+          </div>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Este é um e-mail de teste disparado pelo painel administrativo da <strong>SmartBid</strong> para validar a autenticação do seu servidor Hostinger.
+          </p>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin: 20px 0;">
+            <p style="color: #166534; font-size: 13.5px; font-weight: bold; margin: 0;">
+              ✨ Seus disparos de e-mail institucional estão 100% operacionais.
+            </p>
+          </div>
+          <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+            Enviado em: ${new Date().toLocaleString('pt-BR')}
+          </p>
+        </div>
+      `,
+      text: 'Este é um e-mail de teste da plataforma SmartBid para validar a conexão SMTP com a Hostinger.'
+    });
+
+    if (res.simulated) {
+      return { success: false, error: 'As credenciais SMTP não estão completamente preenchidas ou foram simuladas.' };
+    }
+
+    if (!res.success) {
+      return { success: false, error: res.error || 'Falha ao conectar no servidor SMTP da Hostinger. Verifique host, porta, usuário e senha.' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Erro ao realizar teste de disparo' };
+  }
+}
+
+
 
 
