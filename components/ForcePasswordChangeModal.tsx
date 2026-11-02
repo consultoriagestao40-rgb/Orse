@@ -79,7 +79,7 @@ export default function ForcePasswordChangeModal() {
     setError('');
 
     try {
-      const res = await changeMyPassword(currentPassword, newPassword);
+      const res = await changeMyPassword(currentPassword, newPassword, confirmPassword);
       if (res.success) {
         setSuccess(true);
         // Remove os cookies de bloqueio

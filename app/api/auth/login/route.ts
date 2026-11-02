@@ -24,14 +24,15 @@ export async function POST(request: Request) {
     })
 
     if (!user) {
-      return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 })
+      // Resposta genérica para evitar enumeração de usuários (OWASP standard)
+      return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })
     }
 
-    // 1. Verificação de Bloqueio por Força Bruta (Brute-Force Lockout)
+    // 1. Verificação de Bloqueio por Força Bruta (Brute-Force Lockout após 5 tentativas)
     const lockout = checkAccountLockout(user)
     if (lockout.isLocked) {
       return NextResponse.json({ 
-        error: `Conta bloqueada temporariamente por motivos de segurança. Tente novamente em ${lockout.remainingMinutes} minuto(s).` 
+        error: `Conta bloqueada temporariamente por excesso de tentativas. Tente novamente em ${lockout.remainingMinutes} minuto(s) ou redefina sua senha.` 
       }, { status: 423 })
     }
 
@@ -42,11 +43,11 @@ export async function POST(request: Request) {
       const failResult = await registerFailedAttempt(user.id, user.failedLoginAttempts || 0)
       if (failResult.isLocked) {
         return NextResponse.json({ 
-          error: `Muitas tentativas incorretas. Sua conta foi temporariamente bloqueada por ${failResult.remainingMinutes} minutos por segurança.` 
+          error: `Muitas tentativas incorretas consecutivas (5/5). Por segurança, sua conta foi temporariamente bloqueada por 15 minutos.` 
         }, { status: 423 })
       }
       return NextResponse.json({ 
-        error: `Credenciais inválidas. Você tem mais ${failResult.remainingAttempts} tentativa(s) antes do bloqueio da conta.` 
+        error: 'E-mail ou senha incorretos.' 
       }, { status: 401 })
     }
 

@@ -73,7 +73,7 @@ export default function LoginPage() {
     setForgotError('');
 
     try {
-      const res = await confirmPasswordResetWithCode(forgotEmail, forgotCode, forgotNewPassword);
+      const res = await confirmPasswordResetWithCode(forgotEmail, forgotCode, forgotNewPassword, forgotConfirmPassword);
       if (res.success) {
         setForgotSuccess(true);
         setPassword(forgotNewPassword);

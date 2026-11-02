@@ -1379,11 +1379,16 @@ export async function getAuditLogs(propostaId: string) {
   }
 }
 
-export async function changeMyPassword(currentPassword: string, newPassword: string) {
+export async function changeMyPassword(currentPassword: string, newPassword: string, confirmPassword?: string) {
   try {
     const user = await getLoggedUser();
     if (!user) {
       return { success: false, error: 'Usuário não autenticado.' };
+    }
+
+    // Validação estrita da confirmação de senha
+    if (!confirmPassword || newPassword !== confirmPassword) {
+      return { success: false, error: 'A confirmação de senha não coincide com a nova senha digitada.' };
     }
 
     const { verifyPassword, validatePasswordStrength, hashPassword } = await import('@/lib/security');
@@ -1473,8 +1478,15 @@ export async function requestPasswordReset(email: string) {
     const user = await prisma.user.findFirst({
       where: { email: emailNorm }
     });
+
+    // Resposta anti-enumeração de usuários:
+    // Retorna mensagem idêntica para o cliente mesmo se o e-mail não existir,
+    // garantindo que invasores não consigam testar e descobrir quais e-mails existem no sistema.
     if (!user) {
-      return { success: false, error: 'Este e-mail corporativo não está cadastrado na plataforma.' };
+      return { 
+        success: true, 
+        message: 'Se o e-mail informado estiver cadastrado em nossa base corporativa, um código de segurança de 6 dígitos foi enviado. Por favor, verifique sua caixa de entrada e spam.' 
+      };
     }
 
     const { generateOtpCode } = await import('@/lib/security');
@@ -1539,7 +1551,7 @@ export async function requestPasswordReset(email: string) {
       success: true, 
       email: user.email, 
       simulated: mailRes?.simulated || false,
-      message: 'Código de verificação enviado para o seu e-mail corporativo com sucesso!' 
+      message: 'Se o e-mail informado estiver cadastrado em nossa base corporativa, um código de segurança de 6 dígitos foi enviado. Por favor, verifique sua caixa de entrada e spam.' 
     };
   } catch (error: any) {
     console.error('Erro ao resetar senha:', error);
@@ -1547,17 +1559,27 @@ export async function requestPasswordReset(email: string) {
   }
 }
 
-export async function confirmPasswordResetWithCode(email: string, code: string, newPassword: string) {
+export async function confirmPasswordResetWithCode(
+  email: string, 
+  code: string, 
+  newPassword: string,
+  confirmPassword?: string
+) {
   try {
     const emailNorm = email.trim().toLowerCase();
     const cleanCode = code.trim();
+
+    // Validação estrita da confirmação de senha
+    if (!confirmPassword || newPassword !== confirmPassword) {
+      return { success: false, error: 'A confirmação de senha não coincide com a nova senha digitada.' };
+    }
 
     const user = await prisma.user.findFirst({
       where: { email: emailNorm }
     });
 
     if (!user) {
-      return { success: false, error: 'Usuário não encontrado.' };
+      return { success: false, error: 'Código ou dados de verificação inválidos.' };
     }
 
     if (!user.passwordResetToken || user.passwordResetToken !== cleanCode) {
