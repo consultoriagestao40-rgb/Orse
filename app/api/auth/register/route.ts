@@ -46,6 +46,9 @@ export async function POST(request: Request) {
     const tenantId = tenant.id
 
     const hashedPassword = await hashPassword(password)
+    const { generateVerificationToken, sendVerificationEmail } = await import('@/lib/email-verification')
+    const verificationToken = generateVerificationToken()
+    const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 horas
 
     const user = await prisma.user.create({
       data: {
@@ -55,41 +58,31 @@ export async function POST(request: Request) {
         role: 'ADMIN',
         celular: celularDigits,
         tenantId,
-        emailVerified: true,
+        emailVerified: false,
+        mustChangePassword: false, // O usuário acabou de criar a própria senha forte
+        emailVerificationToken: verificationToken,
+        emailVerificationExpiresAt: verificationExpiresAt,
       },
       include: { tenant: true }
     })
 
-    const isProduction = process.env.NODE_ENV === 'production'
-    const userData = {
-      nome: user.nome,
-      role: user.role,
-      email: user.email,
-      tenantId: user.tenantId,
-      iniciais: user.nome.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().substring(0, 2),
-      ...(user.tenant?.nomeFantasia ? { tenantNome: user.tenant.nomeFantasia } : {}),
-      ...(user.tenant?.primaryColor ? { primaryColor: user.tenant.primaryColor } : {}),
+    // Dispara o e-mail de ativação com o link seguro
+    try {
+      await sendVerificationEmail({
+        email: user.email,
+        nome: user.nome,
+        token: verificationToken,
+      })
+    } catch (mailErr) {
+      console.error('Falha ao disparar e-mail de verificação no registro:', mailErr)
     }
 
-    const response = NextResponse.json({ success: true, user: { nome: user.nome, email: user.email, role: user.role } })
-
-    response.cookies.set('sb_session', user.email, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
+    return NextResponse.json({
+      success: true,
+      requireVerification: true,
+      email: user.email,
+      message: 'Conta criada com sucesso! Enviamos um link de confirmação para o seu e-mail.'
     })
-
-    response.cookies.set('sb_user', JSON.stringify(userData), {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    })
-
-    return response
   } catch (error: any) {
     console.error('Register Error:', error)
     return NextResponse.json({ error: error.message || 'Erro interno no servidor.' }, { status: 500 })

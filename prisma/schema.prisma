@@ -156,6 +156,8 @@ model User {
   passwordChangedAt      DateTime?
   passwordResetToken     String?
   passwordResetExpiresAt DateTime?
+  emailVerificationToken String?
+  emailVerificationExpiresAt DateTime?
 }
 
 model Client {

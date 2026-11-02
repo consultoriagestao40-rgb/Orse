@@ -13,6 +13,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Estados de Verificação de E-mail
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [resendVerificationMsg, setResendVerificationMsg] = useState('');
+
   // Estados de Autenticação em Dois Fatores (2FA)
   const [step, setStep] = useState<'LOGIN' | '2FA'>('LOGIN');
   const [twoFactorCode, setTwoFactorCode] = useState('');
@@ -134,6 +139,11 @@ export default function LoginPage() {
           handleLoginSuccess(data.user);
         }
       } else {
+        if (data.requiresEmailVerification) {
+          setUnverifiedEmail(data.unverifiedEmail || email);
+        } else {
+          setUnverifiedEmail('');
+        }
         setError(data.error || 'Credenciais inválidas.');
       }
     } catch (err) {
@@ -362,9 +372,44 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold flex items-center gap-2 animate-shake">
-                    <Shield size={16} />
-                    {error}
+                  <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold space-y-2 animate-shake">
+                    <div className="flex items-center gap-2">
+                      <Shield size={16} className="shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                    {unverifiedEmail && (
+                      <div className="pt-2 border-t border-red-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setResendingVerification(true);
+                            setResendVerificationMsg('');
+                            try {
+                              const res = await fetch('/api/auth/resend-verification', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: unverifiedEmail })
+                              });
+                              const data = await res.json();
+                              setResendVerificationMsg(data.message || 'Link reenviado!');
+                            } catch {
+                              setResendVerificationMsg('Erro ao reenviar.');
+                            } finally {
+                              setResendingVerification(false);
+                            }
+                          }}
+                          disabled={resendingVerification}
+                          className="text-xs font-bold text-[#1B4D3E] hover:underline cursor-pointer text-left"
+                        >
+                          {resendingVerification ? 'Reenviando link...' : '✉️ Reenviar link de ativação para meu e-mail'}
+                        </button>
+                        {resendVerificationMsg && (
+                          <span className="text-[11px] text-emerald-800 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded">
+                            {resendVerificationMsg}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

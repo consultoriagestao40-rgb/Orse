@@ -51,6 +51,15 @@ export async function POST(request: Request) {
       }, { status: 401 })
     }
 
+    // 2.1 Verificação de E-mail Obrigatória
+    if (user.emailVerified === false) {
+      return NextResponse.json({
+        error: 'Seu e-mail ainda não foi confirmado. Por favor, verifique o link de ativação enviado para sua caixa de entrada ou spam.',
+        unverifiedEmail: user.email,
+        requiresEmailVerification: true,
+      }, { status: 403 })
+    }
+
     // 3. Suporte a Autenticação em Dois Fatores (2FA)
     if (user.twoFactorEnabled) {
       const otpCode = generateOtpCode()
