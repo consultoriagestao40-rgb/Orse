@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { 
-  ShieldCheck, Check, Sparkles, Building2, User, Phone, 
+  ShieldCheck, Check, Sparkles, Building2, User, Users, Phone, 
   Mail, Calendar, ArrowRight, Lock, CheckCircle2, QrCode, 
-  Copy, ExternalLink, Zap, Layers, Cpu, Award, HelpCircle
+  Copy, ExternalLink, Zap, Layers, Cpu, Award, HelpCircle,
+  FileText, Clock, Server, CheckCircle, MessageCircle, AlertCircle
 } from 'lucide-react';
 import { signSaasProposta } from '@/app/admin/saas-crm/actions';
 import { SAAS_AVAILABLE_MODULES } from '@/app/admin/saas-crm/constants';
@@ -44,13 +45,18 @@ export default function ViewSaasProposal({ proposta }: ViewSaasProposalProps) {
   const [copiado, setCopiado] = useState(false);
 
   const isAssinada = propostaState.status === 'ASSINADA' || propostaState.status === 'PAGA';
-
   const setupLiquido = Math.max(0, propostaState.valorSetup - propostaState.descontoSetup);
 
   // Módulos contratados
   const modulosContratados = SAAS_AVAILABLE_MODULES.filter((m) =>
     propostaState.modulosArray.includes(m.id)
   );
+
+  const fmt = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+  const dataEmissao = new Date(propostaState.createdAt).toLocaleDateString('pt-BR');
+  const validadeData = new Date(new Date(propostaState.createdAt).getTime() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR');
 
   const handleSign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,361 +101,434 @@ export default function ViewSaasProposal({ proposta }: ViewSaasProposalProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500 selection:text-white">
-      {/* Container Principal */}
-      <div className="max-w-4xl mx-auto space-y-8">
-        
-        {/* Top Header com Marca e Status */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-800 shadow-2xl">
+    <div className="bg-[#FAFBFD] min-h-screen text-slate-800 font-sans selection:bg-[#1B4D3E] selection:text-white">
+      {/* 1. Header Fixo com Branding SmartBid Oficial */}
+      <header className="sticky top-0 z-50 bg-[#1B4D3E] text-white shadow-md border-b border-[#143d31]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-900/30">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-lg text-emerald-300 shadow-sm">
+              S
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white">SmartBid Hub</h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="font-black text-base sm:text-lg tracking-tight">SmartBid Hub</span>
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
                   Proposta Oficial
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Inteligência Comercial & Custos para Empresas de Facilities</p>
+              <p className="text-[11px] text-white/70 font-medium hidden sm:block">
+                Software de Gestão Comercial, Engenharia de Custos e FPV para Facilities
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {isAssinada ? (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                Proposta Aprovada & Assinada
+              <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm">
+                <CheckCircle2 size={14} className="text-emerald-300" />
+                <span>Assinada</span>
               </div>
             ) : (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold">
-                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                Aguardando Assinatura
+              <div className="flex items-center gap-1.5 bg-amber-400/20 border border-amber-300/40 text-amber-200 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm">
+                <Clock size={14} className="animate-pulse" />
+                <span>Aguardando Assinatura</span>
               </div>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Apresentação do Cliente & Escopo */}
-        <section className="p-8 bg-gradient-to-br from-slate-900 via-slate-900/90 to-emerald-950/40 rounded-3xl border border-slate-800/80 shadow-2xl space-y-6">
-          <div className="border-b border-slate-800 pb-6">
-            <span className="text-xs font-semibold tracking-wider uppercase text-emerald-400">Proposta de Licenciamento SaaS</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-              {propostaState.empresaNome}
-            </h2>
-            <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs text-slate-400 mt-3">
+      {/* 2. Container Central */}
+      <main className="max-w-5xl mx-auto py-8 sm:py-12 px-4 sm:px-6 space-y-8">
+        
+        {/* Banner de Boas-Vindas & Apresentação */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+          <div className="h-1.5 w-full bg-gradient-to-r from-[#1B4D3E] via-emerald-500 to-[#1B4D3E] absolute top-0 left-0" />
+          
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="space-y-2 flex-1">
+              <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#1B4D3E] bg-[#1B4D3E]/8 px-2.5 py-1 rounded-md">
+                <Sparkles size={12} />
+                Proposta de Licenciamento SaaS
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {propostaState.empresaNome}
+              </h1>
+              <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+                Temos o prazer de apresentar a proposta comercial para implantação da plataforma SmartBid Hub, personalizada para atender às demandas de engenharia de custos, automação de CCTs com IA e escala operacional da sua empresa.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:min-w-[260px] space-y-2 text-xs">
+              <div className="flex justify-between items-center text-slate-500">
+                <span>Data de Emissão:</span>
+                <span className="font-bold text-slate-800">{dataEmissao}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-500">
+                <span>Válida até:</span>
+                <span className="font-bold text-slate-800">{validadeData}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-500">
+                <span>Aos cuidados de:</span>
+                <span className="font-bold text-slate-800">{propostaState.contatoNome}</span>
+              </div>
               {propostaState.cnpj && (
-                <div className="flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-slate-500" />
-                  <span>CNPJ: {propostaState.cnpj}</span>
+                <div className="flex justify-between items-center text-slate-500">
+                  <span>CNPJ:</span>
+                  <span className="font-mono text-slate-700">{propostaState.cnpj}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-slate-500" />
-                <span>Aos cuidados de: <strong className="text-slate-200">{propostaState.contatoNome}</strong></span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>Data: {new Date(propostaState.createdAt).toLocaleDateString('pt-BR')}</span>
-              </div>
             </div>
           </div>
+        </div>
 
-          {/* Módulos Selecionados */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-400" />
-                Módulos & Tecnologias Contratadas
-              </h3>
-              <span className="text-xs text-slate-400">
-                {modulosContratados.length} {modulosContratados.length === 1 ? 'módulo incluso' : 'módulos inclusos'}
-              </span>
+        {/* 3. Módulos e Escopo Técnico Contratado */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                <Layers size={20} className="text-[#1B4D3E]" />
+                Módulos Selecionados & Escopo da Licença
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Funcionalidades inclusas no plano contratado da plataforma SmartBid Hub
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {modulosContratados.map((modulo) => (
-                <div 
-                  key={modulo.id} 
-                  className="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/30 hover:border-emerald-500/60 transition shadow-inner relative overflow-hidden group"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                        <h4 className="font-bold text-sm text-white">{modulo.name}</h4>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{modulo.description}</p>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider shrink-0">
-                      Incluso
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <span className="text-xs font-bold text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full border border-[#1B4D3E]/15">
+              {modulosContratados.length} módulos inclusos
+            </span>
           </div>
 
-          {/* Infraestrutura e Garantias Inclusas */}
-          <div className="p-5 rounded-2xl bg-slate-950/40 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Garantias Corporativas & Serviços Inclusos:
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Até <strong>{propostaState.maxUsuarios} usuários</strong> com permissões hierárquicas.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Nuvem corporativa criptografada (SLA 99.9% de uptime).</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Suporte técnico via WhatsApp e canal direto com especialistas.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Em conformidade com a LGPD e sigilo absoluto de planilhas.</span>
-              </div>
-            </div>
-
-            {propostaState.condicoesEspeciais && (
-              <div className="mt-3 pt-3 border-t border-slate-800/80 text-xs text-amber-200/90 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
-                <strong>Condição Especial Acordada:</strong> {propostaState.condicoesEspeciais}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Resumo do Investimento Financeiro */}
-        <section className="p-8 bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <Award className="w-5 h-5 text-emerald-400" />
-            Resumo do Investimento
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            {/* Taxa de Setup / Onboarding */}
-            <div className="p-6 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Implantação & Treinamento</span>
-                <h4 className="text-lg font-bold text-white mt-1">Taxa Única de Onboarding</h4>
-                <p className="text-xs text-slate-400 mt-1">Parametrização das CCTs, importação de clientes e treinamento da equipe.</p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-slate-800/80">
-                {propostaState.descontoSetup > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-slate-400 line-through">
-                    De R$ {propostaState.valorSetup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                )}
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-white">
-                    {setupLiquido === 0 ? 'ISENTO' : `R$ ${setupLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                  </span>
-                  {setupLiquido === 0 && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">
-                      Bônus de Fechamento
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Mensalidade do SaaS */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/30 to-slate-950 border-2 border-emerald-500/50 flex flex-col justify-between shadow-xl shadow-emerald-950/20">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Assinatura do Software</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase">
-                    Plano {propostaState.plano}
-                  </span>
-                </div>
-                <h4 className="text-lg font-bold text-white mt-1">Mensalidade Corporativa</h4>
-                <p className="text-xs text-slate-300 mt-1">Acesso ilimitado às ferramentas, banco de CCTs com IA e atualizações contínuas.</p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-baseline justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {modulosContratados.map((mod) => (
+              <div 
+                key={mod.id}
+                className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-[#1B4D3E]/40 hover:shadow-md transition-all flex flex-col justify-between"
+              >
                 <div>
-                  <span className="text-3xl font-black text-emerald-400">
-                    R$ {propostaState.valorMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                  <span className="text-xs text-slate-400 ml-1">/ mês</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Área de Assinatura & Pagamento */}
-        <section className="p-8 bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl border border-slate-800 shadow-2xl">
-          {isAssinada ? (
-            <div className="space-y-6 text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-900/40">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-bold text-white">Parabéns! Proposta Aceita e Assinada</h3>
-                <p className="text-sm text-slate-300 mt-2 max-w-lg mx-auto">
-                  Assinada digitalmente por <strong className="text-white">{propostaState.assinadoPorNome}</strong> em{' '}
-                  {new Date(propostaState.assinadoEm || Date.now()).toLocaleString('pt-BR')}.
-                </p>
-              </div>
-
-              {/* Informações de Pagamento (PIX) */}
-              <div className="max-w-md mx-auto p-6 rounded-2xl bg-slate-900 border border-emerald-500/30 text-left space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                    <QrCode className="w-4 h-4 text-emerald-400" />
-                    Pagamento via PIX Instantâneo
-                  </span>
-                  <span className="text-xs font-black text-emerald-400">
-                    R$ {(propostaState.valorMensal + setupLiquido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-
-                {propostaState.asaasPixQrCode && (
-                  <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl mx-auto w-48 h-48 shadow-lg">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={propostaState.asaasPixQrCode} 
-                      alt="QR Code Pix" 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                )}
-
-                {propostaState.asaasPixCopiaECola && (
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">
-                      Código Pix Copia e Cola:
-                    </label>
+                  <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={propostaState.asaasPixCopiaECola}
-                        className="flex-1 bg-slate-950 border border-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg font-mono truncate"
-                      />
-                      <button
-                        onClick={handleCopyPix}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0"
-                      >
-                        {copiado ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                        {copiado ? 'Copiado!' : 'Copiar'}
-                      </button>
+                      <div className="p-2 rounded-lg bg-[#1B4D3E]/8 text-[#1B4D3E]">
+                        <Cpu size={16} />
+                      </div>
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">
+                        {mod.name}
+                      </h3>
                     </div>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <Check size={10} strokeWidth={3} /> Incluso
+                    </span>
                   </div>
-                )}
-
-                <div className="pt-2 text-center">
-                  <p className="text-[11px] text-slate-400">
-                    Assim que o pagamento for compensado, o acesso ao painel do SmartBid é liberado automaticamente.
+                  <p className="text-xs text-slate-600 leading-relaxed pl-9">
+                    {mod.description}
                   </p>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
 
-              {/* Botão de Suporte WhatsApp */}
-              <div className="pt-2">
-                <a
-                  href={`https://wa.me/5511999999999?text=${encodeURIComponent(`Olá! Acabei de assinar a proposta do SmartBid para a empresa ${propostaState.empresaNome}.`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition"
-                >
-                  <Phone className="w-4 h-4 text-emerald-400" />
-                  Falar com nosso Consultor de Onboarding no WhatsApp
-                </a>
+        {/* 4. Garantias Corporativas & Serviços Inclusos */}
+        <section className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
+          <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <ShieldCheck size={18} className="text-[#1B4D3E]" />
+            Garantias Corporativas & Serviços Inclusos na Licença
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80">
+              <div className="p-2 rounded-lg bg-[#1B4D3E]/8 text-[#1B4D3E] shrink-0">
+                <Users size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Até {propostaState.maxUsuarios} Usuários</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Perfis hierárquicos e alçadas comerciais.</p>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleSign} className="space-y-6">
+
+            <div className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80">
+              <div className="p-2 rounded-lg bg-[#1B4D3E]/8 text-[#1B4D3E] shrink-0">
+                <Server size={16} />
+              </div>
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-emerald-400" />
-                  Assinatura Digital & Aceite do Contrato
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Confirme seus dados para efetivar o credenciamento de sua empresa ao SmartBid Hub.
+                <h4 className="text-xs font-bold text-slate-900">Nuvem 99.9% Uptime</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Infraestrutura em nuvem e backups diários.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80">
+              <div className="p-2 rounded-lg bg-[#1B4D3E]/8 text-[#1B4D3E] shrink-0">
+                <Lock size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Segurança & LGPD</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Sigilo comercial estrito de planilhas e margens.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80">
+              <div className="p-2 rounded-lg bg-[#1B4D3E]/8 text-[#1B4D3E] shrink-0">
+                <MessageCircle size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Suporte Técnico</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Canal direto via WhatsApp com especialistas.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Resumo Financeiro & Condições Comerciais */}
+        <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                <Award size={20} className="text-[#1B4D3E]" />
+                Condições Comerciais & Investimento
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Periodicidade contratada: <strong className="text-slate-800 uppercase">{propostaState.plano}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Mensalidade */}
+            <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+                    Mensalidade da Licença
+                  </span>
+                  <span className="text-[11px] font-bold text-[#1B4D3E] bg-[#1B4D3E]/10 px-2 py-0.5 rounded-md">
+                    Plano {propostaState.plano}
+                  </span>
+                </div>
+                <div className="text-3xl font-black text-[#1B4D3E] mt-1">
+                  {fmt(propostaState.valorMensal)}
+                  <span className="text-xs font-semibold text-slate-500 ml-1.5">/mês</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Inclui suporte, atualizações contínuas de CCTs com inteligência artificial, correções e servidores em nuvem.
                 </p>
               </div>
+            </div>
 
+            {/* Implantação / Setup */}
+            <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500">
+                    Taxa Única de Setup & Treinamento
+                  </span>
+                  {propostaState.descontoSetup > 0 && (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                      Desconto de {fmt(propostaState.descontoSetup)}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="text-3xl font-black text-slate-900 mt-1">
+                  {setupLiquido === 0 ? (
+                    <span className="text-emerald-600 font-black">ISENTO (BÔNUS)</span>
+                  ) : (
+                    fmt(setupLiquido)
+                  )}
+                  {setupLiquido > 0 && (
+                    <span className="text-xs font-semibold text-slate-500 ml-1.5">(taxa única)</span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Configuração inicial das convenções coletivas da empresa, parametrização de encargos e treinamento da equipe.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {propostaState.condicoesEspeciais && (
+            <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-4 text-xs text-amber-900">
+              <span className="font-bold uppercase tracking-wider text-[10px] block mb-1">
+                Condições Especiais Acordadas:
+              </span>
+              <p className="whitespace-pre-line leading-relaxed">
+                {propostaState.condicoesEspeciais}
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* 6. Seção de Assinatura Digital / Status de Aceite */}
+        <section className="bg-white border-2 border-[#1B4D3E]/20 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                <ShieldCheck size={22} className="text-[#1B4D3E]" />
+                {isAssinada ? 'Proposta Assinada Formalmente' : 'Aceite Formal & Assinatura Digital'}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {isAssinada 
+                  ? 'Esta proposta já foi aprovada e assinada digitalmente pelas partes' 
+                  : 'Preencha seus dados para formalizar a contratação e ativar os acessos à plataforma'}
+              </p>
+            </div>
+          </div>
+
+          {!isAssinada ? (
+            <form onSubmit={handleSign} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Nome Completo do Responsável Legal *
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    Nome Completo do Responsável Legal: *
                   </label>
                   <input
                     type="text"
                     required
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    placeholder="Ex: João Carlos da Silva"
-                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none transition"
+                    placeholder="Ex: Carlos Eduardo de Oliveira"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]"
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    CPF ou Cargo na Empresa *
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    CPF ou Cargo na Empresa: *
                   </label>
                   <input
                     type="text"
                     required
                     value={cpfOuCargo}
                     onChange={(e) => setCpfOuCargo(e.target.value)}
-                    placeholder="Ex: Diretor de Operações / 123.456.789-00"
-                    className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none transition"
+                    placeholder="Ex: Diretor de Operações ou 000.000.000-00"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+              <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <input
                   type="checkbox"
-                  id="termo_aceite"
+                  id="concordo-termos"
                   required
                   checked={concordo}
                   onChange={(e) => setConcordo(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-700 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  className="mt-1 h-4 w-4 text-[#1B4D3E] rounded border-slate-300 focus:ring-[#1B4D3E] cursor-pointer"
                 />
-                <label htmlFor="termo_aceite" className="text-xs text-slate-300 leading-relaxed cursor-pointer">
-                  Declaro que li e concordo com os valores e módulos especificados nesta proposta de prestação de serviços SaaS SmartBid, bem como os{' '}
-                  <a href="/termos" target="_blank" className="text-emerald-400 underline underline-offset-2">Termos de Uso</a>{' '}
-                  e a{' '}
-                  <a href="/privacidade" target="_blank" className="text-emerald-400 underline underline-offset-2">Política de Privacidade (LGPD)</a>.
+                <label htmlFor="concordo-termos" className="text-xs text-slate-600 leading-relaxed cursor-pointer select-none">
+                  Declaro que represento formalmente a empresa <strong className="text-slate-800">{propostaState.empresaNome}</strong> e manifesto o aceite das condições comerciais e escopo aqui descritos, autorizando o início do onboarding e faturamento da licença SmartBid Hub.
                 </label>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading || !concordo}
-                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-base shadow-xl shadow-emerald-950/40 transition flex items-center justify-center gap-2 group cursor-pointer"
-              >
-                {loading ? (
-                  <span>Registrando Assinatura Digital...</span>
-                ) : (
-                  <>
-                    <span>Aceitar Proposta & Gerar Acesso</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-3.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span>Processando Assinatura...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      <span>Assinar Digitalmente e Confirmar Contratação</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 flex items-center gap-4 text-emerald-800">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <CheckCircle2 size={28} />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-emerald-900">
+                    Proposta Aprovada & Assinada Digitalmente!
+                  </h3>
+                  <p className="text-xs text-emerald-700 mt-0.5">
+                    Assinado por <strong>{propostaState.assinadoPorNome}</strong> ({propostaState.assinadoPorCpf}) em{' '}
+                    {propostaState.assinadoEm ? new Date(propostaState.assinadoEm).toLocaleString('pt-BR') : 'Data confirmada'}.
+                  </p>
+                </div>
+              </div>
+
+              {/* PIX para ativação imediata */}
+              {propostaState.asaasPixQrCode && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center space-y-4">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm">
+                      Pagamento Instantâneo via PIX (Ativação Automática)
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Escaneie o QR Code abaixo pelo aplicativo do seu banco:
+                    </p>
+                  </div>
+
+                  <div className="inline-block p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                    <img 
+                      src={`data:image/png;base64,${propostaState.asaasPixQrCode}`} 
+                      alt="PIX QR Code" 
+                      className="w-48 h-48 mx-auto object-contain" 
+                    />
+                  </div>
+
+                  {propostaState.asaasPixCopiaECola && (
+                    <div className="max-w-md mx-auto space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={propostaState.asaasPixCopiaECola}
+                          className="w-full text-xs font-mono bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-600 truncate"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCopyPix}
+                          className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-4 py-2 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                        >
+                          {copiado ? (
+                            <>
+                              <Check size={14} /> Copiado!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={14} /> Copiar PIX
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-center pt-2">
+                <a
+                  href={`https://wa.me/5579998188200?text=${encodeURIComponent(
+                    `Olá! Acabei de assinar a proposta comercial do SmartBid Hub para a empresa ${propostaState.empresaNome}. Gostaria de agendar o início do onboarding.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold px-6 py-3 rounded-xl text-sm shadow-md transition-all active:scale-98"
+                >
+                  <MessageCircle size={18} />
+                  <span>Falar com o Especialista de Onboarding no WhatsApp</span>
+                </a>
+              </div>
+            </div>
           )}
         </section>
 
-        {/* Rodapé Corporativo */}
-        <footer className="text-center text-xs text-slate-500 py-4 space-y-1">
-          <p>© {new Date().getFullYear()} Silva Consultoria Empresarial LTDA • SmartBid Hub.</p>
-          <p>Dúvidas sobre esta proposta? Entre em contato pelo e-mail: suporte@smartbidhub.com.br</p>
-        </footer>
+      </main>
 
-      </div>
+      {/* Footer Executivo */}
+      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
+        <p className="font-semibold text-slate-700">SmartBid Hub • Enterprise Facilities Management System</p>
+        <p className="text-[11px] text-slate-400 mt-1">
+          Proposta comercial confidencial emitida para {propostaState.empresaNome}. Todos os direitos reservados.
+        </p>
+      </footer>
     </div>
   );
 }

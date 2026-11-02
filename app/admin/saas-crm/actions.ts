@@ -8,9 +8,32 @@ import { SAAS_AVAILABLE_MODULES, type SaasModuleConfig } from './constants';
 // 1. CARREGAR DADOS GERAIS DO CRM, TRÁFEGO E CONCORRENTES
 export async function getSaasCRMData() {
   try {
+    // 1.0 Carregar Etapas do Kanban
+    let stages = await prisma.saasStage.findMany({
+      orderBy: { ordem: 'asc' },
+    });
+
+    if (stages.length === 0) {
+      const defaultStages = [
+        { nome: 'Novos Leads (LP/Ads)', color: '#0284c7', ordem: 0 },
+        { nome: 'Qualificação & Diagnóstico', color: '#d97706', ordem: 1 },
+        { nome: 'Demo / Reunião Agendada', color: '#9333ea', ordem: 2 },
+        { nome: 'Proposta Enviada', color: '#2563eb', ordem: 3 },
+        { nome: 'Cliente Ativo (Ganho)', color: '#059669', ordem: 4 },
+        { nome: 'Perdido', color: '#e11d48', ordem: 5 },
+      ];
+      for (const stg of defaultStages) {
+        await prisma.saasStage.create({ data: stg });
+      }
+      stages = await prisma.saasStage.findMany({
+        orderBy: { ordem: 'asc' },
+      });
+    }
+
     // 1.1 Leads do CRM SmartBid
     let leads = await prisma.saasLead.findMany({
       include: {
+        stage: true,
         propostas: {
           orderBy: { createdAt: 'desc' },
         },
@@ -22,9 +45,33 @@ export async function getSaasCRMData() {
     if (leads.length === 0) {
       await seedInitialSaasData();
       leads = await prisma.saasLead.findMany({
-        include: { propostas: { orderBy: { createdAt: 'desc' } } },
+        include: { stage: true, propostas: { orderBy: { createdAt: 'desc' } } },
         orderBy: { createdAt: 'desc' },
       });
+    }
+
+    // Mapear leads sem stageId para suas respectivas etapas
+    for (const lead of leads) {
+      if (!lead.stageId && stages.length > 0) {
+        let matchingStage = stages.find(s => {
+          if (lead.status === 'NOVO' && s.ordem === 0) return true;
+          if (lead.status === 'QUALIFICADO' && s.ordem === 1) return true;
+          if (lead.status === 'DEMO_AGENDADA' && s.ordem === 2) return true;
+          if (lead.status === 'PROPOSTA_ENVIADA' && s.ordem === 3) return true;
+          if (lead.status === 'FECHADO' && s.ordem === 4) return true;
+          if (lead.status === 'PERDIDO' && s.ordem === 5) return true;
+          return false;
+        }) || stages[0];
+
+        if (matchingStage) {
+          await prisma.saasLead.update({
+            where: { id: lead.id },
+            data: { stageId: matchingStage.id },
+          });
+          lead.stageId = matchingStage.id;
+          (lead as any).stage = matchingStage;
+        }
+      }
     }
 
     // 1.2 Propostas geradas
@@ -45,6 +92,7 @@ export async function getSaasCRMData() {
 
     return {
       success: true,
+      stages,
       leads,
       propostas,
       keywords,
@@ -56,9 +104,81 @@ export async function getSaasCRMData() {
   }
 }
 
-// 2. CRIAR / EDITAR LEAD NO CRM DO SAAS
+// 2. CRIAR ETAPA DO KANBAN SAAS
+export async function createSaasStage(nome: string, color: string) {
+  try {
+    const count = await prisma.saasStage.count();
+    const stage = await prisma.saasStage.create({
+      data: {
+        nome: nome.trim(),
+        color: color || '#059669',
+        ordem: count,
+      },
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, stage };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 3. ATUALIZAR ETAPA DO KANBAN SAAS (NOME / COR)
+export async function updateSaasStage(id: string, data: { nome?: string; color?: string; ordem?: number }) {
+  try {
+    const stage = await prisma.saasStage.update({
+      where: { id },
+      data,
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, stage };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 4. EXCLUIR ETAPA DO KANBAN SAAS
+export async function deleteSaasStage(id: string) {
+  try {
+    const otherStage = await prisma.saasStage.findFirst({
+      where: { id: { not: id } },
+      orderBy: { ordem: 'asc' },
+    });
+    if (otherStage) {
+      await prisma.saasLead.updateMany({
+        where: { stageId: id },
+        data: { stageId: otherStage.id },
+      });
+    }
+    await prisma.saasStage.delete({ where: { id } });
+    revalidatePath('/admin/saas-crm');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 5. MOVER LEAD ENTRE ETAPAS (DRAG & DROP REAL)
+export async function updateSaasLeadStage(leadId: string, stageId: string) {
+  try {
+    const targetStage = await prisma.saasStage.findUnique({ where: { id: stageId } });
+    const updated = await prisma.saasLead.update({
+      where: { id: leadId },
+      data: {
+        stageId,
+        status: targetStage?.nome || 'EM_ANDAMENTO',
+      },
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, lead: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 6. CRIAR / EDITAR LEAD NO CRM DO SAAS
 export async function createOrUpdateSaasLead(data: {
   id?: string;
+  stageId?: string;
   nome: string;
   empresa: string;
   email: string;
@@ -85,6 +205,7 @@ export async function createOrUpdateSaasLead(data: {
           tamanhoEmpresa: data.tamanhoEmpresa,
           origem: data.origem || 'LP',
           status: data.status || 'NOVO',
+          stageId: data.stageId,
           valorMensal: Number(data.valorMensal || 0),
           valorSetup: Number(data.valorSetup || 0),
           notas: data.notas,
@@ -94,6 +215,11 @@ export async function createOrUpdateSaasLead(data: {
       revalidatePath('/admin/saas-crm');
       return { success: true, lead: updated };
     } else {
+      let stageId = data.stageId;
+      if (!stageId) {
+        const firstStage = await prisma.saasStage.findFirst({ orderBy: { ordem: 'asc' } });
+        stageId = firstStage?.id;
+      }
       const created = await prisma.saasLead.create({
         data: {
           nome: data.nome,
@@ -104,6 +230,7 @@ export async function createOrUpdateSaasLead(data: {
           tamanhoEmpresa: data.tamanhoEmpresa,
           origem: data.origem || 'LP',
           status: data.status || 'NOVO',
+          stageId,
           valorMensal: Number(data.valorMensal || 0),
           valorSetup: Number(data.valorSetup || 0),
           notas: data.notas,
@@ -119,7 +246,7 @@ export async function createOrUpdateSaasLead(data: {
   }
 }
 
-// 3. ATUALIZAR STATUS DO LEAD NO KANBAN
+// 7. ATUALIZAR STATUS DO LEAD NO KANBAN
 export async function updateSaasLeadStatus(leadId: string, status: string) {
   try {
     const updated = await prisma.saasLead.update({
@@ -133,7 +260,7 @@ export async function updateSaasLeadStatus(leadId: string, status: string) {
   }
 }
 
-// 4. DELETAR LEAD DO CRM
+// 8. DELETAR LEAD DO CRM
 export async function deleteSaasLead(leadId: string) {
   try {
     await prisma.saasLead.delete({ where: { id: leadId } });

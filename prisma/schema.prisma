@@ -1325,6 +1325,16 @@ model PushSubscription {
   createdAt DateTime @default(now())
 }
 
+model SaasStage {
+  id        String     @id @default(cuid())
+  nome      String
+  color     String     @default("#059669")
+  ordem     Int        @default(0)
+  leads     SaasLead[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
 model SaasLead {
   id              String         @id @default(cuid())
   nome            String
@@ -1335,6 +1345,8 @@ model SaasLead {
   tamanhoEmpresa  String?        // ex: "1-10", "11-50", "51-200", "200+"
   origem          String         @default("LP") // "LP", "WHATSAPP", "GOOGLE_ADS", "META_ADS", "INDICACAO"
   status          String         @default("NOVO") // "NOVO", "QUALIFICADO", "DEMO_AGENDADA", "PROPOSTA_ENVIADA", "FECHADO", "PERDIDO"
+  stageId         String?
+  stage           SaasStage?     @relation(fields: [stageId], references: [id], onDelete: SetNull)
   valorMensal     Float?         @default(0)
   valorSetup      Float?         @default(0)
   notas           String?        @db.Text

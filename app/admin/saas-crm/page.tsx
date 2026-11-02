@@ -16,6 +16,7 @@ import {
   addTrafficKeyword, testAsaasKeyAction 
 } from './actions';
 import { SAAS_AVAILABLE_MODULES } from './constants';
+import LeadsKanban from '@/app/leads/LeadsKanban';
 
 export default function SaasCRMPage() {
   const router = useRouter();
@@ -394,114 +395,8 @@ export default function SaasCRMPage() {
 
           {/* ================= ABA 1: CRM KANBAN ================= */}
           {activeTab === 'crm' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">Pipeline de Vendas das Licenças do SmartBid</h2>
-                  <p className="text-xs text-slate-500">
-                    Acompanhe oportunidades geradas pela Landing Page, campanhas de tráfego e reuniões comerciais.
-                  </p>
-                </div>
-              </div>
-
-              {/* Kanban Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
-                {kanbanColumns.map((col) => {
-                  const colLeads = data.leads.filter((l) => l.status === col.id);
-                  const totalMRRCol = colLeads.reduce((acc, curr) => acc + (curr.valorMensal || 0), 0);
-
-                  return (
-                    <div key={col.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[500px]">
-                      {/* Topo da Coluna */}
-                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-                        <div>
-                          <h3 className="text-xs font-bold text-slate-800">{col.label}</h3>
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            R$ {totalMRRCol.toLocaleString('pt-BR')} /mês
-                          </span>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${col.color}`}>
-                          {colLeads.length}
-                        </span>
-                      </div>
-
-                      {/* Lista de Leads da Coluna */}
-                      <div className="flex-1 space-y-2.5 overflow-y-auto">
-                        {colLeads.map((lead) => (
-                          <div 
-                            key={lead.id} 
-                            className="p-3 bg-white rounded-xl border border-slate-200 hover:border-emerald-500/50 shadow-xs hover:shadow-md transition space-y-2 group"
-                          >
-                            <div className="flex items-start justify-between gap-1">
-                              <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                                  {lead.origem}
-                                </span>
-                                <h4 className="text-xs font-bold text-slate-900 mt-1 line-clamp-1">{lead.empresa}</h4>
-                                <p className="text-[11px] text-slate-500">{lead.nome} • {lead.cargo || 'Responsável'}</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between text-[11px] text-slate-600 pt-1 border-t border-slate-100">
-                              <span className="font-semibold text-emerald-700">
-                                R$ {lead.valorMensal?.toLocaleString('pt-BR') || '0'}/mês
-                              </span>
-                              <span className="text-[10px] text-slate-400">
-                                {lead.tamanhoEmpresa ? `${lead.tamanhoEmpresa} func.` : ''}
-                              </span>
-                            </div>
-
-                            {lead.notas && (
-                              <p className="text-[10px] text-slate-500 italic line-clamp-2 bg-slate-50 p-1.5 rounded">
-                                {lead.notas}
-                              </p>
-                            )}
-
-                            {/* Controles rápidos para mover no funil */}
-                            <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-[10px]">
-                              <button
-                                onClick={() => {
-                                  setPropostaForm((prev) => ({
-                                    ...prev,
-                                    empresaNome: lead.empresa,
-                                    contatoNome: lead.nome,
-                                    contatoEmail: lead.email,
-                                    contatoTelefone: lead.telefone,
-                                  }));
-                                  handleTabChange('propostas');
-                                }}
-                                className="text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1 cursor-pointer"
-                                title="Gerar Proposta Flegável para este cliente"
-                              >
-                                <Layers className="w-3 h-3" /> Proposta
-                              </button>
-
-                              <select
-                                value={lead.status}
-                                onChange={(e) => handleMoveLead(lead.id, e.target.value)}
-                                className="bg-slate-100 text-slate-700 rounded px-1.5 py-0.5 text-[10px] font-medium border-0 cursor-pointer"
-                              >
-                                <option value="NOVO">Novo</option>
-                                <option value="QUALIFICADO">Qualificado</option>
-                                <option value="DEMO_AGENDADA">Demo</option>
-                                <option value="PROPOSTA_ENVIADA">Proposta</option>
-                                <option value="FECHADO">Fechado</option>
-                                <option value="PERDIDO">Perdido</option>
-                              </select>
-                            </div>
-                          </div>
-                        ))}
-
-                        {colLeads.length === 0 && (
-                          <div className="text-center py-8 text-slate-400 text-xs italic">
-                            Nenhum lead nesta etapa
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="-mx-6 -my-6 bg-slate-50 min-h-[calc(100vh-140px)]">
+              <LeadsKanban />
             </div>
           )}
 
