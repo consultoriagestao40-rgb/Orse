@@ -6,17 +6,15 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { extractVigencia } from '@/lib/cctParser';
 
-
 export async function getCCTs() {
   noStore();
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return [];
+  }
   try {
-    const whereClause: any = {};
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
     const data = await prisma.cCT.findMany({
-      where: whereClause,
+      where: { tenantId: user.tenantId },
       orderBy: { createdAt: 'desc' },
       include: {
         cargos: true
@@ -32,6 +30,9 @@ export async function getCCTs() {
 
 export async function createCCT(data: any) {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { error: 'Usuário não autenticado ou sem empresa vinculada.' };
+  }
   try {
     const { cargos, ...cctData } = data;
     
@@ -63,7 +64,7 @@ export async function createCCT(data: any) {
         cidade: cctData.cidade || '',
         vigenciaInicio: vigInicio,
         vigenciaFim: vigFim,
-        tenantId: user?.tenantId || null,
+        tenantId: user.tenantId,
         
         vaValor: Number(cctData.vaValor) || 0,
         vaTipo: cctData.vaTipo || 'DIARIO',
@@ -127,9 +128,13 @@ export async function createCCT(data: any) {
 
 export async function getCCTById(id: string) {
   noStore();
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return null;
+  }
   try {
-    const data = await prisma.cCT.findUnique({
-      where: { id },
+    const data = await prisma.cCT.findFirst({
+      where: { id, tenantId: user.tenantId },
       include: {
         cargos: true
       }
@@ -142,7 +147,18 @@ export async function getCCTById(id: string) {
 }
 
 export async function updateCCT(id: string, data: any) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.cCT.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { error: 'Regra técnica (CCT) não encontrada no seu ambiente.' };
+    }
+
     const { cargos, ...cctData } = data;
     
     // Deleta os cargos antigos e cria os novos para garantir sincronia total
@@ -240,7 +256,18 @@ export async function updateCCT(id: string, data: any) {
 }
 
 export async function deleteCCT(id: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    throw new Error('Não autorizado.');
+  }
   try {
+    const existing = await prisma.cCT.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      throw new Error('Regra técnica não encontrada no seu ambiente.');
+    }
+
     await prisma.cCT.delete({
       where: { id }
     });

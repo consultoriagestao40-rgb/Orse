@@ -6,13 +6,12 @@ import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getClientes() {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return [];
+  }
   try {
-    const whereClause: any = {};
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
     const data = await prisma.client.findMany({
-      where: whereClause,
+      where: { tenantId: user.tenantId },
       orderBy: { nomeFantasia: 'asc' }
     });
     // Serialize to standard JSON to avoid Next.js Date serialization issues
@@ -40,13 +39,16 @@ function cleanAndFormatDocument(doc: string | null | undefined): { cleaned: stri
 
 export async function createCliente(data: any) {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { error: 'Usuário não autenticado ou sem empresa vinculada.' };
+  }
   try {
     const { formatted } = cleanAndFormatDocument(data.cnpj);
     if (formatted) {
       const existing = await prisma.client.findFirst({
         where: {
           cnpj: formatted,
-          tenantId: user?.tenantId || null
+          tenantId: user.tenantId
         }
       });
       if (existing) {
@@ -65,7 +67,7 @@ export async function createCliente(data: any) {
         contato: data.contato || '',
         contatoCargo: data.contatoCargo || '',
         segmento: data.segmento || '',
-        tenantId: user?.tenantId || null,
+        tenantId: user.tenantId,
       }
     });
     
@@ -79,7 +81,17 @@ export async function createCliente(data: any) {
 
 export async function updateCliente(id: string, data: any) {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { error: 'Não autorizado.' };
+  }
   try {
+    const client = await prisma.client.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!client) {
+      return { error: 'Cliente não encontrado no seu ambiente.' };
+    }
+
     const updateData: any = {};
     if (data.nomeFantasia !== undefined) updateData.nomeFantasia = data.nomeFantasia;
     if (data.razaoSocial !== undefined) updateData.razaoSocial = data.razaoSocial;
@@ -89,7 +101,7 @@ export async function updateCliente(id: string, data: any) {
         const existing = await prisma.client.findFirst({
           where: {
             cnpj: formatted,
-            tenantId: user?.tenantId || null,
+            tenantId: user.tenantId,
             id: { not: id }
           }
         });
@@ -119,7 +131,18 @@ export async function updateCliente(id: string, data: any) {
 }
 
 export async function deleteCliente(id: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    throw new Error('Não autorizado.');
+  }
   try {
+    const client = await prisma.client.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!client) {
+      throw new Error('Cliente não encontrado no seu ambiente.');
+    }
+
     await prisma.client.delete({
       where: { id }
     });
@@ -133,7 +156,7 @@ export async function deleteCliente(id: string) {
 
 export async function importClientes(clientes: any[]) {
   const user = await getLoggedUser();
-  if (!user) return { error: 'Não autorizado' };
+  if (!user || !user.tenantId) return { error: 'Não autorizado' };
   
   let inserted = 0;
   let updated = 0;
@@ -183,7 +206,7 @@ export async function importClientes(clientes: any[]) {
           contato: c.contato || '',
           contatoCargo: c.contatoCargo || '',
           segmento: c.segmento || '',
-          tenantId: user.tenantId || null
+          tenantId: user.tenantId
         }
       });
       inserted++;

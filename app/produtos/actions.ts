@@ -1,6 +1,5 @@
 'use server';
 import { unstable_noStore as noStore } from 'next/cache';
-
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
@@ -8,11 +7,15 @@ import { getLoggedUser } from '@/app/propostas/actions';
 export async function getProdutos() {
   noStore();
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return [];
+  }
   try {
-    const whereClause: any = { ativo: true };
-    whereClause.tenantId = user?.tenantId;
     return await prisma.produto.findMany({
-      where: whereClause,
+      where: {
+        ativo: true,
+        tenantId: user.tenantId,
+      },
       orderBy: { codigo: 'asc' },
     });
   } catch (error) {
@@ -23,13 +26,15 @@ export async function getProdutos() {
 
 export async function createProduto(data: any) {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Usuário não autenticado ou sem empresa vinculada.' };
+  }
   try {
-    // Remove o ID se vier vazio do formulário para o Prisma gerar um novo
     const { id, ...rest } = data;
     const produto = await prisma.produto.create({
       data: {
         ...rest,
-        tenantId: user?.tenantId || null
+        tenantId: user.tenantId
       }
     });
     revalidatePath('/produtos');
@@ -50,8 +55,22 @@ export async function updateProduto(
     categoria: string;
   }
 ) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
-    const produto = await prisma.produto.update({ where: { id }, data });
+    const existing = await prisma.produto.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Produto não encontrado no seu ambiente.' };
+    }
+
+    const produto = await prisma.produto.update({
+      where: { id },
+      data
+    });
     revalidatePath('/produtos');
     revalidatePath('/epis');
     return { success: true, produto };
@@ -62,8 +81,22 @@ export async function updateProduto(
 }
 
 export async function deleteProduto(id: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
-    await prisma.produto.update({ where: { id }, data: { ativo: false } });
+    const existing = await prisma.produto.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Produto não encontrado no seu ambiente.' };
+    }
+
+    await prisma.produto.update({
+      where: { id },
+      data: { ativo: false }
+    });
     revalidatePath('/produtos');
     revalidatePath('/epis');
     return { success: true };

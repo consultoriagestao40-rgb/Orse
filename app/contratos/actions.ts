@@ -4,9 +4,17 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { triggerPicCreationForContract } from '@/app/pic/actions';
+
 export async function getEmpresasEmissoras() {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: true, data: [] };
+  }
   try {
-    const data = await prisma.empresaEmissora.findMany();
+    const data = await prisma.empresaEmissora.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { nomeFantasia: 'asc' }
+    });
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -15,13 +23,15 @@ export async function getEmpresasEmissoras() {
 
 export async function getPropostasDisponiveis() {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: true, data: [] };
+  }
   try {
-    const whereClause: any = { contrato: null };
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
     const data = await prisma.proposta.findMany({
-      where: whereClause,
+      where: {
+        contrato: null,
+        tenantId: user.tenantId
+      },
       include: { client: true, versoes: { orderBy: { versao: 'desc' }, take: 1 } },
       orderBy: { createdAt: 'desc' }
     });
@@ -30,18 +40,18 @@ export async function getPropostasDisponiveis() {
     return { success: false, error: error.message };
   }
 }
+
 // ---------------------------------------------------------
 // TEMPLATES DE CONTRATO
 // ---------------------------------------------------------
 export async function getTemplates() {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: true, data: [] };
+  }
   try {
-    const whereClause: any = {};
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
     const templates = await prisma.templateContrato.findMany({
-      where: whereClause,
+      where: { tenantId: user.tenantId },
       include: { clausulas: { orderBy: { ordem: 'asc' } } },
       orderBy: { createdAt: 'desc' }
     });
@@ -53,11 +63,14 @@ export async function getTemplates() {
 
 export async function createTemplate(nome: string, clausulas: { titulo: string; texto: string; ordem: number }[]) {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
     const res = await prisma.templateContrato.create({
       data: {
         nome,
-        tenantId: user?.tenantId || null,
+        tenantId: user.tenantId,
         clausulas: {
           create: clausulas.map(c => ({
             titulo: c.titulo,
@@ -75,7 +88,18 @@ export async function createTemplate(nome: string, clausulas: { titulo: string; 
 }
 
 export async function updateTemplate(id: string, nome: string, clausulas: { id?: string; titulo: string; texto: string; ordem: number }[]) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.templateContrato.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Template não encontrado no seu ambiente.' };
+    }
+
     await prisma.clausulaTemplate.deleteMany({ where: { templateId: id } });
     const res = await prisma.templateContrato.update({
       where: { id },
@@ -98,7 +122,18 @@ export async function updateTemplate(id: string, nome: string, clausulas: { id?:
 }
 
 export async function deleteTemplate(id: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.templateContrato.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Template não encontrado no seu ambiente.' };
+    }
+
     await prisma.templateContrato.delete({ where: { id } });
     revalidatePath('/contratos');
     return { success: true };
@@ -112,13 +147,12 @@ export async function deleteTemplate(id: string) {
 // ---------------------------------------------------------
 export async function getContratos() {
   const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: true, data: [] };
+  }
   try {
-    const whereClause: any = {};
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
     const contratos = await prisma.contrato.findMany({
-      where: whereClause,
+      where: { tenantId: user.tenantId },
       include: {
         client: true,
         empresaEmissora: true,
@@ -141,9 +175,13 @@ export async function getContratos() {
 }
 
 export async function getContratoById(id: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
-    const contrato = await prisma.contrato.findUnique({
-      where: { id },
+    const contrato = await prisma.contrato.findFirst({
+      where: { id, tenantId: user.tenantId },
       include: {
         client: true,
         empresaEmissora: true,
@@ -159,6 +197,9 @@ export async function getContratoById(id: string) {
         clausulas: { orderBy: { ordem: 'asc' } }
       }
     });
+    if (!contrato) {
+      return { success: false, error: 'Contrato não encontrado no seu ambiente.' };
+    }
     return { success: true, data: contrato };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -166,13 +207,19 @@ export async function getContratoById(id: string) {
 }
 
 export async function createContratoFromFPV(propostaId: string, empresaEmissoraId: string, templateId: string, valorMensal: number) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
     // Verifica se já existe
-    const exists = await prisma.contrato.findUnique({ where: { propostaId } });
+    const exists = await prisma.contrato.findFirst({
+      where: { propostaId, tenantId: user.tenantId }
+    });
     if (exists) throw new Error('Já existe um contrato gerado para esta proposta.');
 
-    const proposta = await prisma.proposta.findUnique({
-      where: { id: propostaId },
+    const proposta = await prisma.proposta.findFirst({
+      where: { id: propostaId, tenantId: user.tenantId },
       include: { 
         client: true,
         versoes: {
@@ -184,11 +231,13 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
     });
     if (!proposta || !proposta.clientId) throw new Error('Proposta ou Cliente não encontrado');
 
-    const empresa = await prisma.empresaEmissora.findUnique({ where: { id: empresaEmissoraId } });
+    const empresa = await prisma.empresaEmissora.findFirst({
+      where: { id: empresaEmissoraId, tenantId: user.tenantId }
+    });
     if (!empresa) throw new Error('Empresa Emissora não encontrada');
 
-    const template = await prisma.templateContrato.findUnique({
-      where: { id: templateId },
+    const template = await prisma.templateContrato.findFirst({
+      where: { id: templateId, tenantId: user.tenantId },
       include: { clausulas: { orderBy: { ordem: 'asc' } } }
     });
     if (!template) throw new Error('Template não encontrado');
@@ -226,7 +275,6 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
       return t;
     };
 
-    const user = await getLoggedUser();
     const contrato = await prisma.contrato.create({
       data: {
         propostaId,
@@ -237,7 +285,7 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
         vigenciaMeses,
         valorMensal,
         valorTotal,
-        tenantId: user?.tenantId || null,
+        tenantId: user.tenantId,
         clausulas: {
           create: template.clausulas.map(c => ({
             titulo: c.titulo,
@@ -256,7 +304,18 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
 }
 
 export async function updateContratoStatus(id: string, status: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.contrato.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Contrato não encontrado no seu ambiente.' };
+    }
+
     await prisma.contrato.update({
       where: { id },
       data: { status }
@@ -277,7 +336,18 @@ export async function updateContratoStatus(id: string, status: string) {
 }
 
 export async function updateContratoDetails(id: string, data: any) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.contrato.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Contrato não encontrado no seu ambiente.' };
+    }
+
     await prisma.contrato.update({
       where: { id },
       data
@@ -298,7 +368,18 @@ export async function updateContratoDetails(id: string, data: any) {
 }
 
 export async function updateContratoClausulas(contratoId: string, clausulas: { titulo: string; texto: string; ordem: number }[]) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.contrato.findFirst({
+      where: { id: contratoId, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Contrato não encontrado no seu ambiente.' };
+    }
+
     await prisma.clausulaContrato.deleteMany({ where: { contratoId } });
     await prisma.contrato.update({
       where: { id: contratoId },
@@ -320,7 +401,18 @@ export async function updateContratoClausulas(contratoId: string, clausulas: { t
 }
 
 export async function deleteContrato(id: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
+    const existing = await prisma.contrato.findFirst({
+      where: { id, tenantId: user.tenantId }
+    });
+    if (!existing) {
+      return { success: false, error: 'Contrato não encontrado no seu ambiente.' };
+    }
+
     await prisma.contrato.delete({ where: { id } });
     revalidatePath('/contratos');
     return { success: true };
@@ -330,9 +422,13 @@ export async function deleteContrato(id: string) {
 }
 
 export async function renameContratoStatus(oldStatus: string, newStatus: string) {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    return { success: false, error: 'Não autorizado.' };
+  }
   try {
     await prisma.contrato.updateMany({
-      where: { status: oldStatus },
+      where: { status: oldStatus, tenantId: user.tenantId },
       data: { status: newStatus }
     });
     revalidatePath('/contratos');
