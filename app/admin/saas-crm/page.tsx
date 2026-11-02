@@ -16,7 +16,7 @@ import {
   addTrafficKeyword, testAsaasKeyAction 
 } from './actions';
 import { SAAS_AVAILABLE_MODULES } from './constants';
-import LeadsKanban from '@/app/leads/LeadsKanban';
+import SaasLeadsKanban from './components/SaasLeadsKanban';
 
 export default function SaasCRMPage() {
   const router = useRouter();
@@ -237,15 +237,6 @@ export default function SaasCRMPage() {
     }
   };
 
-  // Colunas do Kanban CRM
-  const kanbanColumns = [
-    { id: 'NOVO', label: 'Novos Leads (LP/Ads)', color: 'border-blue-500/50 text-blue-400 bg-blue-500/10' },
-    { id: 'QUALIFICADO', label: 'Qualificação & Diagnóstico', color: 'border-purple-500/50 text-purple-400 bg-purple-500/10' },
-    { id: 'DEMO_AGENDADA', label: 'Demo / Reunião Agendada', color: 'border-amber-500/50 text-amber-400 bg-amber-500/10' },
-    { id: 'PROPOSTA_ENVIADA', label: 'Proposta Enviada', color: 'border-cyan-500/50 text-cyan-400 bg-cyan-500/10' },
-    { id: 'FECHADO', label: 'Cliente Ativo (Ganho)', color: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' },
-    { id: 'PERDIDO', label: 'Perdido', color: 'border-slate-700 text-slate-500 bg-slate-800/20' },
-  ];
 
   // Métricas de Tráfego Calculadas
   const totalGasto = data.keywords.reduce((acc, k) => acc + (k.custoTotal || 0), 2415.5);
@@ -393,10 +384,23 @@ export default function SaasCRMPage() {
         {/* Conteúdo Dinâmico por Aba */}
         <div className="p-6 space-y-6">
 
-          {/* ================= ABA 1: CRM KANBAN ================= */}
+          {/* ================= ABA 1: CRM KANBAN SAAS (ISOLADO DO TENANT) ================= */}
           {activeTab === 'crm' && (
             <div className="-mx-6 -my-6 bg-slate-50 min-h-[calc(100vh-140px)]">
-              <LeadsKanban />
+              <SaasLeadsKanban
+                onGenerateProposta={(lead) => {
+                  setPropostaForm((prev) => ({
+                    ...prev,
+                    empresaNome: lead.empresa || '',
+                    contatoNome: lead.nome || '',
+                    contatoEmail: lead.email || '',
+                    contatoTelefone: lead.telefone || '',
+                    valorMensal: lead.valorMensal || 890,
+                    valorSetup: lead.valorSetup || 1500,
+                  }));
+                  handleTabChange('propostas');
+                }}
+              />
             </div>
           )}
 

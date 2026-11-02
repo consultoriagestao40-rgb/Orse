@@ -1352,8 +1352,44 @@ model SaasLead {
   notas           String?        @db.Text
   tags            String?        // comma-separated tags
   propostas       SaasProposta[]
+  activities      SaasActivity[]
+  history         SaasLeadHistory[]
+  emails          SaasEmail[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+}
+
+model SaasActivity {
+  id          String    @id @default(cuid())
+  leadId      String
+  lead        SaasLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tipo        String    @default("TAREFA") // REUNIAO, DEMO, LIGACAO, TAREFA, WHATSAPP, EMAIL
+  titulo      String
+  dataVenc    DateTime?
+  concluida   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model SaasLeadHistory {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      SaasLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tipo      String   // STATUS_CHANGE, NOTE, EMAIL_SENT, WHATSAPP_SENT, PROPOSAL_CREATED
+  descricao String   @db.Text
+  autor     String   @default("Comercial")
+  createdAt DateTime @default(now())
+}
+
+model SaasEmail {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      SaasLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assunto   String
+  corpo     String   @db.Text
+  de        String
+  para      String
+  status    String   @default("ENVIADO")
+  createdAt DateTime @default(now())
 }
 
 model SaasProposta {

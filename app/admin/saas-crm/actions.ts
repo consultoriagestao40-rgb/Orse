@@ -271,6 +271,149 @@ export async function deleteSaasLead(leadId: string) {
   }
 }
 
+// 8.1 OBTER DETALHES DO LEAD (COM ATIVIDADES, HISTÓRICO, EMAILS E PROPOSTAS)
+export async function getSaasLeadDetails(leadId: string) {
+  try {
+    const lead = await prisma.saasLead.findUnique({
+      where: { id: leadId },
+      include: {
+        stage: true,
+        activities: { orderBy: { createdAt: 'desc' } },
+        history: { orderBy: { createdAt: 'desc' } },
+        emails: { orderBy: { createdAt: 'desc' } },
+        propostas: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+    return { success: true, lead };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 8.2 ADICIONAR ATIVIDADE AO LEAD
+export async function addSaasLeadActivity(data: { leadId: string; tipo: string; titulo: string; dataVenc?: string }) {
+  try {
+    const activity = await prisma.saasActivity.create({
+      data: {
+        leadId: data.leadId,
+        tipo: data.tipo,
+        titulo: data.titulo,
+        dataVenc: data.dataVenc ? new Date(data.dataVenc) : null,
+      },
+    });
+    await prisma.saasLeadHistory.create({
+      data: {
+        leadId: data.leadId,
+        tipo: 'ACTIVITY',
+        descricao: `Atividade agendada: [${data.tipo}] ${data.titulo}`,
+      },
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, activity };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 8.3 ALTERAR STATUS DA ATIVIDADE
+export async function toggleSaasLeadActivity(activityId: string, concluida: boolean) {
+  try {
+    const updated = await prisma.saasActivity.update({
+      where: { id: activityId },
+      data: { concluida },
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, activity: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 8.4 ADICIONAR NOTA / HISTÓRICO AO LEAD
+export async function addSaasLeadNote(leadId: string, nota: string, autor?: string) {
+  try {
+    const history = await prisma.saasLeadHistory.create({
+      data: {
+        leadId,
+        tipo: 'NOTE',
+        descricao: nota,
+        autor: autor || 'Comercial',
+      },
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, history };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 8.5 ENVIAR E-MAIL AO LEAD
+export async function sendSaasLeadEmail(leadId: string, assunto: string, corpo: string) {
+  try {
+    const lead = await prisma.saasLead.findUnique({ where: { id: leadId } });
+    if (!lead || !lead.email) throw new Error('Lead ou e-mail do lead não encontrado');
+
+    const { sendMail } = await import('@/lib/mail');
+    await sendMail({
+      to: lead.email,
+      subject: assunto,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+          <div style="padding: 20px; border-bottom: 2px solid #10b981;">
+            <h2 style="color: #0f172a; margin: 0;">SmartBid Software</h2>
+          </div>
+          <div style="padding: 20px 0;">
+            <p style="white-space: pre-line;">${corpo}</p>
+          </div>
+          <div style="padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+            Equipe Comercial SmartBid • <a href="https://smartbidhub.com.br" style="color: #10b981;">smartbidhub.com.br</a>
+          </div>
+        </div>
+      `,
+    });
+
+    const emailRecord = await prisma.saasEmail.create({
+      data: {
+        leadId,
+        assunto,
+        corpo,
+        de: 'comercial@smartbidhub.com.br',
+        para: lead.email,
+      },
+    });
+
+    await prisma.saasLeadHistory.create({
+      data: {
+        leadId,
+        tipo: 'EMAIL_SENT',
+        descricao: `E-mail enviado: "${assunto}" para ${lead.email}`,
+      },
+    });
+
+    revalidatePath('/admin/saas-crm');
+    return { success: true, email: emailRecord };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// 8.6 REGISTRAR MENSAGEM DO WHATSAPP
+export async function logSaasLeadWhatsApp(leadId: string, mensagem: string) {
+  try {
+    const history = await prisma.saasLeadHistory.create({
+      data: {
+        leadId,
+        tipo: 'WHATSAPP_SENT',
+        descricao: `WhatsApp enviado: "${mensagem.substring(0, 100)}${mensagem.length > 100 ? '...' : ''}"`,
+      },
+    });
+    revalidatePath('/admin/saas-crm');
+    return { success: true, history };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 // 5. GERADOR INTELIGENTE DE PROPOSTA COMERCIAL SAAS (FLEGÁVEL)
 export async function createSaasProposta(data: {
   leadId?: string;
