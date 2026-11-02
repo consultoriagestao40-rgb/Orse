@@ -190,6 +190,89 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
   const [presentationCompleted, setPresentationCompleted] = useState(false);
   const [videoCompleted, setVideoCompleted] = useState(false);
 
+  // Controle de Slide Atual da Apresentação
+  const totalSlides = Number(doc.configApresentacao?.totalSlides) > 0 ? Number(doc.configApresentacao?.totalSlides) : 10;
+  const [currentSlide, setCurrentSlide] = useState(1);
+  const isLastSlide = currentSlide >= totalSlides;
+
+  // Controle de Tempo e Últimos 10 Segundos do Vídeo
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoNearEnd, setVideoNearEnd] = useState(false);
+  const [videoWatchSeconds, setVideoWatchSeconds] = useState(0);
+
+  // Escuta de Teclas para Navegação de Slides da Apresentação
+  useEffect(() => {
+    if (activeClientTab === 'apresentacao') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+          setCurrentSlide((prev) => Math.min(totalSlides, prev + 1));
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          setCurrentSlide((prev) => Math.max(1, prev - 1));
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [activeClientTab, totalSlides]);
+
+  // Escuta de postMessages do YouTube / Vimeo para detectar últimos 10 segundos
+  useEffect(() => {
+    const handleVideoMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && data.event === 'infoDelivery' && data.info) {
+          if (data.info.currentTime !== undefined && data.info.duration !== undefined) {
+            const cur = Number(data.info.currentTime);
+            const dur = Number(data.info.duration);
+            setVideoCurrentTime(cur);
+            setVideoDuration(dur);
+            if (dur > 0 && cur >= dur - 10) {
+              setVideoNearEnd(true);
+            }
+          }
+          if (data.info.playerState === 0) {
+            setVideoNearEnd(true);
+          }
+        }
+        if (data && data.event === 'timeupdate' && data.data) {
+          const cur = Number(data.data.seconds);
+          const dur = Number(data.data.duration);
+          setVideoCurrentTime(cur);
+          setVideoDuration(dur);
+          if (dur > 0 && cur >= dur - 10) {
+            setVideoNearEnd(true);
+          }
+        }
+        if (data && data.event === 'ended') {
+          setVideoNearEnd(true);
+        }
+      } catch {}
+    };
+
+    window.addEventListener('message', handleVideoMessage);
+    return () => window.removeEventListener('message', handleVideoMessage);
+  }, []);
+
+  // Temporizador de exibição na aba de vídeo caso o iframe externo não emita postMessage
+  useEffect(() => {
+    let interval: any = null;
+    if (activeClientTab === 'video' && !videoNearEnd) {
+      interval = setInterval(() => {
+        setVideoWatchSeconds((prev) => {
+          const next = prev + 1;
+          if (videoDuration === 0 && next >= 30) {
+            setVideoNearEnd(true);
+          }
+          return next;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeClientTab, videoNearEnd, videoDuration]);
+
   // Status de Validação e Identificação do Cliente
   const [isAccessVerified, setIsAccessVerified] = useState(false);
   const [showSimulatedWelcome, setShowSimulatedWelcome] = useState(false);
@@ -1330,38 +1413,106 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                 />
               </div>
 
+              {/* Barra de Navegação e Controle de Slides */}
+              {requiresPres && !presentationCompleted && (
+                <div className="bg-slate-50 border border-slate-200/80 p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Progresso dos Slides:</span>
+                    <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-black text-[#1B4D3E] shadow-2xs">
+                      Slide {currentSlide} de {totalSlides}
+                    </span>
+                    {isLastSlide ? (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
+                        ✓ Último Slide Atingido!
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                        🔒 Avance até o slide {totalSlides}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentSlide((prev) => Math.max(1, prev - 1))}
+                      disabled={currentSlide <= 1}
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-700 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                    >
+                      <ChevronLeft size={13} /> Anterior
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentSlide((prev) => Math.min(totalSlides, prev + 1))}
+                      disabled={isLastSlide}
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-700 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                    >
+                      Próximo <ChevronRight size={13} />
+                    </button>
+
+                    {!isLastSlide && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentSlide(totalSlides)}
+                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                        title="Ir direto para a confirmação do último slide"
+                      >
+                        Estou no Último Slide ⏭
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Botão de Conclusão / Desbloqueio da Apresentação */}
               {requiresPres && (
                 <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                      {presentationCompleted ? <CheckCircle2 size={20} /> : <Lock size={20} />}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted ? 'bg-emerald-50 text-emerald-600' : isLastSlide ? 'bg-emerald-50 text-emerald-600 animate-bounce' : 'bg-slate-100 text-slate-400'}`}>
+                      {presentationCompleted || isLastSlide ? <CheckCircle2 size={20} /> : <Lock size={20} />}
                     </div>
                     <div>
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                        {presentationCompleted ? 'Apresentação Concluída' : 'Etapa Obrigatória: Apresentação de Slides'}
+                        {presentationCompleted 
+                          ? 'Apresentação Concluída' 
+                          : isLastSlide 
+                            ? '🎉 Você chegou ao último slide!' 
+                            : `Etapa Obrigatória: Navegue até o último slide (${currentSlide}/${totalSlides})`}
                       </h4>
                       <p className="text-[11px] text-slate-500 font-medium leading-snug">
                         {presentationCompleted 
                           ? 'A proposta comercial (A4), planilhas FPV e minutas foram desbloqueadas no menu lateral.'
-                          : 'Navegue pelos slides da proposta e clique em concluir para liberar a Proposta Comercial (A4) e planilhas.'}
+                          : isLastSlide 
+                            ? 'Clique no botão ao lado para confirmar a conclusão e liberar a Proposta Comercial (A4) e planilhas.'
+                            : 'O botão de conclusão será habilitado automaticamente assim que você chegar ao último slide.'}
                       </p>
                     </div>
                   </div>
 
                   {!presentationCompleted ? (
-                    <button
-                      onClick={() => {
-                        setPresentationCompleted(true);
-                        if (typeof window !== 'undefined') {
-                          localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
-                        }
-                        showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
-                      }}
-                      className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 size={16} /> Concluir Apresentação e Liberar
-                    </button>
+                    isLastSlide ? (
+                      <button
+                        onClick={() => {
+                          setPresentationCompleted(true);
+                          if (typeof window !== 'undefined') {
+                            localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
+                          }
+                          showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                        }}
+                        className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2 animate-bounce animate-duration-1000"
+                      >
+                        <CheckCircle2 size={16} /> Concluir Apresentação e Liberar
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full sm:w-auto px-5 py-3 bg-slate-150 text-slate-400 border border-slate-250 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 shrink-0 select-none opacity-80"
+                        title="Navegue até o último slide para habilitar a conclusão"
+                      >
+                        <Lock size={14} className="text-slate-400" /> Libera no Último Slide ({currentSlide}/{totalSlides})
+                      </button>
+                    )
                   ) : (
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
                       ✓ Liberado
@@ -2392,7 +2543,22 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
               
               <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-2xl border border-slate-100 shadow-lg">
                 {videoUrl.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
-                  <video src={videoUrl} controls className="absolute inset-0 w-full h-full object-contain" />
+                  <video 
+                    src={videoUrl} 
+                    controls 
+                    className="absolute inset-0 w-full h-full object-contain"
+                    onTimeUpdate={(e) => {
+                      const v = e.currentTarget;
+                      if (v.duration && v.duration > 0) {
+                        setVideoCurrentTime(v.currentTime);
+                        setVideoDuration(v.duration);
+                        if (v.currentTime >= v.duration - 10) {
+                          setVideoNearEnd(true);
+                        }
+                      }
+                    }}
+                    onEnded={() => setVideoNearEnd(true)}
+                  />
                 ) : (
                   <iframe
                     src={(() => {
@@ -2400,13 +2566,13 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                       if (videoUrl.includes('youtube.com/watch')) {
                         const urlObj = new URL(videoUrl);
                         const v = urlObj.searchParams.get('v');
-                        if (v) return `https://www.youtube.com/embed/${v}`;
+                        if (v) return `https://www.youtube.com/embed/${v}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`;
                       }
                       if (videoUrl.includes('youtu.be/')) {
                         const parts = videoUrl.split('youtu.be/');
                         if (parts[1]) {
                           const id = parts[1].split('?')[0];
-                          return `https://www.youtube.com/embed/${id}`;
+                          return `https://www.youtube.com/embed/${id}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`;
                         }
                       }
                       if (videoUrl.includes('vimeo.com/')) {
@@ -2414,7 +2580,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                         if (parts[1]) {
                           const id = parts[1].split('?')[0].split('#')[0];
                           if (/^\d+$/.test(id)) {
-                            return `https://player.vimeo.com/video/${id}`;
+                            return `https://player.vimeo.com/video/${id}?api=1`;
                           }
                         }
                       }
@@ -2427,38 +2593,59 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                 )}
               </div>
 
-              {/* Botão de Conclusão / Desbloqueio do Vídeo */}
+              {/* Botão de Conclusão / Desbloqueio do Vídeo (Habilitado apenas nos últimos 10 segundos) */}
               {requiresVideo && (
                 <div className="mt-6 bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${videoCompleted ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                      {videoCompleted ? <CheckCircle2 size={20} /> : <Lock size={20} />}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${videoCompleted ? 'bg-emerald-50 text-emerald-600' : videoNearEnd ? 'bg-emerald-50 text-emerald-600 animate-bounce' : 'bg-slate-200 text-slate-400'}`}>
+                      {videoCompleted || videoNearEnd ? <CheckCircle2 size={20} /> : <Lock size={20} />}
                     </div>
                     <div>
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                        {videoCompleted ? 'Vídeo Concluído' : 'Etapa Obrigatória: Vídeo Explicativo'}
+                        {videoCompleted 
+                          ? 'Vídeo Concluído' 
+                          : videoNearEnd 
+                            ? '🎉 Vídeo nos últimos 10 segundos! Conclusão liberada' 
+                            : 'Etapa Obrigatória: Assista até os últimos 10 segundos'}
                       </h4>
                       <p className="text-[11px] text-slate-500 font-medium leading-snug">
                         {videoCompleted 
                           ? 'A proposta comercial (A4), planilhas FPV e minutas foram desbloqueadas no menu lateral.'
-                          : 'Assista ao vídeo explicativo da proposta e clique abaixo para liberar a Proposta Comercial (A4) e planilhas.'}
+                          : videoNearEnd 
+                            ? 'Clique no botão ao lado para confirmar que assistiu ao vídeo e desbloquear a proposta.'
+                            : videoDuration > 0
+                              ? `O botão será liberado nos últimos 10 segundos (${Math.max(0, Math.ceil(videoDuration - videoCurrentTime))}s restantes).`
+                              : `Assista ao vídeo para liberar a conclusão (${Math.max(0, 30 - videoWatchSeconds)}s restantes).`}
                       </p>
                     </div>
                   </div>
 
                   {!videoCompleted ? (
-                    <button
-                      onClick={() => {
-                        setVideoCompleted(true);
-                        if (typeof window !== 'undefined') {
-                          localStorage.setItem(`sb_video_done_${doc.id}`, 'true');
-                        }
-                        showAlert('Vídeo Concluído!', 'A proposta comercial e os demais menus foram liberados.', 'success');
-                      }}
-                      className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 size={16} /> Concluir Vídeo e Liberar Proposta
-                    </button>
+                    videoNearEnd ? (
+                      <button
+                        onClick={() => {
+                          setVideoCompleted(true);
+                          if (typeof window !== 'undefined') {
+                            localStorage.setItem(`sb_video_done_${doc.id}`, 'true');
+                          }
+                          showAlert('Vídeo Concluído!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                        }}
+                        className="w-full sm:w-auto px-5 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer flex items-center justify-center gap-2 animate-bounce animate-duration-1000"
+                      >
+                        <CheckCircle2 size={16} /> Concluir Vídeo e Liberar Proposta
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full sm:w-auto px-5 py-3 bg-slate-150 text-slate-400 border border-slate-250 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2 shrink-0 select-none opacity-80"
+                        title="O botão habilitará automaticamente nos últimos 10 segundos do vídeo"
+                      >
+                        <Lock size={14} className="text-slate-400" />
+                        {videoDuration > 0
+                          ? `Libera nos últimos 10s (${Math.max(0, Math.ceil(videoDuration - videoCurrentTime))}s)`
+                          : `Libera nos últimos 10s (${Math.max(0, 30 - videoWatchSeconds)}s)`}
+                      </button>
+                    )
                   ) : (
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
                       ✓ Liberado

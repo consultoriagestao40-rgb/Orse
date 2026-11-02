@@ -40,6 +40,9 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
     configApresentacao?.canvaEmbedUrl || DEFAULT_CANVA_URL
   );
+  const [totalSlides, setTotalSlides] = useState<number | ''>(
+    configApresentacao?.totalSlides || 10
+  );
 
   // Novos Estados
   const [video, setVideo] = useState(
@@ -132,6 +135,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           }
           if (config.videoUrl) setVideoUrl(config.videoUrl);
           setCanvaEmbedUrl(config.canvaEmbedUrl || DEFAULT_CANVA_URL);
+          if (config.totalSlides) setTotalSlides(config.totalSlides);
           if (config.validadeDays) setValidadeDays(config.validadeDays);
           if (config.regrasAcesso) {
             setExigirIdentificacao(config.regrasAcesso.exigirIdentificacao !== false);
@@ -246,6 +250,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         ...(configApresentacao || {}),
         useCanva: apresentacao,
         canvaEmbedUrl: finalCanvaUrl,
+        totalSlides: Number(totalSlides) > 0 ? Number(totalSlides) : 10,
         clientTabs: {
           apresentacao,
           proposta,
@@ -392,6 +397,25 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                       </span>
                     </div>
                   </label>
+
+                  {obrigarApresentacao && (
+                    <div className="flex items-center gap-2 pl-3 pt-1">
+                      <label className="text-[10px] font-bold text-slate-700">
+                        Total de Slides da Apresentação:
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={totalSlides}
+                        onChange={(e) => setTotalSlides(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 1)}
+                        className="w-16 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 text-center outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-[9px] text-slate-400 font-medium">
+                        (Libera apenas no último slide)
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
