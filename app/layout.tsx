@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import PushRegister from "@/components/PushRegister";
 import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import TrackingScripts from "@/components/TrackingScripts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,8 +19,72 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SmartBid | Inteligência em Facilities & Serviços",
-  description: "Plataforma de engenharia de custos e gestão comercial da Silva Consultoria Empresarial LTDA.",
+  metadataBase: new URL("https://smartbidhub.com.br"),
+  title: {
+    default: "SmartBid • Inteligência Comercial & Custos para Prestadoras de Serviços",
+    template: "%s | SmartBid",
+  },
+  description: "Plataforma líder em engenharia de custos, formação de preço de venda (FPV), CRM e gestão de contratos para empresas de Facilities, Segurança e Prestação de Serviços.",
+  keywords: [
+    "SmartBid",
+    "Facilities",
+    "Formação de Preço de Venda",
+    "FPV",
+    "Engenharia de Custos",
+    "Gestão de Contratos",
+    "CRM para Facilities",
+    "Propostas Comerciais",
+    "Planilha de Custos e Formação de Preços",
+    "CCT",
+    "Convenção Coletiva de Trabalho",
+    "Terceirização de Serviços",
+    "Limpeza e Conservação",
+    "Portaria e Vigilância",
+  ],
+  authors: [{ name: "Silva Consultoria Empresarial LTDA" }],
+  creator: "SmartBid Hub",
+  publisher: "SmartBid",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  alternates: {
+    canonical: "https://smartbidhub.com.br",
+  },
+  openGraph: {
+    title: "SmartBid • Inteligência Comercial & Custos para Prestadoras de Serviços",
+    description: "Transforme a sua prestadora de serviços numa máquina de contratos previsíveis: da prospecção de grandes contas à blindagem de margem e reajustes automáticos.",
+    url: "https://smartbidhub.com.br",
+    siteName: "SmartBid",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "SmartBid • Ecossistema de Inteligência Comercial e Custos para Facilities",
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SmartBid • Inteligência Comercial & Custos para Prestadoras de Serviços",
+    description: "Transforme a sua prestadora de serviços numa máquina de contratos previsíveis: da prospecção de grandes contas à blindagem de margem e reajustes automáticos.",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg?v=4",
@@ -197,12 +262,37 @@ export default async function RootLayout({
             } catch(e) {}
           })();
         ` }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "SmartBid",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "BRL"
+              },
+              "description": "Plataforma de inteligência comercial, formação de preço de venda (FPV), CRM e gestão de contratos para empresas de Facilities e Prestadoras de Serviços.",
+              "url": "https://smartbidhub.com.br",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Silva Consultoria Empresarial LTDA",
+                "url": "https://smartbidhub.com.br"
+              }
+            })
+          }}
+        />
       </head>
       <body className={`min-h-full bg-[#F8FAFC] ${isCollapsed ? "sidebar-collapsed" : ""}`}>
         {children}
         <PushRegister />
         <ForcePasswordChangeModal />
         <CookieConsentBanner />
+        <TrackingScripts />
       </body>
     </html>
   );
