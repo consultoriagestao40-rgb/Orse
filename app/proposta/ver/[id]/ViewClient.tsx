@@ -1438,12 +1438,12 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
 
               {/* Mecanismo Ativo de Avançar Slides e Conclusão */}
               {requiresPres && (
-                <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl shadow-sm space-y-4">
+                <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 p-4 sm:p-5 rounded-2xl shadow-xl space-y-3.5 transition-all">
                   {/* Cabeçalho de Navegação com Indicador de Progresso */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-100">
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${presentationCompleted || isLastSlide ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600 font-bold'}`}>
-                        {presentationCompleted || isLastSlide ? <CheckCircle2 size={20} /> : <span className="font-mono text-xs">{currentSlide}</span>}
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${presentationCompleted || isLastSlide ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-700 font-bold border border-slate-200'}`}>
+                        {presentationCompleted || isLastSlide ? <CheckCircle2 size={20} /> : <span className="font-mono text-xs font-black">{currentSlide}</span>}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -1464,8 +1464,8 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                           {presentationCompleted 
                             ? 'A proposta comercial (A4), planilhas FPV e minutas contratuais foram desbloqueadas no menu.'
                             : isLastSlide 
-                              ? 'Você visualizou todos os slides! Clique no botão verde abaixo para liberar a proposta comercial.'
-                              : 'Clique no botão "Avançar Slide ➔" abaixo ou navegue pelo Canva / teclado para passar pelos slides.'}
+                              ? 'Você visualizou todos os slides! Clique no botão verde para acessar a proposta comercial.'
+                              : 'Clique no botão "Avançar Slide ➔" abaixo ou use as teclas de seta / clique no Canva para navegar.'}
                         </p>
                       </div>
                     </div>
@@ -1479,11 +1479,34 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
 
                   {/* Barra de Progresso Visual de Slides */}
                   {!presentationCompleted && (
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200/60">
-                      <div 
-                        className="bg-[#1B4D3E] h-full transition-all duration-300 rounded-full"
-                        style={{ width: `${Math.round((currentSlide / totalSlides) * 100)}%` }}
-                      />
+                    <div className="space-y-1.5">
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                        <div 
+                          className="bg-[#1B4D3E] h-full transition-all duration-300 rounded-full"
+                          style={{ width: `${Math.round((currentSlide / totalSlides) * 100)}%` }}
+                        />
+                      </div>
+                      {/* Indicadores de slides em miniatura */}
+                      {totalSlides <= 20 && (
+                        <div className="flex items-center justify-between gap-1 pt-0.5">
+                          {Array.from({ length: totalSlides }, (_, i) => i + 1).map((num) => (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => setCurrentSlide(num)}
+                              disabled={presentationCompleted}
+                              title={`Ir para Slide ${num}`}
+                              className={`h-1.5 flex-1 rounded-full transition-all cursor-pointer ${
+                                num === currentSlide
+                                  ? 'bg-[#1B4D3E] ring-2 ring-emerald-600/30'
+                                  : num < currentSlide
+                                  ? 'bg-emerald-300'
+                                  : 'bg-slate-200 hover:bg-slate-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1518,6 +1541,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                               localStorage.setItem(`sb_pres_done_${doc.id}`, 'true');
                             }
                             showAlert('Apresentação Concluída!', 'A proposta comercial e os demais menus foram liberados.', 'success');
+                            setActiveClientTab('proposta');
                           }}
                           className="px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-2 animate-bounce animate-duration-1000"
                         >
@@ -1526,9 +1550,13 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                       )}
 
                       {presentationCompleted && (
-                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-200 flex items-center gap-1.5">
-                          <CheckCircle2 size={14} /> Apresentação Validada
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveClientTab('proposta')}
+                          className="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-widest rounded-xl border border-emerald-200 flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <CheckCircle2 size={14} className="text-emerald-600" /> Ver Proposta Comercial ➔
+                        </button>
                       )}
                     </div>
                   </div>
