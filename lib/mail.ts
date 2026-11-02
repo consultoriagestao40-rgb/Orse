@@ -6,19 +6,20 @@ interface SendMailArgs {
   html?: string;
   text?: string;
   smtpAccountId?: string;
+  fromName?: string;
   attachments?: {
     filename: string;
     content: string; // Base64
   }[];
 }
 
-export async function sendMail({ to, subject, html, text, smtpAccountId, attachments }: SendMailArgs) {
+export async function sendMail({ to, subject, html, text, smtpAccountId, fromName: customFromName, attachments }: SendMailArgs) {
   let host = process.env.SMTP_HOST;
   let port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
   let user = process.env.SMTP_USER;
   let pass = process.env.SMTP_PASSWORD;
   let fromEmail = process.env.SMTP_FROM_EMAIL || user;
-  let fromName = process.env.SMTP_FROM_NAME || "SmartBid";
+  let fromName = customFromName || process.env.SMTP_FROM_NAME || "SmartBid";
 
   try {
     const { prisma } = await import('./prisma');
@@ -40,7 +41,7 @@ export async function sendMail({ to, subject, html, text, smtpAccountId, attachm
       user = dbAccount.user;
       pass = dbAccount.password;
       fromEmail = dbAccount.fromEmail;
-      fromName = dbAccount.fromName;
+      fromName = customFromName || dbAccount.fromName || "SmartBid";
     }
   } catch (error) {
     console.warn("⚠️ Error fetching SMTP account from DB, falling back to env:", error);

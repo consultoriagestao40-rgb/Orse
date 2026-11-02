@@ -1542,6 +1542,7 @@ export async function requestPasswordReset(email: string) {
 
     const mailRes = await sendMail({
       to: user.email,
+      fromName: 'SmartBid • Segurança Corporativa',
       subject: `🔐 Seu Código de Recuperação de Senha: ${resetCode} — SmartBid`,
       html: emailHtml,
       text: `Seu código de recuperação de senha SmartBid é: ${resetCode}. Válido por 15 minutos.`
