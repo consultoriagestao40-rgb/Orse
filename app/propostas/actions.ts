@@ -523,15 +523,22 @@ export async function saveProposta(data: any) {
       ? Number(resultado.divisor)
       : (1 - (totalTributosPct / 100) - txComissao);
 
-    const insumosDirectCost = finalInsumos.materiais + finalInsumos.maquinas + finalInsumos.descartaveis + finalInsumos.servicos;
-    let insumosSubtotal = 0;
-    if (insumosDirectCost > 0) {
-      const comAdm = insumosDirectCost * (1 + txAdm);
+    const outrosEncargosTotal = Array.isArray(encargos?.outrosEncargos)
+      ? encargos.outrosEncargos.reduce((a: number, b: any) => a + (Number(b.valor) || 0), 0)
+      : 0;
+    const outrosBeneficiosTotal = Array.isArray(premissas?.outrosBeneficios)
+      ? premissas.outrosBeneficios.reduce((a: number, b: any) => a + (Number(b.valor) || 0), 0)
+      : 0;
+
+    const extrasDirectCost = finalInsumos.materiais + finalInsumos.maquinas + finalInsumos.descartaveis + finalInsumos.servicos + outrosEncargosTotal + outrosBeneficiosTotal;
+    let extrasSubtotal = 0;
+    if (extrasDirectCost > 0) {
+      const comAdm = extrasDirectCost * (1 + txAdm);
       const comLucro = comAdm * (1 + txLucro);
-      insumosSubtotal = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+      extrasSubtotal = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
     }
 
-    const totalFaturamentoExato = maoDeObraSubtotal + insumosSubtotal;
+    const totalFaturamentoExato = maoDeObraSubtotal + extrasSubtotal;
     let finalCustoTotal = resultado?.custoDiretoTotal || 0;
 
     // Prioriza o faturamentoBruto vindo do calculo do motor/frontend, se valido (> 0)
@@ -586,7 +593,14 @@ export async function saveProposta(data: any) {
       resultado: finalResultado,
       dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
       dreEncargos: dreEncargos || null,
-      encargos: encargos || null,
+      encargos: encargos ? {
+        ...encargos,
+        outrosEncargos: Array.isArray(encargos.outrosEncargos) ? encargos.outrosEncargos : []
+      } : null,
+      premissas: {
+        ...(premissas || {}),
+        outrosBeneficios: Array.isArray(premissas?.outrosBeneficios) ? premissas.outrosBeneficios : []
+      },
       changelog: changelog || 'Criação inicial da proposta'
     };
 
@@ -630,7 +644,8 @@ export async function saveProposta(data: any) {
             lucro: premissas.margemLucro,
             reservaTecnicaPct: premissas.reservaTecnicaPct,
             manutencaoPct: premissas.manutencaoPct,
-            comissaoVendedor: premissas.comissaoVendedor
+            comissaoVendedor: premissas.comissaoVendedor,
+            outrosBeneficios: Array.isArray(premissas.outrosBeneficios) ? premissas.outrosBeneficios : []
           } as any,
           metadados: metadados as any,
           custoTotal: finalCustoTotal,
@@ -652,7 +667,8 @@ export async function saveProposta(data: any) {
             lucro: premissas.margemLucro,
             reservaTecnicaPct: premissas.reservaTecnicaPct,
             manutencaoPct: premissas.manutencaoPct,
-            comissaoVendedor: premissas.comissaoVendedor
+            comissaoVendedor: premissas.comissaoVendedor,
+            outrosBeneficios: Array.isArray(premissas.outrosBeneficios) ? premissas.outrosBeneficios : []
           } as any,
           metadados: metadados as any,
           custoTotal: finalCustoTotal,
@@ -965,6 +981,9 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         comissaoVendedor: margens?.comissaoVendedor || 0,
         reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
         manutencaoPct: margens?.manutencaoPct || 0,
+        outrosBeneficios: Array.isArray(meta.premissas?.outrosBeneficios)
+          ? meta.premissas.outrosBeneficios
+          : (Array.isArray(margens?.outrosBeneficios) ? margens.outrosBeneficios : []),
         tributos: (() => {
           if (Array.isArray(impostos)) return impostos;
           if (impostos && typeof impostos === 'object') {
@@ -1008,7 +1027,10 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       versao: v.versao,
       dreTaxPercent: meta.dreTaxPercent !== undefined ? meta.dreTaxPercent : null,
       dreEncargos: meta.dreEncargos || null,
-      encargos: meta.encargos || null,
+      encargos: meta.encargos ? {
+        ...meta.encargos,
+        outrosEncargos: Array.isArray(meta.encargos.outrosEncargos) ? meta.encargos.outrosEncargos : []
+      } : null,
       itensInclusosExcluidos: (() => {
         const rawItens = meta.itensInclusosExcluidos || [];
         return rawItens.length > 0 ? rawItens : [

@@ -125,8 +125,13 @@ function PropostaEditor() {
         setProposta({
           ...proposta,
           id: fullData.id,
+          encargos: fullData.encargos ? {
+            ...fullData.encargos,
+            outrosEncargos: Array.isArray(fullData.encargos.outrosEncargos) ? fullData.encargos.outrosEncargos : []
+          } : proposta.encargos,
           premissas: {
             ...fullData.premissas,
+            outrosBeneficios: Array.isArray((fullData.premissas as any)?.outrosBeneficios) ? (fullData.premissas as any).outrosBeneficios : [],
             tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
           },
           equipe: (fullData.equipe || []).map((e: any) => ({
@@ -299,7 +304,8 @@ function PropostaEditor() {
         { id: '5', nome: 'COFINS', percent: 7.6 }
       ],
       reservaTecnicaPct: 0,
-      manutencaoPct: 0
+      manutencaoPct: 0,
+      outrosBeneficios: []
     },
     encargos: { 
       grupoA: { previdenciaSocial: 20.00, fgts: 8.00, sesc: 0.00, senac: 0.00, sebrae: 0.00, incra: 0.00, salarioEducacao: 0.00, seguroAcidenteFap: 0.00 },
@@ -307,7 +313,8 @@ function PropostaEditor() {
       grupoC: { abonoFerias: 3.12, decimoTerceiro: 9.39 },
       grupoD: { indenizacaoSemJustaCausa: 0.99, contribuicaoSocial: 0.27, avisoPrevioIndenizado: 2.71, reflexoAvisoPrevio: 0.79, indenizacaoAdicional: 0.00 },
       grupoE: { licencaMaternidade: 0.99, auxilioAcidenteMais15: 0.00, incidenciaFgtsAviso: 1.19, abonoPecuniario: 0.00 },
-      grupoF: { incidenciaCumulativa: 0.00 }
+      grupoF: { incidenciaCumulativa: 0.00 },
+      outrosEncargos: []
     },
     equipe: [],
     versao: 1,
@@ -559,8 +566,13 @@ function PropostaEditor() {
                   detalheMaquinas: fullData.insumos?.detalheMaquinas || [],
                   detalheDescartaveis: fullData.insumos?.detalheDescartaveis || [],
                 },
+                encargos: fullData.encargos ? {
+                  ...fullData.encargos,
+                  outrosEncargos: Array.isArray(fullData.encargos.outrosEncargos) ? fullData.encargos.outrosEncargos : []
+                } : proposta.encargos,
                 premissas: {
                   ...fullData.premissas,
+                  outrosBeneficios: Array.isArray((fullData.premissas as any)?.outrosBeneficios) ? (fullData.premissas as any).outrosBeneficios : [],
                   tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
                 },
                 equipe: (fullData.equipe || []).map((e: any) => {
@@ -753,6 +765,12 @@ function PropostaEditor() {
         reservaTecnicaPct: proposta.premissas.reservaTecnicaPct || 0,
         manutencaoPct: proposta.premissas.manutencaoPct || 0,
         encargos: proposta.encargos,
+        outrosEncargosTotal: Array.isArray(proposta.encargos?.outrosEncargos)
+          ? proposta.encargos.outrosEncargos.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0)
+          : 0,
+        outrosBeneficiosTotal: Array.isArray(proposta.premissas?.outrosBeneficios)
+          ? proposta.premissas.outrosBeneficios.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0)
+          : 0,
         cctGlobal: selectedCct,
         insumosGlobais: {
           materiais: proposta.insumos.materiais,
@@ -1286,6 +1304,86 @@ function PropostaEditor() {
         ...prev.insumos,
         outrosCustos: updatedList,
         servicos: totalVal
+      }
+    }));
+  };
+
+  const handleAddOutroEncargo = () => {
+    const newItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      descricao: '',
+      valor: 0
+    };
+    const currentList = Array.isArray(proposta.encargos?.outrosEncargos) ? proposta.encargos.outrosEncargos : [];
+    setProposta((prev: any) => ({
+      ...prev,
+      encargos: {
+        ...prev.encargos,
+        outrosEncargos: [...currentList, newItem]
+      }
+    }));
+  };
+
+  const handleUpdateOutroEncargo = (id: string, field: 'descricao' | 'valor', value: any) => {
+    const currentList = Array.isArray(proposta.encargos?.outrosEncargos) ? proposta.encargos.outrosEncargos : [];
+    const updatedList = currentList.map((it: any) => it.id === id ? { ...it, [field]: value } : it);
+    setProposta((prev: any) => ({
+      ...prev,
+      encargos: {
+        ...prev.encargos,
+        outrosEncargos: updatedList
+      }
+    }));
+  };
+
+  const handleRemoveOutroEncargo = (id: string) => {
+    const currentList = Array.isArray(proposta.encargos?.outrosEncargos) ? proposta.encargos.outrosEncargos : [];
+    const updatedList = currentList.filter((it: any) => it.id !== id);
+    setProposta((prev: any) => ({
+      ...prev,
+      encargos: {
+        ...prev.encargos,
+        outrosEncargos: updatedList
+      }
+    }));
+  };
+
+  const handleAddOutroBeneficio = () => {
+    const newItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      descricao: '',
+      valor: 0
+    };
+    const currentList = Array.isArray(proposta.premissas?.outrosBeneficios) ? proposta.premissas.outrosBeneficios : [];
+    setProposta((prev: any) => ({
+      ...prev,
+      premissas: {
+        ...prev.premissas,
+        outrosBeneficios: [...currentList, newItem]
+      }
+    }));
+  };
+
+  const handleUpdateOutroBeneficio = (id: string, field: 'descricao' | 'valor', value: any) => {
+    const currentList = Array.isArray(proposta.premissas?.outrosBeneficios) ? proposta.premissas.outrosBeneficios : [];
+    const updatedList = currentList.map((it: any) => it.id === id ? { ...it, [field]: value } : it);
+    setProposta((prev: any) => ({
+      ...prev,
+      premissas: {
+        ...prev.premissas,
+        outrosBeneficios: updatedList
+      }
+    }));
+  };
+
+  const handleRemoveOutroBeneficio = (id: string) => {
+    const currentList = Array.isArray(proposta.premissas?.outrosBeneficios) ? proposta.premissas.outrosBeneficios : [];
+    const updatedList = currentList.filter((it: any) => it.id !== id);
+    setProposta((prev: any) => ({
+      ...prev,
+      premissas: {
+        ...prev.premissas,
+        outrosBeneficios: updatedList
       }
     }));
   };
@@ -2505,16 +2603,78 @@ function PropostaEditor() {
                               {(() => {
                                  const totalOutrosIndenizatorios = resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.outrosBlocoA || 0) * i.quantidade), 0) || 0;
                                  const itemComExtra = proposta.equipe.find((p: any) => p.parametrosPosto?.adicionalExtraIncideEncargos === false && Number(p.parametrosPosto?.adicionalExtraValor) > 0);
-                                 const labelOutros = totalOutrosIndenizatorios > 0 
+                                 const hasIndenizatorio = totalOutrosIndenizatorios > 0;
+                                 const labelOutros = hasIndenizatorio 
                                     ? `3) Outros (${itemComExtra?.parametrosPosto?.adicionalExtraNome || 'Adicional Extra do Contrato / Verba Indenizatória'})`
-                                    : '3) Outros (Especificar)';
+                                    : null;
+                                 const customEncargos = Array.isArray(proposta.encargos?.outrosEncargos) ? proposta.encargos.outrosEncargos : [];
+
                                  return (
-                                    <tr className="border-b border-slate-200 border-dotted">
-                                       <td className="py-1.5 px-6 font-bold">{labelOutros}</td>
-                                       <td className="py-1.5 px-6 text-center">-</td>
-                                       <td className="py-1.5 px-6 text-right">-</td>
-                                       <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalOutrosIndenizatorios)}</td>
-                                    </tr>
+                                    <>
+                                       {hasIndenizatorio && (
+                                          <tr className="border-b border-slate-200 border-dotted">
+                                             <td className="py-1.5 px-6 font-bold">{labelOutros}</td>
+                                             <td className="py-1.5 px-6 text-center">-</td>
+                                             <td className="py-1.5 px-6 text-right">-</td>
+                                             <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalOutrosIndenizatorios)}</td>
+                                          </tr>
+                                       )}
+                                       {customEncargos.map((item: any, idx: number) => {
+                                          const rowNum = (hasIndenizatorio ? 4 : 3) + idx;
+                                          return (
+                                             <tr key={item.id || idx} className="border-b border-slate-200 border-dotted hover:bg-emerald-50/30 transition-colors">
+                                                <td colSpan={2} className="py-1.5 px-6">
+                                                   <div className="flex items-center gap-2">
+                                                      <span className="text-slate-600 font-extrabold text-xs">{rowNum})</span>
+                                                      <input
+                                                         type="text"
+                                                         value={item.descricao || ''}
+                                                         onChange={(e) => handleUpdateOutroEncargo(item.id, 'descricao', e.target.value)}
+                                                         placeholder="Descrição do encargo ou verba adicional..."
+                                                         className="flex-1 max-w-md px-2.5 py-1 border border-slate-300 rounded-md font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                                      />
+                                                      <button
+                                                         type="button"
+                                                         onClick={() => handleRemoveOutroEncargo(item.id)}
+                                                         className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                                                         title="Excluir linha"
+                                                      >
+                                                         <Trash2 className="w-4 h-4" />
+                                                      </button>
+                                                   </div>
+                                                </td>
+                                                <td className="py-1.5 px-6 text-center text-slate-400 font-semibold">-</td>
+                                                <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                                                   <div className="flex items-center justify-end gap-1.5">
+                                                      <span className="text-xs text-slate-500 font-extrabold">R$</span>
+                                                      <input
+                                                         type="number"
+                                                         step="0.01"
+                                                         min="0"
+                                                         value={item.valor ?? 0}
+                                                         onChange={(e) => {
+                                                            const val = parseFloat(e.target.value) || 0;
+                                                            handleUpdateOutroEncargo(item.id, 'valor', val);
+                                                         }}
+                                                         className="w-32 px-2.5 py-1 border border-slate-300 rounded-md text-right font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                                      />
+                                                   </div>
+                                                </td>
+                                             </tr>
+                                          );
+                                       })}
+                                       <tr className="border-b border-slate-200 bg-slate-50/60">
+                                          <td colSpan={4} className="py-2 px-6">
+                                             <button
+                                                type="button"
+                                                onClick={handleAddOutroEncargo}
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                                             >
+                                                + Adicionar nova Linha
+                                             </button>
+                                          </td>
+                                       </tr>
+                                    </>
                                  );
                               })()}
                            </>
@@ -2525,11 +2685,14 @@ function PropostaEditor() {
                            <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
                            <td className="py-2.5 px-6 text-right">
                               {formatCurrency(
-                                 resultado?.items?.reduce((acc: any, i: any) => {
+                                 (resultado?.items?.reduce((acc: any, i: any) => {
                                     const isItemSpot = isSpot || i.tipoItem === 'SPOT';
                                     const bA = i.detalhes?.blocoA ?? i.detalhes?.remuneracao ?? i.custoTotal ?? 0;
                                     return acc + (isItemSpot ? bA : (bA * (i.quantidade || 1)));
-                                 }, 0) || 0
+                                 }, 0) || 0) +
+                                 (Array.isArray(proposta.encargos?.outrosEncargos)
+                                    ? proposta.encargos.outrosEncargos.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0)
+                                    : 0)
                               )}
                            </td>
                         </tr>
@@ -2643,8 +2806,7 @@ function PropostaEditor() {
                                              onClick={handleAddOutroCusto}
                                              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
                                           >
-                                             <Plus className="w-3.5 h-3.5" />
-                                             <span>+ Adicionar nova linha no Montante "B" (sem limite)</span>
+                                             + Adicionar nova Linha
                                           </button>
                                        </td>
                                     </tr>
@@ -2674,7 +2836,20 @@ function PropostaEditor() {
                         {!isSpot && (
                            <>
                               <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
+                           <th colSpan={4} className="py-2.5 px-6">
+                              <div className="flex items-center justify-between">
+                                 <span className="uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados</span>
+                                 <button
+                                    type="button"
+                                    onClick={handleAddOutroBeneficio}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded text-xs font-bold border border-white/40 transition-all cursor-pointer shadow-xs"
+                                    title="Adicionar novo benefício ou custo adicional"
+                                 >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Adicionar Linha</span>
+                                 </button>
+                              </div>
+                           </th>
                         </tr>
                         {(() => {
                            const b = resultado?.items?.reduce((acc: any, i: any) => {
@@ -2697,7 +2872,7 @@ function PropostaEditor() {
                                };
                             }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, adicionalAssiduidade:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, adicionalAssiduidade:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
 
-                           const rows: any[] = [
+                           const rowsBase: any[] = [
                                { label: '1) Vale Alimentação', val: b.va },
                                { label: '2) Vale Transporte', val: b.vt },
                                { label: '3) Custos com Sindicatos', val: b.custosSindicato },
@@ -2709,17 +2884,19 @@ function PropostaEditor() {
                                { label: '8) Exames Médicos', val: b.exames },
                                { label: '9) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
                                { label: '10) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
-                               { 
+                               ...(b.outros > 0 ? [{ 
                                  label: proposta.cliente.tipoProposta === 'SPOT' && proposta.insumos?.servicosDescricao
                                     ? `11) Outros (${proposta.insumos.servicosDescricao})` 
                                     : '11) Outros (especificar)', 
                                  val: b.outros 
-                               },
+                               }] : []),
                              ];
+
+                           const customBeneficios = Array.isArray(proposta.premissas?.outrosBeneficios) ? proposta.premissas.outrosBeneficios : [];
 
                            return (
                               <>
-                                 {rows.map((row, i) => (
+                                 {rowsBase.map((row, i) => (
                                     <tr key={i} className="border-b border-slate-200 border-dotted">
                                         <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
                                         {row.field !== undefined && (
@@ -2744,10 +2921,70 @@ function PropostaEditor() {
                                         </td>
                                     </tr>
                                  ))}
+
+                                 {customBeneficios.map((item: any, idx: number) => {
+                                    const rowNumber = rowsBase.length + idx + 1;
+                                    return (
+                                       <tr key={item.id || idx} className="border-b border-slate-200 border-dotted hover:bg-emerald-50/30 transition-colors">
+                                          <td colSpan={3} className="py-1.5 px-6">
+                                             <div className="flex items-center gap-2">
+                                                <span className="text-slate-600 font-extrabold text-xs">{rowNumber})</span>
+                                                <input
+                                                   type="text"
+                                                   value={item.descricao || ''}
+                                                   onChange={(e) => handleUpdateOutroBeneficio(item.id, 'descricao', e.target.value)}
+                                                   placeholder="Descrição do benefício ou custo adicional..."
+                                                   className="flex-1 max-w-md px-2.5 py-1 border border-slate-300 rounded-md font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                                />
+                                                <button
+                                                   type="button"
+                                                   onClick={() => handleRemoveOutroBeneficio(item.id)}
+                                                   className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                                                   title="Excluir linha"
+                                                >
+                                                   <Trash2 className="w-4 h-4" />
+                                                </button>
+                                             </div>
+                                          </td>
+                                          <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                                             <div className="flex items-center justify-end gap-1.5">
+                                                <span className="text-xs text-slate-500 font-extrabold">R$</span>
+                                                <input
+                                                   type="number"
+                                                   step="0.01"
+                                                   min="0"
+                                                   value={item.valor ?? 0}
+                                                   onChange={(e) => {
+                                                      const val = parseFloat(e.target.value) || 0;
+                                                      handleUpdateOutroBeneficio(item.id, 'valor', val);
+                                                   }}
+                                                   className="w-32 px-2.5 py-1 border border-slate-300 rounded-md text-right font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-xs shadow-xs transition-all"
+                                                />
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    );
+                                 })}
+
+                                 <tr className="border-b border-slate-200 bg-slate-50/60">
+                                    <td colSpan={4} className="py-2 px-6">
+                                       <button
+                                          type="button"
+                                          onClick={handleAddOutroBeneficio}
+                                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                                       >
+                                          + Adicionar nova Linha
+                                       </button>
+                                    </td>
+                                 </tr>
+
                                  <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
                                     <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
                                     <td className="py-2.5 px-6 text-right">
-                                       {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
+                                       {formatCurrency(
+                                          (resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0) +
+                                          customBeneficios.reduce((acc: number, it: any) => acc + (Number(it.valor) || 0), 0)
+                                       )}
                                     </td>
                                  </tr>
                               </>

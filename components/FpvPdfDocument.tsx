@@ -566,16 +566,33 @@ export default function FpvPdfDocument({
                       {(() => {
                         const totalOutros = resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.outrosBlocoA || 0) * (i.quantidade || 1)), 0) || 0;
                         const itemExtra = proposta.equipe.find((p: any) => p.parametrosPosto?.adicionalExtraIncideEncargos === false && Number(p.parametrosPosto?.adicionalExtraValor) > 0);
-                        const labelOutros = totalOutros > 0 
+                        const hasIndenizatorio = totalOutros > 0;
+                        const labelOutros = hasIndenizatorio
                           ? `3) Outros (${itemExtra?.parametrosPosto?.adicionalExtraNome || 'Adicional Extra / Verba Indenizatória'})`
-                          : '3) Outros (Especificar)';
+                          : null;
+                        const customEncargos = Array.isArray(proposta.encargos?.outrosEncargos) ? proposta.encargos.outrosEncargos : [];
                         return (
-                          <tr>
-                            <td className="py-0.5 px-2 font-semibold text-slate-700">{labelOutros}</td>
-                            <td className="py-0.5 px-2 text-center text-slate-400">-</td>
-                            <td className="py-0.5 px-2 text-right text-slate-400">-</td>
-                            <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(totalOutros)}</td>
-                          </tr>
+                          <>
+                            {hasIndenizatorio && (
+                              <tr>
+                                <td className="py-0.5 px-2 font-semibold text-slate-700">{labelOutros}</td>
+                                <td className="py-0.5 px-2 text-center text-slate-400">-</td>
+                                <td className="py-0.5 px-2 text-right text-slate-400">-</td>
+                                <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(totalOutros)}</td>
+                              </tr>
+                            )}
+                            {customEncargos.map((item: any, idx: number) => {
+                              const rowNum = (hasIndenizatorio ? 4 : 3) + idx;
+                              return (
+                                <tr key={item.id || idx}>
+                                  <td className="py-0.5 px-2 font-semibold text-slate-700">{rowNum}) {item.descricao || 'Encargo / Verba Adicional'}</td>
+                                  <td className="py-0.5 px-2 text-center text-slate-400">-</td>
+                                  <td className="py-0.5 px-2 text-right text-slate-400">-</td>
+                                  <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(Number(item.valor) || 0)}</td>
+                                </tr>
+                              );
+                            })}
+                          </>
                         );
                       })()}
                     </>
@@ -583,7 +600,12 @@ export default function FpvPdfDocument({
                   <tr className="bg-[#1B4D3E] text-white font-black text-[9px]">
                     <td colSpan={3} className="py-0.5 px-2 uppercase text-right">Total Montante "A" (Mão de Obra)</td>
                     <td className="py-0.5 px-2 text-right font-black">
-                      {formatCurrency(resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.blocoA || 0) * (i.quantidade || 1)), 0) || 0)}
+                      {formatCurrency(
+                        (resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.blocoA || 0) * (i.quantidade || 1)), 0) || 0) +
+                        (Array.isArray(proposta.encargos?.outrosEncargos)
+                          ? proposta.encargos.outrosEncargos.reduce((a: number, b: any) => a + (Number(b.valor) || 0), 0)
+                          : 0)
+                      )}
                     </td>
                   </tr>
                 </tbody>
@@ -672,10 +694,21 @@ export default function FpvPdfDocument({
                           <tr><td className="py-0.5 px-2">Cesta Básica / Benefício Social</td><td className="py-0.5 px-2 text-right font-bold">{formatCurrency(b.cesta)}</td></tr>
                           <tr><td className="py-0.5 px-2">Custos Sindicato / Assistencial</td><td className="py-0.5 px-2 text-right font-bold">{formatCurrency(b.sindicato)}</td></tr>
                           {b.outros > 0 && <tr><td className="py-0.5 px-2">Outros Benefícios</td><td className="py-0.5 px-2 text-right font-bold">{formatCurrency(b.outros)}</td></tr>}
+                          {(Array.isArray(proposta.premissas?.outrosBeneficios) ? proposta.premissas.outrosBeneficios : []).map((item: any, idx: number) => (
+                            <tr key={item.id || idx}>
+                              <td className="py-0.5 px-2">{item.descricao || 'Benefício / Custo Extra'}</td>
+                              <td className="py-0.5 px-2 text-right font-bold">{formatCurrency(Number(item.valor) || 0)}</td>
+                            </tr>
+                          ))}
                           <tr className="bg-[#1B4D3E] text-white font-black text-[9px]">
                             <td className="py-0.5 px-2 uppercase text-right">Total Montante "C" (Benefícios)</td>
                             <td className="py-0.5 px-2 text-right font-black">
-                              {formatCurrency(resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.beneficios || 0) * (i.quantidade || 1)), 0) || 0)}
+                              {formatCurrency(
+                                (resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.beneficios || 0) * (i.quantidade || 1)), 0) || 0) +
+                                (Array.isArray(proposta.premissas?.outrosBeneficios)
+                                  ? proposta.premissas.outrosBeneficios.reduce((a: number, b: any) => a + (Number(b.valor) || 0), 0)
+                                  : 0)
+                              )}
                             </td>
                           </tr>
                         </>
@@ -725,7 +758,14 @@ export default function FpvPdfDocument({
                 <tbody className="divide-y divide-slate-100">
                   <tr>
                     <td className="py-0.5 px-2 font-semibold text-slate-700">Total Montante A (Mão de Obra e Encargos)</td>
-                    <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.blocoA || 0) * (i.quantidade || 1)), 0) || 0)}</td>
+                    <td className="py-0.5 px-2 text-right font-bold text-slate-900">
+                      {formatCurrency(
+                        (resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.blocoA || 0) * (i.quantidade || 1)), 0) || 0) +
+                        (Array.isArray(proposta.encargos?.outrosEncargos)
+                          ? proposta.encargos.outrosEncargos.reduce((a: number, b: any) => a + (Number(b.valor) || 0), 0)
+                          : 0)
+                      )}
+                    </td>
                   </tr>
                   <tr>
                     <td className="py-0.5 px-2 font-semibold text-slate-700">Total Montante B (Insumos, Máquinas e Uniformes)</td>
@@ -744,7 +784,14 @@ export default function FpvPdfDocument({
                   {!isSpot && (
                     <tr>
                       <td className="py-0.5 px-2 font-semibold text-slate-700">Total Montante C (Benefícios)</td>
-                      <td className="py-0.5 px-2 text-right font-bold text-slate-900">{formatCurrency(resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.beneficios || 0) * (i.quantidade || 1)), 0) || 0)}</td>
+                      <td className="py-0.5 px-2 text-right font-bold text-slate-900">
+                        {formatCurrency(
+                          (resultado?.items?.reduce((a: any, i: any) => a + ((i.detalhes?.beneficios || 0) * (i.quantidade || 1)), 0) || 0) +
+                          (Array.isArray(proposta.premissas?.outrosBeneficios)
+                            ? proposta.premissas.outrosBeneficios.reduce((a: number, b: any) => a + (Number(b.valor) || 0), 0)
+                            : 0)
+                        )}
+                      </td>
                     </tr>
                   )}
                   <tr className="bg-slate-50 font-bold">
