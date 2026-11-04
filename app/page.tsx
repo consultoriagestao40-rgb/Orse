@@ -1386,151 +1386,131 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                     </div>
                   )}
 
-                  <div className="min-w-[920px] h-[280px] relative px-2">
-                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 250">
+                  <div className="min-w-[920px] h-[320px] relative px-2">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 290">
+                      <defs>
+                        <linearGradient id="gradRealizado" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={brandColor} stopOpacity="1" />
+                          <stop offset="100%" stopColor={brandColor} stopOpacity="0.65" />
+                        </linearGradient>
+                        <linearGradient id="gradRealizadoOk" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10B981" />
+                          <stop offset="100%" stopColor="#047857" />
+                        </linearGradient>
+                        <linearGradient id="gradMeta" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#6366F1" stopOpacity="0.22" />
+                          <stop offset="100%" stopColor="#6366F1" stopOpacity="0.06" />
+                        </linearGradient>
+                      </defs>
+
                       {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-                        const yCoord = 200 - (ratio * 180);
+                        const yCoord = 220 - (ratio * 190);
                         const leftVal = ratio * maxFaturamento;
                         const rightPctVal = ratio * maxPct;
                         return (
                           <g key={index}>
-                            <line 
-                              x1="70" 
-                              y1={yCoord} 
-                              x2="930" 
-                              y2={yCoord} 
-                              stroke="#E2E8F0" 
-                              strokeWidth="1" 
-                              strokeDasharray="4 4" 
-                            />
-                            <text 
-                              x="60" 
-                              y={yCoord + 3} 
-                              textAnchor="end" 
-                              className="fill-slate-400 text-[8px] font-bold tracking-tight"
-                            >
+                            <line x1="70" y1={yCoord} x2="930" y2={yCoord} stroke="#E2E8F0" strokeWidth="1" strokeDasharray="3 5" />
+                            <text x="60" y={yCoord + 3} textAnchor="end" className="fill-slate-400 text-[9px] font-bold tracking-tight">
                               {formatShortCurrency(leftVal)}
                             </text>
-                            <text 
-                              x="940" 
-                              y={yCoord + 3} 
-                              textAnchor="start" 
-                              className="fill-amber-500 text-[8px] font-black tracking-tight"
-                            >
+                            <text x="940" y={yCoord + 3} textAnchor="start" className="fill-amber-500 text-[9px] font-black tracking-tight">
                               {rightPctVal.toFixed(0)}%
                             </text>
                           </g>
                         );
                       })}
 
-                      <line x1="70" y1="200" x2="930" y2="200" stroke="#CBD5E1" strokeWidth="1.5" />
+                      <line x1="70" y1="220" x2="930" y2="220" stroke="#CBD5E1" strokeWidth="1.5" />
 
                       {chartData.map((d, i) => {
                         const gap = 860 / chartData.length;
                         const xCenter = 70 + (i * gap) + (gap / 2);
                         const isHovered = hoveredChartIndex === i;
-                        
-                        const hPrevisto = (d.previsto / maxValY) * 180;
-                        const yPrevisto = 200 - hPrevisto;
-                        
-                        const hRealizado = (d.realizado / maxValY) * 180;
-                        const yRealizado = 200 - hRealizado;
+                        const hPrevisto = (d.previsto / maxValY) * 190;
+                        const yPrevisto = 220 - hPrevisto;
+                        const hRealizado = (d.realizado / maxValY) * 190;
+                        const yRealizado = 220 - hRealizado;
+                        const ok = d.atingidoPct >= 100;
+                        const hasData = d.realizado > 0;
 
                         return (
-                          <g key={`bar-${i}`} className="group cursor-pointer">
-                            
-                            {/* COLUNA DE DESTAQUE NO HOVER */}
+                          <g key={`bar-${i}`} className="cursor-pointer">
                             {isHovered && (
+                              <rect x={xCenter - gap / 2 + 2} y="22" width={gap - 4} height="198" rx="10" fill={hexToRgba(brandColor, 0.07)} />
+                            )}
+
+                            {/* META: barra fantasma larga */}
+                            <rect
+                              x={xCenter - 19}
+                              y={yPrevisto}
+                              width="38"
+                              height={Math.max(2, hPrevisto)}
+                              fill="url(#gradMeta)"
+                              stroke="#6366F1"
+                              strokeOpacity={isHovered ? 0.7 : 0.35}
+                              strokeDasharray="3 3"
+                              rx="6"
+                              className="transition-all duration-200"
+                            />
+
+                            {/* REALIZADO: barra sólida à frente */}
+                            {hasData && (
                               <rect
-                                x={xCenter - (gap / 2) + 2}
-                                y="20"
-                                width={gap - 4}
-                                height="180"
-                                rx="8"
-                                fill={hexToRgba(brandColor, 0.08)}
-                                className="transition-all"
+                                x={xCenter - 12}
+                                y={yRealizado}
+                                width="24"
+                                height={Math.max(3, hRealizado)}
+                                fill={ok ? 'url(#gradRealizadoOk)' : 'url(#gradRealizado)'}
+                                rx="5"
+                                className="transition-all duration-200"
+                                style={{ filter: isHovered ? `drop-shadow(0 3px 6px ${hexToRgba(brandColor, 0.45)})` : 'none' }}
                               />
                             )}
 
-                            {/* BARRA PREVISTO (META) */}
-                            <rect
-                              x={xCenter - 11}
-                              y={yPrevisto}
-                              width="10"
-                              height={Math.max(2, hPrevisto)}
-                              fill={isHovered ? '#818CF8' : '#6366F1'}
-                              rx="3"
-                              className="transition-all duration-200"
-                            />
-
-                            {/* NÚMERO VERTICAL NO TOPO: META PREVISTA */}
-                            {d.previsto > 0 && (
+                            {/* VALOR REALIZADO (horizontal, só quando há dados) */}
+                            {hasData && (
                               <text
-                                x={xCenter - 6}
-                                y={yPrevisto - 5}
-                                transform={`rotate(-90, ${xCenter - 6}, ${yPrevisto - 5})`}
-                                textAnchor="start"
-                                className="fill-[#6366F1] text-[8px] font-black tracking-tight pointer-events-none select-none"
-                                style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(255, 255, 255, 0.95))' }}
+                                x={xCenter}
+                                y={Math.min(yRealizado, yPrevisto) - 8}
+                                textAnchor="middle"
+                                className="fill-slate-800 text-[10px] font-black pointer-events-none select-none"
                               >
-                                {formatShortCurrency(d.previsto)}
+                                {formatShortCurrency(d.realizado)}
                               </text>
                             )}
 
-                            {/* BARRA REALIZADO (ACEITO) */}
-                            <rect
-                              x={xCenter + 1}
-                              y={yRealizado}
-                              width="10"
-                              height={Math.max(2, hRealizado)}
-                              fill={brandColor}
-                              rx="3"
-                              className="transition-all duration-200"
-                              style={{
-                                filter: isHovered ? `drop-shadow(0 2px 6px ${hexToRgba(brandColor, 0.4)})` : 'none'
-                              }}
-                            />
-
-                            {/* NÚMERO VERTICAL NO TOPO: REALIZADO (ACEITO) */}
-                            <text
-                              x={xCenter + 6}
-                              y={d.realizado > 0 ? yRealizado - 5 : 195}
-                              transform={`rotate(-90, ${xCenter + 6}, ${d.realizado > 0 ? yRealizado - 5 : 195})`}
-                              textAnchor="start"
-                              className={`text-[8px] font-black tracking-tight pointer-events-none select-none ${
-                                d.realizado > 0 ? 'fill-blue-900' : 'fill-slate-400'
-                              }`}
-                              style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(255, 255, 255, 0.95))' }}
-                            >
-                              {d.realizado > 0 ? formatShortCurrency(d.realizado) : 'R$ 0'}
-                            </text>
-                            
-                            {/* RÓTULO DO MÊS */}
-                            <text 
-                              x={xCenter} 
-                              y="218" 
-                              textAnchor="middle" 
-                              className={`text-[9px] font-black uppercase tracking-wider transition-colors ${
-                                isHovered ? 'fill-slate-900 font-extrabold' : 'fill-slate-600'
-                              }`}
-                            >
+                            {/* MÊS / ANO */}
+                            <text x={xCenter} y="240" textAnchor="middle" className={`text-[10px] font-black uppercase tracking-wider ${isHovered ? 'fill-slate-900' : 'fill-slate-600'}`}>
                               {getShortMonthName(d.monthKey)}
                             </text>
-                            <text 
-                              x={xCenter} 
-                              y="227" 
-                              textAnchor="middle" 
-                              className="fill-slate-400 text-[7px] font-bold tracking-tight"
-                            >
+                            <text x={xCenter} y="251" textAnchor="middle" className="fill-slate-400 text-[8px] font-bold">
                               {d.monthKey.split('-')[0]}
                             </text>
 
-                            {/* OVERLAY INVISÍVEL PARA CAPTURAR HOVER EM TODA A ALTURA DA COLUNA */}
+                            {/* PÍLULA DE % ATINGIMENTO */}
                             <rect
-                              x={xCenter - (gap / 2)}
+                              x={xCenter - 21}
+                              y="259"
+                              width="42"
+                              height="16"
+                              rx="8"
+                              fill={hasData ? (ok ? '#D1FAE5' : '#FEF3C7') : '#F1F5F9'}
+                            />
+                            <text
+                              x={xCenter}
+                              y="270"
+                              textAnchor="middle"
+                              className="text-[9px] font-black pointer-events-none select-none"
+                              fill={hasData ? (ok ? '#047857' : '#B45309') : '#94A3B8'}
+                            >
+                              {hasData ? `${d.atingidoPct.toFixed(0)}%` : '--'}
+                            </text>
+
+                            <rect
+                              x={xCenter - gap / 2}
                               y="0"
                               width={gap}
-                              height="240"
+                              height="285"
                               fill="transparent"
                               onMouseEnter={() => setHoveredChartIndex(i)}
                             />
@@ -1538,61 +1518,36 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                         );
                       })}
 
-                      {/* LINHA DE TENDÊNCIA (% ATINGIMENTO) */}
+                      {/* LINHA DE TENDÊNCIA (% ATINGIMENTO) — suave, só onde há realizado */}
                       {(() => {
                         const gap = 860 / chartData.length;
-                        const points = chartData.map((d, i) => {
-                          const xCenter = 70 + (i * gap) + (gap / 2);
-                          const hPct = (d.atingidoPct / maxPctY) * 180;
-                          const yCoord = 200 - hPct;
-                          return `${xCenter},${yCoord}`;
-                        });
-                        
+                        const pts = chartData
+                          .map((d, i) => ({ d, i, x: 70 + (i * gap) + (gap / 2), y: 220 - (d.atingidoPct / maxPctY) * 190 }))
+                          .filter(p => p.d.realizado > 0);
                         return (
                           <>
-                            <polyline
-                              fill="none"
-                              stroke="#F59E0B"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              points={points.join(' ')}
-                            />
-                            
-                            {chartData.map((d, i) => {
-                              const gap = 860 / chartData.length;
-                              const xCenter = 70 + (i * gap) + (gap / 2);
-                              const hPct = (d.atingidoPct / maxPctY) * 180;
-                              const yCoord = 200 - hPct;
-                              const isHovered = hoveredChartIndex === i;
-                              
-                              return (
-                                <g 
-                                  key={`dot-${i}`} 
-                                  className="group cursor-pointer"
-                                  onMouseEnter={() => setHoveredChartIndex(i)}
-                                >
-                                  <circle
-                                    cx={xCenter}
-                                    cy={yCoord}
-                                    r={isHovered ? 6 : 4}
-                                    fill="#F59E0B"
-                                    stroke="#FFFFFF"
-                                    strokeWidth={isHovered ? 2.5 : 2}
-                                    className="transition-all duration-150"
-                                  />
-                                  <text
-                                    x={xCenter}
-                                    y={yCoord - 8}
-                                    textAnchor="middle"
-                                    className="fill-amber-600 text-[8px] font-black pointer-events-none select-none"
-                                    style={{ filter: 'drop-shadow(0px 1px 2px rgba(255, 255, 255, 0.95))' }}
-                                  >
-                                    {d.atingidoPct.toFixed(1)}%
-                                  </text>
-                                </g>
-                              );
-                            })}
+                            {pts.length > 1 && (
+                              <polyline
+                                fill="none"
+                                stroke="#F59E0B"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                points={pts.map(p => `${p.x},${p.y}`).join(' ')}
+                              />
+                            )}
+                            {pts.map(p => (
+                              <circle
+                                key={`dot-${p.i}`}
+                                cx={p.x}
+                                cy={p.y}
+                                r={hoveredChartIndex === p.i ? 6 : 4.5}
+                                fill="#F59E0B"
+                                stroke="#FFFFFF"
+                                strokeWidth="2.5"
+                                className="transition-all duration-150 pointer-events-none"
+                              />
+                            ))}
                           </>
                         );
                       })()}
