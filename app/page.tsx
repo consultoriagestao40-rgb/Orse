@@ -861,7 +861,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
 
                 {/* 2. VENDAS FECHADAS */}
                 <div
-                  onClick={() => setShowVendasModal(true)}
+                  onClick={() => { setSelectedSeller(null); setShowVendasModal(true); }}
                   className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
@@ -909,59 +909,71 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                   </div>
                   <p className="text-[10px] font-bold mt-2" style={{ color: brandColor }}>Clique para ver as vendas →</p>
 
-                  {showVendasModal && (
-                    <div
-                      className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
-                      onClick={(e) => { e.stopPropagation(); setShowVendasModal(false); }}
-                    >
+                  {(showVendasModal || selectedSeller) && (() => {
+                    const modalVendas = selectedSeller
+                      ? vendasFechadas.filter((v: any) => v.usuario === selectedSeller)
+                      : vendasFechadas;
+                    const modalTotal = modalVendas.reduce((acc: number, v: any) => acc + (v.valor || 0), 0);
+                    const closeModal = () => {
+                      setShowVendasModal(false);
+                      setSelectedSeller(null);
+                    };
+                    return (
                       <div
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col cursor-default"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={(e) => { e.stopPropagation(); closeModal(); }}
                       >
-                        <div className="flex items-center justify-between p-5 border-b border-slate-200">
-                          <div>
-                            <h2 className="text-lg font-black text-slate-900">Vendas Fechadas</h2>
-                            <p className="text-xs font-bold text-slate-500">
-                              {totalAceitasCount} {totalAceitasCount === 1 ? 'contrato' : 'contratos'} • {formatCurrency(totalAceito)}
-                            </p>
+                        <div
+                          className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col cursor-default"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between p-5 border-b border-slate-200">
+                            <div>
+                              <h2 className="text-lg font-black text-slate-900">
+                                {selectedSeller ? `Vendas Fechadas — ${selectedSeller}` : 'Vendas Fechadas'}
+                              </h2>
+                              <p className="text-xs font-bold text-slate-500">
+                                {modalVendas.length} {modalVendas.length === 1 ? 'contrato' : 'contratos'} • {formatCurrency(modalTotal)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={closeModal}
+                              className="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none cursor-pointer px-2"
+                              aria-label="Fechar"
+                            >×</button>
                           </div>
-                          <button
-                            onClick={() => setShowVendasModal(false)}
-                            className="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none cursor-pointer px-2"
-                            aria-label="Fechar"
-                          >×</button>
-                        </div>
-                        <div className="overflow-y-auto p-5">
-                          {vendasFechadas.length === 0 ? (
-                            <p className="text-sm text-slate-500 text-center py-8">Nenhuma venda fechada no período.</p>
-                          ) : (
-                            <table className="w-full text-left text-xs">
-                              <thead>
-                                <tr className="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-200">
-                                  <th className="py-2">Proposta</th>
-                                  <th className="py-2">Vendedor</th>
-                                  <th className="py-2">Serviço</th>
-                                  <th className="py-2">Fechamento</th>
-                                  <th className="py-2 text-right">Valor</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {vendasFechadas.map((v: any) => (
-                                  <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50 font-semibold text-slate-700">
-                                    <td className="py-2.5 font-black" style={{ color: brandColor }}>{v.numero}</td>
-                                    <td className="py-2.5">{v.usuario}</td>
-                                    <td className="py-2.5">{v.tipoServicos}</td>
-                                    <td className="py-2.5">{new Date(v.dataAceitacao || v.dataCriacao).toLocaleDateString('pt-BR')}</td>
-                                    <td className="py-2.5 text-right font-black text-slate-900">{formatCurrency(v.valor || 0)}</td>
+                          <div className="overflow-y-auto p-5">
+                            {modalVendas.length === 0 ? (
+                              <p className="text-sm text-slate-500 text-center py-8">Nenhuma venda fechada no período.</p>
+                            ) : (
+                              <table className="w-full text-left text-xs">
+                                <thead>
+                                  <tr className="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-200">
+                                    <th className="py-2">Proposta</th>
+                                    <th className="py-2">Vendedor</th>
+                                    <th className="py-2">Serviço</th>
+                                    <th className="py-2">Fechamento</th>
+                                    <th className="py-2 text-right">Valor</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          )}
+                                </thead>
+                                <tbody>
+                                  {modalVendas.map((v: any) => (
+                                    <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50 font-semibold text-slate-700">
+                                      <td className="py-2.5 font-black" style={{ color: brandColor }}>{v.numero}</td>
+                                      <td className="py-2.5">{v.usuario}</td>
+                                      <td className="py-2.5">{v.tipoServicos}</td>
+                                      <td className="py-2.5">{new Date(v.dataAceitacao || v.dataCriacao).toLocaleDateString('pt-BR')}</td>
+                                      <td className="py-2.5 text-right font-black text-slate-900">{formatCurrency(v.valor || 0)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
                 {/* 3. TAXA DE CONVERSÃO EM R$ */}
