@@ -46,6 +46,8 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
 
   // Filtros - Padrão 'all' para carregar todo o histórico e não zerar conversões
   const [userFilter, setUserFilter] = useState<string>('ALL');
+  const [showVendasModal, setShowVendasModal] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState<string | null>(null);
   const [tipoFilter, setTipoFilter] = useState<'ALL' | 'RECORRENTE' | 'SPOT'>('ALL');
   const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
@@ -285,6 +287,9 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
   const taxaConversao = totalVolume > 0 ? (totalAceito / totalVolume) * 100 : 0;
   const conversaoQuantidade = totalPropostasCount > 0 ? (totalAceitasCount / totalPropostasCount) * 100 : 0;
   const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
+  const vendasFechadas = filteredPropostas
+    .filter((p: any) => p.isAceito)
+    .sort((a: any, b: any) => new Date(b.dataAceitacao || b.dataCriacao).getTime() - new Date(a.dataAceitacao || a.dataCriacao).getTime());
 
   const currentMonthKey = new Date().toISOString().substring(0, 7);
 
@@ -855,7 +860,10 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                 </div>
 
                 {/* 2. VENDAS FECHADAS */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                <div
+                  onClick={() => setShowVendasModal(true)}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
+                >
                   <div className="flex items-start justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Vendas Fechadas</span>
                     <span 
@@ -899,6 +907,61 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                       </div>
                     )}
                   </div>
+                  <p className="text-[10px] font-bold mt-2" style={{ color: brandColor }}>Clique para ver as vendas →</p>
+
+                  {showVendasModal && (
+                    <div
+                      className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+                      onClick={(e) => { e.stopPropagation(); setShowVendasModal(false); }}
+                    >
+                      <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col cursor-default"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+                          <div>
+                            <h2 className="text-lg font-black text-slate-900">Vendas Fechadas</h2>
+                            <p className="text-xs font-bold text-slate-500">
+                              {totalAceitasCount} {totalAceitasCount === 1 ? 'contrato' : 'contratos'} • {formatCurrency(totalAceito)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setShowVendasModal(false)}
+                            className="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none cursor-pointer px-2"
+                            aria-label="Fechar"
+                          >×</button>
+                        </div>
+                        <div className="overflow-y-auto p-5">
+                          {vendasFechadas.length === 0 ? (
+                            <p className="text-sm text-slate-500 text-center py-8">Nenhuma venda fechada no período.</p>
+                          ) : (
+                            <table className="w-full text-left text-xs">
+                              <thead>
+                                <tr className="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-200">
+                                  <th className="py-2">Proposta</th>
+                                  <th className="py-2">Vendedor</th>
+                                  <th className="py-2">Serviço</th>
+                                  <th className="py-2">Fechamento</th>
+                                  <th className="py-2 text-right">Valor</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {vendasFechadas.map((v: any) => (
+                                  <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50 font-semibold text-slate-700">
+                                    <td className="py-2.5 font-black" style={{ color: brandColor }}>{v.numero}</td>
+                                    <td className="py-2.5">{v.usuario}</td>
+                                    <td className="py-2.5">{v.tipoServicos}</td>
+                                    <td className="py-2.5">{new Date(v.dataAceitacao || v.dataCriacao).toLocaleDateString('pt-BR')}</td>
+                                    <td className="py-2.5 text-right font-black text-slate-900">{formatCurrency(v.valor || 0)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. TAXA DE CONVERSÃO EM R$ */}
@@ -1112,7 +1175,9 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                         <div key={seller.id} className="flex flex-col lg:flex-row items-stretch gap-3 lg:gap-6 mb-2 last:mb-0">
                           <div className="flex-1 lg:flex-[3] flex justify-center">
                             <div
-                              className="relative h-[84px] flex items-center justify-center text-white transition-transform duration-300 hover:scale-[1.02] shadow-lg"
+                              onClick={() => setSelectedSeller(seller.nome)}
+                              title="Clique para ver a composição das vendas"
+                              className="cursor-pointer relative h-[84px] flex items-center justify-center text-white transition-transform duration-300 hover:scale-[1.02] shadow-lg"
                               style={{
                                 width: `${w}%`,
                                 minWidth: '220px',
@@ -1130,7 +1195,9 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                           </div>
 
                           <div
-                            className={`flex-1 lg:flex-[2] grid grid-cols-3 items-center gap-4 rounded-2xl border px-5 py-3 transition-colors ${isFiltered ? 'bg-blue-50/50' : 'bg-slate-50/70 hover:bg-slate-100/80 border-slate-200'}`}
+                            onClick={() => setSelectedSeller(seller.nome)}
+                            title="Clique para ver a composição das vendas"
+                            className={`cursor-pointer flex-1 lg:flex-[2] grid grid-cols-3 items-center gap-4 rounded-2xl border px-5 py-3 transition-colors ${isFiltered ? 'bg-blue-50/50' : 'bg-slate-50/70 hover:bg-slate-100/80 border-slate-200'}`}
                             style={isFiltered ? { borderColor: brandColor } : undefined}
                           >
                             <div>
@@ -1145,7 +1212,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                             <div>
                               <span className="text-[10px] font-bold text-slate-400 block uppercase">Meta individual</span>
                               {editingUserId === seller.id ? (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                   <span className="text-slate-400 font-bold text-[10px]">R$</span>
                                   <input
                                     type="text"
@@ -1167,7 +1234,8 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                               ) : (
                                 <div
                                   className="flex items-center gap-1.5 group cursor-pointer text-xs font-bold text-slate-700"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setEditingUserId(seller.id);
                                     setEditGoalValue(seller.metaVal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\./g, ''));
                                   }}
