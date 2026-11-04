@@ -84,6 +84,7 @@ const Sidebar = () => {
 
   // Estados do modal de Alterar Senha Premium
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [trialAlert, setTrialAlert] = useState<{ open: boolean; title: string; message: string } | null>(null);
 
   // Estados e lógicas do Período de Testes Grátis de 7 Dias
   const [trialStatus, setTrialStatus] = useState<any>(null);
@@ -1538,11 +1539,6 @@ const Sidebar = () => {
       <div className="p-4 border-t border-slate-50 space-y-4">
         <div 
           onClick={() => {
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-            setPasswordError('');
-            setPasswordSuccess('');
             setShowPasswordModal(true);
           }}
           title="Alterar minha senha"
