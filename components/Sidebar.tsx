@@ -85,6 +85,14 @@ const Sidebar = () => {
   // Estados do modal de Alterar Senha Premium
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
+  // Estados e lógicas do Período de Testes Grátis de 7 Dias
+  const [trialStatus, setTrialStatus] = useState<any>(null);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneSuccess, setPhoneSuccess] = useState('');
+  const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+
   // Formata o input do celular para o padrão brasileiro (99) 99999-9999
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '');
