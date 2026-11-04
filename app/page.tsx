@@ -1001,127 +1001,56 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                   </div>
                 </div>
 
-                {/* ETAPAS VISUAIS DO FUNIL CONECTADAS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 relative">
-                  
-                  {/* ETAPA 1: LEADS */}
-                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">1. Leads</span>
-                      <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                        <Users size={15} />
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-slate-900">{funnelCounts.leads}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">leads</span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Oportunidades no radar</p>
-                    </div>
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-slate-400">Base total</span>
-                      <span className="font-black text-blue-600">100%</span>
-                    </div>
-                  </div>
+                {/* FUNIL VISUAL (TRAPÉZIOS) OCUPANDO TODA A LARGURA */}
+                <div className="flex flex-col">
+                  {[
+                    { n: 1, label: 'Leads', value: funnelCounts.leads, unit: 'leads', desc: 'Oportunidades no radar', rateLabel: 'Base total', rate: '100%', Icon: Users, from: '#1e3a8a', to: '#2563eb', w: 100 },
+                    { n: 2, label: 'Contatos', value: funnelCounts.contatos, unit: 'contatados', desc: 'Primeiro contato ativo', rateLabel: 'Taxa de contato', rate: `${funnelCounts.txLeadsParaContato.toFixed(1)}%`, Icon: PhoneCall, from: '#3730a3', to: '#6366f1', w: 84 },
+                    { n: 3, label: 'Visitas', value: funnelCounts.visitas, unit: 'visitas', desc: 'Vistorias & reuniões', rateLabel: 'Contato → Visita', rate: `${funnelCounts.txContatoParaVisita.toFixed(1)}%`, Icon: CalendarCheck, from: '#b45309', to: '#f59e0b', w: 68 },
+                    { n: 4, label: 'Propostas', value: funnelCounts.propostas, unit: 'emitidas', desc: 'Propostas comerciais', rateLabel: 'Visita → Proposta', rate: funnelCounts.visitas > 0 ? `${funnelCounts.txVisitaParaProposta.toFixed(0)}%` : '--', Icon: FileText, from: '#6b21a8', to: '#a855f7', w: 52 },
+                    { n: 5, label: 'Vendas Fechadas', value: funnelCounts.vendas, unit: 'fechamentos', desc: 'Contratos convertidos', rateLabel: 'Conversão Propostas', rate: `${funnelCounts.txPropostaParaVenda.toFixed(1)}%`, Icon: CheckCircle2, from: '#047857', to: '#10b981', w: 36 },
+                  ].map((stage, i, arr) => {
+                    const nextW = i < arr.length - 1 ? arr[i + 1].w : stage.w * 0.8
+                    const inset = ((1 - nextW / stage.w) / 2) * 100
+                    return (
+                      <div key={stage.n} className="flex flex-col lg:flex-row items-stretch gap-3 lg:gap-6 mb-2 last:mb-0">
+                        {/* TRAPÉZIO */}
+                        <div className="flex-1 lg:flex-[3] flex justify-center">
+                          <div
+                            className="relative h-[84px] flex items-center justify-center text-white transition-transform duration-300 hover:scale-[1.02] shadow-lg"
+                            style={{
+                              width: `${stage.w}%`,
+                              minWidth: '220px',
+                              background: `linear-gradient(135deg, ${stage.from}, ${stage.to})`,
+                              clipPath: `polygon(0 0, 100% 0, ${100 - inset}% 100%, ${inset}% 100%)`,
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <stage.Icon size={22} className="opacity-90" />
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-black tracking-tight drop-shadow-sm">{stage.value}</span>
+                                <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">{stage.unit}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-                  {/* ETAPA 2: CONTATOS */}
-                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">2. Contatos</span>
-                      <span className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
-                        <PhoneCall size={15} />
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-slate-900">{funnelCounts.contatos}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">contatados</span>
+                        {/* DETALHES DA ETAPA */}
+                        <div className="flex-1 lg:flex-[2] flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-3 hover:bg-slate-100/80 transition-colors">
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: stage.to }}>
+                              {stage.n}. {stage.label}
+                            </span>
+                            <p className="text-xs text-slate-600 font-semibold mt-0.5">{stage.desc}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-[10px] font-bold text-slate-400 block">{stage.rateLabel}</span>
+                            <span className="text-xl font-black" style={{ color: stage.to }}>{stage.rate}</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Primeiro contato ativo</p>
-                    </div>
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-slate-400">Taxa de contato</span>
-                      <span className="font-black text-indigo-600">{funnelCounts.txLeadsParaContato.toFixed(1)}%</span>
-                    </div>
-                  </div>
-
-                  {/* ETAPA 3: VISITAS / REUNIÕES */}
-                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">3. Visitas</span>
-                      <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
-                        <CalendarCheck size={15} />
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-slate-900">{funnelCounts.visitas}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">visitas</span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Vistorias & reuniões</p>
-                    </div>
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-slate-400">Contato → Visita</span>
-                      <span className="font-black text-amber-600">{funnelCounts.txContatoParaVisita.toFixed(1)}%</span>
-                    </div>
-                  </div>
-
-                  {/* ETAPA 4: PROPOSTAS */}
-                  <div className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">4. Propostas</span>
-                      <span className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-                        <FileText size={15} />
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-slate-900">{funnelCounts.propostas}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">emitidas</span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-semibold mt-1">Propostas comerciais</p>
-                    </div>
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-slate-400">Visita → Proposta</span>
-                      <span className="font-black text-purple-600">
-                        {funnelCounts.visitas > 0 ? `${funnelCounts.txVisitaParaProposta.toFixed(0)}%` : '--'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* ETAPA 5: VENDAS (CONTRATOS) */}
-                  <div 
-                    className="border rounded-2xl p-4 flex flex-col justify-between transition-all"
-                    style={{
-                      backgroundColor: hexToRgba(brandColor, 0.04),
-                      borderColor: hexToRgba(brandColor, 0.25)
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: brandColor }}>
-                        5. Vendas Fechadas
-                      </span>
-                      <span 
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
-                        style={{ backgroundColor: brandColor }}
-                      >
-                        <CheckCircle2 size={15} />
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-slate-900">{funnelCounts.vendas}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">fechamentos</span>
-                      </div>
-                      <p className="text-[10px] text-emerald-600 font-bold mt-1">Contratos convertidos</p>
-                    </div>
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[10px]">
-                      <span className="font-bold text-slate-500">Conversão Propostas</span>
-                      <span className="font-black text-emerald-600">{funnelCounts.txPropostaParaVenda.toFixed(1)}%</span>
-                    </div>
-                  </div>
-
+                    )
+                  })}
                 </div>
 
               </div>
