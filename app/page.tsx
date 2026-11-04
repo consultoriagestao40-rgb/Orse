@@ -46,6 +46,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
 
   // Filtros - Padrão 'all' para carregar todo o histórico e não zerar conversões
   const [userFilter, setUserFilter] = useState<string>('ALL');
+  const [tipoFilter, setTipoFilter] = useState<'ALL' | 'RECORRENTE' | 'SPOT'>('ALL');
   const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     return new Date().toISOString().substring(0, 7);
@@ -211,6 +212,7 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
     }
     
     if (userFilter !== 'ALL' && p.usuario !== userFilter) return false;
+    if (tipoFilter !== 'ALL' && (p.tipoProposta || 'RECORRENTE') !== tipoFilter) return false;
 
     // Se há filtro por data: entra se foi criada no período OU se foi aceita no período!
     if (startDate) {
@@ -582,6 +584,18 @@ function RadarComercialDashboard({ initialBrandColor }: { initialBrandColor?: st
                 {totalSellers.map((seller: any) => (
                   <option key={seller.id} value={seller.nome}>👤 {seller.nome}</option>
                 ))}
+              </select>
+
+              {/* FILTRO TIPO DE PROPOSTA */}
+              <select
+                className="bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 outline-none shadow-xs cursor-pointer focus:ring-2"
+                style={{ outlineColor: brandColor }}
+                value={tipoFilter}
+                onChange={e => setTipoFilter(e.target.value as any)}
+              >
+                <option value="ALL">📋 Todos os Tipos</option>
+                <option value="RECORRENTE">🔁 Recorrente</option>
+                <option value="SPOT">⚡ Spot</option>
               </select>
 
               {/* SELETOR DE MÊS */}

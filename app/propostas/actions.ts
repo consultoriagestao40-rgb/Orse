@@ -1229,6 +1229,7 @@ export async function getKPIs() {
         status: p.status || 'RASCUNHO',
         isAceito,
         tipoServicos: meta.tipoServicos || 'Outros',
+        tipoProposta: String(meta.tipoProposta || 'RECORRENTE').toUpperCase(),
         dataAceitacao: meta.dataAceitacao || (isAceito && lastVersao?.dataCriacao ? lastVersao.dataCriacao.toISOString() : null)
       };
     });
