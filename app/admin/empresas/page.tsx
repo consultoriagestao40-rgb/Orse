@@ -6,7 +6,7 @@ import {
   Building2, Users, FileText, ClipboardList, Plus, 
   Search, ShieldAlert, Edit2, Trash2, X, RefreshCw, 
   ArrowLeft, CheckCircle2, Lock, Unlock, Layers,
-  Mail, Send, AlertTriangle, Eye, EyeOff, Save
+  Mail, Send, AlertTriangle, Eye, EyeOff, Save, MessageSquare, QrCode, Download
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
@@ -17,7 +17,9 @@ import {
   manuallyCreateInvoiceAction, getPlanConfigs, updatePlanConfigAction
 } from './actions';
 import { 
-  getSystemSmtpSettings, saveSystemSmtpSettings, testSystemSmtpConnection 
+  getSystemSmtpSettings, saveSystemSmtpSettings, testSystemSmtpConnection,
+  getSystemWhatsAppSettings, saveSystemWhatsAppSettings, getSystemWhatsAppQrCode,
+  disconnectSystemWhatsAppInstance, testSystemWhatsAppConnection
 } from '@/app/admin/settings/actions';
 
 interface TenantItem {
@@ -41,7 +43,7 @@ interface TenantItem {
 function TenantManagerDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tabFromUrl = searchParams.get('tab') as 'empresas' | 'faturamento' | 'smtp' | null;
+  const tabFromUrl = searchParams.get('tab') as 'empresas' | 'faturamento' | 'smtp' | 'whatsapp' | null;
 
   // Auth é garantida pelo layout.tsx Server Component
   // Se chegou aqui, o usuário já é Super Admin verificado no servidor
@@ -100,15 +102,15 @@ function TenantManagerDashboardContent() {
   const [taxaWhatsapp, setTaxaWhatsapp] = useState<number>(130.0);
   
   // Faturamento SaaS Admin States
-  const [adminTab, setAdminTab] = useState<'empresas' | 'faturamento' | 'smtp'>(() => {
-    if (tabFromUrl && ['empresas', 'faturamento', 'smtp'].includes(tabFromUrl)) {
+  const [adminTab, setAdminTab] = useState<'empresas' | 'faturamento' | 'smtp' | 'whatsapp'>(() => {
+    if (tabFromUrl && ['empresas', 'faturamento', 'smtp', 'whatsapp'].includes(tabFromUrl)) {
       return tabFromUrl;
     }
     return 'empresas';
   });
 
   useEffect(() => {
-    if (tabFromUrl && ['empresas', 'faturamento', 'smtp'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['empresas', 'faturamento', 'smtp', 'whatsapp'].includes(tabFromUrl)) {
       setAdminTab(tabFromUrl);
     } else if (!tabFromUrl) {
       setAdminTab('empresas');
@@ -117,6 +119,24 @@ function TenantManagerDashboardContent() {
 
   const [financialMetrics, setFinancialMetrics] = useState<any>(null);
   const [allCobrancas, setAllCobrancas] = useState<any[]>([]);
+
+  // Estados de WhatsApp Oficial Central (Z-API SaaS)
+  const [waOfficialInstanceId, setWaOfficialInstanceId] = useState('');
+  const [waOfficialToken, setWaOfficialToken] = useState('');
+  const [waOfficialClientToken, setWaOfficialClientToken] = useState('');
+  const [waOfficialActive, setWaOfficialActive] = useState(true);
+  const [waOfficialConfigured, setWaOfficialConfigured] = useState(false);
+  const [waOfficialConnected, setWaOfficialConnected] = useState(false);
+  const [waOfficialPhone, setWaOfficialPhone] = useState('');
+  const [waOfficialLoading, setWaOfficialLoading] = useState(false);
+  const [waOfficialError, setWaOfficialError] = useState('');
+  const [waOfficialSuccess, setWaOfficialSuccess] = useState('');
+  const [showWaClientToken, setShowWaClientToken] = useState(false);
+  const [waOfficialQrCode, setWaOfficialQrCode] = useState<string | null>(null);
+  const [waOfficialQrLoading, setWaOfficialQrLoading] = useState(false);
+  const [waTestPhone, setWaTestPhone] = useState('');
+  const [waTestLoading, setWaTestLoading] = useState(false);
+  const [waTestResult, setWaTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Estados de E-mail do Sistema (SaaS SMTP Hostinger)
   const [smtpHost, setSmtpHost] = useState('smtp.hostinger.com');
@@ -185,6 +205,17 @@ function TenantManagerDashboardContent() {
         setSmtpFromName(smtpRes.fromName || 'SmartBid • Notificações');
         setSmtpActive(smtpRes.active ?? true);
         setSmtpConfigured(Boolean(smtpRes.configured));
+      }
+
+      // Carrega configurações do WhatsApp Oficial Central (Z-API SaaS)
+      const waRes = await getSystemWhatsAppSettings();
+      if (waRes && !('error' in waRes)) {
+        setWaOfficialInstanceId(waRes.instanceId || '');
+        setWaOfficialToken(waRes.token || '');
+        setWaOfficialActive(waRes.active ?? true);
+        setWaOfficialConfigured(Boolean(waRes.configured));
+        setWaOfficialConnected(Boolean(waRes.connected));
+        setWaOfficialPhone(waRes.phone || '');
       }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -1145,6 +1176,350 @@ function TenantManagerDashboardContent() {
                         <X size={16} className="shrink-0 text-red-500" />
                       )}
                       <span>{smtpTestResult.message}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ABA 4: WHATSAPP OFICIAL CENTRAL DO SISTEMA SAAS (Z-API) */}
+            {adminTab === 'whatsapp' && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-8 relative overflow-hidden animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                      Canal Oficial Central da Plataforma
+                    </span>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight mt-2 font-display flex items-center gap-2">
+                      <MessageSquare size={20} className="text-[#10B981]" /> WhatsApp Oficial SmartBidHub (Z-API)
+                    </h2>
+                    <p className="text-[11px] text-slate-500 font-medium max-w-2xl">
+                      Este número central dispara todas as notificações automáticas do sistema (Propostas Aprovadas/Assinadas, Propostas Recusadas, Solicitações de Ajuste e Atas de Reunião Publicadas) para todas as empresas, mantendo o número individual de cada cliente (ex.: JVS Facilities) 100% exclusivo para o CRM.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {waOfficialConnected ? (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <CheckCircle2 size={14} className="text-emerald-600" />
+                        Conectado {waOfficialPhone ? `(+${waOfficialPhone})` : ''}
+                      </span>
+                    ) : waOfficialConfigured ? (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <AlertTriangle size={14} className="text-amber-600" />
+                        Credenciais Salvas • Aguardando QR Code
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        <AlertTriangle size={14} className="text-slate-500" />
+                        Não Configurado
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card de Identidade Visual Oficial (Avatar do WhatsApp) */}
+                <div className="bg-gradient-to-r from-[#0D261E] to-[#1B4D3E] p-6 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+                  <div className="flex items-center gap-5">
+                    <img
+                      src="/whatsapp-profile-smartbid.jpg"
+                      alt="Avatar Oficial WhatsApp SmartBidHub"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-[#10B981] shadow-lg shrink-0"
+                    />
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                        Identidade Oficial Pronta
+                      </span>
+                      <h3 className="text-base font-black tracking-tight text-white">
+                        Foto de Perfil Oficial — SmartBidHub
+                      </h3>
+                      <p className="text-xs text-emerald-100/80 max-w-lg">
+                        Use esta imagem oficial no perfil do WhatsApp central da SmartBidHub para transmitir máxima credibilidade nos alertas enviados aos consultores e diretores.
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="/whatsapp-profile-smartbid.jpg"
+                    download="whatsapp-perfil-oficial-smartbidhub.jpg"
+                    className="px-4 py-2.5 bg-white text-[#1B4D3E] hover:bg-emerald-50 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 shrink-0"
+                  >
+                    <Download size={14} /> Baixar Foto de Perfil
+                  </a>
+                </div>
+
+                {/* Formulário de Credenciais Z-API Oficial */}
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setWaOfficialLoading(true);
+                    setWaOfficialError('');
+                    setWaOfficialSuccess('');
+
+                    try {
+                      const res = await saveSystemWhatsAppSettings({
+                        instanceId: waOfficialInstanceId,
+                        token: waOfficialToken,
+                        clientToken: waOfficialClientToken,
+                        active: waOfficialActive,
+                      });
+
+                      if (res.success) {
+                        setWaOfficialSuccess('Credenciais do WhatsApp Oficial SmartBidHub salvas com sucesso!');
+                        setWaOfficialConfigured(true);
+                        setWaOfficialClientToken('');
+                        const statusRes = await getSystemWhatsAppSettings();
+                        if (statusRes && !('error' in statusRes)) {
+                          setWaOfficialConnected(Boolean(statusRes.connected));
+                          setWaOfficialPhone(statusRes.phone || '');
+                        }
+                      } else {
+                        setWaOfficialError(res.error || 'Erro ao salvar credenciais.');
+                      }
+                    } catch (err: any) {
+                      setWaOfficialError(err.message || 'Erro de comunicação com o servidor.');
+                    } finally {
+                      setWaOfficialLoading(false);
+                    }
+                  }}
+                  className="space-y-6 max-w-2xl pt-2"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        ID da Instância (Z-API Instance ID)
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: 3C8F9A1B2D3E4F..."
+                        value={waOfficialInstanceId}
+                        onChange={(e) => setWaOfficialInstanceId(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                        Token da Instância (Z-API Token)
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: A1B2C3D4E5F6..."
+                        value={waOfficialToken}
+                        onChange={(e) => setWaOfficialToken(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                      Client-Token de Segurança da Conta Z-API
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showWaClientToken ? 'text' : 'password'}
+                        placeholder={waOfficialConfigured ? '•••••••• (Já salvo — preencha apenas se quiser alterar)' : 'Cole o Client-Token de segurança da Z-API'}
+                        value={waOfficialClientToken}
+                        onChange={(e) => setWaOfficialClientToken(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowWaClientToken(!showWaClientToken)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        {showWaClientToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                    <div>
+                      <span className="text-xs font-black text-slate-800 block">Ativar Disparo pelo Número Oficial Central</span>
+                      <span className="text-[11px] text-slate-500">
+                        Quando ativo, todas as notificações de Propostas e Atas saem exclusivamente por este número oficial.
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={waOfficialActive}
+                      onChange={(e) => setWaOfficialActive(e.target.checked)}
+                      className="w-5 h-5 accent-[#1B4D3E] rounded cursor-pointer"
+                    />
+                  </div>
+
+                  {waOfficialError && (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-bold flex items-center gap-2">
+                      <AlertTriangle size={16} className="shrink-0" />
+                      <span>{waOfficialError}</span>
+                    </div>
+                  )}
+
+                  {waOfficialSuccess && (
+                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-2">
+                      <CheckCircle2 size={16} className="shrink-0" />
+                      <span>{waOfficialSuccess}</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={waOfficialLoading}
+                      className="px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Save size={15} />
+                      {waOfficialLoading ? 'Salvando...' : 'Salvar Credenciais Oficiais'}
+                    </button>
+
+                    {waOfficialConfigured && !waOfficialConnected && (
+                      <button
+                        type="button"
+                        disabled={waOfficialQrLoading}
+                        onClick={async () => {
+                          setWaOfficialQrLoading(true);
+                          setWaOfficialError('');
+                          try {
+                            const res = await getSystemWhatsAppQrCode();
+                            if (res.success && res.qrCode) {
+                              setWaOfficialQrCode(res.qrCode);
+                            } else {
+                              setWaOfficialError(res.error || 'Não foi possível gerar o QR Code.');
+                            }
+                          } finally {
+                            setWaOfficialQrLoading(false);
+                          }
+                        }}
+                        className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <QrCode size={15} />
+                        {waOfficialQrLoading ? 'Gerando QR Code...' : 'Gerar QR Code de Conexão'}
+                      </button>
+                    )}
+
+                    {waOfficialConnected && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await disconnectSystemWhatsAppInstance();
+                          if (res.success) {
+                            setWaOfficialConnected(false);
+                            setWaOfficialPhone('');
+                            setWaOfficialQrCode(null);
+                            setWaOfficialSuccess('Aparelho desconectado com sucesso.');
+                          } else {
+                            setWaOfficialError(res.error || 'Erro ao desconectar.');
+                          }
+                        }}
+                        className="px-5 py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        Desconectar Aparelho
+                      </button>
+                    )}
+                  </div>
+                </form>
+
+                {/* Exibição do QR Code quando solicitado */}
+                {waOfficialQrCode && !waOfficialConnected && (
+                  <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl max-w-md space-y-4 text-center">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      Escaneie com o WhatsApp Oficial da SmartBidHub
+                    </h4>
+                    <img
+                      src={waOfficialQrCode.startsWith('data:') ? waOfficialQrCode : `data:image/png;base64,${waOfficialQrCode}`}
+                      alt="QR Code WhatsApp Oficial"
+                      className="w-56 h-56 mx-auto rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const statusRes = await getSystemWhatsAppSettings();
+                        if (statusRes && !('error' in statusRes)) {
+                          setWaOfficialConnected(Boolean(statusRes.connected));
+                          setWaOfficialPhone(statusRes.phone || '');
+                          if (statusRes.connected) {
+                            setWaOfficialQrCode(null);
+                            setWaOfficialSuccess('WhatsApp Oficial conectado com sucesso!');
+                          }
+                        }
+                      }}
+                      className="px-4 py-2 bg-[#1B4D3E] text-white rounded-xl text-xs font-bold cursor-pointer"
+                    >
+                      🔄 Já escaneei • Verificar Conexão
+                    </button>
+                  </div>
+                )}
+
+                {/* Seção de Disparo de Teste do WhatsApp Oficial */}
+                <div className="pt-6 border-t border-slate-200/80 max-w-2xl space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      Testar Disparo do WhatsApp Oficial
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Informe um celular com DDD para receber uma notificação de teste enviada pela instância central da SmartBidHub.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      placeholder="Ex: 11999999999"
+                      value={waTestPhone}
+                      onChange={(e) => setWaTestPhone(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all"
+                    />
+                    <button
+                      type="button"
+                      disabled={waTestLoading || !waTestPhone.trim()}
+                      onClick={async () => {
+                        setWaTestLoading(true);
+                        setWaTestResult(null);
+                        try {
+                          const res = await testSystemWhatsAppConnection(waTestPhone);
+                          if (res.success) {
+                            setWaTestResult({
+                              success: true,
+                              message: `Mensagem de teste enviada com sucesso para ${waTestPhone}!`,
+                            });
+                          } else {
+                            setWaTestResult({
+                              success: false,
+                              message: res.error || 'Falha ao enviar mensagem de teste.',
+                            });
+                          }
+                        } catch (err: any) {
+                          setWaTestResult({
+                            success: false,
+                            message: err.message || 'Erro inesperado ao testar disparo.',
+                          });
+                        } finally {
+                          setWaTestLoading(false);
+                        }
+                      }}
+                      className="px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
+                    >
+                      <Send size={14} />
+                      {waTestLoading ? 'Enviando...' : 'Enviar WhatsApp de Teste'}
+                    </button>
+                  </div>
+
+                  {waTestResult && (
+                    <div
+                      className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                        waTestResult.success
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-50 text-red-600 border border-red-200'
+                      }`}
+                    >
+                      {waTestResult.success ? (
+                        <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                      ) : (
+                        <X size={16} className="shrink-0 text-red-500" />
+                      )}
+                      <span>{waTestResult.message}</span>
                     </div>
                   )}
                 </div>

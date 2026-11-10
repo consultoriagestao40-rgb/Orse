@@ -1254,6 +1254,7 @@ const Sidebar = () => {
         { icon: Sliders, label: 'Palavras-Chave & Leilão', href: '/admin/saas-crm?tab=palavras' },
         { icon: CreditCard, label: 'Faturamento & Cobranças', href: '/admin/empresas?tab=faturamento' },
         { icon: Mail, label: 'E-mail do Sistema (SMTP)', href: '/admin/empresas?tab=smtp' },
+        { icon: MessageSquare, label: 'WhatsApp Oficial (Z-API)', href: '/admin/empresas?tab=whatsapp' },
         { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
       ]
     : [
@@ -1265,6 +1266,7 @@ const Sidebar = () => {
         { icon: Sliders, label: 'Palavras-Chave & Leilão', href: '/admin/saas-crm?tab=palavras' },
         { icon: CreditCard, label: 'Faturamento & Cobranças', href: '/admin/empresas?tab=faturamento' },
         { icon: Mail, label: 'E-mail do Sistema (SMTP)', href: '/admin/empresas?tab=smtp' },
+        { icon: MessageSquare, label: 'WhatsApp Oficial (Z-API)', href: '/admin/empresas?tab=whatsapp' },
         { icon: Layers, label: 'Precificação & Módulos', href: '/admin/modulos' },
       ];
 
@@ -1566,7 +1568,7 @@ const Sidebar = () => {
 
         {/* BOTÃO SUPORTE TÉCNICO WHATSAPP NA SIDEBAR */}
         <a 
-          href={`https://wa.me/5541984042835?text=${encodeURIComponent(
+          href={`https://wa.me/5541992823967?text=${encodeURIComponent(
             `Olá, Suporte Técnico SmartBid! Preciso de ajuda com a plataforma.\nEmpresa: ${user?.tenant?.nomeFantasia || user?.tenant?.razaoSocial || 'Minha Empresa'}\nUsuário: ${user?.nome || ''} (${user?.email || ''})`
           )}`}
           target="_blank"
@@ -1602,7 +1604,7 @@ const Sidebar = () => {
 
     {/* BOTÃO FLUTUANTE DE SUPORTE WHATSAPP NA PLATAFORMA */}
     <a
-      href={`https://wa.me/5541984042835?text=${encodeURIComponent(
+      href={`https://wa.me/5541992823967?text=${encodeURIComponent(
         `Olá, Suporte SmartBid! Preciso de ajuda técnica com a plataforma.\nEmpresa: ${user?.tenant?.nomeFantasia || user?.tenant?.razaoSocial || 'Minha Empresa'}\nUsuário: ${user?.nome || ''} (${user?.email || ''})`
       )}`}
       target="_blank"

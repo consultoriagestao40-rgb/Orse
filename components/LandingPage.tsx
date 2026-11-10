@@ -216,7 +216,7 @@ export default function LandingPage() {
       `Olá! Gostaria de agendar uma demonstração prática do SmartBid (${demoPlanName}).\nNome: ${demoForm.nome}\nEmpresa: ${demoForm.empresa}\nWhatsApp: ${demoForm.whatsapp}\nPorte: ${demoForm.postos}`
     );
     setTimeout(() => {
-      window.open(`https://wa.me/5541984042835?text=${msg}`, '_blank');
+      window.open(`https://wa.me/5541992823967?text=${msg}`, '_blank');
     }, 1000);
   };
 
@@ -1510,7 +1510,7 @@ export default function LandingPage() {
 
       {/* BOTÃO FLUTUANTE DE WHATSAPP (SITE / VENDAS E DÚVIDAS) */}
       <a
-        href="https://wa.me/5541984042835?text=Ol%C3%A1!%20Estava%20navegando%20no%20site%20da%20SmartBid%20e%20gostaria%20de%20tirar%20algumas%20d%C3%BAvidas."
+        href="https://wa.me/5541992823967?text=Ol%C3%A1!%20Estava%20navegando%20no%20site%20da%20SmartBid%20e%20gostaria%20de%20tirar%20algumas%20d%C3%BAvidas."
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale conosco no WhatsApp"

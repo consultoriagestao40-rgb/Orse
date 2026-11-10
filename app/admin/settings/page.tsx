@@ -2634,7 +2634,7 @@ export default function SettingsPage() {
                       </p>
                     </div>
                     <a
-                      href={`https://wa.me/5541984042835?text=${encodeURIComponent(`Olá! Gostaria de adquirir uma recarga avulsa de +100 buscas na Máquina de Prospecção para a minha empresa: ${billingInfo?.nomeFantasia || 'SmartBid'}`)}`}
+                      href={`https://wa.me/5541992823967?text=${encodeURIComponent(`Olá! Gostaria de adquirir uma recarga avulsa de +100 buscas na Máquina de Prospecção para a minha empresa: ${billingInfo?.nomeFantasia || 'SmartBid'}`)}`}
                       target="_blank"
                       rel="noreferrer"
                       className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-emerald-100 active:scale-[0.98] shrink-0"

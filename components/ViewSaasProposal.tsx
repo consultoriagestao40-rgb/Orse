@@ -505,7 +505,7 @@ export default function ViewSaasProposal({ proposta }: ViewSaasProposalProps) {
 
               <div className="flex justify-center pt-2">
                 <a
-                  href={`https://wa.me/5579998188200?text=${encodeURIComponent(
+                  href={`https://wa.me/5541992823967?text=${encodeURIComponent(
                     `Olá! Acabei de assinar a proposta comercial do SmartBid Hub para a empresa ${propostaState.empresaNome}. Gostaria de agendar o início do onboarding.`
                   )}`}
                   target="_blank"

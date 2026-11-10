@@ -787,27 +787,7 @@ export async function notifyAtaPublish(ataId: string) {
     });
     const userCelularMap = new Map(dbUsers.map(u => [u.id, u.celular]));
 
-    // Prepara chaves do Z-API do tenant (isolamento estrito multi-tenant)
-    let instanceId: string | null | undefined = null;
-    let token: string | null | undefined = null;
-    let clientToken: string | null | undefined = null;
-
-    if (user.tenantId) {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: user.tenantId },
-        select: {
-          whatsappInstanceId: true,
-          whatsappToken: true,
-          whatsappClientToken: true,
-          whatsappConnected: true,
-        }
-      });
-      if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
-        instanceId = tenant.whatsappInstanceId;
-        token = tenant.whatsappToken;
-        clientToken = tenant.whatsappClientToken;
-      }
-    }
+    const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
 
     for (const part of targetUsers) {
       if (!part.userId) continue;
@@ -832,38 +812,21 @@ export async function notifyAtaPublish(ataId: string) {
 📍 Local: ${ata.local || 'Não especificado'}
 👤 Criada por: ${ata.criadorNome || user.nome}
 ${participantesSummary}${pautasSummary}${relatorioSummary}${delibSummary}${acoesSummary}${suasAcoes}${proximaSummary}
-🔗 Visualize a ata completa no menu *Atas de Reunião*.`;
+🔗 Visualize a ata completa no menu *Atas de Reunião*.\n_Notificação Oficial • SmartBidHub_`;
 
       // Envia a mensagem direta via chat interno (somente se não for o próprio remetente)
       if (part.userId !== user.id) {
         await sendInternalMessage(part.userId, msg);
       }
 
-      // Envia via WhatsApp se o participante tiver celular cadastrado e o Z-API estiver configurado
+      // Envia via WhatsApp Oficial Central SmartBid se o participante tiver celular cadastrado
       const rawPhone = userCelularMap.get(part.userId);
-      if (rawPhone && instanceId && token && clientToken) {
-        let cleanPhone = rawPhone.replace(/\D/g, '');
-        if (cleanPhone.length >= 10 && cleanPhone.length <= 11 && !cleanPhone.startsWith('55')) {
-          cleanPhone = `55${cleanPhone}`;
-        }
-        if (cleanPhone) {
-          try {
-            const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
-            await fetch(url, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Client-Token': clientToken
-              },
-              body: JSON.stringify({
-                phone: cleanPhone,
-                message: msg
-              })
-            });
-          } catch (zapiErr) {
-            console.error(`Erro ao disparar WhatsApp de ata para participante ${part.nome}:`, zapiErr);
-          }
-        }
+      if (rawPhone) {
+        await sendOfficialWhatsAppNotification({
+          phone: rawPhone,
+          message: msg,
+          fallbackTenantId: user.tenantId,
+        });
       }
     }
 

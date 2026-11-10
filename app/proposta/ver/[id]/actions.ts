@@ -75,62 +75,31 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
       data: { status: 'Aprovada' }
     }).catch(err => console.error('Erro ao atualizar FPV associada:', err));
 
-    // 3. Disparar notificação no WhatsApp do Vendedor via Z-API se estiver conectada
+    // 3. Disparar notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
     const vendedor = doc.proposta.user;
     if (vendedor.celular) {
-      const cleanPhone = vendedor.celular.replace(/\D/g, '');
-      const tenantId = doc.tenantId;
+      try {
+        const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
+        const numProposta = String(doc.proposta.numero).padStart(3, '0');
+        const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
 
-      let instanceId: string | null | undefined = null;
-      let token: string | null | undefined = null;
-      let clientToken: string | null | undefined = null;
+        const text = `🎉 *PROPOSTA APROVADA!* 🎉\n\n` +
+                     `Olá, *${vendedor.nome}*!\n\n` +
+                     `Temos ótimas notícias! O cliente *${clienteNome}* acabou de visualizar, aprovar e assinar eletronicamente a proposta comercial *FPV-${numProposta}*!\n\n` +
+                     `✍️ *Assinado por:* ${payload.nome}\n` +
+                     `🆔 *CPF/CNPJ:* ${payload.cpf}\n` +
+                     `🌐 *IP:* ${payload.ip}\n` +
+                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `Parabéns por mais este fechamento! 🚀💼\n` +
+                     `_Notificação Oficial • SmartBidHub_`;
 
-      if (tenantId) {
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: {
-            whatsappInstanceId: true,
-            whatsappToken: true,
-            whatsappClientToken: true,
-            whatsappConnected: true,
-          }
+        await sendOfficialWhatsAppNotification({
+          phone: vendedor.celular,
+          message: text,
+          fallbackTenantId: doc.tenantId,
         });
-        if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
-          instanceId = tenant.whatsappInstanceId;
-          token = tenant.whatsappToken;
-          clientToken = tenant.whatsappClientToken;
-        }
-      }
-
-      if (instanceId && token && clientToken) {
-        try {
-          const numProposta = String(doc.proposta.numero).padStart(3, '0');
-          const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
-          
-          const text = `🎉 *PROPOSTA APROVADA!* 🎉\n\n` +
-                       `Olá, *${vendedor.nome}*!\n\n` +
-                       `Temos ótimas notícias! O cliente *${clienteNome}* acabou de visualizar, aprovar e assinar eletronicamente a proposta comercial *FPV-${numProposta}*!\n\n` +
-                       `✍️ *Assinado por:* ${payload.nome}\n` +
-                       `🆔 *CPF/CNPJ:* ${payload.cpf}\n` +
-                       `🌐 *IP:* ${payload.ip}\n` +
-                       `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
-                       `Parabéns por mais este fechamento! 🚀💼`;
-
-          const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
-          await fetch(url, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Client-Token': clientToken
-            },
-            body: JSON.stringify({
-              phone: cleanPhone,
-              message: text
-            })
-          });
-        } catch (zapiErr) {
-          console.error('Erro ao disparar WhatsApp de fechamento via Z-API:', zapiErr);
-        }
+      } catch (zapiErr) {
+        console.error('Erro ao disparar WhatsApp de fechamento via Z-API Oficial:', zapiErr);
       }
     }
 
@@ -210,60 +179,29 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       data: { status: 'Recusada' }
     }).catch(err => console.error('Erro ao atualizar FPV:', err));
 
-    // 3. Disparar notificação no WhatsApp do Vendedor via Z-API se celular cadastrado
+    // 3. Disparar notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
     const vendedor = doc.proposta.user;
     if (vendedor.celular) {
-      const cleanPhone = vendedor.celular.replace(/\D/g, '');
-      const tenantId = doc.tenantId;
+      try {
+        const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
+        const numProposta = String(doc.proposta.numero).padStart(3, '0');
+        const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
 
-      let instanceId: string | null | undefined = null;
-      let token: string | null | undefined = null;
-      let clientToken: string | null | undefined = null;
+        const text = `⚠️ *PROPOSTA RECUSADA* ⚠️\n\n` +
+                     `Olá, *${vendedor.nome}*!\n\n` +
+                     `O cliente *${clienteNome}* visualizou e *recusou* a proposta comercial *FPV-${numProposta}*.\n\n` +
+                     `💬 *Justificativa informada:* ${motivo}\n` +
+                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `Acesse a plataforma para renegociar com o cliente. 📈💼\n` +
+                     `_Notificação Oficial • SmartBidHub_`;
 
-      if (tenantId) {
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: {
-            whatsappInstanceId: true,
-            whatsappToken: true,
-            whatsappClientToken: true,
-            whatsappConnected: true,
-          }
+        await sendOfficialWhatsAppNotification({
+          phone: vendedor.celular,
+          message: text,
+          fallbackTenantId: doc.tenantId,
         });
-        if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
-          instanceId = tenant.whatsappInstanceId;
-          token = tenant.whatsappToken;
-          clientToken = tenant.whatsappClientToken;
-        }
-      }
-
-      if (instanceId && token && clientToken) {
-        try {
-          const numProposta = String(doc.proposta.numero).padStart(3, '0');
-          const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
-          
-          const text = `⚠️ *PROPOSTA RECUSADA* ⚠️\n\n` +
-                       `Olá, *${vendedor.nome}*!\n\n` +
-                       `O cliente *${clienteNome}* visualizou e *recusou* a proposta comercial *FPV-${numProposta}*.\n\n` +
-                       `💬 *Justificativa informada:* ${motivo}\n` +
-                       `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
-                       `Acesse a plataforma para renegociar com o cliente. 📈💼`;
-
-          const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
-          await fetch(url, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Client-Token': clientToken
-            },
-            body: JSON.stringify({
-              phone: cleanPhone,
-              message: text
-            })
-          });
-        } catch (zapiErr) {
-          console.error('Erro ao disparar WhatsApp de recusa:', zapiErr);
-        }
+      } catch (zapiErr) {
+        console.error('Erro ao disparar WhatsApp de recusa via Z-API Oficial:', zapiErr);
       }
     }
 
@@ -455,60 +393,29 @@ export async function registrarAjusteAction(documentoId: string, mensagem: strin
       }
     });
 
-    // 2. Disparar notificação no WhatsApp do Vendedor via Z-API se celular cadastrado
+    // 2. Disparar notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
     const vendedor = doc.proposta.user;
     if (vendedor.celular) {
-      const cleanPhone = vendedor.celular.replace(/\D/g, '');
-      const tenantId = doc.tenantId;
+      try {
+        const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
+        const numProposta = String(doc.proposta.numero).padStart(3, '0');
+        const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
 
-      let instanceId: string | null | undefined = null;
-      let token: string | null | undefined = null;
-      let clientToken: string | null | undefined = null;
+        const text = `💬 *SOLICITAÇÃO DE AJUSTES* 💬\n\n` +
+                     `Olá, *${vendedor.nome}*!\n\n` +
+                     `O cliente *${clienteNome}* visualizou a proposta comercial *FPV-${numProposta}* e solicitou ajustes/contraproposta.\n\n` +
+                     `💬 *Mensagem do cliente:* ${mensagem}\n` +
+                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `Acesse a plataforma para responder ao cliente. 📈💼\n` +
+                     `_Notificação Oficial • SmartBidHub_`;
 
-      if (tenantId) {
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: {
-            whatsappInstanceId: true,
-            whatsappToken: true,
-            whatsappClientToken: true,
-            whatsappConnected: true,
-          }
+        await sendOfficialWhatsAppNotification({
+          phone: vendedor.celular,
+          message: text,
+          fallbackTenantId: doc.tenantId,
         });
-        if (tenant && tenant.whatsappConnected && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
-          instanceId = tenant.whatsappInstanceId;
-          token = tenant.whatsappToken;
-          clientToken = tenant.whatsappClientToken;
-        }
-      }
-
-      if (instanceId && token && clientToken) {
-        try {
-          const numProposta = String(doc.proposta.numero).padStart(3, '0');
-          const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
-          
-          const text = `💬 *SOLICITAÇÃO DE AJUSTES* 💬\n\n` +
-                       `Olá, *${vendedor.nome}*!\n\n` +
-                       `O cliente *${clienteNome}* visualizou a proposta comercial *FPV-${numProposta}* e solicitou ajustes/contraproposta.\n\n` +
-                       `💬 *Mensagem do cliente:* ${mensagem}\n` +
-                       `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
-                       `Acesse a plataforma para responder ao cliente. 📈💼`;
-
-          const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
-          await fetch(url, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Client-Token': clientToken
-            },
-            body: JSON.stringify({
-              phone: cleanPhone,
-              message: text
-            })
-          });
-        } catch (zapiErr) {
-          console.error('Erro ao disparar WhatsApp de ajuste:', zapiErr);
-        }
+      } catch (zapiErr) {
+        console.error('Erro ao disparar WhatsApp de ajuste via Z-API Oficial:', zapiErr);
       }
     }
 

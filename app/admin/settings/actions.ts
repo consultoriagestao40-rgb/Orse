@@ -574,6 +574,253 @@ export async function testSystemSmtpConnection(targetEmail: string) {
   }
 }
 
+// ==========================================
+// CONFIGURAÇÃO DO WHATSAPP OFICIAL CENTRAL (Z-API SAAS)
+// ==========================================
+const OFFICIAL_WA_RECORD_KEY = 'SYSTEM_OFFICIAL_ZAPI';
+
+export async function getSystemWhatsAppSettings() {
+  try {
+    const record = await prisma.smtpAccount.findFirst({
+      where: {
+        nome: OFFICIAL_WA_RECORD_KEY,
+        isSystem: false,
+      },
+    });
+
+    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || '';
+    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || '';
+    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || '';
+    const active = record ? record.active : true;
+    let connected = false;
+    let phone = record?.fromEmail || '';
+
+    if (instanceId && token && clientToken) {
+      try {
+        const statusRes = await fetch(
+          `https://api.z-api.io/instances/${instanceId}/token/${token}/status`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Client-Token': clientToken,
+            },
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          connected = !!statusData.connected;
+          if (statusData.phone) {
+            phone = String(statusData.phone);
+          }
+          if (record && record.fromEmail !== (connected ? phone : '')) {
+            await prisma.smtpAccount.update({
+              where: { id: record.id },
+              data: { fromEmail: connected ? phone : '' },
+            });
+          }
+        }
+      } catch (statusErr) {
+        console.warn('Aviso ao consultar status da Z-API Oficial:', statusErr);
+      }
+    }
+
+    return {
+      configured: Boolean(instanceId && token && clientToken),
+      instanceId,
+      token,
+      hasClientToken: Boolean(clientToken),
+      active,
+      connected,
+      phone,
+    };
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações do WhatsApp Oficial do sistema:', error);
+    return { error: error.message };
+  }
+}
+
+export async function saveSystemWhatsAppSettings(data: {
+  instanceId: string;
+  token: string;
+  clientToken?: string;
+  active?: boolean;
+}) {
+  try {
+    const existing = await prisma.smtpAccount.findFirst({
+      where: {
+        nome: OFFICIAL_WA_RECORD_KEY,
+        isSystem: false,
+      },
+    });
+
+    const cleanInstanceId = (data.instanceId || '').trim();
+    const cleanToken = (data.token || '').trim();
+    const cleanClientToken = (data.clientToken || '').trim();
+
+    if (!cleanInstanceId || !cleanToken) {
+      return { success: false, error: 'Instance ID e Token da Z-API são obrigatórios.' };
+    }
+
+    const payload: any = {
+      nome: OFFICIAL_WA_RECORD_KEY,
+      host: cleanInstanceId,
+      port: 443,
+      user: cleanToken,
+      fromEmail: existing?.fromEmail || '',
+      fromName: 'SmartBidHub Oficial',
+      active: data.active ?? true,
+      isSystem: false,
+    };
+
+    if (cleanClientToken.length > 0) {
+      payload.password = cleanClientToken;
+    } else if (!existing?.password) {
+      return {
+        success: false,
+        error: 'O Client-Token de segurança da Z-API é obrigatório na primeira configuração.',
+      };
+    }
+
+    if (existing) {
+      await prisma.smtpAccount.update({
+        where: { id: existing.id },
+        data: payload,
+      });
+    } else {
+      await prisma.smtpAccount.create({
+        data: payload,
+      });
+    }
+
+    revalidatePath('/admin/empresas');
+    revalidatePath('/admin/settings');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações do WhatsApp Oficial:', error);
+    return { success: false, error: error.message || 'Erro ao salvar configurações' };
+  }
+}
+
+export async function getSystemWhatsAppQrCode() {
+  try {
+    const record = await prisma.smtpAccount.findFirst({
+      where: {
+        nome: OFFICIAL_WA_RECORD_KEY,
+        isSystem: false,
+      },
+    });
+
+    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || '';
+    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || '';
+    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || '';
+
+    if (!instanceId || !token || !clientToken) {
+      return {
+        success: false,
+        error: 'Salve primeiro o Instance ID, Token e Client-Token da Z-API antes de gerar o QR Code.',
+      };
+    }
+
+    const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/qr-code/image`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Client-Token': clientToken,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { success: true, qrCode: data.value || data.qrCode };
+    } else {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error:
+          errData.message ||
+          errData.error ||
+          'QR Code não disponível. Verifique se o aparelho já está conectado ou se as credenciais estão corretas.',
+      };
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Erro ao buscar QR Code na Z-API' };
+  }
+}
+
+export async function disconnectSystemWhatsAppInstance() {
+  try {
+    const record = await prisma.smtpAccount.findFirst({
+      where: {
+        nome: OFFICIAL_WA_RECORD_KEY,
+        isSystem: false,
+      },
+    });
+
+    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || '';
+    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || '';
+    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || '';
+
+    if (!instanceId || !token || !clientToken) {
+      return { success: false, error: 'Nenhuma instância oficial configurada.' };
+    }
+
+    await fetch(`https://api.z-api.io/instances/${instanceId}/token/${token}/disconnect`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Client-Token': clientToken,
+      },
+      signal: AbortSignal.timeout(5000),
+    }).catch(() => {});
+
+    if (record) {
+      await prisma.smtpAccount.update({
+        where: { id: record.id },
+        data: { fromEmail: '' },
+      });
+    }
+
+    revalidatePath('/admin/empresas');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Erro ao desconectar instância' };
+  }
+}
+
+export async function testSystemWhatsAppConnection(targetPhone: string) {
+  try {
+    const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
+    const text =
+      `✅ *TESTE DE CONEXÃO — SMARTBIDHUB OFICIAL*\n\n` +
+      `Esta é uma mensagem de teste disparada pelo número central oficial da *SmartBidHub*.\n\n` +
+      `A partir de agora, todas as notificações automáticas de:\n` +
+      `• 🎉 *Propostas Aprovadas / Assinadas*\n` +
+      `• ⚠️ *Propostas Recusadas / Pedidos de Ajuste*\n` +
+      `• 📢 *Publicação de Atas de Reunião*\n\n` +
+      `serão enviadas por este canal oficial para todas as empresas da plataforma.\n\n` +
+      `📅 _Enviado em: ${new Date().toLocaleString('pt-BR')}_`;
+
+    const res = await sendOfficialWhatsAppNotification({
+      phone: targetPhone,
+      message: text,
+    });
+
+    if (!res.success) {
+      return {
+        success: false,
+        error: res.error || 'Falha ao disparar mensagem de teste via Z-API Oficial.',
+      };
+    }
+
+    return { success: true, source: res.source };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Erro ao realizar teste de WhatsApp' };
+  }
+}
+
 // -------------------------------------------------------------
 // EXPORTAÇÃO INTEGRAL DE DADOS (LGPD / ENCERRAMENTO DE CONTA)
 // -------------------------------------------------------------

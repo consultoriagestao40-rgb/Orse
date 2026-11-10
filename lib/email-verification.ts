@@ -202,7 +202,7 @@ export async function sendWelcomeAndConsultancyEmail({
   const primeiroNome = (nome || '').split(' ')[0] || 'Gestor';
   
   const whatsappMsg = `Olá Cristiano! Criei minha conta no SmartBid (${empresaDisplay}) e gostaria de agendar uma consultoria para implementação do sistema na minha empresa.`;
-  const whatsappUrl = `https://wa.me/5541984042835?text=${encodeURIComponent(whatsappMsg)}`;
+  const whatsappUrl = `https://wa.me/5541992823967?text=${encodeURIComponent(whatsappMsg)}`;
 
   const emailHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 32px 20px; background-color: #f8fafc;">
@@ -261,7 +261,7 @@ export async function sendWelcomeAndConsultancyEmail({
                 💬 Falar com Cristiano no WhatsApp
               </a>
               <p style="color: #15803d; font-size: 11.5px; margin: 10px 0 0 0; font-weight: 500;">
-                (41) 98404-2835 • Resposta rápida direta com o fundador
+                (41) 9 9282-3967 • Resposta rápida direta com o fundador
               </p>
             </div>
           </div>
