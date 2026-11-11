@@ -64,6 +64,10 @@ model Tenant {
   ordensServicoAtivo        OrdemServicoAtivo[]
   empresasEmissoras         EmpresaEmissora[]
   entregas                  Entrega[]
+  segmentos                 Segmento[]
+  tiposServico              TipoServico[]
+  categorias                Categoria[]
+  unidadesMedida            UnidadeMedida[]
 }
 
 model EmpresaEmissora {
@@ -220,7 +224,7 @@ model CCT {
   outrosBeneficios       Float    @default(0)
   reservaTecnica         Float    @default(0)
   insalubridadeBase      String   @default("MINIMO") // "SALARIO" ou "MINIMO"
-  salarioMinimo          Float    @default(1518)
+  salarioMinimo          Float    @default(1621)
   pdfUrl                 String?  @db.Text
   pdfNome                String?
   textoCompleto          String?  @db.Text
@@ -303,12 +307,14 @@ model PropostaItem {
 
 model Escala {
   id                 String   @id @default(cuid())
-  nome               String   @unique
+  nome               String
   diasTrabalhadosMes Int      @default(22)
   horasMensais       Int      @default(220)
   createdAt          DateTime @default(now())
   tenantId           String?
   tenant             Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([nome, tenantId])
 }
 
 model PropostaStatus {
@@ -341,15 +347,23 @@ model Produto {
 }
 
 model Categoria {
-  id    String  @id @default(cuid())
-  nome  String  @unique
-  ativo Boolean @default(true)
+  id       String  @id @default(cuid())
+  nome     String
+  ativo    Boolean @default(true)
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([nome, tenantId])
 }
 
 model UnidadeMedida {
-  id    String  @id @default(cuid())
-  nome  String  @unique
-  ativo Boolean @default(true)
+  id       String  @id @default(cuid())
+  nome     String
+  ativo    Boolean @default(true)
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([nome, tenantId])
 }
 
 enum UserRole {
@@ -360,15 +374,23 @@ enum UserRole {
 }
 
 model TipoServico {
-  id    String  @id @default(cuid())
-  nome  String  @unique
-  ativo Boolean @default(true)
+  id       String  @id @default(cuid())
+  nome     String
+  ativo    Boolean @default(true)
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([nome, tenantId])
 }
 
 model Segmento {
-  id    String  @id @default(cuid())
-  nome  String  @unique
-  ativo Boolean @default(true)
+  id       String  @id @default(cuid())
+  nome     String
+  ativo    Boolean @default(true)
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([nome, tenantId])
 }
 
 model PropostaShare {
@@ -398,11 +420,13 @@ model AuditLog {
 
 model TemplateContrato {
   id        String             @id @default(uuid())
-  nome      String             @unique
+  nome      String
   clausulas ClausulaTemplate[]
   createdAt DateTime           @default(now())
   tenantId  String?
   tenant    Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([nome, tenantId])
 }
 
 model ClausulaTemplate {

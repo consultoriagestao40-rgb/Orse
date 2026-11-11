@@ -86,7 +86,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   // Base de cálculo da insalubridade (Mínimo vs Salário da Função)
   const baseInsalubridade = cctEfetiva.insalubridadeBase === 'SALARIO' 
     ? salarioBase 
-    : (Number(cctEfetiva.salarioMinimo) || 1518);
+    : (Number(cctEfetiva.salarioMinimo) || 1621);
 
   const adicionalInsalubridade = baseInsalubridade * (pctInsalubridade / 100);
 

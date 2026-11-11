@@ -1752,12 +1752,15 @@ export async function getProposalPageInitData(propostaId?: string, versionId?: s
         orderBy: { descricao: 'asc' }
       }),
       prisma.tipoServico.findMany({
+        where: whereClause,
         orderBy: { nome: 'asc' }
       }),
       prisma.segmento.findMany({
+        where: whereClause,
         orderBy: { nome: 'asc' }
       }),
       prisma.empresaEmissora.findMany({
+        where: whereClause,
         orderBy: { nomeFantasia: 'asc' }
       }),
       prisma.equipeTecnicaComposicao.findMany({

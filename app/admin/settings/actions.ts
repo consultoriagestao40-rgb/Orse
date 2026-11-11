@@ -7,22 +7,31 @@ import { getLoggedUser } from '@/app/propostas/actions';
 // UNIDADES DE MEDIDA
 export async function getUnidadesMedida() {
   try {
-    const unidades = await prisma.unidadeMedida.findMany({ orderBy: { nome: 'asc' } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return [];
+
+    const unidades = await prisma.unidadeMedida.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { nome: 'asc' }
+    });
     if (unidades.length === 0) {
-      // Popula com defaults se estiver vazio
+      // Popula com defaults se estiver vazio para este tenant
       await prisma.unidadeMedida.createMany({
         data: [
-          { nome: 'UN' },
-          { nome: 'KG' },
-          { nome: 'L' },
-          { nome: 'MT' },
-          { nome: 'M²' },
-          { nome: 'PAR' },
-          { nome: 'CX' },
+          { nome: 'UN', tenantId: user.tenantId },
+          { nome: 'KG', tenantId: user.tenantId },
+          { nome: 'L', tenantId: user.tenantId },
+          { nome: 'MT', tenantId: user.tenantId },
+          { nome: 'M²', tenantId: user.tenantId },
+          { nome: 'PAR', tenantId: user.tenantId },
+          { nome: 'CX', tenantId: user.tenantId },
         ],
         skipDuplicates: true
       });
-      return await prisma.unidadeMedida.findMany({ orderBy: { nome: 'asc' } });
+      return await prisma.unidadeMedida.findMany({
+        where: { tenantId: user.tenantId },
+        orderBy: { nome: 'asc' }
+      });
     }
     return unidades;
   } catch (error) {
@@ -33,8 +42,11 @@ export async function getUnidadesMedida() {
 
 export async function createUnidadeMedida(nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.unidadeMedida.create({
-      data: { nome: nome.trim() }
+      data: { nome: nome.trim(), tenantId: user.tenantId }
     });
     revalidatePath('/admin/settings');
     return { success: true, data: res };
@@ -45,7 +57,10 @@ export async function createUnidadeMedida(nome: string) {
 
 export async function deleteUnidadeMedida(id: string) {
   try {
-    await prisma.unidadeMedida.delete({ where: { id } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
+    await prisma.unidadeMedida.deleteMany({ where: { id, tenantId: user.tenantId } });
     revalidatePath('/admin/settings');
     return { success: true };
   } catch (error: any) {
@@ -56,7 +71,11 @@ export async function deleteUnidadeMedida(id: string) {
 // CATEGORIAS
 export async function getCategorias() {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return [];
+
     return await prisma.categoria.findMany({ 
+      where: { tenantId: user.tenantId },
       orderBy: { nome: 'asc' } 
     });
   } catch (error) {
@@ -67,8 +86,11 @@ export async function getCategorias() {
 
 export async function createCategoria(nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.categoria.create({
-      data: { nome: nome.trim() }
+      data: { nome: nome.trim(), tenantId: user.tenantId }
     });
     revalidatePath('/admin/settings');
     revalidatePath('/produtos');
@@ -80,7 +102,10 @@ export async function createCategoria(nome: string) {
 
 export async function deleteCategoria(id: string) {
   try {
-    await prisma.categoria.delete({ where: { id } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
+    await prisma.categoria.deleteMany({ where: { id, tenantId: user.tenantId } });
     revalidatePath('/admin/settings');
     revalidatePath('/produtos');
     return { success: true };
@@ -92,22 +117,13 @@ export async function deleteCategoria(id: string) {
 // TIPOS DE SERVIÇO
 export async function getTiposServico() {
   try {
-    const tipos = await prisma.tipoServico.findMany({ orderBy: { nome: 'asc' } });
-    if (tipos.length === 0) {
-      // Popula com defaults se estiver vazio
-      await prisma.tipoServico.createMany({
-        data: [
-          { nome: 'Limpeza e Conservação' },
-          { nome: 'Portaria' },
-          { nome: 'Jardinagem' },
-          { nome: 'Manutenção Predial' },
-          { nome: 'Full Service' }
-        ],
-        skipDuplicates: true
-      });
-      return await prisma.tipoServico.findMany({ orderBy: { nome: 'asc' } });
-    }
-    return tipos;
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return [];
+
+    return await prisma.tipoServico.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { nome: 'asc' }
+    });
   } catch (error) {
     console.error('Erro ao buscar tipos de serviço:', error);
     return [];
@@ -116,8 +132,11 @@ export async function getTiposServico() {
 
 export async function createTipoServico(nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.tipoServico.create({
-      data: { nome: nome.trim() }
+      data: { nome: nome.trim(), tenantId: user.tenantId }
     });
     revalidatePath('/admin/settings');
     return { success: true, data: res };
@@ -128,7 +147,10 @@ export async function createTipoServico(nome: string) {
 
 export async function deleteTipoServico(id: string) {
   try {
-    await prisma.tipoServico.delete({ where: { id } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
+    await prisma.tipoServico.deleteMany({ where: { id, tenantId: user.tenantId } });
     revalidatePath('/admin/settings');
     return { success: true };
   } catch (error: any) {
@@ -179,7 +201,13 @@ export async function updateSellerMeta(userId: string, meta: number) {
 // -- Segmentos --
 export async function getSegmentos() {
   try {
-    return await prisma.segmento.findMany({ orderBy: { nome: 'asc' } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return [];
+
+    return await prisma.segmento.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { nome: 'asc' }
+    });
   } catch (error) {
     console.error('Erro ao buscar segmentos:', error);
     return [];
@@ -188,7 +216,12 @@ export async function getSegmentos() {
 
 export async function createSegmento(nome: string) {
   try {
-    const res = await prisma.segmento.create({ data: { nome: nome.toUpperCase() } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
+    const res = await prisma.segmento.create({
+      data: { nome: nome.toUpperCase().trim(), tenantId: user.tenantId }
+    });
     revalidatePath('/admin/settings');
     revalidatePath('/clientes');
     revalidatePath('/clientes/[id]/edit', 'page');
@@ -201,7 +234,10 @@ export async function createSegmento(nome: string) {
 
 export async function deleteSegmento(id: string) {
   try {
-    await prisma.segmento.delete({ where: { id } });
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
+    await prisma.segmento.deleteMany({ where: { id, tenantId: user.tenantId } });
     revalidatePath('/admin/settings');
     revalidatePath('/clientes');
     revalidatePath('/clientes/[id]/edit', 'page');
@@ -215,8 +251,11 @@ export async function deleteSegmento(id: string) {
 // UPDATE E TOGGLE ACTIONS
 export async function updateUnidadeMedida(id: string, nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.unidadeMedida.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { nome: nome.trim() }
     });
     revalidatePath('/admin/settings');
@@ -228,8 +267,11 @@ export async function updateUnidadeMedida(id: string, nome: string) {
 
 export async function toggleUnidadeMedida(id: string, ativo: boolean) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.unidadeMedida.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { ativo }
     });
     revalidatePath('/admin/settings');
@@ -241,8 +283,11 @@ export async function toggleUnidadeMedida(id: string, ativo: boolean) {
 
 export async function updateCategoria(id: string, nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.categoria.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { nome: nome.trim() }
     });
     revalidatePath('/admin/settings');
@@ -255,8 +300,11 @@ export async function updateCategoria(id: string, nome: string) {
 
 export async function toggleCategoria(id: string, ativo: boolean) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.categoria.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { ativo }
     });
     revalidatePath('/admin/settings');
@@ -269,8 +317,11 @@ export async function toggleCategoria(id: string, ativo: boolean) {
 
 export async function updateTipoServico(id: string, nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.tipoServico.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { nome: nome.trim() }
     });
     revalidatePath('/admin/settings');
@@ -282,8 +333,11 @@ export async function updateTipoServico(id: string, nome: string) {
 
 export async function toggleTipoServico(id: string, ativo: boolean) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.tipoServico.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { ativo }
     });
     revalidatePath('/admin/settings');
@@ -295,8 +349,11 @@ export async function toggleTipoServico(id: string, ativo: boolean) {
 
 export async function updateSegmento(id: string, nome: string) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.segmento.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { nome: nome.toUpperCase().trim() }
     });
     revalidatePath('/admin/settings');
@@ -311,8 +368,11 @@ export async function updateSegmento(id: string, nome: string) {
 
 export async function toggleSegmento(id: string, ativo: boolean) {
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) return { success: false, error: 'Não autorizado' };
+
     const res = await prisma.segmento.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: { ativo }
     });
     revalidatePath('/admin/settings');

@@ -86,7 +86,7 @@ export default function CCTEditorPage() {
     taxaAdm: 5,
     custosSindicato: 0,
     insalubridadeBase: 'MINIMO',
-    salarioMinimo: 1518,
+    salarioMinimo: 1621,
     outrosBeneficios: 0,
     pdfUrl: '',
     pdfNome: '',
@@ -323,31 +323,37 @@ export default function CCTEditorPage() {
         throw new Error(data?.error || 'Erro ao processar PDF da CCT.');
       }
 
-      const p = data.parsed || {};
+      const p = data.parsedData || data.parsed || {};
+      const extractedCargos = p.cargos || data.cargos || [];
       setFormData((prev: any) => ({
         ...prev,
-        nome: p.nomeSindicato || prev.nome || file.name.replace(/\.pdf$/i, ''),
+        nome: p.nome || p.nomeSindicato || prev.nome || file.name.replace(/\.pdf$/i, ''),
         uf: p.uf || prev.uf,
         cidade: p.cidade || prev.cidade,
         vigenciaInicio: p.vigenciaInicio || prev.vigenciaInicio,
         vigenciaFim: p.vigenciaFim || prev.vigenciaFim,
         vaValor: p.vaValor !== undefined && p.vaValor > 0 ? p.vaValor : prev.vaValor,
+        vaTipo: p.vaTipo || prev.vaTipo,
+        vaDescPercent: p.vaDescPercent !== undefined && p.vaDescPercent > 0 ? p.vaDescPercent : prev.vaDescPercent,
         vaRefeicaoLocal: p.vaRefeicaoLocal !== undefined && p.vaRefeicaoLocal > 0 ? p.vaRefeicaoLocal : prev.vaRefeicaoLocal,
         vtValor: p.vtValor !== undefined && p.vtValor > 0 ? p.vtValor : prev.vtValor,
+        vtDescPercent: p.vtDescPercent !== undefined && p.vtDescPercent > 0 ? p.vtDescPercent : prev.vtDescPercent,
         seguroVida: p.seguroVida !== undefined && p.seguroVida > 0 ? p.seguroVida : prev.seguroVida,
+        examesMedicos: p.examesMedicos !== undefined && p.examesMedicos > 0 ? p.examesMedicos : prev.examesMedicos,
+        custosSindicato: p.custosSindicato !== undefined && p.custosSindicato > 0 ? p.custosSindicato : prev.custosSindicato,
         cestaBasica: p.cestaBasica !== undefined && p.cestaBasica > 0 ? p.cestaBasica : prev.cestaBasica,
-        salarioMinimo: p.salarioMinimo || prev.salarioMinimo,
+        salarioMinimo: p.salarioMinimo || 1621,
         pdfUrl: data.pdfUrl || prev.pdfUrl,
         pdfNome: data.pdfNome || file.name,
-        textoCompleto: data.textoCompleto || prev.textoCompleto,
-        resumoClausulas: data.resumoClausulas || prev.resumoClausulas,
+        textoCompleto: p.textoCompleto || data.textoCompleto || prev.textoCompleto,
+        resumoClausulas: p.clausulas || data.resumoClausulas || prev.resumoClausulas,
       }));
 
-      if (data.cargos && data.cargos.length > 0) {
-        setCargos(data.cargos);
+      if (extractedCargos.length > 0) {
+        setCargos(extractedCargos);
       }
 
-      setPdfSuccess(`CCT processada com sucesso! ${data.cargos?.length || 0} funções identificadas e valores preenchidos.`);
+      setPdfSuccess(`CCT processada com sucesso! ${extractedCargos.length} funções identificadas e valores preenchidos.`);
     } catch (err: any) {
       alert('Erro na leitura do PDF: ' + (err?.message || 'Tente novamente'));
     } finally {

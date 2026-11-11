@@ -24,6 +24,8 @@ export interface ExtractedCctData {
   cestaBasica?: number;
   seguroVida?: number;
   examesMedicos?: number;
+  custosSindicato?: number;
+  salarioMinimo?: number;
   provisFerias?: number;
   provis13?: number;
   encargoInss?: number;
@@ -443,21 +445,32 @@ export async function parseCCT(pdfText: string, originalFileName?: string): Prom
     }
   }
 
-  // 7. Assistência Médica / Saúde
-  let examesMedicos = 0;
-  const medCl = clausulas.find(c => /assist[êe]ncia\s+m[ée]dica|sa[úu]de/i.test(c.titulo));
+  // 7. Assistência Médica / Saúde (Instituto Sindical)
+  let assistenciaMedica = 0;
+  const medCl = clausulas.find(c => /assist[êe]ncia\s+m[ée]dica|aux[íi]lio\s+sa[úu]de|sa[úu]de/i.test(c.titulo));
   if (medCl) {
     const mm = medCl.texto.match(/R\$\s*([\d\.,]+)/i);
-    if (mm) examesMedicos = cleanCurrency(mm[1]);
+    if (mm) assistenciaMedica = cleanCurrency(mm[1]);
   }
 
   // 8. Benefício Social Familiar / Seguro de Vida
   let seguroVida = 0;
-  const socCl = clausulas.find(c => /social\s+familiar|seguro/i.test(c.titulo));
+  const socCl = clausulas.find(c => /social\s+familiar|assist[êe]ncia\s+social|seguro/i.test(c.titulo));
   if (socCl) {
     const sm = socCl.texto.match(/R\$\s*([\d\.,]+)/i);
     if (sm) seguroVida = cleanCurrency(sm[1]);
   }
+
+  // 9. Fundo de Formação / Qualificação Profissional
+  let fundoFormacao = 0;
+  const formCl = clausulas.find(c => /fundo\s+de\s+forma[çc][ãa]o|forma[çc][ãa]o\s+profissional|qualifica[çc][ãa]o\s+profissional/i.test(c.titulo));
+  if (formCl) {
+    const fm = formCl.texto.match(/R\$\s*([\d\.,]+)/i);
+    if (fm) fundoFormacao = cleanCurrency(fm[1]);
+  }
+
+  const somaSindicatoExtraida = Number((assistenciaMedica + seguroVida + fundoFormacao).toFixed(2));
+  const custosSindicato = somaSindicatoExtraida > 0 ? somaSindicatoExtraida : 156.50;
 
   // Fallback seguro caso seja um PDF não reconhecido
   if (cargos.length === 0) {
@@ -482,7 +495,9 @@ export async function parseCCT(pdfText: string, originalFileName?: string): Prom
     vtDescPercent: 6,
     cestaBasica: 0,
     seguroVida: seguroVida || 31.00,
-    examesMedicos: examesMedicos || 94.50,
+    examesMedicos: 20.00,
+    custosSindicato,
+    salarioMinimo: 1621.0,
     provisFerias: 11.11,
     provis13: 8.33,
     encargoInss: 20,
@@ -779,7 +794,7 @@ export async function askCctAI(
       const horasMatch = qNorm.match(/(\d+)\s*(?:horas|h\b|hora)/i);
       const horasSolicitadas = horasMatch ? parseInt(horasMatch[1], 10) : null;
 
-      const salarioMinimo = (cct as any).salarioMinimo || 1518.0;
+      const salarioMinimo = (cct as any).salarioMinimo || 1621.0;
       const insalubridadeMensal = bestCargo.insalubridadePercent > 0
         ? (salarioMinimo * (bestCargo.insalubridadePercent / 100))
         : 0;

@@ -204,7 +204,7 @@ export default function AdminEquipesTecnicasPage() {
 
     const baseInsalubridade = cct.insalubridadeBase === 'SALARIO' 
       ? salarioBase 
-      : (Number(cct.salarioMinimo) || 1518);
+      : (Number(cct.salarioMinimo) || 1621);
     const insalubridadePercent = Number(cargo.insalubridadePercent) || 0;
     const insalubridade = baseInsalubridade * (insalubridadePercent / 100);
 
@@ -358,7 +358,7 @@ export default function AdminEquipesTecnicasPage() {
 
           const baseInsalubridade = cct.insalubridadeBase === 'SALARIO' 
             ? salarioBase 
-            : (Number(cct.salarioMinimo) || 1518);
+            : (Number(cct.salarioMinimo) || 1621);
           const insalubridade = baseInsalubridade * ((Number(cargo.insalubridadePercent) || 0) / 100);
 
           const remuneracaoTotal = salarioBase + adicionais + insalubridade;
