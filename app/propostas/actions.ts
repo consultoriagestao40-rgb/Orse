@@ -681,11 +681,61 @@ export async function saveProposta(data: any) {
       });
     }
 
-    // Atualiza o valorTotal de qualquer DocumentoProposta (Proposta Comercial) vinculado a esta FPV
-    await prisma.documentoProposta.updateMany({
-      where: { propostaId },
-      data: { valorTotal: finalPrecoVenda }
-    }).catch(err => console.error('Erro ao sincronizar valor do documento proposta:', err));
+    if (!criarNova) {
+      // Mesma versão: atualiza apenas o DocumentoProposta desta revisão específica (preserva revisões anteriores)
+      await prisma.documentoProposta.updateMany({
+        where: { propostaId, versaoFPV: nextVersion },
+        data: { valorTotal: finalPrecoVenda }
+      }).catch(err => console.error('Erro ao sincronizar valor do documento proposta:', err));
+    } else {
+      // Nova versão da FPV criada (ex: R02, R03): preserva 100% o histórico das propostas comerciais anteriores
+      // e, se a FPV já possuía Proposta Comercial na revisão anterior, gera automaticamente uma nova Proposta Comercial para esta nova revisão!
+      try {
+        const lastDoc = await prisma.documentoProposta.findFirst({
+          where: { propostaId },
+          orderBy: [{ versaoFPV: 'desc' }, { createdAt: 'desc' }],
+          include: { secoes: { orderBy: { ordem: 'asc' } } }
+        });
+
+        const existingForNewVersion = await prisma.documentoProposta.findFirst({
+          where: { propostaId, versaoFPV: nextVersion }
+        });
+
+        if (lastDoc && !existingForNewVersion) {
+          const prevConfig = (lastDoc.configApresentacao as any) || null;
+          let clonedConfig: any = null;
+          if (prevConfig && typeof prevConfig === 'object') {
+            const { viewTracking, negotiations, linkExpiresAt, ...restConfig } = prevConfig;
+            clonedConfig = { ...restConfig };
+          }
+
+          await prisma.documentoProposta.create({
+            data: {
+              propostaId,
+              versaoFPV: nextVersion,
+              clientId: dbClient?.id || lastDoc.clientId,
+              empresaEmissoraId: lastDoc.empresaEmissoraId,
+              templateOrigemId: lastDoc.templateOrigemId,
+              tipo: lastDoc.tipo || 'A4',
+              status: 'Rascunho',
+              valorTotal: finalPrecoVenda,
+              tenantId: lastDoc.tenantId || user?.tenantId || null,
+              configApresentacao: clonedConfig,
+              secoes: {
+                create: (lastDoc.secoes || []).map((s: any) => ({
+                  titulo: s.titulo,
+                  texto: s.texto,
+                  ordem: s.ordem
+                }))
+              }
+            }
+          });
+          revalidatePath('/propostas-comerciais');
+        }
+      } catch (err) {
+        console.error('Erro ao gerar nova versão de DocumentoProposta:', err);
+      }
+    }
 
     // Se existir um contrato vinculado a esta FPV, atualiza automaticamente o valor mensal e total do contrato
     const existingContrato = await prisma.contrato.findUnique({ where: { propostaId }, include: { pic: true } });

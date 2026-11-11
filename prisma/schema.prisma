@@ -494,6 +494,7 @@ model SecaoTemplateProposta {
 model DocumentoProposta {
   id                String             @id @default(cuid())
   propostaId        String
+  versaoFPV         Int                @default(1)
   clientId          String
   empresaEmissoraId String
   templateOrigemId  String?

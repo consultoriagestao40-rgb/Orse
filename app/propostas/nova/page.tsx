@@ -8641,7 +8641,7 @@ function PropostaEditor() {
                 </div>
                 <div>
                   <h4 className="font-bold text-[#1B4D3E] mb-0.5">Salvar Nova Versão</h4>
-                  <p className="text-xs text-[#1B4D3E]/70">Cria a Revisão R{String((proposta.versao || 1) + 1).padStart(2, '0')} com histórico de mudanças</p>
+                  <p className="text-xs text-[#1B4D3E]/70">Cria a Revisão R{String((proposta.versao || 1) + 1).padStart(2, '0')} e gera uma nova Proposta Comercial preservando o histórico da anterior</p>
                 </div>
               </button>
             </div>

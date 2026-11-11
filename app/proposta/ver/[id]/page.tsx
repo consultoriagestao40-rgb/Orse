@@ -21,7 +21,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   
   const cliente = res.client?.nomeFantasia || res.client?.razaoSocial || '';
   const numeroPadded = String(res.proposta?.numero || '').padStart(3, '0');
-  const versaoNum = res.proposta?.versoes?.[0]?.versao || 1;
+  const versaoNum = res.versaoFPV || res.proposta?.versoes?.[0]?.versao || 1;
   const revisaoPart = `R${String(versaoNum).padStart(2, '0')}`;
   
   return {
@@ -113,7 +113,7 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
     }
   }
 
-  const fullProposta = await getPropostaCompleta(res.propostaId, undefined, true);
+  const fullProposta = await getPropostaCompleta(res.propostaId, res.versaoFPV || undefined, true);
 
   let templateOrigem = null;
   if (res.templateOrigemId) {

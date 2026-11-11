@@ -1906,12 +1906,21 @@ export default function PropostasComerciaisDashboard() {
                       onChange={e => setCreateModal({...createModal, fpvId: e.target.value})}
                     >
                       <option value="">-- Selecione uma FPV --</option>
-                      {fpvs.map(f => (
-                        <option key={f.id} value={f.id}>
-                          #{f.numero}-R{String(f.versao || 1).padStart(2, '0')} - {f.cliente} ({fmt(f.valor)})
-                        </option>
-                      ))}
+                      {fpvs.map(f => {
+                        const fVersao = Number(f.versao || 1);
+                        const jaPossuiNestaVersao = docs.some(
+                          d => d.propostaId === f.id && Number(d.versaoFPV || 1) === fVersao
+                        );
+                        return (
+                          <option key={f.id} value={f.id} disabled={jaPossuiNestaVersao}>
+                            #{f.numero}-R{String(fVersao).padStart(2, '0')} - {f.cliente} ({fmt(f.valor)}){jaPossuiNestaVersao ? ' — [Já possui proposta nesta revisão]' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Cada revisão de FPV permite apenas 1 proposta comercial. Ao salvar uma <strong>Nova Versão (R02, R03...)</strong> na FPV, uma nova proposta comercial é gerada automaticamente mantendo o histórico.
+                    </p>
                   </div>
 
                   <div>

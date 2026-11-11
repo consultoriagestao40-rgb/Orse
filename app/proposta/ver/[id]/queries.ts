@@ -27,7 +27,14 @@ export async function getDocumentoPropostaById(id: string) {
       }
     });
     if (doc && doc.proposta && doc.proposta.versoes) {
-      const sortedVersoes = [...doc.proposta.versoes].sort((a: any, b: any) => b.versao - a.versao);
+      const targetVersao = (doc as any).versaoFPV;
+      const sortedVersoes = [...doc.proposta.versoes].sort((a: any, b: any) => {
+        if (targetVersao) {
+          if (a.versao === targetVersao && b.versao !== targetVersao) return -1;
+          if (b.versao === targetVersao && a.versao !== targetVersao) return 1;
+        }
+        return b.versao - a.versao;
+      });
       doc.proposta.versoes = sortedVersoes;
     }
     return doc;

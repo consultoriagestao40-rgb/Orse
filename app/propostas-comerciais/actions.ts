@@ -52,6 +52,7 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
       select: {
         id: true,
         propostaId: true,
+        versaoFPV: true,
         clientId: true,
         valorTotal: true,
         status: true,
@@ -81,18 +82,21 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
             },
             versoes: {
               select: {
-                versao: true
+                versao: true,
+                precoVenda: true
               }
             }
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: [{ createdAt: 'desc' }, { versaoFPV: 'desc' }]
     });
 
     return docs.map((d: any) => {
       const sortedVersoes = [...(d.proposta?.versoes || [])].sort((a: any, b: any) => b.versao - a.versao);
       const lastVersao = sortedVersoes[0];
+      const effectiveVersao = d.versaoFPV || lastVersao?.versao || 1;
+      const matchedVersaoObj = sortedVersoes.find((v: any) => v.versao === effectiveVersao);
       return {
         id: d.id,
         propostaId: d.propostaId,
@@ -101,10 +105,10 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         cliente: d.client?.nomeFantasia || 'Sem Cliente',
         segmento: d.client?.segmento || 'Sem Segmento',
         empresa: d.empresaEmissora?.nomeFantasia,
-        valor: d.valorTotal,
+        valor: d.valorTotal || matchedVersaoObj?.precoVenda || 0,
         status: d.status,
         data: d.createdAt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        versaoFPV: lastVersao?.versao || 1,
+        versaoFPV: effectiveVersao,
         usuario: d.proposta?.user?.nome || 'Sistema',
         avatarUrl: d.proposta?.user?.avatarUrl || null,
         configApresentacao: configMap.get(d.id) || null,
@@ -144,7 +148,14 @@ export async function getDocumentoPropostaById(id: string) {
       }
     });
     if (doc && doc.proposta && doc.proposta.versoes) {
-      const sortedVersoes = [...doc.proposta.versoes].sort((a: any, b: any) => b.versao - a.versao);
+      const targetVersao = (doc as any).versaoFPV;
+      const sortedVersoes = [...doc.proposta.versoes].sort((a: any, b: any) => {
+        if (targetVersao) {
+          if (a.versao === targetVersao && b.versao !== targetVersao) return -1;
+          if (b.versao === targetVersao && a.versao !== targetVersao) return 1;
+        }
+        return b.versao - a.versao;
+      });
       doc.proposta.versoes = sortedVersoes;
     }
     return doc;
@@ -253,7 +264,22 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     if (!clientId) throw new Error('FPV sem cliente cadastrado no sistema. Por favor, cadastre o cliente em "Clientes" primeiro.');
 
     const sortedVersoes = [...fpv.versoes].sort((a: any, b: any) => b.versao - a.versao);
+    const targetVersao = sortedVersoes[0]?.versao || 1;
     const valorTotal = sortedVersoes[0]?.precoVenda || 0;
+
+    // Impede gerar duas propostas comerciais para a mesma versão da FPV
+    const existingDocSameVersion = await prisma.documentoProposta.findFirst({
+      where: {
+        propostaId,
+        versaoFPV: targetVersao
+      }
+    });
+    if (existingDocSameVersion) {
+      const refStr = `FPV-${String(fpv.numero).padStart(3, '0')}-REV-${String(targetVersao).padStart(2, '0')}`;
+      throw new Error(
+        `Já existe uma Proposta Comercial gerada para a ${refStr}. Para gerar uma nova proposta mantendo o histórico das anteriores, salve uma Nova Versão (R${String(targetVersao + 1).padStart(2, '0')}) dentro da FPV.`
+      );
+    }
 
     // Busca o template e suas seções
     const template = await prisma.templatePropostaComercial.findUnique({
@@ -326,6 +352,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     const doc = await prisma.documentoProposta.create({
       data: {
         propostaId,
+        versaoFPV: targetVersao,
         clientId: fpv.clientId,
         empresaEmissoraId: empresaId,
         templateOrigemId: template.id,
