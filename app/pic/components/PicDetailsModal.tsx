@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { RichTextDisplay } from '@/components/RichTextField';
 import { 
   X, Calendar, User, Plus, Trash2, Paperclip, Send, Copy,
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
@@ -741,9 +742,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <div className="space-y-3 text-xs font-semibold text-slate-700">
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase block font-black">Objeto / Escopo Técnico</span>
-                      <p className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mt-1 text-slate-600 font-medium whitespace-pre-line leading-relaxed">
-                        {meta.escopoTecnico || meta.objetoProposta || 'Não especificado no contrato.'}
-                      </p>
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mt-1 text-slate-600 font-medium leading-relaxed">
+                        <RichTextDisplay
+                          content={meta.escopoTecnico || meta.objetoProposta}
+                          fallback="Não especificado no contrato."
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -2272,9 +2276,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <div className="space-y-3">
                     <div>
                       <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block mb-1">Objeto / Escopo Técnico</span>
-                      <p className="bg-slate-50/50 border border-slate-100 rounded-xl p-3.5 mt-1 text-slate-600 font-medium whitespace-pre-line leading-relaxed print:bg-white print:border-slate-200">
-                        {meta.escopoTecnico || meta.objetoProposta || 'Não especificado no contrato.'}
-                      </p>
+                      <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3.5 mt-1 text-slate-600 font-medium leading-relaxed print:bg-white print:border-slate-200">
+                        <RichTextDisplay
+                          content={meta.escopoTecnico || meta.objetoProposta}
+                          fallback="Não especificado no contrato."
+                        />
+                      </div>
                     </div>
 
                     {/* Itens Inclusos e Excluídos Unificados */}

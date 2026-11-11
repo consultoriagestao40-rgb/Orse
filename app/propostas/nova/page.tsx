@@ -23,6 +23,7 @@ import DocumentoA4 from '@/components/DocumentoA4';
 import TemplateEditorModal from '@/components/TemplateEditorModal';
 import SearchableSelect, { SearchableSelectOption } from '@/components/SearchableSelect';
 import FpvPdfDocument from '@/components/FpvPdfDocument';
+import RichTextField, { RichTextDisplay, stripHtmlToText } from '@/components/RichTextField';
 import { FileDown, Printer, Upload, Search, Check, Globe, ExternalLink } from 'lucide-react';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import {
@@ -3583,9 +3584,14 @@ function PropostaEditor() {
                        <input type="email" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.email} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, email: e.target.value}})} />
                     </div>
 
-                    <div className="md:col-span-2 space-y-1">
+                    <div className="md:col-span-2 space-y-1.5">
                        <label className="text-xs font-semibold text-slate-700">Objeto da Proposta</label>
-                       <textarea className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] resize-none min-h-[80px]" value={proposta.cliente.objetoProposta} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: e.target.value}})}></textarea>
+                       <RichTextField
+                          value={proposta.cliente.objetoProposta || ''}
+                          onChange={(html) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: html}})}
+                          placeholder="Descreva detalhadamente o objeto da proposta (use a barra acima para formatar fonte, tamanho, cores, alinhamento, marcadores, numeração e recuo de parágrafo)..."
+                          minHeight={200}
+                       />
                     </div>
 
                     <div className="md:col-span-2 flex items-center gap-2 pt-2 pb-1">
@@ -3602,14 +3608,14 @@ function PropostaEditor() {
                     </div>
 
                     {proposta.cliente.hasEscopoTecnico && (
-                       <div className="md:col-span-2 space-y-1">
+                       <div className="md:col-span-2 space-y-1.5">
                           <label className="text-xs font-semibold text-slate-700">Detalhamento do Escopo Técnico</label>
-                          <textarea 
-                             className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] min-h-[120px]" 
-                             value={proposta.cliente.escopoTecnico || ''} 
+                          <RichTextField
+                             value={proposta.cliente.escopoTecnico || ''}
+                             onChange={(html) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: html}})}
                              placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
-                             onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
-                          ></textarea>
+                             minHeight={200}
+                          />
                        </div>
                     )}
 
@@ -5876,7 +5882,7 @@ function PropostaEditor() {
                                     {/* Mensagem Principal */}
                                     <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                        <p>
-                                          O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                          O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || stripHtmlToText(proposta.cliente.objetoProposta) || "Limpeza e conservação"}</strong>.
                                        </p>
                                        <p className="font-semibold text-slate-700">
                                           Estamos imensamente gratos desde já pela oportunidade!
@@ -6583,9 +6589,11 @@ function PropostaEditor() {
                                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                                               <div>
                                                  <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">01. OBJETO DA PROPOSTA</span>
-                                                 <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                                                    {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                                 </p>
+                                                 <RichTextDisplay
+                                                    content={proposta.cliente.objetoProposta}
+                                                    fallback={proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                                    className="text-xs font-semibold leading-relaxed text-slate-700"
+                                                 />
                                               </div>
                                            </div>
 
@@ -6593,18 +6601,22 @@ function PropostaEditor() {
                                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                                               <div>
                                                  <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">02. ESCOPO TÉCNICO</span>
-                                                 <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[160px]">
-                                                    {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
-                                                 </p>
+                                                 <RichTextDisplay
+                                                    content={proposta.cliente.escopoTecnico}
+                                                    fallback="Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado."
+                                                    className="text-xs font-semibold leading-relaxed text-slate-700 overflow-y-auto max-h-[160px]"
+                                                 />
                                               </div>
                                            </div>
                                         </div>
                                      ) : (
                                         <div className="max-w-2xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-8 text-center shadow-sm">
                                            <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">OBJETO DA PROPOSTA</span>
-                                           <p className="text-sm font-bold leading-relaxed text-slate-700 whitespace-pre-line">
-                                              {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                           </p>
+                                           <RichTextDisplay
+                                              content={proposta.cliente.objetoProposta}
+                                              fallback={proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                              className="text-sm font-bold leading-relaxed text-slate-700"
+                                           />
                                         </div>
                                      )}
                                   </div>
@@ -7183,10 +7195,10 @@ function PropostaEditor() {
                          <div className="space-y-4">
                             <div>
                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Objeto da Proposta</label>
-                               <textarea 
-                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[80px] resize-none"
-                                  value={proposta.cliente.objetoProposta}
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: e.target.value}})}
+                               <RichTextField
+                                  value={proposta.cliente.objetoProposta || ''}
+                                  onChange={(html) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: html}})}
+                                  minHeight={180}
                                />
                             </div>
                             <div className="flex items-center gap-2 py-2">
@@ -7202,11 +7214,11 @@ function PropostaEditor() {
                             {proposta.cliente.hasEscopoTecnico && (
                                <div>
                                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Escopo Técnico Detalhado</label>
-                                  <textarea 
-                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[120px]"
+                                  <RichTextField
                                      value={proposta.cliente.escopoTecnico || ''}
-                                     onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
+                                     onChange={(html) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: html}})}
                                      placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
+                                     minHeight={180}
                                   />
                                </div>
                             )}
@@ -8961,7 +8973,7 @@ function PropostaEditor() {
                               </h2>
                               <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                  <p>
-                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || stripHtmlToText(proposta.cliente.objetoProposta) || "Limpeza e conservação"}</strong>.
                                  </p>
                                  <p className="font-semibold text-slate-700">
                                     Estamos imensamente gratos desde já pela oportunidade!
@@ -9587,9 +9599,11 @@ function PropostaEditor() {
                                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 shadow-sm flex flex-col justify-between">
                                          <div>
                                             <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">01. OBJETO DA PROPOSTA</span>
-                                            <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                                               {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                            </p>
+                                            <RichTextDisplay
+                                               content={proposta.cliente.objetoProposta}
+                                               fallback={proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                               className="text-sm font-semibold leading-relaxed text-slate-700"
+                                            />
                                          </div>
                                       </div>
 
@@ -9597,18 +9611,22 @@ function PropostaEditor() {
                                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 shadow-sm flex flex-col justify-between">
                                          <div>
                                             <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">02. ESCOPO TÉCNICO</span>
-                                            <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[220px]">
-                                               {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
-                                            </p>
+                                            <RichTextDisplay
+                                               content={proposta.cliente.escopoTecnico}
+                                               fallback="Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado."
+                                               className="text-sm font-semibold leading-relaxed text-slate-700 overflow-y-auto max-h-[220px]"
+                                            />
                                          </div>
                                       </div>
                                    </div>
                                 ) : (
                                    <div className="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-10 text-center shadow-sm">
                                       <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-4">OBJETO DA PROPOSTA</span>
-                                      <p className="text-base font-bold leading-relaxed text-slate-700 whitespace-pre-line">
-                                         {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                      </p>
+                                      <RichTextDisplay
+                                         content={proposta.cliente.objetoProposta}
+                                         fallback={proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                         className="text-base font-bold leading-relaxed text-slate-700"
+                                      />
                                    </div>
                                 )}
                              </div>

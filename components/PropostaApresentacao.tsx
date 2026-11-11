@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, User, Cpu, Smartphone, Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, CreditCard, ShieldCheck, MapPin, Calendar, UserCheck, Briefcase } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
+import { RichTextDisplay, stripHtmlToText } from '@/components/RichTextField';
 import * as Icons from 'lucide-react';
 
 const LucideIconRenderer = ({ name, className, size, color }: { name: string; className?: string; size?: number | string; color?: string }) => {
@@ -239,8 +240,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
       ? new Date(proposta.cliente.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR') 
       : 'A definir';
       
-    const objeto = proposta.cliente?.objetoProposta || proposta.cliente?.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.';
-    const escopo = proposta.cliente?.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.';
+    const objeto = stripHtmlToText(proposta.cliente?.objetoProposta) || proposta.cliente?.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.';
+    const escopo = stripHtmlToText(proposta.cliente?.escopoTecnico) || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.';
     const localPrestacao = proposta.cliente?.localPrestacao || proposta.cliente?.endereco || 'Local a ser definido';
     const prazoContrato = proposta.cliente?.prazoContrato || '12 meses';
     
@@ -2275,7 +2276,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                     {/* Mensagem Principal */}
                                     <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                        <p>
-                                          O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.nomeFantasia || proposta.cliente.razaoSocial || "Cliente Não Informado"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                          O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.nomeFantasia || proposta.cliente.razaoSocial || "Cliente Não Informado"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || stripHtmlToText(proposta.cliente.objetoProposta) || "Limpeza e conservação"}</strong>.
                                        </p>
                                        <p className="font-semibold text-slate-700">
                                           Estamos imensamente gratos desde já pela oportunidade!
@@ -2991,9 +2992,11 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                                               <div>
                                                  <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">01. OBJETO DA PROPOSTA</span>
-                                                 <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                                                    {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                                 </p>
+                                                 <RichTextDisplay
+                                                    content={proposta.cliente.objetoProposta}
+                                                    fallback={proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                                    className="text-xs font-semibold leading-relaxed text-slate-700"
+                                                 />
                                               </div>
                                            </div>
 
@@ -3001,18 +3004,22 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                                               <div>
                                                  <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">02. ESCOPO TÉCNICO</span>
-                                                 <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[160px]">
-                                                    {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
-                                                 </p>
+                                                 <RichTextDisplay
+                                                    content={proposta.cliente.escopoTecnico}
+                                                    fallback="Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado."
+                                                    className="text-xs font-semibold leading-relaxed text-slate-700 overflow-y-auto max-h-[160px]"
+                                                 />
                                               </div>
                                            </div>
                                         </div>
                                      ) : (
                                         <div className="max-w-2xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-8 text-center shadow-sm">
                                            <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">OBJETO DA PROPOSTA</span>
-                                           <p className="text-sm font-bold leading-relaxed text-slate-700 whitespace-pre-line">
-                                              {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                           </p>
+                                           <RichTextDisplay
+                                              content={proposta.cliente.objetoProposta}
+                                              fallback={proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                              className="text-sm font-bold leading-relaxed text-slate-700"
+                                           />
                                         </div>
                                      )}
                                   </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { RichTextDisplay } from '@/components/RichTextField';
 
 interface FpvPdfDocumentProps {
   mode: 'ALL' | string; // 'ALL' para todas as telas ou id da aba ('dados', 'premissas', etc.)
@@ -189,7 +190,7 @@ export default function FpvPdfDocument({
             {proposta.cliente.objetoProposta && (
               <div className="bg-white p-1.5 rounded border border-slate-200 mt-1">
                 <span className="text-[8px] uppercase font-black text-slate-500 block mb-0.5">Objeto da Proposta</span>
-                <p className="text-[9px] text-slate-700 leading-snug whitespace-pre-wrap">{proposta.cliente.objetoProposta}</p>
+                <RichTextDisplay content={proposta.cliente.objetoProposta} className="text-[9px] text-slate-700 leading-snug" />
               </div>
             )}
           </div>

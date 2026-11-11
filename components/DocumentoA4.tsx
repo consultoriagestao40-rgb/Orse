@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import numeroPorExtenso from '@/lib/numeroPorExtenso';
+import { RichTextDisplay, isHtmlContent } from '@/components/RichTextField';
 
 export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens, isPublicView = false }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void, isPublicView?: boolean }) {
   const color = proposta.tenant?.primaryColor || '#1B4D3E';
@@ -965,11 +966,17 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             let paragrafos = textoLimpo
                               ? textoLimpo.split(/\n/).filter((p: string) => p.trim() !== '')
                               : [];
+                            const hasHtmlBlock = isHtmlContent(textoLimpo);
                               
                             return (
                               <div key={idx} className={idx > 0 ? "mt-6" : ""}>
                                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
-                                {paragrafos.length > 0 && (
+                                {hasHtmlBlock ? (
+                                  <div className="pl-4 mt-2 mb-4 text-justify">
+                                    <span className="font-bold mr-1">{clauseNum}.1.</span>
+                                    <RichTextDisplay content={textoLimpo} inline />
+                                  </div>
+                                ) : paragrafos.length > 0 && (
                                   <div className="pl-4 mt-2 mb-4">
                                     {paragrafos.map((p: string, pIdx: number) => (
                                       <p key={pIdx} className="mb-2 text-justify">
@@ -995,14 +1002,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                           <h4 className="font-bold uppercase">01 - DO OBJETO E ESCOPO</h4>
                           <div className="pl-4 mt-2">
                             {proposta.cliente?.objetoProposta && (
-                              <p className="mb-2 text-justify">
-                                <span className="font-bold mr-1">1.1.</span>{proposta.cliente.objetoProposta}
-                              </p>
+                              <div className="mb-2 text-justify">
+                                <span className="font-bold mr-1">1.1.</span>
+                                <RichTextDisplay content={proposta.cliente.objetoProposta} inline />
+                              </div>
                             )}
                             {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                              <p className="text-justify">
-                                <span className="font-bold mr-1">1.2.</span>{proposta.cliente.escopoTecnico}
-                              </p>
+                              <div className="text-justify">
+                                <span className="font-bold mr-1">1.2.</span>
+                                <RichTextDisplay content={proposta.cliente.escopoTecnico} inline />
+                              </div>
                             )}
                           </div>
                         </div>
@@ -1068,14 +1077,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                               </h4>
                               <div className="pl-4 mt-2">
                                 {proposta.cliente?.objetoProposta && (
-                                  <p className="mb-2 text-justify">
-                                    <span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>{proposta.cliente.objetoProposta}
-                                  </p>
+                                  <div className="mb-2 text-justify">
+                                    <span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>
+                                    <RichTextDisplay content={proposta.cliente.objetoProposta} inline />
+                                  </div>
                                 )}
                                 {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                                  <p className="text-justify">
-                                    <span className="font-bold mr-1">{currentFallbackClause - 1}.2.</span>{proposta.cliente.escopoTecnico}
-                                  </p>
+                                  <div className="text-justify">
+                                    <span className="font-bold mr-1">{currentFallbackClause - 1}.2.</span>
+                                    <RichTextDisplay content={proposta.cliente.escopoTecnico} inline />
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -1362,11 +1373,17 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   let paragrafos = textoLimpo
                     ? textoLimpo.split(/\n/).filter((p: string) => p.trim() !== '')
                     : [];
+                  const hasHtmlBlock = isHtmlContent(textoLimpo);
                     
                   return (
                     <div key={idx} className={idx > 0 ? "mt-6" : ""}>
                       <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
-                      {paragrafos.length > 0 && (
+                      {hasHtmlBlock ? (
+                        <div className="pl-4 mt-2 mb-4 text-justify">
+                          <span className="font-bold mr-1">{clauseNum}.1.</span>
+                          <RichTextDisplay content={textoLimpo} inline />
+                        </div>
+                      ) : paragrafos.length > 0 && (
                         <div className="pl-4 mt-2 mb-4">
                           {paragrafos.map((p: string, pIdx: number) => (
                             <p key={pIdx} className="mb-2 text-justify">
@@ -1391,14 +1408,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 <h4 className="font-bold uppercase">01 - DO OBJETO E ESCOPO</h4>
                 <div className="pl-4 mt-2">
                   {proposta.cliente?.objetoProposta && (
-                    <p className="mb-2 text-justify">
-                      <span className="font-bold mr-1">1.1.</span>{proposta.cliente.objetoProposta}
-                    </p>
+                    <div className="mb-2 text-justify">
+                      <span className="font-bold mr-1">1.1.</span>
+                      <RichTextDisplay content={proposta.cliente.objetoProposta} inline />
+                    </div>
                   )}
                   {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                    <p className="text-justify">
-                      <span className="font-bold mr-1">1.2.</span>{proposta.cliente.escopoTecnico}
-                    </p>
+                    <div className="text-justify">
+                      <span className="font-bold mr-1">1.2.</span>
+                      <RichTextDisplay content={proposta.cliente.escopoTecnico} inline />
+                    </div>
                   )}
                 </div>
               </div>
@@ -1465,14 +1484,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                     </h4>
                     <div className="pl-4 mt-2">
                       {proposta.cliente?.objetoProposta && (
-                        <p className="mb-2 text-justify">
-                          <span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>{proposta.cliente.objetoProposta}
-                        </p>
+                        <div className="mb-2 text-justify">
+                          <span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>
+                          <RichTextDisplay content={proposta.cliente.objetoProposta} inline />
+                        </div>
                       )}
                       {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                        <p className="text-justify">
-                          <span className="font-bold mr-1">{currentFallbackClause - 1}.2.</span>{proposta.cliente.escopoTecnico}
-                        </p>
+                        <div className="text-justify">
+                          <span className="font-bold mr-1">{currentFallbackClause - 1}.2.</span>
+                          <RichTextDisplay content={proposta.cliente.escopoTecnico} inline />
+                        </div>
                       )}
                     </div>
                   </div>
