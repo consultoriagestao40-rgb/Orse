@@ -394,10 +394,42 @@ export async function updateConfigApresentacao(id: string, config: any) {
 
 export async function updateDocumentoStatus(id: string, status: string) {
   try {
-    await prisma.documentoProposta.update({
+    const doc = await prisma.documentoProposta.update({
       where: { id },
-      data: { status }
+      data: { status },
+      include: {
+        proposta: {
+          include: { user: true }
+        },
+        client: true
+      }
     });
+
+    if (status === 'Aprovada' && doc?.proposta?.user?.celular) {
+      try {
+        const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
+        const vendedor = doc.proposta.user;
+        const numProposta = String(doc.proposta.numero).padStart(3, '0');
+        const clienteNome = doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Cliente';
+
+        const text =
+          `🎉 *PROPOSTA APROVADA!* 🎉\n\n` +
+          `Olá, *${vendedor.nome}*!\n\n` +
+          `A proposta comercial *FPV-${numProposta}* do cliente *${clienteNome}* acaba de ser marcada como *Aprovada*!\n\n` +
+          `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+          `Parabéns por mais este fechamento! 🚀💼\n` +
+          `_Notificação Oficial • SmartBidHub_`;
+
+        await sendOfficialWhatsAppNotification({
+          phone: vendedor.celular!,
+          message: text,
+          fallbackTenantId: doc.tenantId,
+        });
+      } catch (zapiErr) {
+        console.error('Erro ao disparar WhatsApp em updateDocumentoStatus:', zapiErr);
+      }
+    }
+
     revalidatePath('/propostas-comerciais');
     return { success: true };
   } catch (error: any) {
