@@ -86,6 +86,9 @@ export const metadata: Metadata = {
     },
   },
   manifest: "/manifest.json",
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  },
   icons: {
     icon: "/icon.svg?v=4",
     shortcut: "/icon.svg?v=4",

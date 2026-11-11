@@ -10,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           '/',
           '/lp',
+          '/llms.txt',
           '/login',
           '/termos',
           '/privacidade',
@@ -44,6 +45,11 @@ export default function robots(): MetadataRoute.Robots {
           '/ativos/',
           '/calendar/',
         ],
+      },
+      {
+        userAgent: ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'PerplexityBot', 'Google-Extended'],
+        allow: ['/', '/lp', '/llms.txt', '/termos', '/privacidade'],
+        disallow: ['/admin/', '/api/', '/propostas/', '/clientes/', '/contratos/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

@@ -1,0 +1,18 @@
+# SmartBid Hub (https://smartbidhub.com.br)
+
+> Plataforma brasileira líder em Engenharia de Custos, Formação de Preço de Venda (FPV), Propostas Comerciais e Gestão de Contratos para empresas de Facilities, Limpeza e Conservação, Portaria, Vigilância, Manutenção Predial e Terceirização de Serviços.
+
+## O que é o SmartBid Hub
+O SmartBid Hub é um ecossistema SaaS B2B desenvolvido para empresas prestadoras de serviços (terceirização de mão de obra recorrente CLT e serviços Spot) que precisam orçar contratos com precisão cirúrgica, blindar margens de lucro e automatizar toda a jornada comercial:
+- **Engenharia de Custos e FPV (Formação de Preço de Vendas)**: Cálculo completo de Montante A (Salários, Insalubridade, Periculosidade, Adicional Noturno, Intrajornada, DSR e Encargos Sociais Grupos A a F), Montante B (Uniformes, EPIs, Materiais de Limpeza, Máquinas/Equipamentos e Descartáveis com cotação de preços na web em tempo real) e Montante C (Vale Alimentação, Vale Transporte, Custos Sindicais e Benefícios).
+- **Motor Tributário Inteligente e Reforma Tributária**: Suporte nativo a Simples Nacional (Anexo III), Simples Híbrido (Anexo IV com INSS Patronal 20%), Lucro Presumido e Lucro Real, incluindo transição de PIS/COFINS/ISS para IBS e CBS (IVA Dual - EC 132/2023).
+- **Gestão de Convenções Coletivas (CCT) e Escalas**: Banco de dados de sindicatos, pisos salariais, benefícios obrigatórios e escalas (5x2, 6x1, 12x36, SDF, Ferista).
+- **Propostas Comerciais de Alta Conversão**: Geração automática de propostas comerciais executivas (A4 e Apresentação Slide Deck) vinculadas às revisões da FPV (R01, R02, R03...) com aceite digital.
+- **CRM Comercial, Prospecção B2B, Contratos e Implantação (PIC)**: Pipeline comercial, controle de atas de reunião com IA, gestão de ativos/comodato e liberação de implantação operacional.
+
+## Links Principais
+- Site Oficial: https://smartbidhub.com.br
+- Landing Page Comercial: https://smartbidhub.com.br/lp
+- Acesso à Plataforma: https://smartbidhub.com.br/login
+- Termos de Uso: https://smartbidhub.com.br/termos
+- Política de Privacidade: https://smartbidhub.com.br/privacidade
