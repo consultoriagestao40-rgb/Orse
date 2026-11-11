@@ -12,6 +12,7 @@ import '@/components/lp/lp.css';
 import ProposalJourney from '@/components/lp/ProposalJourney';
 import ModulesSection from '@/components/lp/ModulesSection';
 import SpreadsheetCompare from '@/components/lp/SpreadsheetCompare';
+import { trackEvent } from '@/components/TrackingScripts';
 
 // Paleta: papel quente, tinta escura e um único verde (o mesmo do sistema)
 const C = {
@@ -207,11 +208,17 @@ export default function LandingPage() {
     setDemoPlanName(planName);
     setDemoModalOpen(true);
     setDemoSuccess(false);
+    trackEvent('InitiateCheckout', { content_name: planName });
   };
 
   const handleDemoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setDemoSuccess(true);
+    trackEvent('Lead', {
+      content_name: demoPlanName,
+      company: demoForm.empresa,
+      size: demoForm.postos,
+    });
     const msg = encodeURIComponent(
       `Olá! Gostaria de agendar uma demonstração prática do SmartBid (${demoPlanName}).\nNome: ${demoForm.nome}\nEmpresa: ${demoForm.empresa}\nWhatsApp: ${demoForm.whatsapp}\nPorte: ${demoForm.postos}`
     );

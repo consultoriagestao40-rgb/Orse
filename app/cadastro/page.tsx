@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import PasswordInputWithRequirements from '@/components/PasswordInputWithRequirements';
 import { textFont } from '@/components/lp/fonts';
+import { trackEvent } from '@/components/TrackingScripts';
 
 const C = {
   paper: '#FBFAF7',
@@ -114,6 +115,13 @@ function CadastroForm() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        trackEvent('CompleteRegistration', {
+          content_name: plano || 'Trial 7 Dias',
+          status: 'registered',
+        });
+        trackEvent('StartTrial', {
+          content_name: plano || 'Trial 7 Dias',
+        });
         setRegisteredEmail(data.email || form.email);
         setStep('VERIFICATION_INSTRUCTIONS');
       } else {
