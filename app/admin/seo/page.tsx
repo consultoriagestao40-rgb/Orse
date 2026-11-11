@@ -18,25 +18,33 @@ import {
 export default function AdminSeoPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
+  const [dailyAutopilot, setDailyAutopilot] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingTrends, setLoadingTrends] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [customTopic, setCustomTopic] = useState('');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const loadSeoData = async () => {
-    setLoading(true);
+  const loadSeoData = async (withLiveTrends = false) => {
+    if (withLiveTrends) setLoadingTrends(true);
+    else setLoading(true);
     try {
-      const res = await fetch('/api/seo/generate');
+      const res = await fetch(withLiveTrends ? '/api/seo/generate?trends=1' : '/api/seo/generate');
       const data = await res.json();
       if (data.success) {
         setArticles(data.articles || []);
         setSuggestedTopics(data.suggestedTopics || []);
+        if (data.dailyAutopilot) setDailyAutopilot(data.dailyAutopilot);
+        if (withLiveTrends) {
+          setFeedback('🔍 Termos mais pesquisados atualizados ao vivo via Google Autocomplete Brasil!');
+        }
       }
     } catch (e) {
       console.error('Erro ao carregar dados de SEO:', e);
     } finally {
       setLoading(false);
+      setLoadingTrends(false);
     }
   };
 
@@ -123,6 +131,36 @@ export default function AdminSeoPage() {
           </div>
         </div>
 
+        {/* Card Status Piloto Automático Diário */}
+        <div className="bg-emerald-950 text-white rounded-2xl p-5 border border-emerald-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Piloto Automático Diário Ativo (1 Artigo / Dia)
+              </span>
+              <span className="text-xs text-emerald-200/80 font-semibold">
+                Cron Diário 06:00 BRT + Gatilho Inteligente Google Suggest
+              </span>
+            </div>
+            <p className="text-xs text-emerald-100/90">
+              Todos os dias o SmartBid consulta os termos mais pesquisados no Google Brasil sobre Terceirização, Facilities, CCT e FPV, gera 1 guia técnico inédito e publica automaticamente no <code className="bg-white/10 px-1.5 py-0.5 rounded">sitemap.xml</code>.
+            </p>
+            {dailyAutopilot?.todayArticleTitle && (
+              <p className="text-xs text-amber-300 font-bold pt-1">
+                ✅ Artigo automático de hoje ({dailyAutopilot.todayDateKey}): &ldquo;{dailyAutopilot.todayArticleTitle}&rdquo;
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => loadSeoData(true)}
+            disabled={loadingTrends || generating}
+            className="shrink-0 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 cursor-pointer transition-all"
+          >
+            <RefreshCw size={14} className={loadingTrends ? 'animate-spin' : ''} />
+            {loadingTrends ? 'Consultando Google...' : 'Buscar Termos Mais Pesquisados no Google'}
+          </button>
+        </div>
+
         {/* Gerador por IA */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
           <div className="flex items-center justify-between">
@@ -195,7 +233,7 @@ export default function AdminSeoPage() {
               <BookOpen size={16} /> Artigos & Guias Publicados no Google ({articles.length})
             </h2>
             <button
-              onClick={loadSeoData}
+              onClick={() => loadSeoData(false)}
               className="p-1.5 text-slate-400 hover:text-[#1B4D3E] rounded-lg cursor-pointer"
               title="Atualizar lista"
             >

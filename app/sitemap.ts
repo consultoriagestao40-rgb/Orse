@@ -1,8 +1,11 @@
 import { MetadataRoute } from 'next';
-import { getAllSeoArticles } from '@/lib/seo-engine';
+import { getAllSeoArticles, ensureDailyAutopilotArticle } from '@/lib/seo-engine';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.smartbidhub.com.br';
+
+  // Garante que o artigo automático do dia (1/dia) já foi publicado antes de entregar o sitemap ao Googlebot
+  await ensureDailyAutopilotArticle().catch(() => {});
 
   const articles = await getAllSeoArticles();
   const articleEntries: MetadataRoute.Sitemap = articles.map((art) => ({

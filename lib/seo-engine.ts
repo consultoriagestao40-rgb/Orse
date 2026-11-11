@@ -509,7 +509,9 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
 ];
 
 export const AUTOPILOT_SEO_TOPICS = [
+  'Como montar proposta comercial de limpeza e conservação para condomínios e empresas (Modelo e Custos)',
   'Como calcular adicional de insalubridade 20% e 40% na limpeza de banheiros de uso coletivo (Súmula 448 TST)',
+  'Planilha de custos para portaria presencial 24 horas: cálculo de 4 postos 12x36, intrajornada e adicional noturno',
   'Planilha de custos para jardinagem e conservação de áreas verdes: equipamentos, combustível e mão de obra',
   'Como orçar serviços Spot de limpeza pós-obra e tratamento de pisos com margem acima de 25%',
   'Checklist de implantação de contrato de Facilities (PIC): do fechamento comercial ao início operacional',
@@ -519,7 +521,82 @@ export const AUTOPILOT_SEO_TOPICS = [
   'Cálculo de depreciação de máquinas de limpeza (lavadoras de piso, enceradeiras e aspiradores) na FPV',
   'Como reduzir o turnover e o absenteísmo em contratos de limpeza e portaria terceirizada',
   'Guia de EPIs obrigatórios para limpeza hospitalar, industrial e trabalho em altura (NR-6 e NR-35)',
+  'Como calcular repactuação e reajuste anual de contratos de terceirização pelo dissídio da CCT e IPCA',
+  'Planilha de orçamento para recepção corporativa e controle de acesso terceirizado: salários, uniformes e BDI',
+  'Tabela de produtividade de limpeza por m² (ABNT NBR 14082): áreas administrativas, banheiros, galpões e vidros',
+  'Simples Nacional Anexo III vs Anexo IV na terceirização de limpeza, vigilância e portaria: qual escolher?',
+  'Como calcular Vale-Transporte com desconto de 6% e Vale-Refeição nas escalas 5x2, 6x1 e 12x36',
+  'Proposta comercial para manutenção predial preventiva e corretiva (PMOC, elétrica e hidráulica): como precificar',
+  'Como apresentar uma proposta comercial de terceirização que vence concorrentes que jogam o preço lá embaixo',
+  'Como calcular o Grupo B e Grupo C de encargos sociais (férias, 13º salário, aviso prévio e multa de 40% FGTS)',
+  'Planilha de custos para zeladoria e bombeiro civil em condomínios comerciais e shoppings',
+  'Cálculo de adicional noturno, hora noturna reduzida (52m30s) e reflexo no DSR para portaria e vigilância',
+  'Como dimensionar enxoval de materiais químicos, papel higiênico e sabonete em contratos de limpeza empresarial',
+  'Auditoria de folha e encargos trabalhistas em contratos de terceirização: como evitar passivo solidário',
+  'Sistema de orçamento e propostas para empresas de segurança patrimonial, portaria e facilities',
 ];
+
+const GOOGLE_SUGGEST_SEEDS = [
+  'planilha de custos terceirizacao ',
+  'como calcular posto 12x36 ',
+  'proposta comercial limpeza e conservacao ',
+  'orcamento de portaria e limpeza ',
+  'software propostas terceirizacao ',
+  'calculo encargos sociais terceirizacao ',
+  'formacao de preco servicos terceirizados ',
+  'planilha orcamentaria facilities ',
+  'reajuste contrato prestacao de servicos ',
+  'custo funcionario limpeza terceirizada ',
+];
+
+/**
+ * Consulta em tempo real o Google Autocomplete Brasil (termos mais pesquisados pelos usuários no Google)
+ * para descobrir dúvidas e buscas reais do mercado de Terceirização e Facilities.
+ */
+export async function fetchTrendingGoogleSearchTerms(): Promise<string[]> {
+  const collected = new Set<string>();
+  const dayOfYear = Math.floor(Date.now() / 86400000);
+  // Seleciona 4 sementes rotativas por consulta para ser ultrarrápido
+  const seedsToQuery = [
+    GOOGLE_SUGGEST_SEEDS[dayOfYear % GOOGLE_SUGGEST_SEEDS.length],
+    GOOGLE_SUGGEST_SEEDS[(dayOfYear + 2) % GOOGLE_SUGGEST_SEEDS.length],
+    GOOGLE_SUGGEST_SEEDS[(dayOfYear + 5) % GOOGLE_SUGGEST_SEEDS.length],
+    GOOGLE_SUGGEST_SEEDS[(dayOfYear + 7) % GOOGLE_SUGGEST_SEEDS.length],
+  ];
+
+  await Promise.all(
+    seedsToQuery.map(async (seed) => {
+      try {
+        const url = `https://suggestqueries.google.com/complete/search?client=firefox&hl=pt-BR&gl=br&q=${encodeURIComponent(seed)}`;
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SmartBidSEO/1.0)' },
+          signal: AbortSignal.timeout(3500),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const suggestions: string[] = Array.isArray(data?.[1]) ? data[1] : [];
+          for (const s of suggestions) {
+            const clean = String(s || '').trim();
+            if (clean.length >= 18) {
+              // Formata com inicial maiúscula como tema editorial
+              const formatted = clean.charAt(0).toUpperCase() + clean.slice(1);
+              collected.add(formatted);
+            }
+          }
+        }
+      } catch {
+        // Silencia timeout individual do Google Suggest
+      }
+    })
+  );
+
+  // Combina os termos ao vivo do Google com o banco estratégico BOFU
+  for (const topic of AUTOPILOT_SEO_TOPICS) {
+    collected.add(topic);
+  }
+
+  return Array.from(collected);
+}
 
 function slugify(text: string): string {
   return text
@@ -593,8 +670,57 @@ export async function deleteCustomSeoArticle(slug: string): Promise<boolean> {
 }
 
 /**
+ * Verifica se já foi publicado o artigo automático de hoje (fuso America/Sao_Paulo).
+ * Caso ainda não tenha sido gerado hoje, busca os termos mais pesquisados no Google e publica 1 artigo inédito!
+ */
+export async function ensureDailyAutopilotArticle(): Promise<{
+  triggered: boolean;
+  article?: SeoArticle;
+  todayDateKey: string;
+}> {
+  const todayDateKey = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  try {
+    const all = await getAllSeoArticles();
+    const alreadyPublishedToday = all.find((art) => {
+      if (!art.isCustom) return false;
+      const artDateKey = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(art.publishedAt));
+      return artDateKey === todayDateKey;
+    });
+
+    if (alreadyPublishedToday) {
+      return {
+        triggered: false,
+        article: alreadyPublishedToday,
+        todayDateKey,
+      };
+    }
+
+    const newArticle = await generateAndPublishSeoArticle();
+    return {
+      triggered: true,
+      article: newArticle,
+      todayDateKey,
+    };
+  } catch (err) {
+    console.warn('Aviso no gatilho diário de SEO:', err);
+    return { triggered: false, todayDateKey };
+  }
+}
+
+/**
  * Gera um artigo completo de SEO estruturado (usando Gemini/OpenAI quando configurado ou o motor especialista nativo)
- * e salva automaticamente no banco de dados para publicação imediata em /conteudos/[slug] e /sitemap.xml
+ * com base nos termos mais pesquisados no Google e salva automaticamente no banco para /conteudos/[slug] e /sitemap.xml
  */
 export async function generateAndPublishSeoArticle(topicOrKeyword?: string): Promise<SeoArticle> {
   const existing = await getAllSeoArticles();
@@ -602,10 +728,18 @@ export async function generateAndPublishSeoArticle(topicOrKeyword?: string): Pro
 
   let chosenTopic = (topicOrKeyword || '').trim();
   if (!chosenTopic) {
-    const available = AUTOPILOT_SEO_TOPICS.filter(t => !existingSlugs.has(slugify(t)));
-    chosenTopic =
-      available[0] ||
-      `Guia estratégico de formação de preços e gestão de contratos de Facilities (${new Date().toLocaleDateString('pt-BR')})`;
+    // 1. Prioriza a fila curada de alta intenção comercial ainda não publicada
+    const availableCurated = AUTOPILOT_SEO_TOPICS.filter(t => !existingSlugs.has(slugify(t)));
+    if (availableCurated.length > 0) {
+      chosenTopic = availableCurated[0];
+    } else {
+      // 2. Consulta ao vivo o Google Autocomplete Brasil para capturar novos termos em alta
+      const trending = await fetchTrendingGoogleSearchTerms();
+      const availableLive = trending.filter(t => !existingSlugs.has(slugify(t)));
+      chosenTopic =
+        availableLive[0] ||
+        `Guia prático de formação de preços e orçamento de terceirização (${new Date().toLocaleDateString('pt-BR')})`;
+    }
   }
 
   let baseSlug = slugify(chosenTopic);
@@ -616,11 +750,8 @@ export async function generateAndPublishSeoArticle(topicOrKeyword?: string): Pro
   const nowIso = new Date().toISOString();
   let generated: SeoArticle | null = null;
 
-  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (geminiKey) {
-    try {
-      const prompt = `Você é um especialista sênior em Engenharia de Custos, Formação de Preço de Venda (FPV), Convenções Coletivas (CCT), Tributação e Gestão Comercial para empresas de Facilities e Terceirização de Serviços no Brasil (Limpeza, Portaria, Manutenção, Vigilância, Jardinagem).
-Crie um artigo técnico completo de SEO altamente persuasivo sobre o tema: "${chosenTopic}".
+  const prompt = `Você é um especialista sênior em Engenharia de Custos, Formação de Preço de Venda (FPV), Convenções Coletivas (CCT), Tributação e Gestão Comercial para empresas de Facilities e Terceirização de Serviços no Brasil (Limpeza, Portaria, Manutenção, Vigilância, Jardinagem).
+Crie um artigo técnico completo de SEO altamente persuasivo e otimizado para o Google e para a "Visão geral criada por IA" (AI Overviews) sobre o termo pesquisado: "${chosenTopic}".
 Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
 {
   "title": "Título H1 magnético e otimizado para SEO (60 a 85 caracteres)",
@@ -631,8 +762,8 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
   "excerpt": "Subtítulo executivo de 2 linhas resumindo o valor prático do guia",
   "sections": [
     {
-      "heading": "Subtítulo H2 da Seção 1",
-      "paragraphs": ["Parágrafo 1 detalhado...", "Parágrafo 2 detalhado..."],
+      "heading": "Subtítulo H2 da Seção 1 respondendo diretamente à intenção de busca",
+      "paragraphs": ["Parágrafo 1 técnico com números reais do setor...", "Parágrafo 2 detalhado..."],
       "bullets": ["Ponto técnico 1", "Ponto técnico 2", "Ponto técnico 3"],
       "highlightBox": {
         "title": "Dica Prática SmartBid Hub",
@@ -640,7 +771,7 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
       }
     },
     {
-      "heading": "Subtítulo H2 da Seção 2 com Tabela Prática",
+      "heading": "Subtítulo H2 da Seção 2 com Tabela de Memória de Cálculo",
       "paragraphs": ["Explicação técnica da tabela..."],
       "table": {
         "headers": ["Item / Rubrica", "Regra Técnica / Base", "Impacto na Margem"],
@@ -662,21 +793,73 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
   ]
 }`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.4 },
-          }),
-        }
-      );
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (geminiKey) {
+    for (const modelName of ['gemini-2.0-flash', 'gemini-1.5-flash']) {
+      if (generated) break;
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.4 },
+            }),
+            signal: AbortSignal.timeout(15000),
+          }
+        );
 
+        if (res.ok) {
+          const data = await res.json();
+          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.title && Array.isArray(parsed.sections)) {
+              generated = {
+                slug: baseSlug,
+                title: parsed.title,
+                metaDescription: parsed.metaDescription || parsed.excerpt || chosenTopic,
+                category: parsed.category || 'Engenharia de Custos & FPV',
+                readTimeMinutes: Number(parsed.readTimeMinutes) || 8,
+                publishedAt: nowIso,
+                updatedAt: nowIso,
+                keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [chosenTopic, 'SmartBid', 'Facilities', 'FPV'],
+                excerpt: parsed.excerpt || parsed.metaDescription || chosenTopic,
+                sections: parsed.sections,
+                faqs: Array.isArray(parsed.faqs) ? parsed.faqs : [],
+                isCustom: true,
+              };
+            }
+          }
+        }
+      } catch (aiErr) {
+        console.warn(`Aviso modelo ${modelName}:`, aiErr);
+      }
+    }
+  }
+
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!generated && openaiKey) {
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.4,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
       if (res.ok) {
         const data = await res.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const rawText = data?.choices?.[0]?.message?.content || '';
         const jsonMatch = rawText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -698,78 +881,117 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
           }
         }
       }
-    } catch (aiErr) {
-      console.warn('Fallback especialista ativado na geração de artigo SEO:', aiErr);
-    }
+    } catch {}
   }
 
-  // Fallback especialista nativo (garante 100% de disponibilidade mesmo sem chave externa de IA)
+  // Motor Especialista Nativo Contextual (garante 100% de geração diária mesmo sem chave externa)
   if (!generated) {
+    const lower = chosenTopic.toLowerCase();
+    const isPortaria12x36 = lower.includes('12x36') || lower.includes('portaria') || lower.includes('vigil') || lower.includes('noturno');
+    const isLimpezaInsalub = lower.includes('limpeza') || lower.includes('insalub') || lower.includes('m²') || lower.includes('jardinagem') || lower.includes('epi');
+    const isTributarioReajuste = lower.includes('simples') || lower.includes('inss') || lower.includes('reajuste') || lower.includes('repactua') || lower.includes('tribut');
+
+    const category = isTributarioReajuste
+      ? 'Tributação & Contratos B2B'
+      : isPortaria12x36
+      ? 'Escalas & Portaria/Segurança'
+      : isLimpezaInsalub
+      ? 'Limpeza, Operações & CCT'
+      : 'Engenharia de Custos & FPV';
+
+    const cleanTitle =
+      chosenTopic.length > 72
+        ? chosenTopic
+        : `${chosenTopic}: Guia Prático e Memória de Cálculo (2026)`;
+
     generated = {
       slug: baseSlug,
-      title: `${chosenTopic}: Guia Prático Completo para Empresas de Facilities e Serviços`,
-      metaDescription: `Aprenda passo a passo sobre ${chosenTopic.toLowerCase()} e descubra como automatizar sua Formação de Preço de Venda (FPV) e blindar sua margem no SmartBid Hub.`,
-      category: 'Engenharia de Custos & FPV',
-      readTimeMinutes: 7,
+      title: cleanTitle,
+      metaDescription: `Guia técnico completo sobre ${chosenTopic.toLowerCase()}. Veja a memória de cálculo exata na planilha de custos (FPV), regras de CCT, encargos e como automatizar no SmartBid Hub.`,
+      category,
+      readTimeMinutes: 8,
       publishedAt: nowIso,
       updatedAt: nowIso,
       keywords: [
         chosenTopic.toLowerCase(),
-        'formação de preço de venda facilities',
-        'planilha de custos terceirização',
+        'software montagem de propostas terceirização',
+        'planilha de custos e formação de preços facilities',
         'cálculo de CCT e encargos sociais',
+        'orçamento prestação de serviços',
         'SmartBid Hub',
       ],
-      excerpt: `Guia técnico atualizado para diretores comerciais, gestores e orçamentistas sobre ${chosenTopic.toLowerCase()}, com memória de cálculo, boas práticas de CCT e proteção de margem.`,
+      excerpt: `Análise técnica passo a passo sobre ${chosenTopic.toLowerCase()}, incluindo composição dos Montantes A, B e C, encargos trabalhistas, BDI e proteção de margem líquida em contratos de terceirização.`,
       sections: [
         {
-          heading: `Por que dominar "${chosenTopic}" é decisivo para a margem da sua prestadora?`,
+          heading: `1. Entendendo na prática: ${chosenTopic}`,
           paragraphs: [
-            `No mercado brasileiro de terceirização de serviços e Facilities (limpeza e conservação, portaria, manutenção predial, jardinagem e apoio operacional), pequenos erros de parametrização em "${chosenTopic}" podem comprometer todo o resultado líquido de um contrato de 12 ou 24 meses.`,
-            `Empresas que ainda dependem exclusivamente de planilhas soltas no Excel enfrentam dificuldade para atualizar pisos sindicais, alíquotas tributárias (Simples Nacional, Lucro Presumido, Lucro Real e Reforma Tributária IBS/CBS) e custos reais de reposição de insumos.`,
+            `Para empresas de terceirização de mão de obra e gestão de Facilities (limpeza e conservação, portaria, controle de acesso, manutenção predial, jardinagem e apoio operacional), dominar o cálculo e as regras de "${chosenTopic}" é o que separa contratos lucrativos de operações deficitárias.`,
+            `Quando o orçamento é montado em planilhas de Excel improvisadas, rubricas críticas como reflexo de adicionais sobre DSR, incidência cumulativa do Grupo A sobre o Grupo B (13º salário e férias), teto de 6% do Vale-Transporte e gross-up de impostos na Nota Fiscal costumam apresentar distorções que consomem de 4% a 8% da margem líquida.`,
           ],
           bullets: [
-            'Padronização da memória de cálculo (Montantes A, B e C) auditável pelo cliente B2B.',
-            'Eliminação de erros de fórmula em encargos sociais, provisões de férias, 13º salário e rescisão.',
-            'Rastreabilidade completa entre a revisão da FPV e a Proposta Comercial enviada ao cliente.',
+            'Memória de cálculo aberta e auditável (Montantes A, B, C, BDI e Tributos) pronta para exigências de compras B2B e licitações.',
+            'Vinculação direta às Convenções Coletivas de Trabalho (CCT) de cada sindicato e região.',
+            'Cálculo automático por regime tributário (Simples Nacional, Lucro Presumido, Lucro Real e transição IBS/CBS).',
           ],
           highlightBox: {
-            title: 'Automatize esse processo em segundos no SmartBid Hub',
-            text: 'No SmartBid Hub, você parametriza suas CCTs, empresas emissoras e catálogo de insumos uma única vez e monta propostas completas com cálculo automático de impostos e DRE projetada.',
+            title: 'Automatize este cálculo em segundos no SmartBid Hub',
+            text: 'No SmartBid Hub, você seleciona a empresa emissora, o cargo da CCT e a escala de trabalho, e o motor de FPV calcula automaticamente todos os encargos, benefícios, materiais e impostos sem risco de erro humano.',
           },
         },
         {
-          heading: 'Quadro Técnico de Referência para Orçamentistas de Facilities',
+          heading: '2. Quadro Técnico e Memória de Cálculo de Referência na FPV',
           paragraphs: [
-            'Confira abaixo os pilares que devem ser validados antes do envio de qualquer proposta comercial ou revisão contratual:',
+            `A tabela abaixo resume os parâmetros técnicos que todo diretor comercial ou orçamentista deve validar ao estruturar "${chosenTopic}" dentro da Formação de Preço de Venda (FPV):`,
           ],
           table: {
-            headers: ['Pilar de Controle', 'O que Conferir na FPV', 'Como o SmartBid Hub Resolve'],
+            headers: ['Bloco da FPV / Rubrica', 'Regra Técnica de Cálculo', 'Como o SmartBid Hub Automatiza'],
             rows: [
-              ['Salários e Adicionais (Montante A)', 'Piso vigente da CCT, insalubridade (20%/40%), periculosidade e adicional noturno', 'Vínculo direto com a CCT cadastrada e lupa de composição de custos do cargo'],
-              ['Benefícios Sindicais (Montante C)', 'VT com teto legal de 6%, VA/VR líquido, cesta básica, seguro de vida e cláusulas sociais', 'Cálculo automático conforme a escala (5x2, 6x1, 12x36, SDF ou Ferista)'],
-              ['Materiais e Máquinas (Montante B)', 'Consumo mensal de químicos, descartáveis, EPIs e depreciação de equipamentos', 'Catálogo inteligente com cotação de preços atualizados na Web em tempo real'],
-              ['Tributos e BDI (Gross-up)', 'Enquadramento tributário da empresa emissora (PIS/COFINS/ISS ou IBS/CBS)', 'Seleção da empresa emissora com cálculo automático por dentro (Gross-up)'],
+              [
+                'Montante A — Salário Base + Adicionais',
+                'Piso normativo da CCT vigente + Insalubridade (20%/40%), Periculosidade (30%) ou Adicional Noturno + DSR',
+                'Puxa automaticamente o piso e adicionais do cargo cadastrado na CCT com lupa de detalhamento',
+              ],
+              [
+                'Grupos A, B, C, D, E e F de Encargos',
+                'INSS Patronal (20%), FGTS (8%), RAT/FAP, Sistema S, 13º Salário, Férias + 1/3 e Provisão de Rescisão',
+                'Aplica as alíquotas exatas com incidência cumulativa auditada sobre a remuneração total',
+              ],
+              [
+                'Montante C — Benefícios Sindicais',
+                'Vale-Refeição/Alimentação por dias trabalhados na escala + Vale-Transporte líquido da dedução de 6%',
+                'Calcula os dias exatos conforme a escala (5x2, 6x1, 12x36 Diurno/Noturno, SDF ou Ferista)',
+              ],
+              [
+                'Montante B — Uniformes, EPIs e Materiais',
+                'Custo unitário dividido pela vida útil em meses + rateio mensal de químicos, descartáveis e máquinas',
+                'Catálogo próprio integrado com buscador de preços de mercado na Web em tempo real',
+              ],
+              [
+                'BDI e Impostos por Dentro (Gross-up)',
+                'Preço Final = Custo Direto ÷ (1 − [% Tributos + % Taxa Adm + % Lucro + % Comissão])',
+                'Calcula o divisor exato conforme a empresa emissora e gera a DRE projetada do contrato',
+              ],
             ],
           },
         },
         {
-          heading: 'Da Planilha ao Fechamento: Proposta por Link com Rastreamento de Leitura',
+          heading: '3. Como transformar sua FPV em uma Proposta Comercial de Alta Conversão',
           paragraphs: [
-            'Além de acertar o preço na vírgula, a velocidade e a apresentação comercial definem quem ganha o contrato. Enviar um link interativo onde o cliente visualiza a apresentação executiva, o escopo detalhado e assina digitalmente — enquanto você recebe alertas em tempo real de cada abertura — aumenta drasticamente a taxa de conversão comercial.',
+            'Não basta ter o cálculo técnico perfeito se a proposta demora dias para ficar pronta ou chega ao cliente como um PDF estático sem diferencial competitivo.',
+            'Com o SmartBid Hub, assim que você finaliza a planilha de custos (FPV), o sistema gera automaticamente a Proposta Comercial executiva (por link interativo rastreável e PDF premium), avisa no seu painel quando o cliente abre a proposta e permite assinatura digital com validade jurídica.',
           ],
         },
       ],
       faqs: [
         {
-          question: `Como aplicar as melhores práticas de "${chosenTopic}" sem depender de planilhas manuais?`,
+          question: `Como evitar erros de planilha ao calcular "${chosenTopic}"?`,
           answer:
-            'Utilizando o SmartBid Hub: você cria sua conta gratuita para testar por 30 dias completos, cadastra sua empresa emissora e suas CCTs, e o sistema realiza todos os cálculos de FPV, DRE e geração de propostas automaticamente.',
+            'Substituindo planilhas manuais de Excel pelo motor de Formação de Preço de Venda (FPV) do SmartBid Hub, onde as fórmulas de encargos sociais, CCT, escalas, insumos e impostos por dentro já estão homologadas.',
         },
         {
-          question: 'Posso testar o SmartBid Hub gratuitamente na minha empresa?',
+          question: 'Posso testar o SmartBid Hub gratuitamente para montar minhas propostas?',
           answer:
-            'Sim! O SmartBid Hub oferece 30 dias de teste grátis com acesso completo a todos os módulos (CRM, Prospecção, CCTs, FPV, Propostas Interativas e Contratos), sem exigir cartão de crédito.',
+            'Sim! Acesse smartbidhub.com.br/cadastro e libere imediatamente 30 dias de teste grátis com acesso completo a todos os módulos (CRM, Prospecção, CCTs, FPV, Propostas e Contratos), sem cartão de crédito.',
         },
       ],
       isCustom: true,
