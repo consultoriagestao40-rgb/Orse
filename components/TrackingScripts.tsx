@@ -24,7 +24,7 @@ export const trackEvent = (eventName: string, params?: Record<string, any>) => {
 export default function TrackingScripts() {
   const pathname = usePathname();
   const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  const googleAdsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+  const googleAdsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || 'AW-18569676536';
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-58WGWGVG';
 
