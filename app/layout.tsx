@@ -39,6 +39,8 @@ export const metadata: Metadata = {
     "Terceirização de Serviços",
     "Limpeza e Conservação",
     "Portaria e Vigilância",
+    "Reforma Tributária Facilities IBS CBS",
+    "Cálculo IBS e CBS Terceirização",
   ],
   authors: [{ name: "Silva Consultoria Empresarial LTDA" }],
   creator: "SmartBid Hub",

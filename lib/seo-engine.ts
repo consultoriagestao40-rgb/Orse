@@ -172,57 +172,74 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
   },
   {
     slug: 'reforma-tributaria-ibs-cbs-impacto-empresas-limpeza-portaria-facilities',
-    title: 'Reforma Tributária (IBS e CBS) nas Empresas de Facilities e Terceirização: Guia Prático de Transição',
+    title: 'Reforma Tributária (IBS e CBS) em Facilities e Terceirização: Impacto na Planilha de Custos e Preços (2026)',
     metaDescription:
-      'Entenda como a substituição de PIS, COFINS e ISS pelo novo IVA Dual (IBS e CBS) afeta a formação de preços e os contratos de limpeza, portaria e prestação de serviços.',
+      'Guia completo sobre a Reforma Tributária (IBS e CBS) para empresas de Facilities, limpeza, portaria e terceirização: simulação de alíquotas, Split Payment, créditos B2B e FPV.',
     category: 'Tributação & Reforma Tributária',
-    readTimeMinutes: 7,
+    readTimeMinutes: 9,
     publishedAt: '2026-11-03T10:00:00.000Z',
-    updatedAt: '2026-11-11T12:00:00.000Z',
+    updatedAt: '2026-11-11T19:20:00.000Z',
     keywords: [
-      'reforma tributária empresas de serviços',
+      'reforma tributária facilities',
       'IBS e CBS terceirização de mão de obra',
-      'impacto reforma tributária facilities limpeza',
-      'substituição PIS COFINS ISS por IBS CBS',
-      'simples híbrido reforma tributária',
+      'impacto reforma tributária limpeza e portaria',
+      'como calcular IBS e CBS na planilha de custos',
+      'substituição PIS COFINS ISS por IBS CBS serviços',
+      'simples híbrido reforma tributária facilities',
+      'split payment terceirização de serviços',
     ],
     excerpt:
-      'Veja como preparar suas propostas comerciais e cláusulas de reequilíbrio econômico-financeiro para a transição do PIS/COFINS/ISS para a CBS e o IBS.',
+      'Entenda por que o setor de Facilities e Terceirização de Mão de Obra é o mais impactado pelo IVA Dual (IBS e CBS) e veja como simular os 3 cenários tributários na sua FPV.',
     sections: [
       {
-        heading: 'O que muda com a substituição de PIS, COFINS e ISS pelo IBS e CBS?',
+        heading: '1. Por que as Empresas de Facilities e Terceirização são as mais afetadas pelo IBS e CBS?',
         paragraphs: [
-          'Com a Emenda Constitucional 132/2023 e a regulamentação do IVA Dual no Brasil, os atuais tributos sobre o faturamento das prestadoras de serviços — PIS (0,65% ou 1,65%), COFINS (3,00% ou 7,60%) e ISS municipal (2% a 5%) — passam por um cronograma de transição para dois novos tributos não cumulativos:',
+          'Com a Emenda Constitucional 132/2023 e a Lei Complementar do IVA Dual (EC 132 e PLP 68/2024), os tributos cumulativos e mistos sobre o faturamento das prestadoras de serviços — PIS (0,65% ou 1,65%), COFINS (3,00% ou 7,60%) e ISS municipal (2% a 5%) — dão lugar à CBS (Contribuição sobre Bens e Serviços, federal) e ao IBS (Imposto sobre Bens e Serviços, estadual e municipal).',
+          'O grande desafio para empresas de limpeza e conservação, portaria, vigilância, recepção e manutenção predial está na estrutura de custos: entre 70% e 82% do custo direto de um contrato de Facilities é composto por Folha de Pagamento e Encargos Sociais (Montante A), que não geram crédito de IBS/CBS na mesma proporção de insumos industriais.',
         ],
         bullets: [
-          'CBS (Contribuição sobre Bens e Serviços — Federal): Substitui o PIS e a COFINS.',
-          'IBS (Imposto sobre Bens e Serviços — Estadual/Municipal): Substitui gradualmente o ISS e o ICMS.',
+          'CBS (Contribuição sobre Bens e Serviços — Federal): Substitui o PIS e a COFINS sob lógica de não cumulatividade plena.',
+          'IBS (Imposto sobre Bens e Serviços — Estadual/Municipal): Substitui gradualmente o ISS e o ICMS, unificando a tributação no destino (local da prestação do serviço).',
+          'Split Payment (Recolhimento na Liquidação Financeira): O tributo passa a ser separado automaticamente no momento do pagamento da Nota Fiscal pelo cliente contratante, exigindo cálculo exato do capital de giro.',
+          'Transferência Integral de Crédito B2B: Clientes contratantes no regime regular do IBS/CBS passarão a descontar integralmente o IVA destacado na nota fiscal da terceirizada, mudando a comparação de preços entre fornecedores do Simples, Lucro Presumido e Lucro Real.',
         ],
+        highlightBox: {
+          title: 'O Primeiro Software de FPV do Brasil já Pronto para IBS e CBS',
+          text: 'Enquanto planilhas tradicionais de Excel continuam presas apenas a PIS/COFINS/ISS, o SmartBid Hub já possui seletor nativo de Reforma Tributária na Empresa Emissora e na Aba 2 da FPV, permitindo alternar em 1 clique entre Sistema Atual, Transição Fase 1 (CBS + ISS) e IVA Dual Pleno (IBS + CBS).',
+        },
       },
       {
-        heading: 'Os 3 Cenários Tributários que sua FPV precisa simular hoje',
+        heading: '2. Os 3 Cenários Tributários que toda Proposta de Facilities precisa Simular (2026 a 2033)',
         paragraphs: [
-          'Como os contratos de prestação de serviços continuados (limpeza, portaria, manutenção e facilities) têm vigência de 12 a 60 meses, orçar sem prever a transição tributária é um risco grave para o fluxo de caixa:',
+          'Como os contratos de prestação de serviços continuados têm duração de 12 a 60 meses, enviar uma proposta comercial sem simular a transição tributária e sem incluir cláusula de reequilíbrio econômico-financeiro expõe a prestadora a prejuízos severos:',
         ],
         table: {
-          headers: ['Modo Tributário', 'Tributos na FPV', 'Quando Utilizar'],
+          headers: ['Cenário na FPV (SmartBid Hub)', 'Tributos Calculados no Gross-up', 'Impacto Prático nos Contratos de Facilities'],
           rows: [
-            ['Sistema Atual', 'PIS + COFINS + ISS (ou DAS Simples)', 'Contratos vigentes no modelo atual antes da extinção do PIS/COFINS'],
-            ['Transição Fase 1 (CBS + ISS)', 'CBS Federal + ISS Municipal', 'Etapa em que PIS e COFINS são extintos e substituídos pela CBS, mantendo o ISS'],
-            ['IVA Dual Pleno (IBS + CBS)', 'CBS Federal + IBS Estadual/Municipal', 'Simulação de longo prazo e transferência integral de crédito de IVA para clientes B2B'],
+            ['1. Regime Atual (PIS + COFINS + ISS)', 'PIS (0,65%/1,65%) + COFINS (3%/7,6%) + ISS (2% a 5%) ou DAS Simples', 'Base atual de faturamento; no Lucro Presumido a carga indireta gira entre 5,65% e 8,65% sobre a NF'],
+            ['2. Transição Fase 1 (CBS + ISS)', 'CBS Federal (extinção do PIS/COFINS) + ISS Municipal mantido', 'Exige revisão imediata do divisor de Gross-up e aproveitamento de créditos sobre EPIs, uniformes, químicos e frotas'],
+            ['3. IVA Dual Pleno (IBS + CBS)', 'CBS Federal + IBS Estadual/Municipal (extinção gradual do ISS)', 'Alíquota nominal maior sobre a NF, porém com crédito integral para o cliente contratante B2B'],
           ],
         },
-        highlightBox: {
-          title: 'E o Simples Híbrido na Reforma Tributária?',
-          text: 'Empresas do Simples Nacional poderão optar por recolher IBS e CBS "por fora" do DAS (Simples Híbrido) quando venderem para grandes empresas do Lucro Real que exigem crédito integral de IBS/CBS na contratação.',
-        },
+      },
+      {
+        heading: '3. Simples Híbrido e Créditos de Insumos (Montante B): Como Proteger sua Competitividade',
+        paragraphs: [
+          'Na nova arquitetura tributária, dois fatores passam a ser decisivos na engenharia de custos de Facilities: primeiro, o controle rigoroso dos créditos sobre materiais químicos, descartáveis, EPIs, uniformes, locação de máquinas e combustível (Montante B); segundo, a escolha estratégica entre recolher pelo DAS tradicional ou pelo Simples Híbrido (recolhendo IBS e CBS por fora para transferir crédito total ao cliente corporativo).',
+          'No SmartBid Hub, você cadastra múltiplas empresas emissoras do seu grupo (Simples Normal, Simples Híbrido, Lucro Presumido e Lucro Real) e compara instantaneamente o preço final e a margem líquida de cada cenário.',
+        ],
       },
     ],
     faqs: [
       {
-        question: 'Como o SmartBid Hub calcula PIS/COFINS vs IBS/CBS?',
+        question: 'Como calcular o impacto do IBS e da CBS na planilha de custos de limpeza e portaria?',
         answer:
-          'No cadastro de cada Empresa Emissora e diretamente na Aba 2 da FPV do SmartBid Hub, você pode alternar com 1 clique entre o Regime Atual (PIS/COFINS/ISS), a Transição Fase 1 (CBS + ISS) e o IVA Dual Pleno (IBS + CBS).',
+          'O cálculo deve aplicar a fórmula de Gross-up (impostos por dentro) substituindo as alíquotas de PIS, COFINS e ISS pelas alíquotas de CBS e IBS da fase correspondente, deduzindo os créditos gerados pelos insumos do Montante B (materiais, EPIs e equipamentos). O SmartBid Hub realiza essa simulação automaticamente na Aba 2 da FPV.',
+      },
+      {
+        question: 'Quais cláusulas incluir nas propostas comerciais e contratos de Facilities por causa da Reforma Tributária?',
+        answer:
+          'Toda proposta comercial e minuta de contrato de prestação de serviços deve conter uma Cláusula de Reequilíbrio Econômico-Financeiro Automático por Alteração de Carga Tributária (Fato do Príncipe), garantindo o repasse imediato das variações de alíquotas da CBS e do IBS ao longo do cronograma de transição.',
       },
     ],
   },
@@ -609,6 +626,10 @@ export const AUTOPILOT_SEO_TOPICS = [
   'Como dimensionar enxoval de materiais químicos, papel higiênico e sabonete em contratos de limpeza empresarial',
   'Auditoria de folha e encargos trabalhistas em contratos de terceirização: como evitar passivo solidário',
   'Sistema de orçamento e propostas para empresas de segurança patrimonial, portaria e facilities',
+  'Reforma Tributária (IBS e CBS) em contratos de limpeza e portaria: como calcular o novo Gross-up na FPV',
+  'Impacto do Split Payment (IBS e CBS) no capital de giro das empresas de terceirização e facilities',
+  'Lucro Presumido vs Lucro Real na terceirização de mão de obra após a Reforma Tributária (IBS e CBS)',
+  'Modelo de cláusula de reequilíbrio econômico-financeiro para repasse de IBS e CBS em contratos de facilities',
 ];
 
 const GOOGLE_SUGGEST_SEEDS = [
@@ -622,6 +643,8 @@ const GOOGLE_SUGGEST_SEEDS = [
   'planilha orcamentaria facilities ',
   'reajuste contrato prestacao de servicos ',
   'custo funcionario limpeza terceirizada ',
+  'reforma tributaria empresas de servicos ibs cbs ',
+  'impacto reforma tributaria terceirizacao ',
 ];
 
 /**
