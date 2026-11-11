@@ -12,7 +12,7 @@ import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
 import { createCliente, getClientes } from '@/app/clientes/actions';
-import { createProduto } from '@/app/produtos/actions';
+import { createProduto, updateProduto } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser, getProposalPageInitData, logPropostaAction, getHistoricoProposta } from '@/app/propostas/actions';
 import { getTiposServico, getSegmentos, createTipoServico, createSegmento } from '@/app/admin/settings/actions';
 import { getEquipesTecnicas } from '@/app/admin/equipes-tecnicas/actions';
@@ -23,7 +23,7 @@ import DocumentoA4 from '@/components/DocumentoA4';
 import TemplateEditorModal from '@/components/TemplateEditorModal';
 import SearchableSelect, { SearchableSelectOption } from '@/components/SearchableSelect';
 import FpvPdfDocument from '@/components/FpvPdfDocument';
-import { FileDown, Printer, Upload, Search, Check } from 'lucide-react';
+import { FileDown, Printer, Upload, Search, Check, Globe, ExternalLink } from 'lucide-react';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
 const TABS = [
@@ -263,6 +263,13 @@ function PropostaEditor() {
   const [newProductForm, setNewProductForm] = useState({ descricao: '', precoUnitario: 0, unidade: 'UN', categoria: 'Geral' });
   const [savingProduct, setSavingProduct] = useState(false);
   const [activeProdutoTipo, setActiveProdutoTipo] = useState<'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis' | ''>(''); // To know which section opened the product modal
+
+  // Estados de Cotação Web de Materiais / Produtos na Proposta
+  const [webQuoteModalItem, setWebQuoteModalItem] = useState<{ tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis'; item: any } | null>(null);
+  const [webQuoteLoading, setWebQuoteLoading] = useState(false);
+  const [webQuoteResult, setWebQuoteResult] = useState<any | null>(null);
+  const [webQuoteError, setWebQuoteError] = useState<string | null>(null);
+  const [applyingWebQuote, setApplyingWebQuote] = useState(false);
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [presentationMode, setPresentationMode] = useState(false);
@@ -1190,6 +1197,72 @@ function PropostaEditor() {
     }
   };
 
+  const fetchWebQuoteForProduct = async (descricao: string, unidade?: string) => {
+    if (!descricao || descricao.trim().length < 2) {
+      setWebQuoteError('Informe a descrição do produto para pesquisar preços na web.');
+      return;
+    }
+    try {
+      setWebQuoteLoading(true);
+      setWebQuoteError(null);
+      setWebQuoteResult(null);
+      const res = await fetch('/api/produtos/price-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descricao: descricao.trim(), unidade: unidade || 'UN' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setWebQuoteError(json.error || 'Não foi possível localizar preços na web para este item.');
+        return;
+      }
+      setWebQuoteResult(json);
+    } catch (err: any) {
+      setWebQuoteError(err?.message || 'Erro ao pesquisar preços na web.');
+    } finally {
+      setWebQuoteLoading(false);
+    }
+  };
+
+  const openInsumoWebQuote = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', item: any) => {
+    setWebQuoteModalItem({ tipo, item });
+    setWebQuoteResult(null);
+    setWebQuoteError(null);
+    fetchWebQuoteForProduct(item.descricao, item.unidade);
+  };
+
+  const applyInsumoWebPrice = async (novoPreco: number, alsoUpdateCatalog: boolean = true) => {
+    if (!webQuoteModalItem) return;
+    const { tipo, item } = webQuoteModalItem;
+    try {
+      setApplyingWebQuote(true);
+      // 1. Atualiza imediatamente na proposta atual e recalcula o custo mensal do item e do bloco
+      updateInsumoItem(tipo, item.id, 'precoUnitario', Number(novoPreco));
+
+      // 2. Se o item existe no catálogo de Produtos, atualiza o preço base no catálogo para futuras propostas
+      // (propostas antigas já salvas permanecem inalteradas com seu snapshot, a menos que o usuário clique em "Atualizar Cálculo")
+      if (alsoUpdateCatalog) {
+        const prodDb = produtosDb.find(p => p.id === item.id || p.codigo === item.codigo);
+        if (prodDb) {
+          await updateProduto(prodDb.id, {
+            descricao: prodDb.descricao,
+            unidade: prodDb.unidade || 'UN',
+            categoria: prodDb.categoria || 'Geral',
+            precoUnitario: Number(novoPreco),
+          });
+          setProdutosDb(prev => prev.map(p => p.id === prodDb.id ? { ...p, precoUnitario: Number(novoPreco) } : p));
+        }
+      }
+
+      setWebQuoteModalItem(null);
+      setWebQuoteResult(null);
+    } catch (err) {
+      console.error('Erro ao aplicar preço cotado:', err);
+    } finally {
+      setApplyingWebQuote(false);
+    }
+  };
+
   const handleSaveNewProduct = async () => {
     if (!newProductForm.descricao.trim()) return showAlert('Descrição é obrigatória', 'warning', 'Atenção');
     setSavingProduct(true);
@@ -1202,6 +1275,8 @@ function PropostaEditor() {
            addInsumoItem(activeProdutoTipo, res.produto);
         }
         setShowNewProductModal(false);
+        setWebQuoteResult(null);
+        setWebQuoteError(null);
         setNewProductForm({ descricao: '', precoUnitario: 0, unidade: 'UN', categoria: 'Geral' });
       } else {
         showAlert(res.error, 'error', 'Erro');
@@ -2882,7 +2957,7 @@ function PropostaEditor() {
               <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <th className="px-4 py-2 w-20">Cód.</th>
                 <th className="px-4 py-2">Descrição</th>
-                <th className="px-4 py-2 text-right">Preço Unit.</th>
+                <th className="px-4 py-2 text-right">Preço Unit. / Cotação Web</th>
                 <th className="px-4 py-2 text-center w-20">Qtd.</th>
                 <th className="px-4 py-2 text-center w-24">Vida Útil (Meses)</th>
                 <th className="px-4 py-2 text-right">Custo Mensal</th>
@@ -2895,16 +2970,23 @@ function PropostaEditor() {
                   <td className="px-4 py-2 font-mono text-xs text-slate-500">{item.codigo}</td>
                   <td className="px-4 py-2 font-medium text-slate-800">{item.descricao}</td>
                   <td className="px-4 py-2 text-right">
-                    {tipo === 'detalheMaquinas' && isLocado(item.descricao) ? (
+                    <div className="flex items-center justify-end gap-2">
                       <input 
                         type="number" 
+                        step="0.01"
                         className="w-28 bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-right font-bold outline-none focus:border-[#1B4D3E]"
                         value={item.precoUnitario}
                         onChange={(e) => updateInsumoItem(tipo, item.id, 'precoUnitario', (e.target.value === '' ? '' : Number(e.target.value)))}
                       />
-                    ) : (
-                      <span className="text-slate-600">{formatCurrency(item.precoUnitario)}</span>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => openInsumoWebQuote(tipo, item)}
+                        className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded text-[10px] font-black uppercase flex items-center gap-1 transition-all shrink-0"
+                        title="Pesquisar Preço Mínimo, Médio e Ofertas na Web"
+                      >
+                        <Globe size={11} /> Cotar Web
+                      </button>
+                    </div>
                   </td>
                   <td className="px-4 py-2">
                     <input 
@@ -8126,19 +8208,181 @@ function PropostaEditor() {
             </div>
          )}
 
+         {/* MODAL DE COTAÇÃO DE PREÇO NA WEB PARA ITEM DA PROPOSTA */}
+         {webQuoteModalItem && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+               <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden animate-modal-in border border-slate-200">
+                  <div className="bg-[#1B4D3E] text-white px-5 py-4 flex justify-between items-center">
+                     <div>
+                        <h3 className="font-bold text-xs uppercase tracking-widest flex items-center gap-2">
+                           <Globe size={15} className="text-emerald-300" /> Pesquisa de Preços na Web em Tempo Real
+                        </h3>
+                        <p className="text-[11px] text-emerald-200 font-bold mt-0.5 uppercase">{webQuoteModalItem.item.descricao}</p>
+                     </div>
+                     <button onClick={() => setWebQuoteModalItem(null)} className="text-white/80 hover:text-white"><X size={18} /></button>
+                  </div>
+
+                  <div className="p-6 space-y-4 max-h-[78vh] overflow-y-auto">
+                     {webQuoteLoading ? (
+                        <div className="py-10 text-center space-y-2">
+                           <RefreshCw size={24} className="animate-spin text-[#1B4D3E] mx-auto" />
+                           <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Consultando preços no Google Shopping e fornecedores...</p>
+                        </div>
+                     ) : webQuoteError ? (
+                        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg text-xs font-bold text-rose-700">
+                           {webQuoteError}
+                        </div>
+                     ) : webQuoteResult ? (
+                        <>
+                           <div className="grid grid-cols-3 gap-3">
+                              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                                 <span className="text-[10px] font-black text-slate-400 uppercase block">Preço Atual</span>
+                                 <span className="text-base font-black text-slate-800 block mt-1">{formatCurrency(Number(webQuoteModalItem.item.precoUnitario) || 0)}</span>
+                                 <span className="text-[9px] text-slate-400 block mt-1">Na proposta atual</span>
+                              </div>
+
+                              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center flex flex-col justify-between">
+                                 <div>
+                                    <span className="text-[10px] font-black text-emerald-700 uppercase block">Preço Mínimo (Web)</span>
+                                    <span className="text-base font-black text-emerald-900 block mt-1">{formatCurrency(webQuoteResult.precoMinimo)}</span>
+                                 </div>
+                                 <button
+                                    type="button"
+                                    disabled={applyingWebQuote}
+                                    onClick={() => applyInsumoWebPrice(webQuoteResult.precoMinimo, true)}
+                                    className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase py-1.5 rounded-lg transition-colors"
+                                 >
+                                    Usar Mínimo
+                                 </button>
+                              </div>
+
+                              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center flex flex-col justify-between">
+                                 <div>
+                                    <span className="text-[10px] font-black text-blue-700 uppercase block">Preço Médio (Web)</span>
+                                    <span className="text-base font-black text-blue-900 block mt-1">{formatCurrency(webQuoteResult.precoMedio)}</span>
+                                 </div>
+                                 <button
+                                    type="button"
+                                    disabled={applyingWebQuote}
+                                    onClick={() => applyInsumoWebPrice(webQuoteResult.precoMedio, true)}
+                                    className="mt-2 w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase py-1.5 rounded-lg transition-colors"
+                                 >
+                                    Usar Preço Médio
+                                 </button>
+                              </div>
+                           </div>
+
+                           <p className="text-[10px] text-slate-500 italic bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                              💡 Ao aplicar um novo valor, ele atualiza este item na proposta atual e no catálogo de produtos. Propostas anteriores já salvas permanecem com o valor original congelado (só atualizam se clicar em <strong>"Atualizar Cálculo"</strong>).
+                           </p>
+
+                           <div>
+                              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                                 Ofertas Encontradas ({webQuoteResult.ofertas?.length || 0})
+                              </h4>
+                              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+                                 {(webQuoteResult.ofertas || []).map((of: any, idx: number) => (
+                                    <div key={idx} className="p-3 bg-white hover:bg-slate-50 flex items-center justify-between gap-3 text-xs">
+                                       <div className="min-w-0 flex-1">
+                                          <p className="font-bold text-slate-800 truncate">{of.titulo}</p>
+                                          <div className="flex items-center gap-2 mt-0.5">
+                                             <span className="text-[10px] font-bold text-slate-500 uppercase">{of.loja}</span>
+                                             {of.link && (
+                                                <a
+                                                   href={of.link}
+                                                   target="_blank"
+                                                   rel="noopener noreferrer"
+                                                   className="text-[10px] text-emerald-700 hover:underline inline-flex items-center gap-0.5 font-bold"
+                                                >
+                                                   Ver loja <ExternalLink size={10} />
+                                                </a>
+                                             )}
+                                          </div>
+                                       </div>
+                                       <div className="flex items-center gap-2 shrink-0">
+                                          <span className="font-black text-slate-900">{formatCurrency(of.preco)}</span>
+                                          <button
+                                             type="button"
+                                             disabled={applyingWebQuote}
+                                             onClick={() => applyInsumoWebPrice(of.preco, true)}
+                                             className="px-2.5 py-1 bg-slate-100 hover:bg-[#1B4D3E] hover:text-white text-slate-700 rounded text-[10px] font-bold uppercase transition-colors"
+                                          >
+                                             Aplicar
+                                          </button>
+                                       </div>
+                                    </div>
+                                 ))}
+                              </div>
+                           </div>
+                        </>
+                     ) : null}
+                  </div>
+               </div>
+            </div>
+         )}
+
          {/* MODAL NOVO PRODUTO */}
          {showNewProductModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
                <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full flex flex-col overflow-hidden animate-modal-in">
                   <div className="bg-[#1B4D3E] text-white p-4 flex justify-between items-center">
                      <h3 className="font-bold text-sm uppercase tracking-wider">Cadastrar Novo Produto</h3>
-                     <button onClick={() => setShowNewProductModal(false)} className="text-white/80 hover:text-white"><X size={18} /></button>
+                     <button onClick={() => { setShowNewProductModal(false); setWebQuoteResult(null); setWebQuoteError(null); }} className="text-white/80 hover:text-white"><X size={18} /></button>
                   </div>
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 space-y-4 max-h-[78vh] overflow-y-auto">
                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Descrição *</label>
+                        <div className="flex justify-between items-center">
+                           <label className="text-[10px] font-bold text-slate-500 uppercase">Descrição *</label>
+                           <button
+                              type="button"
+                              onClick={() => fetchWebQuoteForProduct(newProductForm.descricao, newProductForm.unidade)}
+                              disabled={webQuoteLoading}
+                              className="text-[10px] font-black text-[#1B4D3E] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                           >
+                              <Globe size={11} />
+                              {webQuoteLoading ? 'Pesquisando...' : 'Pesquisar Preço na Web'}
+                           </button>
+                        </div>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newProductForm.descricao} onChange={e => setNewProductForm({...newProductForm, descricao: e.target.value})} />
                      </div>
+
+                     {webQuoteError && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-bold text-rose-700">
+                           {webQuoteError}
+                        </div>
+                     )}
+
+                     {webQuoteResult && (
+                        <div className="bg-slate-50 border border-emerald-200 rounded-xl p-3.5 space-y-2.5">
+                           <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black text-[#1B4D3E] uppercase">Preços Encontrados na Web</span>
+                              <button type="button" onClick={() => setWebQuoteResult(null)} className="text-[10px] font-bold text-slate-400 hover:text-slate-600">Fechar</button>
+                           </div>
+                           <div className="grid grid-cols-3 gap-2">
+                              <div className="bg-white border border-slate-200 rounded-lg p-2 text-center">
+                                 <span className="text-[9px] font-bold text-slate-400 uppercase block">Atual</span>
+                                 <span className="text-xs font-black text-slate-700">{formatCurrency(Number(newProductForm.precoUnitario) || 0)}</span>
+                              </div>
+                              <button
+                                 type="button"
+                                 onClick={() => setNewProductForm({ ...newProductForm, precoUnitario: webQuoteResult.precoMinimo })}
+                                 className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg p-2 text-center"
+                              >
+                                 <span className="text-[9px] font-black text-emerald-700 uppercase block">Usar Mínimo</span>
+                                 <span className="text-xs font-black text-emerald-900">{formatCurrency(webQuoteResult.precoMinimo)}</span>
+                              </button>
+                              <button
+                                 type="button"
+                                 onClick={() => setNewProductForm({ ...newProductForm, precoUnitario: webQuoteResult.precoMedio })}
+                                 className="bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg p-2 text-center"
+                              >
+                                 <span className="text-[9px] font-black text-blue-700 uppercase block">Usar Médio</span>
+                                 <span className="text-xs font-black text-blue-900">{formatCurrency(webQuoteResult.precoMedio)}</span>
+                              </button>
+                           </div>
+                        </div>
+                     )}
+
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                            <label className="text-[10px] font-bold text-slate-500 uppercase">Preço Unitário (R$)</label>
