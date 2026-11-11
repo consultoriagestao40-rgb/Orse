@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getAllSeoArticles } from '@/lib/seo-engine';
+import { getAllSeoArticles, ensureDailyAutopilotArticle } from '@/lib/seo-engine';
 import { ArrowRight, BookOpen, Clock, TrendingUp, CheckCircle2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ConteudosIndexPage() {
+  await ensureDailyAutopilotArticle().catch(() => {});
   const articles = await getAllSeoArticles();
 
   return (
