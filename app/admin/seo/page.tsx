@@ -92,14 +92,14 @@ export default function AdminSeoPage() {
     setTimeout(() => setCopiedSlug(null), 2000);
   };
 
-  const copyLinkedInPost = (art: any) => {
+  const buildLinkedInText = (art: any) => {
     const bullets =
       art.sections?.[0]?.bullets?.slice(0, 3) || [
         'Memória de cálculo auditável de Montantes A, B e C por CCT;',
         'Simulação automática de tributos por dentro (Gross-up) incluindo Reforma Tributária (IBS e CBS);',
         'Geração imediata de Proposta Comercial interativa com rastreamento de abertura.',
       ];
-    const postText = `📊 ${art.title}
+    return `📊 ${art.title}
 
 Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante os 12 meses do contrato.
 
@@ -115,11 +115,19 @@ Acabamos de publicar um guia técnico completo com a memória de cálculo detalh
 Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/lp
 
 #Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
+  };
 
+  const shareDirectOnLinkedIn = (art: any) => {
+    const postText = buildLinkedInText(art);
     navigator.clipboard.writeText(postText);
     setCopiedLinkedinSlug(art.slug);
-    setFeedback(`💼 Post executivo para LinkedIn copiado! Basta colar no seu feed ou agendar no relógio do LinkedIn.`);
+    setFeedback(`💼 Texto copiado e janela de publicação do LinkedIn aberta já preenchida!`);
     setTimeout(() => setCopiedLinkedinSlug(null), 2500);
+    window.open(
+      `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(postText)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
   };
 
   return (
@@ -298,16 +306,16 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
-                      onClick={() => copyLinkedInPost(art)}
-                      className="px-3 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                      onClick={() => shareDirectOnLinkedIn(art)}
+                      className="px-3.5 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                     >
                       {copiedLinkedinSlug === art.slug ? (
                         <>
-                          <Check size={14} className="text-white" /> Post LinkedIn Copiado!
+                          <Check size={14} className="text-white" /> Abrindo LinkedIn...
                         </>
                       ) : (
                         <>
-                          <Sparkles size={14} /> Copiar Post LinkedIn
+                          <Sparkles size={14} /> Postar no LinkedIn
                         </>
                       )}
                     </button>
