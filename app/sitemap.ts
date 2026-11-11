@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getAllSeoArticles } from '@/lib/seo-engine';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://smartbidhub.com.br';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.smartbidhub.com.br';
 
   const articles = await getAllSeoArticles();
   const articleEntries: MetadataRoute.Sitemap = articles.map((art) => ({

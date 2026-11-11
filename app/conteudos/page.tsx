@@ -19,13 +19,13 @@ export const metadata: Metadata = {
     'repactuação de contratos CCT',
   ],
   alternates: {
-    canonical: 'https://smartbidhub.com.br/conteudos',
+    canonical: 'https://www.smartbidhub.com.br/conteudos',
   },
   openGraph: {
     title: 'Central Técnica de Custos, FPV & Facilities | SmartBid Hub',
     description:
       'Guias práticos e planilhas automatizadas para empresas de Limpeza, Portaria, Vigilância, Manutenção e Terceirização de Serviços.',
-    url: 'https://smartbidhub.com.br/conteudos',
+    url: 'https://www.smartbidhub.com.br/conteudos',
     siteName: 'SmartBid Hub',
     locale: 'pt_BR',
     type: 'website',

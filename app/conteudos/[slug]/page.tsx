@@ -21,7 +21,7 @@ export async function generateMetadata({
     };
   }
 
-  const canonicalUrl = `https://smartbidhub.com.br/conteudos/${article.slug}`;
+  const canonicalUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
 
   return {
     title: article.title,
@@ -72,7 +72,7 @@ export default async function SeoArticlePage({
   const allArticles = await getAllSeoArticles();
   const related = allArticles.filter((a) => a.slug !== article.slug).slice(0, 3);
 
-  const canonicalUrl = `https://smartbidhub.com.br/conteudos/${article.slug}`;
+  const canonicalUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
 
   const articleSchema = {
     '@context': 'https://schema.org',
