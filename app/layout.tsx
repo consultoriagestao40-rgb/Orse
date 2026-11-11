@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import { cookies } from "next/headers";
 import PushRegister from "@/components/PushRegister";
 import ForcePasswordChangeModal from "@/components/ForcePasswordChangeModal";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
@@ -104,14 +103,11 @@ export const viewport = {
   themeColor: "#1B4D3E",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const isCollapsed = cookieStore.get("sb_sidebar_collapsed")?.value === "true";
-
   return (
     <html
       lang="pt-BR"
@@ -318,7 +314,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`min-h-full bg-[#F8FAFC] ${isCollapsed ? "sidebar-collapsed" : ""}`}>
+      <body className="min-h-full bg-[#FBFAF7]">
         {children}
         <PushRegister />
         <ForcePasswordChangeModal />

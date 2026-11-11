@@ -1767,6 +1767,9 @@ export default function Page() {
 
           setIsLoggedIn(true);
         } else {
+          if (typeof document !== 'undefined') {
+            document.cookie = 'sb_user=; Max-Age=0; path=/;';
+          }
           setIsLoggedIn(false);
         }
       })
