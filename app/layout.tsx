@@ -18,21 +18,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://smartbidhub.com.br"),
+  metadataBase: new URL("https://www.smartbidhub.com.br"),
   title: {
-    default: "SmartBid • Inteligência Comercial & Custos para Prestadoras de Serviços",
+    default: "SmartBid • Software de Propostas, Orçamentos e Custos (FPV) para Terceirização e Facilities",
     template: "%s | SmartBid",
   },
-  description: "Plataforma líder em engenharia de custos, formação de preço de venda (FPV), CRM e gestão de contratos para empresas de Facilities, Segurança e Prestação de Serviços.",
+  description: "Software especializado em montagem de propostas comerciais, planilha de custos e formação de preço de venda (FPV por CCT), CRM e gestão de contratos para empresas de terceirização de serviços, limpeza, portaria, segurança e manutenção.",
   keywords: [
     "SmartBid",
-    "Facilities",
+    "Software montagem de propostas terceirização",
+    "Software para empresas de terceirização",
+    "Sistema de orçamento terceirização de serviços",
+    "Software para Facilities",
     "Formação de Preço de Venda",
     "FPV",
     "Engenharia de Custos",
     "Gestão de Contratos",
     "CRM para Facilities",
-    "Propostas Comerciais",
+    "Propostas Comerciais Terceirização",
     "Planilha de Custos e Formação de Preços",
     "CCT",
     "Convenção Coletiva de Trabalho",
@@ -49,12 +52,12 @@ export const metadata: Metadata = {
     telephone: false,
   },
   alternates: {
-    canonical: "https://smartbidhub.com.br",
+    canonical: "https://www.smartbidhub.com.br/lp",
   },
   openGraph: {
-    title: "SmartBid • Inteligência Comercial & Custos para Prestadoras de Serviços",
-    description: "Transforme a sua prestadora de serviços numa máquina de contratos previsíveis: da prospecção de grandes contas à blindagem de margem e reajustes automáticos.",
-    url: "https://smartbidhub.com.br",
+    title: "SmartBid • Software de Propostas, Orçamentos e Custos (FPV) para Terceirização e Facilities",
+    description: "Monte propostas comerciais e planilhas de custos por CCT para limpeza, portaria, segurança e manutenção: encargos trabalhistas, benefícios, insumos, margem de lucro e rastreio de leitura.",
+    url: "https://www.smartbidhub.com.br/lp",
     siteName: "SmartBid",
     images: [
       {
@@ -274,20 +277,29 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "SmartBid",
+              "name": "SmartBid Hub",
+              "alternateName": "SmartBid - Software de Propostas e Custos para Terceirização e Facilities",
               "applicationCategory": "BusinessApplication",
+              "applicationSubCategory": "Software de Montagem de Propostas, Orçamento e Formação de Preço de Venda (FPV) para Terceirização de Serviços e Facilities",
               "operatingSystem": "Web",
               "offers": {
                 "@type": "Offer",
                 "price": "0",
-                "priceCurrency": "BRL"
+                "priceCurrency": "BRL",
+                "description": "Teste grátis completo por 30 dias sem cartão de crédito"
               },
-              "description": "Plataforma de inteligência comercial, formação de preço de venda (FPV), CRM e gestão de contratos para empresas de Facilities e Prestadoras de Serviços.",
-              "url": "https://smartbidhub.com.br",
+              "featureList": [
+                "Cálculo automático de custo por colaborador e posto de trabalho (salário, adicionais, encargos sociais Grupos A a F, benefícios por CCT, insumos e EPIs)",
+                "Montagem de propostas comerciais interativas por link com rastreio de leitura e PDF A4 padronizado",
+                "Motor tributário para Simples Nacional, Lucro Presumido, Lucro Real e Reforma Tributária (IBS e CBS)",
+                "CRM comercial B2B, prospecção de decisores e gestão de contratos e reajustes para limpeza, portaria, segurança e manutenção"
+              ],
+              "description": "Software brasileiro focado em terceirização e locação de mão de obra (limpeza, portaria, segurança, recepção e manutenção): calcula encargos trabalhistas, benefícios sindicais (CCT), insumos, impostos e margem de lucro (DRE) e gera propostas comerciais interativas e em PDF.",
+              "url": "https://www.smartbidhub.com.br/lp",
               "publisher": {
                 "@type": "Organization",
                 "name": "Silva Consultoria Empresarial LTDA",
-                "url": "https://smartbidhub.com.br"
+                "url": "https://www.smartbidhub.com.br"
               }
             })
           }}
