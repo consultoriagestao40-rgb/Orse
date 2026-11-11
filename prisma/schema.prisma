@@ -71,21 +71,24 @@ model Tenant {
 }
 
 model EmpresaEmissora {
-  id           String   @id @default(uuid())
-  nomeFantasia String
-  razaoSocial  String
-  cnpj         String
-  endereco     String?
-  telefone     String?
-  email        String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  contratos    Contrato[]
+  id               String   @id @default(uuid())
+  nomeFantasia     String
+  razaoSocial      String
+  cnpj             String
+  endereco         String?
+  telefone         String?
+  email            String?
+  regimeTributario String   @default("LUCRO_REAL") // "SIMPLES_NORMAL", "SIMPLES_HIBRIDO", "LUCRO_PRESUMIDO", "LUCRO_REAL"
+  modoTributario   String   @default("ATUAL")      // "ATUAL" (PIS/COFINS/ISS), "TRANSICAO_CBS" (CBS+ISS), "IVA_DUAL" (IBS+CBS)
+  tributosPadrao   Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  contratos        Contrato[]
   documentosProposta DocumentoProposta[] @relation("EmpresaToDocumento")
   contratosComodato   ContratoComodato[]
   
-  tenantId     String?
-  tenant       Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId         String?
+  tenant           Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model User {

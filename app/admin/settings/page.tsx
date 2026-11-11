@@ -31,6 +31,14 @@ import {
   getSystemSmtpSettings, saveSystemSmtpSettings, testSystemSmtpConnection, exportFullTenantData
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
+import {
+  REGIMES_TRIBUTARIOS,
+  MODOS_TRIBUTARIOS,
+  getDefaultTributos,
+  getRegimeShortLabel,
+  RegimeTributario,
+  ModoTributario
+} from '@/lib/taxRegimes';
 import { 
   getWhatsAppConnectionStatus, connectWhatsAppInstance, 
   getWhatsAppQrCode, disconnectWhatsAppInstance,
@@ -339,7 +347,18 @@ export default function SettingsPage() {
   // Empresas Emissoras
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [showEmpresaModal, setShowEmpresaModal] = useState(false);
-  const [empresaForm, setEmpresaForm] = useState({ id: '', nomeFantasia: '', razaoSocial: '', cnpj: '', endereco: '', telefone: '', email: '' });
+  const [empresaForm, setEmpresaForm] = useState<any>({
+    id: '',
+    nomeFantasia: '',
+    razaoSocial: '',
+    cnpj: '',
+    endereco: '',
+    telefone: '',
+    email: '',
+    regimeTributario: 'LUCRO_REAL',
+    modoTributario: 'ATUAL',
+    tributosPadrao: getDefaultTributos('LUCRO_REAL', 'ATUAL')
+  });
 
   // WhatsApp Integration State
   const [waConnected, setWaConnected] = useState(false);
@@ -806,9 +825,30 @@ export default function SettingsPage() {
 
   const openEmpresaModal = (empresa?: any) => {
     if (empresa && empresa.id) {
-      setEmpresaForm(empresa);
+      const reg = (empresa.regimeTributario || 'LUCRO_REAL') as RegimeTributario;
+      const mod = (empresa.modoTributario || 'ATUAL') as ModoTributario;
+      const trib = Array.isArray(empresa.tributosPadrao) && empresa.tributosPadrao.length > 0
+        ? empresa.tributosPadrao
+        : getDefaultTributos(reg, mod);
+      setEmpresaForm({
+        ...empresa,
+        regimeTributario: reg,
+        modoTributario: mod,
+        tributosPadrao: trib
+      });
     } else {
-      setEmpresaForm({ id: '', nomeFantasia: '', razaoSocial: '', cnpj: '', endereco: '', telefone: '', email: '' });
+      setEmpresaForm({
+        id: '',
+        nomeFantasia: '',
+        razaoSocial: '',
+        cnpj: '',
+        endereco: '',
+        telefone: '',
+        email: '',
+        regimeTributario: 'LUCRO_REAL',
+        modoTributario: 'ATUAL',
+        tributosPadrao: getDefaultTributos('LUCRO_REAL', 'ATUAL')
+      });
     }
     setShowEmpresaModal(true);
   };
@@ -2021,25 +2061,40 @@ export default function SettingsPage() {
                         <th className="px-4 py-3">Nome Fantasia</th>
                         <th className="px-4 py-3">Razão Social</th>
                         <th className="px-4 py-3">CNPJ</th>
+                        <th className="px-4 py-3">Enquadramento Tributário</th>
                         <th className="px-4 py-3 text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {empresas.map(e => (
-                        <tr key={e.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 font-bold text-slate-700">{e.nomeFantasia}</td>
-                          <td className="px-4 py-3 text-slate-600">{e.razaoSocial}</td>
-                          <td className="px-4 py-3 text-slate-600">{e.cnpj}</td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button onClick={() => openEmpresaModal(e)} className="text-amber-500 hover:text-amber-600"><Edit2 size={14} /></button>
-                              <button onClick={() => handleDeleteEmpresa(e.id)} className="text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {empresas.map(e => {
+                        const regObj = REGIMES_TRIBUTARIOS.find(r => r.id === (e.regimeTributario || 'LUCRO_REAL'));
+                        const modObj = MODOS_TRIBUTARIOS.find(m => m.id === (e.modoTributario || 'ATUAL'));
+                        return (
+                          <tr key={e.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-slate-700">{e.nomeFantasia}</td>
+                            <td className="px-4 py-3 text-slate-600">{e.razaoSocial}</td>
+                            <td className="px-4 py-3 text-slate-600">{e.cnpj}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase ${regObj?.badgeClass || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                                  {getRegimeShortLabel(e.regimeTributario)}
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-semibold">
+                                  {modObj?.shortLabel || 'PIS / COFINS / ISS'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button onClick={() => openEmpresaModal(e)} className="text-amber-500 hover:text-amber-600"><Edit2 size={14} /></button>
+                                <button onClick={() => handleDeleteEmpresa(e.id)} className="text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {empresas.length === 0 && (
-                        <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">Nenhuma empresa cadastrada.</td></tr>
+                        <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Nenhuma empresa cadastrada.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -3848,43 +3903,175 @@ export default function SettingsPage() {
       
         {/* MODAL EMPRESA */}
         {showEmpresaModal && (
-          <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden">
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden my-8">
               <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] flex justify-between items-center">
                 <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                   <Briefcase size={14} /> {empresaForm.id ? 'Editar' : 'Nova'} Empresa Emissora
                 </h2>
                 <button onClick={() => setShowEmpresaModal(false)} className="text-white/60 hover:text-white transition-colors"><X size={18} /></button>
               </div>
-              <div className="p-6 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome Fantasia</label>
-                  <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.nomeFantasia} onChange={e => setEmpresaForm({...empresaForm, nomeFantasia: e.target.value})} />
+              <div className="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome Fantasia</label>
+                    <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.nomeFantasia} onChange={e => setEmpresaForm({...empresaForm, nomeFantasia: e.target.value})} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CNPJ</label>
+                    <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.cnpj} onChange={e => setEmpresaForm({...empresaForm, cnpj: e.target.value})} />
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Razão Social</label>
                   <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.razaoSocial} onChange={e => setEmpresaForm({...empresaForm, razaoSocial: e.target.value})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CNPJ</label>
-                  <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.cnpj} onChange={e => setEmpresaForm({...empresaForm, cnpj: e.target.value})} />
-                </div>
-                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Endereço Completo</label>
-                  <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.endereco} onChange={e => setEmpresaForm({...empresaForm, endereco: e.target.value})} />
+                  <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.endereco || ''} onChange={e => setEmpresaForm({...empresaForm, endereco: e.target.value})} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Telefone</label>
-                    <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.telefone} onChange={e => setEmpresaForm({...empresaForm, telefone: e.target.value})} />
+                    <input type="text" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.telefone || ''} onChange={e => setEmpresaForm({...empresaForm, telefone: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">E-mail Comercial</label>
-                    <input type="email" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.email} onChange={e => setEmpresaForm({...empresaForm, email: e.target.value})} />
+                    <input type="email" className="w-full px-3 py-2 border border-slate-200 rounded text-sm outline-none focus:border-[#1B4D3E]" value={empresaForm.email || ''} onChange={e => setEmpresaForm({...empresaForm, email: e.target.value})} />
                   </div>
                 </div>
+
+                {/* ENQUADRAMENTO TRIBUTÁRIO E TRANSIÇÃO IBS/CBS */}
+                <div className="border-t border-slate-200 pt-4 mt-2 space-y-4">
+                  <div>
+                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-1">
+                      Enquadramento Tributário Padrão da Empresa
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Ao selecionar esta empresa na construção da FPV, o sistema aplicará automaticamente este regime nos Tributos e no Grupo A (Encargos CLT).
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Regime Tributário</label>
+                      <select
+                        className="w-full px-3 py-2 border border-slate-300 rounded text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] bg-slate-50"
+                        value={empresaForm.regimeTributario || 'LUCRO_REAL'}
+                        onChange={(e) => {
+                          const newRegime = e.target.value as RegimeTributario;
+                          const modo = (empresaForm.modoTributario || 'ATUAL') as ModoTributario;
+                          setEmpresaForm({
+                            ...empresaForm,
+                            regimeTributario: newRegime,
+                            tributosPadrao: getDefaultTributos(newRegime, modo),
+                          });
+                        }}
+                      >
+                        {REGIMES_TRIBUTARIOS.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Modelo / Reforma Tributária</label>
+                      <select
+                        className="w-full px-3 py-2 border border-slate-300 rounded text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] bg-slate-50"
+                        value={empresaForm.modoTributario || 'ATUAL'}
+                        onChange={(e) => {
+                          const newModo = e.target.value as ModoTributario;
+                          const regime = (empresaForm.regimeTributario || 'LUCRO_REAL') as RegimeTributario;
+                          setEmpresaForm({
+                            ...empresaForm,
+                            modoTributario: newModo,
+                            tributosPadrao: getDefaultTributos(regime, newModo),
+                          });
+                        }}
+                      >
+                        {MODOS_TRIBUTARIOS.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Alíquotas Padrão da Empresa */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-extrabold text-slate-600 uppercase tracking-wider">
+                        Tributos Padrão ({(empresaForm.tributosPadrao || []).reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0).toFixed(2)}%)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEmpresaForm({
+                            ...empresaForm,
+                            tributosPadrao: [
+                              ...(empresaForm.tributosPadrao || []),
+                              { id: String(Date.now()), nome: '', percent: 0 },
+                            ],
+                          })
+                        }
+                        className="text-[10px] font-bold text-[#1B4D3E] hover:underline flex items-center gap-1"
+                      >
+                        <Plus size={12} /> Adicionar Tributo
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(empresaForm.tributosPadrao || []).map((t: any, idx: number) => (
+                        <div key={t.id || idx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Nome do Tributo (ex: CBS, IBS, ISS, DAS...)"
+                            className="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-800 outline-none focus:border-[#1B4D3E]"
+                            value={t.nome}
+                            onChange={(e) => {
+                              const updated = [...(empresaForm.tributosPadrao || [])];
+                              updated[idx] = { ...updated[idx], nome: e.target.value };
+                              setEmpresaForm({ ...empresaForm, tributosPadrao: updated });
+                            }}
+                          />
+                          <div className="relative w-24">
+                            <input
+                              type="number"
+                              step="0.01"
+                              className="w-full px-2.5 py-1.5 pr-6 bg-white border border-slate-200 rounded text-xs font-bold text-right text-slate-800 outline-none focus:border-[#1B4D3E]"
+                              value={t.percent}
+                              onChange={(e) => {
+                                const updated = [...(empresaForm.tributosPadrao || [])];
+                                updated[idx] = {
+                                  ...updated[idx],
+                                  percent: e.target.value === '' ? 0 : Number(e.target.value),
+                                };
+                                setEmpresaForm({ ...empresaForm, tributosPadrao: updated });
+                              }}
+                            />
+                            <span className="absolute right-2 top-1.5 text-xs text-slate-400">%</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (empresaForm.tributosPadrao || []).filter((_: any, i: number) => i !== idx);
+                              setEmpresaForm({ ...empresaForm, tributosPadrao: updated });
+                            }}
+                            className="text-slate-400 hover:text-red-600 p-1"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 <button onClick={handleSaveEmpresa} className="w-full bg-[#1B4D3E] hover:bg-emerald-900 text-white py-3 rounded text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all mt-4">
-                  <Save size={18} /> Cadastrar Empresa
+                  <Save size={18} /> {empresaForm.id ? 'Salvar Alterações' : 'Cadastrar Empresa'}
                 </button>
               </div>
             </div>

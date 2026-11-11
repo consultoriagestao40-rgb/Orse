@@ -41,6 +41,9 @@ export async function createEmpresaEmissora(data: any) {
         endereco: data.endereco,
         telefone: data.telefone,
         email: data.email,
+        regimeTributario: data.regimeTributario || 'LUCRO_REAL',
+        modoTributario: data.modoTributario || 'ATUAL',
+        tributosPadrao: Array.isArray(data.tributosPadrao) ? data.tributosPadrao : undefined,
         tenantId: user.tenantId
       }
     });
@@ -64,6 +67,9 @@ export async function updateEmpresaEmissora(id: string, data: any) {
         endereco: data.endereco,
         telefone: data.telefone,
         email: data.email,
+        regimeTributario: data.regimeTributario || 'LUCRO_REAL',
+        modoTributario: data.modoTributario || 'ATUAL',
+        tributosPadrao: Array.isArray(data.tributosPadrao) ? data.tributosPadrao : undefined,
       }
     });
     revalidatePath('/admin/settings');

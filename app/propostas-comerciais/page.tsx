@@ -1903,7 +1903,15 @@ export default function PropostasComerciaisDashboard() {
                     <select 
                       className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
                       value={createModal.fpvId}
-                      onChange={e => setCreateModal({...createModal, fpvId: e.target.value})}
+                      onChange={e => {
+                        const selectedFpvId = e.target.value;
+                        const selectedFpv = fpvs.find(f => f.id === selectedFpvId);
+                        setCreateModal(prev => ({
+                          ...prev,
+                          fpvId: selectedFpvId,
+                          empresaId: selectedFpv?.empresaEmissoraId || prev.empresaId
+                        }));
+                      }}
                     >
                       <option value="">-- Selecione uma FPV --</option>
                       {fpvs.map(f => {

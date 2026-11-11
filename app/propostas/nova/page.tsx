@@ -25,6 +25,15 @@ import SearchableSelect, { SearchableSelectOption } from '@/components/Searchabl
 import FpvPdfDocument from '@/components/FpvPdfDocument';
 import { FileDown, Printer, Upload, Search, Check, Globe, ExternalLink } from 'lucide-react';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
+import {
+  REGIMES_TRIBUTARIOS,
+  MODOS_TRIBUTARIOS,
+  getDefaultTributos,
+  getAdjustedGrupoAForRegime,
+  getRegimeShortLabel,
+  RegimeTributario,
+  ModoTributario
+} from '@/lib/taxRegimes';
 
 const TABS = [
   { id: 'dados', label: '1. Cliente', icon: Building2 },
@@ -331,6 +340,9 @@ function PropostaEditor() {
       taxaAdm: 5, 
       margemLucro: 10,
       comissaoVendedor: 0,
+      empresaEmissoraId: '',
+      regimeTributario: 'LUCRO_REAL',
+      modoTributario: 'ATUAL',
       tributos: [
         { id: '1', nome: 'ISS', percent: 5 },
         { id: '2', nome: 'CSLL', percent: 1 },
@@ -568,6 +580,9 @@ function PropostaEditor() {
                   revisao: `R${String(fullData.versao).padStart(2, '0')}`,
                   tipoServicos: fullData.cliente.tipoServicos || '',
                   tipoProposta: fullData.cliente.tipoProposta || 'RECORRENTE',
+                  empresaEmissoraId: (fullData.cliente as any).empresaEmissoraId || (fullData.premissas as any)?.empresaEmissoraId || '',
+                  regimeTributario: (fullData.premissas as any)?.regimeTributario || (fullData.cliente as any).regimeTributario || 'LUCRO_REAL',
+                  modoTributario: (fullData.premissas as any)?.modoTributario || (fullData.cliente as any).modoTributario || 'ATUAL',
                   segmento: clientObj?.segmento || fullData.cliente.segmento || '',
                   vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
                   vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
@@ -609,6 +624,9 @@ function PropostaEditor() {
                 } : proposta.encargos,
                 premissas: {
                   ...fullData.premissas,
+                  empresaEmissoraId: (fullData.premissas as any)?.empresaEmissoraId || (fullData.cliente as any)?.empresaEmissoraId || '',
+                  regimeTributario: (fullData.premissas as any)?.regimeTributario || (fullData.cliente as any)?.regimeTributario || 'LUCRO_REAL',
+                  modoTributario: (fullData.premissas as any)?.modoTributario || (fullData.cliente as any)?.modoTributario || 'ATUAL',
                   outrosBeneficios: Array.isArray((fullData.premissas as any)?.outrosBeneficios) ? (fullData.premissas as any).outrosBeneficios : [],
                   tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
                 },
@@ -652,6 +670,9 @@ function PropostaEditor() {
                 dreTaxPercent: (fullData as any).dreTaxPercent
              };
              setProposta(loadedProposta);
+             if (loadedProposta.premissas?.empresaEmissoraId) {
+               setSelectedEmpresaId(loadedProposta.premissas.empresaEmissoraId);
+             }
              setInitialPropostaJson(JSON.stringify(loadedProposta));
              setVersions(fullData.availableVersions || []);
              console.log('Estado da proposta atualizado.');
@@ -956,6 +977,68 @@ function PropostaEditor() {
 
   const addTributo = () => {
     setProposta({ ...proposta, premissas: { ...proposta.premissas, tributos: [...proposta.premissas.tributos, { id: Math.random().toString(), nome: '', percent: 0 }] } });
+  };
+
+  const handleChangeRegimeOrModo = (newRegime: RegimeTributario, newModo: ModoTributario, customTributos?: any[], empresaId?: string) => {
+    const nextTributos = Array.isArray(customTributos) && customTributos.length > 0
+      ? customTributos.map((t: any, idx: number) => ({
+          id: String(t.id || idx + 1),
+          nome: String(t.nome || ''),
+          percent: Number(t.percent || 0)
+        }))
+      : getDefaultTributos(newRegime, newModo);
+
+    const nextTotalTributos = Number(
+      nextTributos.reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0).toFixed(2)
+    );
+    const nextGrupoA = getAdjustedGrupoAForRegime(proposta.encargos?.grupoA, newRegime);
+
+    setDreTaxPercent(nextTotalTributos);
+    setProposta((prev: any) => ({
+      ...prev,
+      cliente: {
+        ...prev.cliente,
+        empresaEmissoraId: empresaId !== undefined ? empresaId : prev.cliente.empresaEmissoraId,
+        regimeTributario: newRegime,
+        modoTributario: newModo,
+      },
+      premissas: {
+        ...prev.premissas,
+        empresaEmissoraId: empresaId !== undefined ? empresaId : prev.premissas.empresaEmissoraId,
+        regimeTributario: newRegime,
+        modoTributario: newModo,
+        tributos: nextTributos,
+      },
+      encargos: {
+        ...prev.encargos,
+        grupoA: nextGrupoA,
+      },
+      dreEncargos: {
+        ...prev.dreEncargos,
+        inss: nextGrupoA.previdenciaSocial,
+        fgts: nextGrupoA.fgts,
+      },
+    }));
+  };
+
+  const handleSelectEmpresaEmissora = (empId: string) => {
+    setSelectedEmpresaId(empId);
+    if (!empId) {
+      setProposta((prev: any) => ({
+        ...prev,
+        cliente: { ...prev.cliente, empresaEmissoraId: '' },
+        premissas: { ...prev.premissas, empresaEmissoraId: '' },
+      }));
+      return;
+    }
+    const emp = empresasEmissoras.find((e: any) => e.id === empId);
+    if (!emp) return;
+    const reg = (emp.regimeTributario || 'LUCRO_REAL') as RegimeTributario;
+    const mod = (emp.modoTributario || 'ATUAL') as ModoTributario;
+    const tribs = Array.isArray(emp.tributosPadrao) && emp.tributosPadrao.length > 0
+      ? emp.tributosPadrao
+      : getDefaultTributos(reg, mod);
+    handleChangeRegimeOrModo(reg, mod, tribs, empId);
   };
 
   const addPosto = () => {
@@ -3301,6 +3384,36 @@ function PropostaEditor() {
                         </p>
                      </div>
 
+                     {/* EMPRESA EMISSORA E ENQUADRAMENTO TRIBUTÁRIO */}
+                     <div className="space-y-2 md:col-span-2 bg-emerald-50/40 p-4 rounded-xl border border-emerald-200/70">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                           <label className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                              <Briefcase size={14} className="text-[#1B4D3E]" /> Empresa Emissora (CNPJ de Faturamento & Enquadramento Tributário)
+                           </label>
+                           <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-[#1B4D3E] text-white">
+                              {getRegimeShortLabel(proposta.premissas?.regimeTributario || 'LUCRO_REAL')} •{' '}
+                              {MODOS_TRIBUTARIOS.find(m => m.id === (proposta.premissas?.modoTributario || 'ATUAL'))?.shortLabel || 'PIS / COFINS / ISS'}
+                           </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                           <select
+                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                              value={proposta.premissas?.empresaEmissoraId || selectedEmpresaId || ''}
+                              onChange={(e) => handleSelectEmpresaEmissora(e.target.value)}
+                           >
+                              <option value="">-- Selecione a Empresa Emissora desta FPV --</option>
+                              {empresasEmissoras.map((emp: any) => (
+                                 <option key={emp.id} value={emp.id}>
+                                    {emp.nomeFantasia} {emp.cnpj ? `(${emp.cnpj})` : ''} — [{getRegimeShortLabel(emp.regimeTributario)}]
+                                 </option>
+                              ))}
+                           </select>
+                           <p className="text-[11px] text-slate-600 leading-snug">
+                              Ao selecionar a empresa emissora, o sistema aplica automaticamente seu <strong>Enquadramento Tributário</strong> (Simples Normal, Simples Híbrido, Lucro Presumido ou Lucro Real) na aba <strong>2. Taxas e Tributos</strong> e ajusta o <strong>Grupo A (Encargos CLT)</strong>.
+                           </p>
+                        </div>
+                     </div>
+
                     <div className="space-y-1 relative">
                        
                        <div className="flex justify-between items-center">
@@ -3604,9 +3717,79 @@ function PropostaEditor() {
                  </div>
 
                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
-                    <div className="bg-slate-50 border-b border-slate-300 px-6 py-4 flex justify-between items-center">
-                       <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Composição Tributária</h3>
-                       <button onClick={addTributo} className="text-[#1B4D3E] hover:text-[#13382D] text-xs font-semibold flex items-center gap-1"><Plus size={14}/> Nova Linha</button>
+                    <div className="bg-slate-50 border-b border-slate-300 px-6 py-4">
+                       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+                          <div>
+                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Enquadramento Tributário & Reforma Tributária (IBS / CBS)</h3>
+                             <p className="text-xs text-slate-500 mt-0.5">
+                                Selecione o regime da empresa e o cenário tributário (Sistema Atual com PIS/COFINS/ISS ou substituição por CBS/IBS). Todas as alíquotas continuam editáveis abaixo.
+                             </p>
+                          </div>
+                          <button onClick={addTributo} className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 shadow-sm"><Plus size={14}/> Nova Linha de Imposto</button>
+                       </div>
+
+                       {/* Seletor dos 4 Regimes Tributários */}
+                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                          {REGIMES_TRIBUTARIOS.map((reg) => {
+                             const isSelected = (proposta.premissas?.regimeTributario || 'LUCRO_REAL') === reg.id;
+                             return (
+                                <button
+                                   key={reg.id}
+                                   type="button"
+                                   onClick={() =>
+                                      handleChangeRegimeOrModo(
+                                         reg.id,
+                                         (proposta.premissas?.modoTributario || 'ATUAL') as ModoTributario
+                                      )
+                                   }
+                                   className={`text-left p-3 rounded-lg border transition-all ${
+                                      isSelected
+                                         ? 'bg-[#1B4D3E]/10 border-[#1B4D3E] ring-1 ring-[#1B4D3E]'
+                                         : 'bg-white border-slate-200 hover:border-slate-300'
+                                   }`}
+                                >
+                                   <div className="flex items-center justify-between mb-1">
+                                      <span className={`text-xs font-black uppercase ${isSelected ? 'text-[#1B4D3E]' : 'text-slate-700'}`}>
+                                         {reg.shortLabel}
+                                      </span>
+                                      {isSelected && <Check size={14} className="text-[#1B4D3E]" />}
+                                   </div>
+                                   <p className="text-[10px] text-slate-500 leading-tight">{reg.descricao}</p>
+                                </button>
+                             );
+                          })}
+                       </div>
+
+                       {/* Seletor de Transição PIS/COFINS -> IBS/CBS */}
+                       <div className="bg-white border border-slate-200 rounded-lg p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider">
+                             Modelo de Tributos s/ Faturamento:
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                             {MODOS_TRIBUTARIOS.map((m) => {
+                                const isActiveModo = (proposta.premissas?.modoTributario || 'ATUAL') === m.id;
+                                return (
+                                   <button
+                                      key={m.id}
+                                      type="button"
+                                      onClick={() =>
+                                         handleChangeRegimeOrModo(
+                                            (proposta.premissas?.regimeTributario || 'LUCRO_REAL') as RegimeTributario,
+                                            m.id
+                                         )
+                                      }
+                                      className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-all ${
+                                         isActiveModo
+                                            ? 'bg-[#1B4D3E] text-white border-[#1B4D3E] shadow-sm'
+                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                      }`}
+                                   >
+                                      {m.shortLabel}
+                                   </button>
+                                );
+                             })}
+                          </div>
+                       </div>
                     </div>
                     <div className="p-6 space-y-3">
                        {proposta.premissas.tributos.map((t: any) => (
