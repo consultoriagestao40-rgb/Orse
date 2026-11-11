@@ -506,6 +506,81 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
       },
     ],
   },
+  {
+    slug: 'como-montar-orcamento-anual-de-facilities-do-zero-planilha-controle',
+    title: 'Como Montar o Orçamento Anual de Facilities do Zero + Planilha de Controle de Facilities (Guia 2026)',
+    metaDescription:
+      'Passo a passo completo de como montar o orçamento anual de Facilities do zero e evoluir da planilha de controle de Facilities em Excel para o SmartBid Hub.',
+    category: 'Orçamento & Gestão de Facilities',
+    readTimeMinutes: 9,
+    publishedAt: '2026-11-11T19:00:00.000Z',
+    updatedAt: '2026-11-11T19:10:00.000Z',
+    keywords: [
+      'como montar o orçamento anual de facilities do zero',
+      'planilha de controle de facilities',
+      'orçamento de facilities passo a passo',
+      'planilha orçamentária de facilities',
+      'como fazer orçamento de limpeza portaria e manutenção',
+      'gestão de contratos de facilities',
+      'software de orçamento de facilities',
+    ],
+    excerpt:
+      'Domine todas as etapas de levantamento, coleta de dados operacionais, dimensionamento de postos (limpeza, portaria, recepção e manutenção), cálculo de CCT, provisões de repactuação e planilha de controle de Facilities.',
+    sections: [
+      {
+        heading: '1. Etapas de Levantamento e Coleta de Dados: O Primeiro Passo para Montar o Orçamento Anual de Facilities do Zero',
+        paragraphs: [
+          'Montar o orçamento anual de Facilities do zero (seja para precificar um novo contrato B2B como prestadora de serviços ou para planejar o budget anual de operações prediais) exige começar por um levantamento técnico rigoroso da planta física e do nível de serviço esperado (SLA).',
+          'Antes de abrir qualquer planilha de controle de Facilities, é indispensável consolidar o inventário operacional da unidade: metragem quadrada por tipo de piso e criticidade (áreas administrativas, banheiros coletivos, áreas externas, vidros e galpões), horários de funcionamento, pontos de acesso de portaria/recepção e plano de manutenção preventiva (PMOC, elétrica e civil).',
+        ],
+        bullets: [
+          'Levantamento Físico e Produtividade: Mapeamento de m² por ambiente (referência ABNT NBR 14082) para definir o quadro exato de serventes, auxiliares de limpeza, líderes e encarregados.',
+          'Mapeamento de Postos e Escalas de Trabalho: Definição das jornadas 5x2 (44h semanais), 6x1, 12x36 Diurno, 12x36 Noturno, folguistas, feristas e cobertura de intrajornada.',
+          'Enquadramento Sindical (CCT por Município/Estado): Identificação exata do sindicato laboral (Asseio e Conservação, Portaria, Vigilância ou Manutenção) para capturar pisos salariais, vale-refeição, cesta básica e benefícios obrigatórios.',
+          'Levantamento de Insumos, Uniformes, EPIs e Equipamentos: Estimativa de consumo mensal de saneantes, descartáveis de higiene, enxoval de EPIs com vida útil e depreciação de maquinário.',
+        ],
+        highlightBox: {
+          title: 'Do Levantamento Técnico ao Orçamento Anual em Minutos no SmartBid Hub',
+          text: 'Em vez de cruzar dezenas de abas manuais numa planilha de controle de Facilities, no SmartBid Hub você cadastra os postos, vincula a CCT do sindicato e escolhe os materiais em modais de busca com cotação web em tempo real — gerando automaticamente o orçamento mensal e anual completo.',
+        },
+      },
+      {
+        heading: '2. Estrutura Completa da Planilha de Controle e Orçamento Anual de Facilities',
+        paragraphs: [
+          'Um orçamento anual de Facilities sólido precisa projetar os 12 meses de operação contemplando não apenas a folha mensal, mas todas as provisões trabalhistas (Montante A), operacionais (Montante B), benefícios (Montante C), repactuação sindical na data-base e tributos:',
+        ],
+        table: {
+          headers: ['Etapa do Orçamento Anual de Facilities', 'O que Incluir na Memória de Cálculo', 'Risco nas Planilhas de Controle em Excel'],
+          rows: [
+            ['1. Mão de Obra Direta e Adicionais', 'Salário-base da CCT, insalubridade (20%/40%), periculosidade (30%), adicional noturno + reflexo DSR', 'Usar piso salarial vencido ou esquecer o reflexo do adicional noturno sobre o DSR'],
+            ['2. Encargos Sociais e Provisões (Grupos A a F)', 'INSS Patronal, FGTS, RAT/FAP, 13º salário, férias + 1/3, ausências legais e provisão de rescisão', 'Subdimensionar o custo anual de substituição de férias (ferista) e turnover'],
+            ['3. Benefícios Obrigatórios da CCT', 'Vale-transporte (deduzido 6%), vale-alimentação/refeição, seguro de vida, plano odontológico/saúde', 'Calcular dias úteis fixos (22 dias) em escalas 12x36 (que possuem 15,22 turnos/mês)'],
+            ['4. Materiais, Químicos, EPIs e Manutenção', 'Rateio mensal por vida útil de uniformes/EPIs + consumo de químicos/descartáveis + depreciação', 'Não atualizar o preço de reposição dos insumos e corroer a margem ao longo dos 12 meses'],
+            ['5. Repactuação Anual (Dissídio) + Tributos e BDI', 'Previsão de reajuste na data-base da CCT + impostos por dentro (PIS/COFINS/ISS ou IBS/CBS) + Lucro', 'Perder o prazo de repactuação anual do contrato ou errar o cálculo de gross-up tributário'],
+          ],
+        },
+      },
+      {
+        heading: '3. Planilha de Controle de Facilities vs. Plataforma Integrada SmartBid Hub',
+        paragraphs: [
+          'Muitas empresas começam buscando uma "Planilha de Controle de Facilities" gratuita em Excel para tentar organizar postos, materiais e vencimentos de contratos. Porém, à medida que a operação cresce, planilhas isoladas não avisam quando uma CCT vence, não rastreiam se o cliente abriu a proposta comercial e frequentemente quebram fórmulas de encargos e impostos.',
+          'O SmartBid Hub substitui até 6 planilhas paralelas (Planilha de Prospecção, Planilha de Custos FPV, Tabela de CCTs, Catálogo de Insumos, Modelo de Proposta em Word/PDF e Planilha de Controle de Contratos) por um único sistema em nuvem com 30 dias de teste grátis.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Como montar o orçamento anual de Facilities do zero sem errar nos encargos?',
+        answer:
+          'O caminho mais seguro é seguir as 5 etapas: 1) Levantamento físico e definição de postos/escalas; 2) Vinculação dos pisos e benefícios da CCT vigente; 3) Aplicação dos Grupos A a F de encargos trabalhistas; 4) Dimensionamento de materiais, EPIs e equipamentos; e 5) Aplicação do BDI e impostos por dentro (Gross-up) no SmartBid Hub.',
+      },
+      {
+        question: 'Existe um sistema que substitui a Planilha de Controle de Facilities tradicional?',
+        answer:
+          'Sim! O SmartBid Hub une o motor completo de Orçamento e Formação de Preço de Venda (FPV) com Propostas Comerciais Interativas, Controle de Contratos, Alertas de Reajuste Anual (CCT/IPCA) e Cronograma de Implantação (PIC). Você pode testar grátis por 30 dias em smartbidhub.com.br/cadastro.',
+      },
+    ],
+  },
 ];
 
 export const AUTOPILOT_SEO_TOPICS = [
