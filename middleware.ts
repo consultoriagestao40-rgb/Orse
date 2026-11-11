@@ -33,6 +33,9 @@ export function middleware(request: NextRequest) {
     pathname === '/sitemap.xml' ||
     pathname === '/robots.txt' ||
     pathname === '/llms.txt' ||
+    pathname === '/ai-catalog.json' ||
+    pathname === '/ard.json' ||
+    pathname.startsWith('/.well-known/') ||
     pathname === '/google7ebbc4c4a41aadfa.html' ||
     (pathname.startsWith('/google') && pathname.endsWith('.html')) ||
     pathname.startsWith('/api/') ||
@@ -47,5 +50,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg|og-image.jpg|sitemap.xml|robots.txt|llms.txt|google7ebbc4c4a41aadfa.html).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|\\.well-known|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg|og-image.jpg|sitemap.xml|robots.txt|llms.txt|ai-catalog.json|ard.json|google7ebbc4c4a41aadfa.html).*)'],
 }

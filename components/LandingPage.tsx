@@ -426,7 +426,7 @@ export default function LandingPage() {
                   Agendar demonstração
                 </button>
               </div>
-              <p className="lp-enter mt-6 text-[13px] text-white/60 flex flex-wrap items-center justify-center gap-x-5 gap-y-1" style={{ '--d': '1050ms' } as React.CSSProperties}>
+              <p className="lp-enter mt-6 text-[13px] text-white/85 flex flex-wrap items-center justify-center gap-x-5 gap-y-1" style={{ '--d': '1050ms' } as React.CSSProperties}>
                 {['Conta pronta em 2 minutos', 'Sem cartão de crédito', 'Acesso completo no teste'].map(t => (
                   <span key={t} className="inline-flex items-center gap-1.5"><Check size={13} style={{ color: '#FF9A5C' }} strokeWidth={3} />{t}</span>
                 ))}
@@ -615,7 +615,7 @@ export default function LandingPage() {
                         <button
                           onClick={() => setClientAccepted(!clientAccepted)}
                           className={`w-full py-2.5 rounded-lg text-[14px] font-medium text-white cursor-pointer transition-all duration-300 shadow-sm ${clientAccepted ? 'lp-accepted-anim' : 'hover:scale-[1.02]'}`}
-                          style={{ background: clientAccepted ? '#1B4D3E' : '#EA580C', boxShadow: clientAccepted ? '0 10px 24px -10px rgba(27,77,62,0.6)' : '0 10px 24px -10px rgba(234,88,12,0.6)' }}
+                          style={{ background: clientAccepted ? '#1B4D3E' : '#C2410C', boxShadow: clientAccepted ? '0 10px 24px -10px rgba(27,77,62,0.6)' : '0 10px 24px -10px rgba(194,65,12,0.6)' }}
                         >
                           {clientAccepted ? '✓ Proposta aprovada online' : 'Aprovar proposta'}
                         </button>
@@ -953,10 +953,10 @@ export default function LandingPage() {
         <div className="lp-dots" aria-hidden />
         <div className="lp-grain" aria-hidden />
         <div className="relative max-w-[1200px] mx-auto px-6">
-          <p className="text-[14px] text-white/60 mb-6">O que é o SmartBid</p>
+          <p className="text-[14px] text-white/85 mb-6">O que é o SmartBid</p>
           <p className="text-[30px] md:text-[40px] leading-[1.18] max-w-[980px]" style={{ ...serif, fontWeight: 600, letterSpacing: '-0.025em' }}>
             Uma esteira única, feita para a realidade de prestadoras de limpeza, portaria, segurança e apoio operacional.
-            <span className="text-white/55"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
+            <span className="text-white/85"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
           </p>
 
           <div data-reveal className="lp-timeline relative mt-16 pt-10">
@@ -979,9 +979,9 @@ export default function LandingPage() {
                       <span className="w-[6px] h-[6px] rounded-full" style={{ background: '#FF7A2F' }} />
                     </span>
                   </span>
-                  <p className="text-[13px] tabular-nums font-semibold transition-colors duration-300 group-hover:text-[#FF9A5C]" style={{ color: 'rgba(255,154,92,0.85)' }}>0{i + 1}</p>
+                  <p className="text-[13px] tabular-nums font-semibold transition-colors duration-300 group-hover:text-[#FF9A5C]" style={{ color: '#FFB27A' }}>0{i + 1}</p>
                   <p className="text-[17px] font-medium mt-2">{t}</p>
-                  <p className="text-[14px] text-white/60 mt-1">{d}</p>
+                  <p className="text-[14px] text-white/85 mt-1">{d}</p>
                 </div>
               ))}
             </div>
@@ -1285,16 +1285,16 @@ export default function LandingPage() {
                 <div>
                   <div className="flex items-center justify-between">
                     <p className="text-[16px] font-bold">{p.nome}</p>
-                    {p.destaque && <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#EA580C] text-white">Mais escolhido</span>}
+                    {p.destaque && <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#C2410C] text-white">Mais escolhido</span>}
                     {p.isFree && <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Entrada</span>}
                   </div>
-                  <p className="text-[13px] mt-1" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>{p.para}</p>
+                  <p className="text-[13px] mt-1" style={{ color: p.destaque ? 'rgba(255,255,255,0.85)' : C.muted }}>{p.para}</p>
                   <p className="mt-6 flex items-baseline gap-1.5">
                     <span className="text-[14px]">R$</span>
                     <span className="text-[48px] sm:text-[52px] leading-none tabular-nums font-black" style={serif}>{p.preco}</span>
-                    <span className="text-[13px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>/mês</span>
+                    <span className="text-[13px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.85)' : C.muted }}>/mês</span>
                   </p>
-                  <p className="text-[12px] mt-1.5 min-h-[18px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.6)' : C.muted }}>{p.extra}</p>
+                  <p className="text-[12px] mt-1.5 min-h-[18px]" style={{ color: p.destaque ? 'rgba(255,255,255,0.85)' : C.muted }}>{p.extra}</p>
                   <ul className="mt-6 space-y-2.5 text-[13px] flex-1 border-t pt-5" style={{ borderColor: p.destaque ? 'rgba(255,255,255,0.1)' : '#F1EFEA' }}>
                     {p.itens.map(i => (
                       <li key={i} className="flex gap-2 items-start">
@@ -1311,7 +1311,7 @@ export default function LandingPage() {
                     className="w-full py-3 rounded-full text-[13px] font-bold text-center block transition-all hover:opacity-90 active:scale-[0.98]"
                     style={
                       p.destaque 
-                        ? { background: '#EA580C', color: '#fff', boxShadow: '0 12px 30px -12px rgba(234,88,12,0.7)' } 
+                        ? { background: '#C2410C', color: '#fff', boxShadow: '0 12px 30px -12px rgba(194,65,12,0.7)' } 
                         : p.isFree
                           ? { background: '#1B4D3E', color: '#fff', boxShadow: '0 8px 20px -8px rgba(27,77,62,0.5)' }
                           : { border: `1px solid ${C.ink}`, color: C.ink }
@@ -1319,7 +1319,7 @@ export default function LandingPage() {
                   >
                     {p.cta}
                   </a>
-                  <p className="text-[11px] text-center mt-2" style={{ color: p.destaque ? 'rgba(255,255,255,0.55)' : C.muted }}>
+                  <p className="text-[11px] text-center mt-2" style={{ color: p.destaque ? 'rgba(255,255,255,0.8)' : C.muted }}>
                     {p.isFree ? '100% grátis. Crie em 1 minuto.' : 'Sem cartão. Cancele quando quiser.'}
                   </p>
                 </div>
