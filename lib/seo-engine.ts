@@ -1106,5 +1106,108 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
     },
   });
 
+  // Dispara publicação automática no LinkedIn caso Webhook/Token esteja configurado
+  await publishToLinkedInAutopilot(generated).catch(() => {});
+
   return generated;
+}
+
+/**
+ * Monta um post executivo de alta conversão para o LinkedIn (em 1ª pessoa como Especialista em Facilities & Founder da SmartBid Hub)
+ */
+export function buildLinkedInPostFromArticle(article: SeoArticle): string {
+  const bullets =
+    article.sections?.[0]?.bullets?.slice(0, 3) || [
+      'Memória de cálculo auditável de Montantes A, B e C por CCT;',
+      'Simulação automática de tributos por dentro (Gross-up) incluindo Reforma Tributária (IBS e CBS);',
+      'Geração imediata de Proposta Comercial interativa com rastreamento de abertura.',
+    ];
+
+  return `📊 ${article.title}
+
+Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante os 12 meses do contrato.
+
+${article.excerpt || article.metaDescription}
+
+Pontos críticos que todo diretor e orçamentista precisa blindar antes de enviar uma proposta:
+${bullets.map((b) => `✅ ${b}`).join('\n')}
+
+Acabamos de publicar um guia técnico completo com a memória de cálculo detalhada na Central Técnica da SmartBid Hub:
+👉 Leia o guia completo: https://www.smartbidhub.com.br/conteudos/${article.slug}
+
+🚀 Quer substituir planilhas soltas de Excel por um motor completo de Engenharia de Custos (FPV por CCT), CRM e Propostas Interativas?
+Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/lp
+
+#Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
+}
+
+/**
+ * Publica automaticamente o artigo do dia no LinkedIn via API Oficial (LINKEDIN_ACCESS_TOKEN + LINKEDIN_PERSON_URN)
+ * ou via Webhook de Automação (LINKEDIN_WEBHOOK_URL - Make.com / Zapier / n8n)
+ */
+export async function publishToLinkedInAutopilot(article: SeoArticle): Promise<boolean> {
+  const postText = buildLinkedInPostFromArticle(article);
+  const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
+
+  // 1. Webhook direto (Make.com / Zapier / n8n)
+  const webhookUrl = process.env.LINKEDIN_WEBHOOK_URL;
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: article.title,
+          excerpt: article.excerpt,
+          url: articleUrl,
+          lpUrl: 'https://www.smartbidhub.com.br/lp',
+          linkedinPostText: postText,
+          publishedAt: article.publishedAt,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+      return true;
+    } catch {}
+  }
+
+  // 2. API Oficial do LinkedIn (v2/ugcPosts)
+  const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
+  const authorUrn = process.env.LINKEDIN_PERSON_URN; // ex: urn:li:person:XXXX ou urn:li:organization:XXXX
+  if (accessToken && authorUrn) {
+    try {
+      const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+          author: authorUrn.startsWith('urn:li:') ? authorUrn : `urn:li:person:${authorUrn}`,
+          lifecycleState: 'PUBLISHED',
+          specificContent: {
+            'com.linkedin.ugc.ShareContent': {
+              shareCommentary: { text: postText },
+              shareMediaCategory: 'ARTICLE',
+              media: [
+                {
+                  status: 'READY',
+                  description: { text: article.metaDescription },
+                  originalUrl: articleUrl,
+                  title: { text: article.title },
+                },
+              ],
+            },
+          },
+          visibility: {
+            'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+          },
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      return res.ok;
+    } catch {}
+  }
+
+  return false;
 }

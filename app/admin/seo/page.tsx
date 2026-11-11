@@ -24,6 +24,7 @@ export default function AdminSeoPage() {
   const [generating, setGenerating] = useState(false);
   const [customTopic, setCustomTopic] = useState('');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [copiedLinkedinSlug, setCopiedLinkedinSlug] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const loadSeoData = async (withLiveTrends = false) => {
@@ -85,10 +86,40 @@ export default function AdminSeoPage() {
   };
 
   const copyUrl = (slug: string) => {
-    const url = `https://smartbidhub.com.br/conteudos/${slug}`;
+    const url = `https://www.smartbidhub.com.br/conteudos/${slug}`;
     navigator.clipboard.writeText(url);
     setCopiedSlug(slug);
     setTimeout(() => setCopiedSlug(null), 2000);
+  };
+
+  const copyLinkedInPost = (art: any) => {
+    const bullets =
+      art.sections?.[0]?.bullets?.slice(0, 3) || [
+        'Memória de cálculo auditável de Montantes A, B e C por CCT;',
+        'Simulação automática de tributos por dentro (Gross-up) incluindo Reforma Tributária (IBS e CBS);',
+        'Geração imediata de Proposta Comercial interativa com rastreamento de abertura.',
+      ];
+    const postText = `📊 ${art.title}
+
+Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante os 12 meses do contrato.
+
+${art.excerpt || art.metaDescription}
+
+Pontos críticos que todo diretor e orçamentista precisa blindar antes de enviar uma proposta:
+${bullets.map((b: string) => `✅ ${b}`).join('\n')}
+
+Acabamos de publicar um guia técnico completo com a memória de cálculo detalhada na Central Técnica da SmartBid Hub:
+👉 Leia o guia completo: https://www.smartbidhub.com.br/conteudos/${art.slug}
+
+🚀 Quer substituir planilhas soltas de Excel por um motor completo de Engenharia de Custos (FPV por CCT), CRM e Propostas Interativas?
+Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/lp
+
+#Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
+
+    navigator.clipboard.writeText(postText);
+    setCopiedLinkedinSlug(art.slug);
+    setFeedback(`💼 Post executivo para LinkedIn copiado! Basta colar no seu feed ou agendar no relógio do LinkedIn.`);
+    setTimeout(() => setCopiedLinkedinSlug(null), 2500);
   };
 
   return (
@@ -265,7 +296,21 @@ export default function AdminSeoPage() {
                     <p className="text-xs text-slate-500 line-clamp-2">{art.metaDescription}</p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => copyLinkedInPost(art)}
+                      className="px-3 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                    >
+                      {copiedLinkedinSlug === art.slug ? (
+                        <>
+                          <Check size={14} className="text-white" /> Post LinkedIn Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={14} /> Copiar Post LinkedIn
+                        </>
+                      )}
+                    </button>
                     <button
                       onClick={() => copyUrl(art.slug)}
                       className="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer"
