@@ -127,6 +127,45 @@ export default function LandingPage() {
 
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Registro de ferramentas WebMCP para Navegação Agêntica (Chrome / Lighthouse Agentic Browsing)
+    try {
+      const mc = (navigator as any)?.modelContext || (document as any)?.modelContext;
+      if (mc && typeof mc.registerTool === 'function') {
+        mc.registerTool({
+          name: 'schedule_smartbid_demo',
+          description: 'Agenda uma demonstração gratuita ou solicita contato comercial para testar a plataforma SmartBid Hub.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              nome: { type: 'string', description: 'Nome completo do responsável' },
+              empresa: { type: 'string', description: 'Nome da empresa prestadora de serviços' },
+              email: { type: 'string', description: 'E-mail corporativo para contato' },
+              whatsapp: { type: 'string', description: 'Telefone ou WhatsApp com DDD' },
+              postos: { type: 'string', description: 'Porte da operação (ex.: 10 a 50 postos)' },
+            },
+            required: ['nome', 'empresa', 'whatsapp'],
+            additionalProperties: false,
+          },
+          execute: async (input: any) => {
+            await fetch('/api/public/trial-lead', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                nome: input?.nome || '',
+                empresa: input?.empresa || '',
+                email: input?.email || '',
+                whatsapp: input?.whatsapp || '',
+                plano: 'Agente IA WebMCP',
+                postos: input?.postos || '10 a 50 postos',
+              }),
+            });
+            return 'Solicitação registrada com sucesso na equipe comercial do SmartBid Hub.';
+          },
+        });
+      }
+    } catch {}
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
@@ -1432,21 +1471,29 @@ export default function LandingPage() {
             </button>
 
             {!demoSuccess ? (
-              <form onSubmit={handleDemoSubmit} className="space-y-4">
+              <form
+                onSubmit={handleDemoSubmit}
+                className="space-y-4"
+                {...({
+                  toolname: 'agendar_demonstracao_smartbid',
+                  tooldescription: 'Agendar uma demonstração prática gratuita de 20 minutos da plataforma SmartBid Hub',
+                } as any)}
+              >
                 <div>
                   <h3 className="text-[30px] leading-tight" style={serif}>Ver o SmartBid em ação</h3>
                   <p className="text-[13px] mt-1" style={{ color: C.muted }}>20 minutos, com a sua CCT · {demoPlanName}</p>
                 </div>
 
                 {[
-                  { k: 'nome', l: 'Nome', t: 'text', p: 'Seu nome completo' },
-                  { k: 'email', l: 'E-mail corporativo', t: 'email', p: 'voce@suaempresa.com.br' },
-                  { k: 'whatsapp', l: 'WhatsApp', t: 'tel', p: '(41) 99999-9999' },
-                  { k: 'empresa', l: 'Empresa', t: 'text', p: 'Nome da sua prestadora' },
+                  { k: 'nome', l: 'Nome', t: 'text', p: 'Seu nome completo', desc: 'Nome completo do solicitante' },
+                  { k: 'email', l: 'E-mail corporativo', t: 'email', p: 'voce@suaempresa.com.br', desc: 'Endereço de e-mail corporativo' },
+                  { k: 'whatsapp', l: 'WhatsApp', t: 'tel', p: '(41) 99999-9999', desc: 'Número de WhatsApp com DDD' },
+                  { k: 'empresa', l: 'Empresa', t: 'text', p: 'Nome da sua prestadora', desc: 'Nome da empresa prestadora de serviços' },
                 ].map(f => (
                   <label key={f.k} className="block">
                     <span className="text-[13px] font-medium">{f.l}</span>
                     <input
+                      name={f.k}
                       type={f.t}
                       required
                       placeholder={f.p}
@@ -1454,6 +1501,7 @@ export default function LandingPage() {
                       onChange={(e) => setDemoForm({ ...demoForm, [f.k]: e.target.value })}
                       className="mt-1.5 w-full px-3.5 py-2.5 rounded-lg border bg-white text-[14px] outline-none focus:border-[#1B4D3E]"
                       style={{ borderColor: C.line }}
+                      {...({ toolparamdescription: f.desc } as any)}
                     />
                   </label>
                 ))}
@@ -1461,10 +1509,12 @@ export default function LandingPage() {
                 <label className="block">
                   <span className="text-[13px] font-medium">Porte da operação</span>
                   <select
+                    name="postos"
                     value={demoForm.postos}
                     onChange={(e) => setDemoForm({ ...demoForm, postos: e.target.value })}
                     className="mt-1.5 w-full px-3.5 py-2.5 rounded-lg border bg-white text-[14px] outline-none focus:border-[#1B4D3E]"
                     style={{ borderColor: C.line }}
+                    {...({ toolparamdescription: 'Quantidade estimada de postos de serviço ativos na empresa' } as any)}
                   >
                     <option value="1 a 10 postos">1 a 10 postos</option>
                     <option value="10 a 50 postos">10 a 50 postos</option>

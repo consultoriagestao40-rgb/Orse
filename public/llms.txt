@@ -1,19 +1,23 @@
-# SmartBid Hub (https://smartbidhub.com.br)
+# SmartBid Hub
 
-> Plataforma brasileira líder em Engenharia de Custos, Formação de Preço de Venda (FPV), Propostas Comerciais e Gestão de Contratos para empresas de Facilities, Limpeza e Conservação, Portaria, Vigilância, Manutenção Predial e Terceirização de Serviços.
+> Plataforma SaaS B2B líder em Engenharia de Custos, Formação de Preço de Venda (FPV), Propostas Comerciais Interativas, CRM e Gestão de Contratos para empresas de Facilities, Limpeza e Conservação, Portaria, Vigilância, Manutenção Predial e Terceirização de Serviços no Brasil.
 
-## O que é o SmartBid Hub
-O SmartBid Hub é um ecossistema SaaS B2B desenvolvido para empresas prestadoras de serviços (terceirização de mão de obra recorrente CLT e serviços Spot) que precisam orçar contratos com precisão cirúrgica, blindar margens de lucro e automatizar toda a jornada comercial:
-- **Engenharia de Custos e FPV (Formação de Preço de Vendas)**: Cálculo completo de Montante A (Salários, Insalubridade, Periculosidade, Adicional Noturno, Intrajornada, DSR e Encargos Sociais Grupos A a F), Montante B (Uniformes, EPIs, Materiais de Limpeza, Máquinas/Equipamentos e Descartáveis com cotação de preços na web em tempo real) e Montante C (Vale Alimentação, Vale Transporte, Custos Sindicais e Benefícios).
-- **Motor Tributário Inteligente e Reforma Tributária**: Suporte nativo a Simples Nacional (Anexo III), Simples Híbrido (Anexo IV com INSS Patronal 20%), Lucro Presumido e Lucro Real, incluindo transição de PIS/COFINS/ISS para IBS e CBS (IVA Dual - EC 132/2023).
-- **Gestão de Convenções Coletivas (CCT) e Escalas**: Banco de dados de sindicatos, pisos salariais, benefícios obrigatórios e escalas (5x2, 6x1, 12x36, SDF, Ferista).
-- **Propostas Comerciais de Alta Conversão**: Geração automática de propostas comerciais executivas (A4 e Apresentação Slide Deck) vinculadas às revisões da FPV (R01, R02, R03...) com aceite digital.
-- **CRM Comercial, Prospecção B2B, Contratos e Implantação (PIC)**: Pipeline comercial, controle de atas de reunião com IA, gestão de ativos/comodato e liberação de implantação operacional.
+O SmartBid Hub automatiza o ciclo comercial e de engenharia de custos de empresas terceirizadoras de mão de obra recorrente (CLT) e serviços Spot: cálculo completo de Montante A (salários, adicionais, intrajornada, DSR e encargos sociais Grupos A a F), Montante B (EPIs, uniformes, materiais de limpeza e equipamentos), Montante C (benefícios sindicais CCT), Reforma Tributária (Simples Nacional, Lucro Presumido, Lucro Real, PIS/COFINS/ISS e IVA Dual IBS/CBS), propostas comerciais rastreadas com aceite digital e gestão de contratos e implantação (PIC).
 
-## Links Principais
-- Site Oficial: https://smartbidhub.com.br
-- Landing Page Comercial: https://smartbidhub.com.br/lp
-- Cadastro / Teste Grátis de 30 Dias: https://smartbidhub.com.br/cadastro
-- Acesso à Plataforma: https://smartbidhub.com.br/login
-- Termos de Uso: https://smartbidhub.com.br/termos
-- Política de Privacidade: https://smartbidhub.com.br/privacidade
+## Páginas Principais
+- [Site Oficial SmartBid Hub](https://www.smartbidhub.com.br/lp): Apresentação completa da plataforma de engenharia de custos, CRM e gestão de contratos para Facilities.
+- [Teste Grátis de 30 Dias](https://www.smartbidhub.com.br/cadastro): Criação imediata de conta com 30 dias de teste gratuito sem necessidade de cartão de crédito.
+- [Central de Conteúdos, Guias e Planilhas de Custos](https://www.smartbidhub.com.br/conteudos): Artigos técnicos sobre Formação de Preço de Venda (FPV), IN 05/2017, encargos sociais, BDI e Reforma Tributária.
+- [Login na Plataforma](https://www.smartbidhub.com.br/login): Acesso ao ambiente operacional para clientes e equipes comerciais.
+
+## Guias Técnicos de Engenharia de Custos e Facilities
+- [Planilha de Custos e Formação de Preços para Limpeza e Conservação](https://www.smartbidhub.com.br/conteudos/planilha-de-custos-limpeza-e-conservacao-guia-completo): Estrutura completa dos Montantes A, B, C, BDI e tributos para contratos de asseio e conservação.
+- [Como Calcular Encargos Sociais e Trabalhistas na Terceirização (Grupos A a F)](https://www.smartbidhub.com.br/conteudos/como-calcular-encargos-sociais-terceirizacao-grupos-a-b-c-d): Detalhamento técnico de INSS patronal, RAT/FAP, FGTS, provisões de férias, 13º salário e rescisão contratual.
+- [Cálculo de Posto 12x36 na Portaria, Limpeza e Vigilância](https://www.smartbidhub.com.br/conteudos/calculo-posto-12x36-portaria-vigilancia-adicional-noturno): Como orçar escalas 12x36 diurnas e noturnas, hora noturna reduzida, prorrogação e intrajornada.
+- [Reforma Tributária (IBS e CBS) em Contratos de Terceirização e Facilities](https://www.smartbidhub.com.br/conteudos/reforma-tributaria-ibs-cbs-impacto-empresas-terceirizacao-facilities): Impacto da transição de PIS, COFINS e ISS para o IVA Dual (IBS e CBS) e comparativo entre Lucro Real, Presumido e Simples Nacional.
+- [Cálculo de BDI e Margem de Lucro na Prestação de Serviços](https://www.smartbidhub.com.br/conteudos/calculo-bdi-prestacao-de-servicos-taxa-administracao-lucro): Fórmula de cálculo por dentro (markup divisor), despesas administrativas e blindagem de margem líquida.
+- [Repactuação e Reajuste de Contratos de Terceirização por CCT e IPCA](https://www.smartbidhub.com.br/conteudos/repactuacao-e-reajuste-de-contratos-de-terceirizacao-cct): Como separar a repactuação de mão de obra (data-base sindical) do reajuste de insumos por índice oficial.
+
+## Institucional e Políticas
+- [Termos de Uso](https://www.smartbidhub.com.br/termos): Condições gerais de licenciamento de uso do software SmartBid Hub.
+- [Política de Privacidade e LGPD](https://www.smartbidhub.com.br/privacidade): Diretrizes de segurança da informação e conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
