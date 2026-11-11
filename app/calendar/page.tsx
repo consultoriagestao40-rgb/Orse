@@ -44,24 +44,25 @@ export default function CalendarPage() {
   const [selectedDayEvents, setSelectedDayEvents] = useState<{ dateStr: string; dayNum: number } | null>(null);
   const [viewEventModal, setViewEventModal] = useState<CalendarEventItem | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [savingNewEvent, setSavingNewEvent] = useState(false);
   const [newEventData, setNewEventData] = useState({
     titulo: '',
     descricao: '',
-    tipo: 'REUNIAO' as const,
+    tipo: 'REUNIAO' as 'REUNIAO' | 'LIGACAO' | 'VISITA' | 'TAREFA' | 'OUTRO',
     data: '',
     hora: '10:00',
     userId: ''
   });
 
-  const loadCalendarData = async () => {
-    setLoading(true);
+  const loadCalendarData = async (showSkeleton = true) => {
+    if (showSkeleton) setLoading(true);
     const res = await getUnifiedCalendarData();
     if (res.success) {
       setEvents(res.events || []);
       setAllUsers(res.users || []);
       if (res.currentUser) setCurrentUser(res.currentUser);
     }
-    setLoading(false);
+    if (showSkeleton) setLoading(false);
   };
 
   useEffect(() => {
@@ -102,7 +103,9 @@ export default function CalendarPage() {
   const filteredEvents = useMemo(() => {
     return events.filter(ev => {
       // Filtro de Categoria
-      if (categoryFilter !== 'TODOS' && ev.origem !== categoryFilter) {
+      if (categoryFilter === 'ATA') {
+        if (ev.origem !== 'ATA' && ev.origem !== 'EVENTO') return false;
+      } else if (categoryFilter !== 'TODOS' && ev.origem !== categoryFilter) {
         return false;
       }
 
@@ -133,7 +136,7 @@ export default function CalendarPage() {
   const counts = useMemo(() => {
     return {
       todos: events.length,
-      ata: events.filter(e => e.origem === 'ATA').length,
+      ata: events.filter(e => e.origem === 'ATA' || e.origem === 'EVENTO').length,
       lead: events.filter(e => e.origem === 'LEAD').length,
       tarefa: events.filter(e => e.origem === 'TAREFA').length,
       contrato: events.filter(e => e.origem === 'CONTRATO').length,
@@ -221,21 +224,31 @@ export default function CalendarPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEventData.titulo || !newEventData.data) return;
+    if (!newEventData.titulo || !newEventData.data || savingNewEvent) return;
 
-    const dataInicioStr = `${newEventData.data}T${newEventData.hora || '10:00'}:00`;
-    const res = await createQuickCalendarEvent({
-      titulo: newEventData.titulo,
-      descricao: newEventData.descricao,
-      tipo: newEventData.tipo,
-      dataInicio: new Date(dataInicioStr).toISOString(),
-      userId: newEventData.userId || currentUser?.id
-    });
+    setSavingNewEvent(true);
+    try {
+      const targetDate = newEventData.data;
+      const targetDayNum = parseInt(targetDate.split('-')[2] || '1', 10);
+      const dataInicioStr = `${targetDate}T${newEventData.hora || '10:00'}:00-03:00`;
+      const res = await createQuickCalendarEvent({
+        titulo: newEventData.titulo,
+        descricao: newEventData.descricao,
+        tipo: newEventData.tipo,
+        dataInicio: new Date(dataInicioStr).toISOString(),
+        userId: newEventData.userId || currentUser?.id
+      });
 
-    if (res.success) {
-      setShowNewModal(false);
-      setNewEventData({ titulo: '', descricao: '', tipo: 'REUNIAO', data: '', hora: '10:00', userId: '' });
-      loadCalendarData();
+      if (res.success) {
+        setShowNewModal(false);
+        setSelectedDayEvents({ dateStr: targetDate, dayNum: targetDayNum });
+        setNewEventData({ titulo: '', descricao: '', tipo: 'REUNIAO', data: '', hora: '10:00', userId: '' });
+        await loadCalendarData(false);
+      } else {
+        alert(`Erro ao salvar compromisso: ${res.error || 'Tente novamente.'}`);
+      }
+    } finally {
+      setSavingNewEvent(false);
     }
   };
 
@@ -787,9 +800,10 @@ export default function CalendarPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-xl text-xs font-black shadow-xs cursor-pointer"
+                  disabled={savingNewEvent}
+                  className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382d] disabled:opacity-60 text-white rounded-xl text-xs font-black shadow-xs cursor-pointer"
                 >
-                  Salvar Compromisso
+                  {savingNewEvent ? 'Salvando...' : 'Salvar Compromisso'}
                 </button>
               </div>
             </form>

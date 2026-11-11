@@ -129,6 +129,24 @@ export default function PushRegister() {
   };
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = window.location.pathname;
+    if (
+      p === '/' ||
+      p.startsWith('/lp') ||
+      p.startsWith('/login') ||
+      p.startsWith('/cadastro') ||
+      p.startsWith('/conteudos') ||
+      p.startsWith('/termos') ||
+      p.startsWith('/privacidade') ||
+      p.startsWith('/proposta/ver/')
+    ) {
+      return;
+    }
+    if (!document.cookie.includes('sb_user=')) {
+      return;
+    }
+
     let intervalId: NodeJS.Timeout;
 
     const checkNewMessages = async () => {

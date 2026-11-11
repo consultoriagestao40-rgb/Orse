@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap');
-
 /* =========================================================
    SmartBid LP — sistema de movimento
    Fundo claro, sem neon. Movimento com propósito.
@@ -11,13 +9,12 @@
 
 /* palco 3D: entrada sem blur (blur quebraria o backdrop e o 3D) */
 @keyframes lp-rise-nf {
-  from { opacity: 0; transform: translateY(60px); }
-  to { opacity: 1; transform: none; }
+  from { transform: translate3d(0, 24px, 0); }
+  to { transform: none; }
 }
-.lp-stage.lp-enter { animation-name: lp-rise-nf; animation-duration: 1.2s; }
+.lp-stage.lp-enter { animation-name: lp-rise-nf; animation-duration: 0.7s; }
 
 .lp-root {
-  --font-lp-text: 'Inter Tight', system-ui, -apple-system, sans-serif;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
   --ease-smooth: cubic-bezier(0.25, 1, 0.5, 1);
@@ -81,27 +78,32 @@
   transform-origin: left;
 }
 
-/* ---------- Entrada do hero (no carregamento) ---------- */
+/* ---------- Entrada do hero (no carregamento - 100% GPU composited sem atrasar LCP) ---------- */
 @keyframes lp-rise {
-  from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
-  to { opacity: 1; transform: none; filter: blur(0); }
+  from { transform: translate3d(0, 12px, 0); }
+  to { transform: none; }
 }
 .lp-enter {
-  opacity: 0;
-  animation: lp-rise 0.9s var(--ease-out) forwards;
-  animation-delay: var(--d, 0ms);
+  opacity: 1;
+  animation: lp-rise 0.55s var(--ease-out) both;
 }
 
-/* palavras do título entrando uma a uma */
+/* palavras do título visíveis no primeiro frame para LCP imediato (< 0.6s) */
 .lp-word {
   display: inline-block;
-  opacity: 0;
-  transform: translateY(0.45em);
-  animation: lp-word 0.8s var(--ease-out) forwards;
-  animation-delay: var(--d, 0ms);
+  opacity: 1;
 }
-@keyframes lp-word {
-  to { opacity: 1; transform: none; }
+@media (max-width: 768px) {
+  .lp-enter,
+  .lp-stage.lp-enter,
+  .lp-aurora,
+  .lp-beam,
+  .lp-sunrise,
+  .lp-rings span,
+  .lp-pulse-orange {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 /* ---------- Faixa verde: luz em movimento ---------- */
@@ -184,36 +186,30 @@
   transition: left 0.45s var(--ease-out), width 0.45s var(--ease-out);
 }
 
-/* ---------- Revelação ao rolar (Cinematic deblur + spring) ---------- */
+/* ---------- Revelação ao rolar (GPU-composited sem filter blur) ---------- */
 .lp-reveal {
   opacity: 0;
-  transform: translateY(28px);
-  filter: blur(8px);
-  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--d, 0ms);
-  will-change: opacity, transform, filter;
+  will-change: opacity, transform;
 }
 .lp-reveal.is-in {
   opacity: 1;
   transform: none;
-  filter: blur(0);
 }
 .lp-reveal-scale {
   opacity: 0;
-  transform: translateY(32px) scale(0.96);
-  filter: blur(10px);
-  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate3d(0, 28px, 0) scale(0.97);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--d, 0ms);
-  will-change: opacity, transform, filter;
+  will-change: opacity, transform;
 }
 .lp-reveal-scale.is-in {
   opacity: 1;
   transform: none;
-  filter: blur(0);
 }
 
 /* linha que se desenha */
@@ -549,15 +545,15 @@
 }
 @keyframes lp-mark-draw { to { stroke-dashoffset: 0; } }
 
-/* botão laranja (ação principal) */
+/* botão laranja (ação principal — contraste WCAG AA >= 5.1:1 com texto branco) */
 .lp-btn-orange {
-  background: var(--orange);
+  background: #C2410C;
   color: #fff;
-  box-shadow: 0 10px 30px -10px rgba(234, 88, 12, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 30px -10px rgba(194, 65, 12, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .lp-btn-orange:hover {
-  background: #F06415;
-  box-shadow: 0 18px 40px -12px rgba(234, 88, 12, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: #9A3412;
+  box-shadow: 0 18px 40px -12px rgba(194, 65, 12, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 @keyframes lp-ring-orange {
   0% { box-shadow: 0 0 0 0 rgba(255, 122, 47, 0.55), 0 10px 30px -10px rgba(234, 88, 12, 0.7); }

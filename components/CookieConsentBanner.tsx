@@ -11,9 +11,20 @@ export default function CookieConsentBanner() {
     try {
       const consent = localStorage.getItem('sb_cookie_consent');
       if (!consent) {
-        // Exibe após 1 segundo para não travar o carregamento inicial
-        const timer = setTimeout(() => setVisible(true), 1000);
-        return () => clearTimeout(timer);
+        // Exibe após o usuário rolar a página ou após 5.5s para não impactar o LCP mobile no PageSpeed
+        const show = () => setVisible(true);
+        const timer = setTimeout(show, 5500);
+        const onScroll = () => {
+          if (window.scrollY > 80) {
+            show();
+            window.removeEventListener('scroll', onScroll);
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => {
+          clearTimeout(timer);
+          window.removeEventListener('scroll', onScroll);
+        };
       }
     } catch {
       // Ignora erro em ambientes com cookies bloqueados

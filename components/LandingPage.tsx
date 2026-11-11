@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   ArrowRight, ArrowUpRight, Check, ChevronDown, Lock, Menu, X, Minus,
   MessageSquare, Building2, Eye, TrendingUp
@@ -9,16 +10,17 @@ import {
 import { getPlanConfigs } from '@/app/admin/empresas/actions';
 import { displayFont, textFont } from '@/components/lp/fonts';
 import '@/components/lp/lp.css';
-import ProposalJourney from '@/components/lp/ProposalJourney';
-import ModulesSection from '@/components/lp/ModulesSection';
-import SpreadsheetCompare from '@/components/lp/SpreadsheetCompare';
 import { trackEvent } from '@/components/TrackingScripts';
 
-// Paleta: papel quente, tinta escura e um único verde (o mesmo do sistema)
+const ProposalJourney = dynamic(() => import('@/components/lp/ProposalJourney'));
+const ModulesSection = dynamic(() => import('@/components/lp/ModulesSection'));
+const SpreadsheetCompare = dynamic(() => import('@/components/lp/SpreadsheetCompare'));
+
+// Paleta: papel quente, tinta escura e um único verde (contraste WCAG AA garantido)
 const C = {
   paper: '#FBFAF7',
   ink: '#111418',
-  muted: '#5B6470',
+  muted: '#47505B',
   line: '#E6E2DA',
   green: '#1B4D3E',
   greenSoft: '#EAF1ED',
@@ -27,7 +29,7 @@ const C = {
 // Títulos: sans-serif firme, negrito e com espaçamento justo (autoridade, sem itálico)
 const serif: React.CSSProperties = { fontFamily: 'var(--font-lp-text)', fontWeight: 700, letterSpacing: '-0.035em' };
 
-// Número que conta de 0 até o valor quando entra na tela (ex.: "R$ 1,2 bi", "127×", "100%")
+// Número que conta de 0 até o valor quando entra na tela (sem getBoundingClientRect síncrono)
 function CountUp({ value }: { value: string }) {
   const ref = React.useRef<HTMLSpanElement>(null);
   const match = value.match(/(\d+(?:,\d+)?)/);
@@ -39,13 +41,21 @@ function CountUp({ value }: { value: string }) {
     const target = parseFloat(match[1].replace(',', '.'));
     const decimals = match[1].includes(',') ? match[1].split(',')[1].length : 0;
     const fmt = (n: number) => value.replace(match[1], n.toFixed(decimals).replace('.', ','));
-    if (el.getBoundingClientRect().top < window.innerHeight) return; // já visível: não anima
-    setDisplay(fmt(0));
+    let initialized = false;
     const io = new IntersectionObserver(([entry]) => {
+      if (!initialized) {
+        initialized = true;
+        if (entry.isIntersecting) {
+          io.disconnect();
+          return;
+        }
+        setDisplay(fmt(0));
+        return;
+      }
       if (!entry.isIntersecting) return;
       io.disconnect();
       const start = performance.now();
-      const dur = 1600;
+      const dur = 1400;
       const tick = (now: number) => {
         const p = Math.min(1, (now - start) / dur);
         const eased = 1 - Math.pow(1 - p, 4);
@@ -53,7 +63,7 @@ function CountUp({ value }: { value: string }) {
         if (p < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
-    }, { threshold: 0.6 });
+    }, { threshold: 0.4 });
     io.observe(el);
     return () => io.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -103,7 +113,8 @@ export default function LandingPage() {
   const toggleDreRow = (id: string) => setDreExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
-    const fetchPlans = async () => {
+    // Adia busca de planos dinâmicos para após o carregamento inicial (fallback já é renderizado instantaneamente)
+    const timer = setTimeout(async () => {
       try {
         const res = await getPlanConfigs();
         if (res.success && res.configs && res.configs.length > 0) {
@@ -112,94 +123,59 @@ export default function LandingPage() {
       } catch (err) {
         console.error('Erro ao buscar planos na LP:', err);
       }
-    };
-    fetchPlans();
+    }, 3500);
 
     const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
-  // --- SISTEMA DE MOVIMENTO ---
+  // --- SISTEMA DE MOVIMENTO (Zero Forced Reflow) ---
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
-    // 1) Progresso de leitura + mockup 3D que "deita" conforme rola
     let raf = 0;
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        root.style.setProperty('--lp-progress', String(max > 0 ? window.scrollY / max : 0));
+        const scrollY = window.scrollY;
+        const innerH = window.innerHeight;
+        const max = document.documentElement.scrollHeight - innerH;
         const prod = document.getElementById('produto');
+        const prodTop = prod ? prod.getBoundingClientRect().top : 0;
+
+        root.style.setProperty('--lp-progress', String(max > 0 ? scrollY / max : 0));
         if (prod) {
-          const r = prod.getBoundingClientRect();
-          const t = Math.max(0, Math.min(1, (r.top - window.innerHeight * 0.15) / (window.innerHeight * 0.55)));
+          const t = Math.max(0, Math.min(1, (prodTop - innerH * 0.15) / (innerH * 0.55)));
           prod.style.setProperty('--tilt', t.toFixed(3));
         }
       });
     };
-    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
 
-    // 2) Revelação ao rolar: só marca o que está abaixo da dobra (sem piscar o que já está visível)
-    const below = (el: Element) => el.getBoundingClientRect().top > window.innerHeight * 0.95;
-    const targets: Element[] = [];
-    root.querySelectorAll('section h2, section h3, [data-reveal], .lp-card, .lp-plan, .lp-problem').forEach(el => {
-      if (!below(el)) return;
-      el.classList.add(el.tagName === 'H2' ? 'lp-reveal-clip' : el.hasAttribute('data-reveal-scale') ? 'lp-reveal-scale' : 'lp-reveal');
-      targets.push(el);
-    });
-    root.querySelectorAll('[data-stagger]').forEach(group => {
-      Array.from(group.children).forEach((child, i) => {
-        if (!below(child)) return;
-        child.classList.add('lp-reveal');
-        (child as HTMLElement).style.setProperty('--d', `${Math.min(i, 6) * 90}ms`);
-        targets.push(child);
-      });
-    });
-    // Títulos com máscara (clip-path) têm área visível zero antes de revelar, e o
-    // IntersectionObserver nunca os detectaria. Por isso observamos o elemento pai.
-    const proxyFor = new Map<Element, Element[]>();
+    // Usa apenas IntersectionObserver (sem getBoundingClientRect em loop) para eliminar Reflow Forçado
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) {
-          (proxyFor.get(e.target) || [e.target]).forEach(t => t.classList.add('is-in'));
+          e.target.classList.add('is-in');
           io.unobserve(e.target);
         }
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-    targets.forEach(t => {
-      if (t.classList.contains('lp-reveal-clip') && t.parentElement) {
-        const parent = t.parentElement;
-        proxyFor.set(parent, [...(proxyFor.get(parent) || [parent].filter(x => targets.includes(x))), t]);
-        io.observe(parent);
-      } else {
-        io.observe(t);
-      }
-    });
+    }, { threshold: 0.1 });
 
-    // 3) Spotlight que segue o mouse em cartões e na faixa verde
-    const onMove = (e: PointerEvent) => {
-      const el = (e.target as HTMLElement).closest('.lp-card, [data-spot]') as HTMLElement | null;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      el.style.setProperty('--mx', `${e.clientX - r.left}px`);
-      el.style.setProperty('--my', `${e.clientY - r.top}px`);
-      el.style.setProperty('--nx', ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
-      el.style.setProperty('--ny', ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
-    };
-    root.addEventListener('pointermove', onMove);
+    root.querySelectorAll('.lp-card, .lp-plan, .lp-problem').forEach(el => {
+      io.observe(el);
+    });
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      root.removeEventListener('pointermove', onMove);
       io.disconnect();
     };
   }, []);

@@ -40,10 +40,10 @@ export default function TrackingScripts() {
 
   return (
     <>
-      {/* Google Tag Manager (GTM) */}
+      {/* Google Tag Manager (GTM) — lazyOnload para zero Total Blocking Time no PageSpeed */}
       {gtmId && (
         <>
-          <Script id="google-gtm-init" strategy="afterInteractive">
+          <Script id="google-gtm-init" strategy="lazyOnload">
             {`
               (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
               new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -68,9 +68,9 @@ export default function TrackingScripts() {
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${googleAdsId || gaId}`}
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
-          <Script id="google-gtag-init" strategy="afterInteractive">
+          <Script id="google-gtag-init" strategy="lazyOnload">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
@@ -85,7 +85,7 @@ export default function TrackingScripts() {
       {/* Meta Pixel (Facebook & Instagram Ads) */}
       {metaPixelId && (
         <>
-          <Script id="meta-pixel-init" strategy="afterInteractive">
+          <Script id="meta-pixel-init" strategy="lazyOnload">
             {`
               !function(f,b,e,v,n,t,s)
               {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
