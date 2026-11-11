@@ -13,6 +13,7 @@ O SmartBid Hub é um ecossistema SaaS B2B desenvolvido para empresas prestadoras
 ## Links Principais
 - Site Oficial: https://smartbidhub.com.br
 - Landing Page Comercial: https://smartbidhub.com.br/lp
+- Cadastro / Teste Grátis de 30 Dias: https://smartbidhub.com.br/cadastro
 - Acesso à Plataforma: https://smartbidhub.com.br/login
 - Termos de Uso: https://smartbidhub.com.br/termos
 - Política de Privacidade: https://smartbidhub.com.br/privacidade

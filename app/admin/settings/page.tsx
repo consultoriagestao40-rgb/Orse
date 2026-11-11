@@ -2511,7 +2511,7 @@ export default function SettingsPage() {
                             Plano Atual
                           </span>
                           <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight mt-1">
-                            {billingInfo.plano === 'TESTE' ? 'Teste Grátis 7 Dias' : `Plano ${billingInfo.plano}`}
+                            {billingInfo.plano === 'TESTE' ? 'Teste Grátis 30 Dias' : `Plano ${billingInfo.plano}`}
                           </h3>
                           <p className="text-xs text-slate-400 font-medium">
                             {billingInfo.plano === 'TESTE' 

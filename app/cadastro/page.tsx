@@ -116,11 +116,11 @@ function CadastroForm() {
       const data = await res.json();
       if (res.ok && data.success) {
         trackEvent('CompleteRegistration', {
-          content_name: plano || 'Trial 7 Dias',
+          content_name: plano || 'Trial 30 Dias',
           status: 'registered',
         });
         trackEvent('StartTrial', {
-          content_name: plano || 'Trial 7 Dias',
+          content_name: plano || 'Trial 30 Dias',
         });
         setRegisteredEmail(data.email || form.email);
         setStep('VERIFICATION_INSTRUCTIONS');
@@ -295,7 +295,7 @@ function CadastroForm() {
           {/* Coluna de valor */}
           <section className="lg:col-span-6 lg:pt-6">
             <p className="text-[14px] font-semibold mb-5" style={{ color: '#EA580C' }}>
-              Teste grátis por 7 dias
+              Teste grátis por 30 dias
             </p>
             <h1 className="text-[36px] sm:text-[46px] leading-[1.05]" style={title}>
               Crie a sua conta e monte a primeira proposta hoje.
@@ -328,7 +328,7 @@ function CadastroForm() {
 
             <div className="mt-12 pt-8 border-t grid grid-cols-3 gap-6 max-w-[520px]" style={{ borderColor: C.line }}>
               {[
-                ['7 dias', 'de acesso completo'],
+                ['30 dias', 'de acesso completo'],
                 ['2 min', 'para criar a conta'],
                 ['R$ 0', 'durante o teste'],
               ].map(([n, l]) => (
@@ -346,9 +346,9 @@ function CadastroForm() {
               className="bg-white rounded-[22px] border p-7 sm:p-9 shadow-[0_30px_60px_-35px_rgba(17,20,24,0.3)]"
               style={{ borderColor: C.line }}
             >
-              <h2 className="text-[24px]" style={title}>Comece o seu teste grátis</h2>
+              <h2 className="text-[24px]" style={title}>Comece o seu teste grátis de 30 dias</h2>
               <p className="text-[14px] mt-1.5 mb-7" style={{ color: C.muted }}>
-                {plano ? `Plano escolhido: ${plano}. ` : ''}Você só escolhe o plano depois dos 7 dias.
+                {plano ? `Plano escolhido: ${plano}. ` : ''}Você só escolhe e paga o plano após concluir os 30 dias.
               </p>
 
               <a

@@ -80,6 +80,11 @@ export async function getTenantsWithStats() {
     const tenants = await prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
+        users: {
+          take: 1,
+          orderBy: { createdAt: 'asc' },
+          select: { nome: true, email: true, celular: true },
+        },
         _count: {
           select: {
             users: true,
@@ -101,6 +106,9 @@ export async function getTenantsWithStats() {
       limiteUsuarios: t.limiteUsuarios,
       trialStartedAt: t.trialStartedAt ? t.trialStartedAt.toISOString() : null,
       taxaWhatsapp: t.taxaWhatsapp,
+      whatsappPhone: t.whatsappPhone || t.users?.[0]?.celular || null,
+      responsavelNome: t.users?.[0]?.nome || null,
+      responsavelEmail: t.users?.[0]?.email || null,
       stats: {
         users: t._count.users,
         propostas: t._count.propostas,
@@ -392,7 +400,7 @@ export async function getTenantTrialStatus() {
     let trialExpired = false;
     let remainingTimeMs = 0;
     const trialStart = tenant.trialStartedAt || tenant.createdAt;
-    const durationMs = 7 * 24 * 60 * 60 * 1000; // 7 dias
+    const durationMs = 30 * 24 * 60 * 60 * 1000; // 30 dias
     const trialEnd = new Date(trialStart.getTime() + durationMs);
     const now = new Date();
 
@@ -454,6 +462,21 @@ export async function updateTenantContactAction(phone: string) {
       where: { id: user.id },
       data: { celular: phone }
     });
+
+    // Dispara Boas-Vindas no WhatsApp Oficial e registra no CRM do Super Admin
+    try {
+      const { processSaasTrialOnboarding } = await import('@/lib/saas-onboarding');
+      await processSaasTrialOnboarding({
+        nome: user.nome,
+        empresa: (user as any).tenant?.nomeFantasia || user.nome,
+        email: user.email,
+        celular: cleanedPhone,
+        planoInteresse: 'Teste Grátis 30 Dias',
+        origem: 'GOOGLE_AUTH',
+      });
+    } catch (onbErr) {
+      console.error('Erro ao registrar onboarding após captura de WhatsApp:', onbErr);
+    }
 
     return { success: true };
   } catch (error: any) {

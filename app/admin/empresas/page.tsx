@@ -556,6 +556,13 @@ function TenantManagerDashboardContent() {
                                 )}
                               </p>
                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">ID: {t.id}</p>
+                              {((t as any).responsavelNome || (t as any).whatsappPhone) && (
+                                <p className="text-[11px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-2 flex-wrap">
+                                  {(t as any).responsavelNome && <span>👤 {(t as any).responsavelNome}</span>}
+                                  {(t as any).whatsappPhone && <span>📱 {(t as any).whatsappPhone}</span>}
+                                  {(t as any).responsavelEmail && <span className="text-slate-400">✉️ {(t as any).responsavelEmail}</span>}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -565,7 +572,7 @@ function TenantManagerDashboardContent() {
                             <div>
                               {t.plano === 'TESTE' ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide animate-pulse">
-                                  Teste 7 Dias
+                                  Teste 30 Dias
                                 </span>
                               ) : t.plano === 'PRO' ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide">
@@ -606,6 +613,24 @@ function TenantManagerDashboardContent() {
                         <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(t.createdAt).toLocaleDateString('pt-BR')}</td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2.5">
+                            {(t as any).whatsappPhone && (
+                              <a
+                                href={`https://wa.me/${String((t as any).whatsappPhone).replace(/\D/g, '').startsWith('55') ? String((t as any).whatsappPhone).replace(/\D/g, '') : `55${String((t as any).whatsappPhone).replace(/\D/g, '')}`}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                title="Chamar Cliente no WhatsApp"
+                              >
+                                💬
+                              </a>
+                            )}
+                            <a
+                              href="/leads"
+                              className="px-2 py-1 rounded-lg bg-[#1B4D3E]/10 text-[#1B4D3E] hover:bg-[#1B4D3E]/20 text-[10px] font-black uppercase tracking-wider transition-colors"
+                              title="Ver no Pipeline / CRM"
+                            >
+                              CRM
+                            </a>
                             <button
                               onClick={() => handleToggleActive(t)}
                               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
@@ -1594,7 +1619,7 @@ function TenantManagerDashboardContent() {
                   }}
                   disabled={actionLoading}
                 >
-                  <option value="TESTE">Teste Grátis (7 dias - 3 users)</option>
+                  <option value="TESTE">Teste Grátis (30 dias - 3 users)</option>
                   <option value="STARTER">Starter (3 users)</option>
                   <option value="PRO">Pro (10 users)</option>
                   <option value="ENTERPRISE">Enterprise (100 users)</option>

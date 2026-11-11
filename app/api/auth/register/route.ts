@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const { nome, email, password, empresa, celular } = await request.json()
+    const { nome, email, password, empresa, celular, plano } = await request.json()
 
     if (!nome || !email || !password || !empresa?.trim()) {
       return NextResponse.json({ error: 'Nome, empresa, e-mail e senha são obrigatórios.' }, { status: 400 })
@@ -75,6 +75,21 @@ export async function POST(request: Request) {
       })
     } catch (mailErr) {
       console.error('Falha ao disparar e-mail de verificação no registro:', mailErr)
+    }
+
+    // Dispara Boas-Vindas no WhatsApp Oficial e registra o Lead no CRM do Super Admin
+    try {
+      const { processSaasTrialOnboarding } = await import('@/lib/saas-onboarding')
+      await processSaasTrialOnboarding({
+        nome: user.nome,
+        empresa: empresa.trim(),
+        email: user.email,
+        celular: celularDigits,
+        planoInteresse: plano || 'Teste Grátis 30 Dias',
+        origem: 'CADASTRO_TRIAL_30D',
+      })
+    } catch (onbErr) {
+      console.error('Falha ao processar onboarding SaaS no registro:', onbErr)
     }
 
     return NextResponse.json({

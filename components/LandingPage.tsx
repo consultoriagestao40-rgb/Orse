@@ -219,6 +219,18 @@ export default function LandingPage() {
       company: demoForm.empresa,
       size: demoForm.postos,
     });
+    fetch('/api/public/trial-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: demoForm.nome,
+        empresa: demoForm.empresa,
+        email: demoForm.email,
+        whatsapp: demoForm.whatsapp,
+        plano: demoPlanName,
+        postos: demoForm.postos,
+      }),
+    }).catch(() => {});
     const msg = encodeURIComponent(
       `Olá! Gostaria de agendar uma demonstração prática do SmartBid (${demoPlanName}).\nNome: ${demoForm.nome}\nEmpresa: ${demoForm.empresa}\nWhatsApp: ${demoForm.whatsapp}\nPorte: ${demoForm.postos}`
     );
@@ -304,7 +316,7 @@ export default function LandingPage() {
               href="/cadastro"
               className="lp-btn lp-btn-orange text-[14px] font-semibold px-4 py-2 rounded-full"
             >
-              Testar grátis por 7 dias
+              Testar grátis por 30 dias
             </a>
           </div>
 
@@ -388,7 +400,7 @@ export default function LandingPage() {
                   href="/cadastro"
                   className="lp-btn lp-btn-orange lp-pulse-orange group w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[15px] font-bold px-7 py-4 rounded-xl"
                 >
-                  Começar teste grátis de 7 dias
+                  Começar teste grátis de 30 dias
                   <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </a>
                 <button
@@ -846,7 +858,7 @@ export default function LandingPage() {
               ['R$ 1,2 bi', 'em propostas gerenciadas'],
               ['100%', 'das CCTs parametrizadas'],
               ['127×', 'acessos rastreados numa proposta'],
-              ['7 dias', 'grátis para testar tudo'],
+              ['30 dias', 'grátis para testar tudo'],
             ].map(([n, l], i) => (
               <div key={n} className={`lp-stat-card text-center px-4 cursor-default ${i > 0 ? 'lg:border-l' : ''} ${i % 2 === 1 ? 'border-l lg:border-l' : ''}`} style={{ borderColor: C.line }}>
                 <p className="text-[44px] md:text-[52px] leading-none tabular-nums transition-transform duration-300 hover:scale-105" style={{ ...serif, fontWeight: 800, color: C.ink }}><CountUp value={n} /></p>
@@ -1330,8 +1342,8 @@ export default function LandingPage() {
           <div className="lg:col-span-8 border-t" style={{ borderColor: C.line }}>
             {[
               {
-                pergunta: 'Como funciona o teste grátis de 7 dias?',
-                resposta: 'Você cria a conta sozinho em 2 minutos, sem cartão de crédito, e usa a plataforma completa por 7 dias. No fim do teste você escolhe o plano para continuar. Se não escolher, a conta fica pausada e nada é cobrado.'
+                pergunta: 'Como funciona o teste grátis de 30 dias?',
+                resposta: 'Você cria a conta sozinho em 2 minutos, sem cartão de crédito, e usa a plataforma completa por 30 dias. No fim dos 30 dias você escolhe o seu plano pré-pago para continuar. Se não escolher, a conta fica pausada e nada é cobrado.'
               },
               {
                 pergunta: 'Consigo cadastrar convenções de estados diferentes?',
@@ -1389,7 +1401,7 @@ export default function LandingPage() {
           </h2>
           <div className="relative lg:col-span-4">
             <p className="text-[15px] text-white/70 leading-[1.6]">
-              Teste por 7 dias, monte a primeira proposta e veja a DRE do projeto antes de enviar. Sem cartão de crédito.
+              Teste por 30 dias, monte suas propostas e veja a DRE do projeto antes de enviar. Sem cartão de crédito.
             </p>
             <a
               id="final-teste-gratis"

@@ -86,8 +86,9 @@ const Sidebar = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [trialAlert, setTrialAlert] = useState<{ open: boolean; title: string; message: string } | null>(null);
 
-  // Estados e lógicas do Período de Testes Grátis de 7 Dias
+  // Estados e lógicas do Período de Testes Grátis de 30 Dias
   const [trialStatus, setTrialStatus] = useState<any>(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneError, setPhoneError] = useState('');
@@ -266,6 +267,10 @@ const Sidebar = () => {
               if (trialRes.isTrialActive) {
                 if (!trialRes.trialExpired && trialRes.hasContact) {
                   document.body.classList.add('has-trial-banner');
+                  const welcomeKey = `sb_welcome_30d_seen_${trialRes.createdAt || 'default'}`;
+                  if (!localStorage.getItem(welcomeKey) || window.location.search.includes('ativado=true')) {
+                    setShowWelcomeModal(true);
+                  }
                 } else {
                   document.body.classList.remove('has-trial-banner');
                 }
@@ -289,6 +294,10 @@ const Sidebar = () => {
             if (trialRes.isTrialActive) {
               if (!trialRes.trialExpired && trialRes.hasContact) {
                 document.body.classList.add('has-trial-banner');
+                const welcomeKey = `sb_welcome_30d_seen_${trialRes.createdAt || 'default'}`;
+                if (!localStorage.getItem(welcomeKey) || window.location.search.includes('ativado=true')) {
+                  setShowWelcomeModal(true);
+                }
               } else {
                 document.body.classList.remove('has-trial-banner');
               }
@@ -1691,6 +1700,76 @@ const Sidebar = () => {
         onUserUpdated={setUser} 
       />
 
+      {/* MODAL DE BOAS-VINDAS AUTOMÁTICO NO PRIMEIRO ACESSO (TESTE GRÁTIS 30 DIAS) */}
+      {showWelcomeModal && trialStatus?.isTrialActive && !trialStatus?.trialExpired && !trialStatus?.isSuperAdmin && (
+        <div className="fixed inset-0 z-[9997] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300 font-sans no-print">
+          <div className="w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-100">
+            <div className="bg-gradient-to-br from-[#1B4D3E] to-[#0F2D24] px-8 py-7 text-white relative">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/20 border border-emerald-400/30 text-emerald-200 text-[10px] font-black uppercase tracking-widest mb-3">
+                🎉 Acesso Liberado • 30 Dias Grátis
+              </span>
+              <h2 className="text-2xl font-black tracking-tight">
+                Seja muito bem-vindo(a), {user?.nome?.split(' ')[0] || 'Gestor'}!
+              </h2>
+              <p className="text-xs text-emerald-100/90 mt-1.5 leading-relaxed">
+                O ambiente da <strong>{user?.tenantNome || 'sua empresa'}</strong> já está ativo com <strong>30 dias de teste gratuito completo</strong>. Você só escolhe e paga o seu plano pré-pago após concluir os 30 dias!
+              </p>
+            </div>
+
+            <div className="p-8 space-y-5">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5 text-left">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+                  Passos recomendados para começar agora:
+                </p>
+                <div className="space-y-2 text-xs text-slate-600 font-medium">
+                  <p>1️⃣ <strong>Configurações & Empresas:</strong> Cadastre os dados e o regime tributário da sua empresa emissora.</p>
+                  <p>2️⃣ <strong>CCTs & Insumos:</strong> Configure os pisos salariais, benefícios e sua tabela de materiais/equipamentos.</p>
+                  <p>3️⃣ <strong>Pipeline & FPV:</strong> Monte sua primeira proposta comercial e envie o link interativo com rastreamento de leitura!</p>
+                </div>
+              </div>
+
+              <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 text-left">
+                <p className="text-xs font-extrabold text-emerald-950">
+                  💬 Acabamos de te enviar um "Oi" no seu WhatsApp!
+                </p>
+                <p className="text-[11px] text-emerald-800 mt-1 leading-relaxed">
+                  O fundador da SmartBid (<strong>Cristiano Silva</strong>) acompanha pessoalmente os novos clientes para ajudar na parametrização das suas primeiras CCTs e propostas.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <a
+                  href={`https://wa.me/5541992823967?text=${encodeURIComponent(
+                    `Olá Cristiano! Acabei de acessar meu painel de 30 dias grátis no SmartBid (${user?.tenantNome || user?.nome || ''}) e gostaria de um apoio inicial!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    const welcomeKey = `sb_welcome_30d_seen_${trialStatus?.createdAt || 'default'}`;
+                    localStorage.setItem(welcomeKey, 'true');
+                    setShowWelcomeModal(false);
+                  }}
+                  className="flex-1 py-3.5 px-4 bg-[#25D366] hover:bg-[#1ebe5b] text-white text-xs font-black uppercase tracking-wider rounded-xl text-center transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                >
+                  💬 Falar no WhatsApp Oficial
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const welcomeKey = `sb_welcome_30d_seen_${trialStatus?.createdAt || 'default'}`;
+                    localStorage.setItem(welcomeKey, 'true');
+                    setShowWelcomeModal(false);
+                  }}
+                  className="flex-1 py-3.5 px-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+                >
+                  Começar a Usar o Sistema →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FIXED COUNTER BANNER AT THE TOP OF THE SCREEN */}
       {trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime && (
         <div suppressHydrationWarning={true} className={`sidebar-topbar fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg ${isMounted ? 'transition-all duration-300' : ''} no-print`}>
@@ -1743,7 +1822,7 @@ const Sidebar = () => {
               <h2 className="text-[10px] font-black tracking-[0.3em] text-[#10B981] uppercase">Cadastro Obrigatório</h2>
               <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Celular / WhatsApp</h1>
               <p className="text-xs text-slate-400 font-bold max-w-xs mt-2">
-                Para prosseguir com seu período de testes grátis de 7 dias, informe seu WhatsApp para contato comercial e suporte técnico.
+                Para prosseguir com seu período de testes grátis de 30 dias, informe seu WhatsApp para contato comercial e suporte técnico.
               </p>
             </div>
 
@@ -1818,7 +1897,7 @@ const Sidebar = () => {
             {/* Message Block */}
             <div className="space-y-4 max-w-sm">
               <p className="text-sm font-semibold text-slate-300 leading-relaxed">
-                Seu período de teste grátis de 7 dias chegou ao fim.
+                Seu período de teste grátis de 30 dias chegou ao fim.
               </p>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Esperamos que tenha gostado das ferramentas de automação de propostas, controladoria SPOT, CCTs e prospecção inteligente!
