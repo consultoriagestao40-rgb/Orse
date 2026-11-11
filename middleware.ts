@@ -25,6 +25,8 @@ export function middleware(request: NextRequest) {
     pathname === '/icon-192.png' ||
     pathname === '/icon-512.png' ||
     pathname.startsWith('/proposta/') ||
+    pathname === '/conteudos' ||
+    pathname.startsWith('/conteudos/') ||
     pathname.startsWith('/slides/') ||
     pathname.startsWith('/uploads/') ||
     pathname === '/og-image.jpg' ||

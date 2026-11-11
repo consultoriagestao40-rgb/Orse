@@ -435,6 +435,12 @@ function TenantManagerDashboardContent() {
             </div>
             <div className="flex items-center gap-3">
               <button
+                onClick={() => router.push('/admin/seo')}
+                className="bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold py-2.5 px-5 rounded-xl text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+              >
+                🚀 Motor de SEO & IA
+              </button>
+              <button
                 onClick={() => router.push('/admin/modulos')}
                 className="bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold py-2.5 px-5 rounded-xl text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
               >

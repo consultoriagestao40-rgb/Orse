@@ -265,6 +265,7 @@ export default function LandingPage() {
     { href: '#qualificacao', label: 'Para quem é' },
     { href: '#planos', label: 'Planos' },
     { href: '#faq', label: 'Dúvidas' },
+    { href: '/conteudos', label: 'Guias & Custos' },
   ];
 
   const heroTabs: { id: typeof heroTab; label: string }[] = [
