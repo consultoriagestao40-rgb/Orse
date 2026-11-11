@@ -588,9 +588,15 @@ export async function getSystemWhatsAppSettings() {
       },
     });
 
-    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || '';
-    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || '';
-    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || '';
+    const {
+      DEFAULT_OFFICIAL_INSTANCE_ID,
+      DEFAULT_OFFICIAL_TOKEN,
+      DEFAULT_OFFICIAL_CLIENT_TOKEN,
+    } = await import('@/lib/whatsapp-official');
+
+    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || DEFAULT_OFFICIAL_INSTANCE_ID;
+    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || DEFAULT_OFFICIAL_TOKEN;
+    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || process.env.ZAPI_CLIENT_TOKEN || DEFAULT_OFFICIAL_CLIENT_TOKEN;
     const active = record ? record.active : true;
     let connected = false;
     let phone = record?.fromEmail || '';
@@ -712,9 +718,15 @@ export async function getSystemWhatsAppQrCode() {
       },
     });
 
-    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || '';
-    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || '';
-    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || '';
+    const {
+      DEFAULT_OFFICIAL_INSTANCE_ID,
+      DEFAULT_OFFICIAL_TOKEN,
+      DEFAULT_OFFICIAL_CLIENT_TOKEN,
+    } = await import('@/lib/whatsapp-official');
+
+    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || DEFAULT_OFFICIAL_INSTANCE_ID;
+    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || DEFAULT_OFFICIAL_TOKEN;
+    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || process.env.ZAPI_CLIENT_TOKEN || DEFAULT_OFFICIAL_CLIENT_TOKEN;
 
     if (!instanceId || !token || !clientToken) {
       return {
@@ -759,9 +771,15 @@ export async function disconnectSystemWhatsAppInstance() {
       },
     });
 
-    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || '';
-    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || '';
-    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || '';
+    const {
+      DEFAULT_OFFICIAL_INSTANCE_ID,
+      DEFAULT_OFFICIAL_TOKEN,
+      DEFAULT_OFFICIAL_CLIENT_TOKEN,
+    } = await import('@/lib/whatsapp-official');
+
+    const instanceId = record?.host || process.env.ZAPI_OFFICIAL_INSTANCE_ID || DEFAULT_OFFICIAL_INSTANCE_ID;
+    const token = record?.user || process.env.ZAPI_OFFICIAL_TOKEN || DEFAULT_OFFICIAL_TOKEN;
+    const clientToken = record?.password || process.env.ZAPI_OFFICIAL_CLIENT_TOKEN || process.env.ZAPI_CLIENT_TOKEN || DEFAULT_OFFICIAL_CLIENT_TOKEN;
 
     if (!instanceId || !token || !clientToken) {
       return { success: false, error: 'Nenhuma instância oficial configurada.' };

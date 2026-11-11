@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 
 const OFFICIAL_RECORD_KEY = 'SYSTEM_OFFICIAL_ZAPI';
+export const DEFAULT_OFFICIAL_INSTANCE_ID = '3FBF908DFD12A351AE6426CDA0686E76';
+export const DEFAULT_OFFICIAL_TOKEN = '142FFA134AED5586293C4918';
+export const DEFAULT_OFFICIAL_CLIENT_TOKEN = 'F5c1b8f27f6b049c98c4e779d00f67552S';
 
 function getZApiHeaders(clientToken: string) {
   return {
@@ -56,11 +59,13 @@ export async function resolveOfficialZApiCredentials(fallbackTenantId?: string |
       };
     }
 
-    const envInstanceId = process.env.ZAPI_OFFICIAL_INSTANCE_ID?.trim();
-    const envToken = process.env.ZAPI_OFFICIAL_TOKEN?.trim();
-    const envClientToken =
-      process.env.ZAPI_OFFICIAL_CLIENT_TOKEN?.trim() ||
-      process.env.ZAPI_CLIENT_TOKEN?.trim();
+    const envInstanceId = (process.env.ZAPI_OFFICIAL_INSTANCE_ID || DEFAULT_OFFICIAL_INSTANCE_ID).trim();
+    const envToken = (process.env.ZAPI_OFFICIAL_TOKEN || DEFAULT_OFFICIAL_TOKEN).trim();
+    const envClientToken = (
+      process.env.ZAPI_OFFICIAL_CLIENT_TOKEN ||
+      process.env.ZAPI_CLIENT_TOKEN ||
+      DEFAULT_OFFICIAL_CLIENT_TOKEN
+    ).trim();
 
     if (envInstanceId && envToken && envClientToken) {
       return {
