@@ -23,7 +23,7 @@ import DocumentoA4 from '@/components/DocumentoA4';
 import TemplateEditorModal from '@/components/TemplateEditorModal';
 import SearchableSelect, { SearchableSelectOption } from '@/components/SearchableSelect';
 import FpvPdfDocument from '@/components/FpvPdfDocument';
-import { FileDown, Printer } from 'lucide-react';
+import { FileDown, Printer, Upload, Search, Check } from 'lucide-react';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
 const TABS = [
@@ -254,6 +254,10 @@ function PropostaEditor() {
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [newClientForm, setNewClientForm] = useState({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', contatoCargo: '', segmento: '' });
   const [savingClient, setSavingClient] = useState(false);
+  const [searchingQuickCnpj, setSearchingQuickCnpj] = useState(false);
+  const [uploadingQuickClientPdf, setUploadingQuickClientPdf] = useState(false);
+  const [quickClientFeedback, setQuickClientFeedback] = useState<string | null>(null);
+  const quickClientPdfRef = React.useRef<HTMLInputElement>(null);
 
   const [showNewProductModal, setShowNewProductModal] = useState(false);
   const [newProductForm, setNewProductForm] = useState({ descricao: '', precoUnitario: 0, unidade: 'UN', categoria: 'Geral' });
@@ -1041,6 +1045,114 @@ function PropostaEditor() {
     }
   };
 
+  const handleQuickClientCnpjSearch = async (cnpjVal?: string) => {
+    const raw = cnpjVal !== undefined ? cnpjVal : newClientForm.cnpj;
+    const cleanCnpj = String(raw || '').replace(/\D/g, '');
+    if (cleanCnpj.length !== 14) {
+      if (cnpjVal === undefined) {
+        showAlert('Digite um CNPJ válido com 14 números para buscar os dados.', 'warning', 'Atenção');
+      }
+      return;
+    }
+
+    try {
+      setSearchingQuickCnpj(true);
+      setQuickClientFeedback(null);
+      const res = await fetch('/api/clientes/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnpj: cleanCnpj }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        if (cnpjVal === undefined) {
+          showAlert(json.error || 'Não foi possível localizar este CNPJ.', 'warning', 'Atenção');
+        }
+        return;
+      }
+      const d = json.data || {};
+      setNewClientForm((prev) => ({
+        ...prev,
+        cnpj: d.cnpj || prev.cnpj,
+        razaoSocial: d.razaoSocial || prev.razaoSocial,
+        nomeFantasia: d.nomeFantasia || d.razaoSocial || prev.nomeFantasia,
+        endereco: d.endereco || prev.endereco,
+        email: d.email || prev.email,
+        whatsapp: d.whatsapp || prev.whatsapp,
+        contato: d.contato || prev.contato,
+        contatoCargo: d.contatoCargo || prev.contatoCargo,
+      }));
+      setQuickClientFeedback('Dados puxados automaticamente pelo CNPJ (Receita Federal)!');
+      setTimeout(() => setQuickClientFeedback(null), 5000);
+    } catch (err) {
+      console.error('Erro ao buscar CNPJ no modal rápido:', err);
+    } finally {
+      setSearchingQuickCnpj(false);
+    }
+  };
+
+  const handleQuickClientCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const digits = raw.replace(/\D/g, '').slice(0, 14);
+    let formatted = raw;
+    if (digits.length === 14) {
+      formatted = `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+    }
+    setNewClientForm((prev) => ({ ...prev, cnpj: formatted }));
+    if (digits.length === 14) {
+      handleQuickClientCnpjSearch(digits);
+    }
+  };
+
+  const handleQuickClientPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      showAlert('Selecione um arquivo PDF (Cartão CNPJ ou Ficha Cadastral).', 'warning', 'Formato Inválido');
+      return;
+    }
+
+    try {
+      setUploadingQuickClientPdf(true);
+      setQuickClientFeedback(null);
+      const fData = new FormData();
+      fData.append('pdf', file);
+
+      const res = await fetch('/api/clientes/extract', {
+        method: 'POST',
+        body: fData,
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        showAlert(json.error || 'Não foi possível extrair os dados do PDF.', 'error', 'Erro');
+        return;
+      }
+      const d = json.data || {};
+      setNewClientForm((prev) => ({
+        ...prev,
+        cnpj: d.cnpj || prev.cnpj,
+        razaoSocial: d.razaoSocial || prev.razaoSocial,
+        nomeFantasia: d.nomeFantasia || d.razaoSocial || prev.nomeFantasia,
+        endereco: d.endereco || prev.endereco,
+        email: d.email || prev.email,
+        whatsapp: d.whatsapp || prev.whatsapp,
+        contato: d.contato || prev.contato,
+        contatoCargo: d.contatoCargo || prev.contatoCargo,
+      }));
+      setQuickClientFeedback(
+        json.source === 'PDF_AND_RECEITA'
+          ? 'PDF lido com sucesso e enriquecido com dados da Receita Federal!'
+          : 'Dados extraídos do PDF com sucesso!'
+      );
+      setTimeout(() => setQuickClientFeedback(null), 5000);
+    } catch (err: any) {
+      showAlert('Erro ao processar PDF: ' + (err?.message || 'Tente novamente.'), 'error', 'Erro');
+    } finally {
+      setUploadingQuickClientPdf(false);
+      if (quickClientPdfRef.current) quickClientPdfRef.current.value = '';
+    }
+  };
+
   const handleSaveNewClient = async () => {
     if (!newClientForm.nomeFantasia.trim()) return showAlert('Nome Fantasia é obrigatório', 'warning', 'Atenção');
     setSavingClient(true);
@@ -1055,6 +1167,7 @@ function PropostaEditor() {
           cliente: {
              ...proposta.cliente,
              cliente: newClientForm.nomeFantasia,
+             razaoSocial: newClientForm.razaoSocial || newClientForm.nomeFantasia,
              codigo: (res as any).data?.codigo || '',
              cnpj: newClientForm.cnpj,
              email: newClientForm.email,
@@ -1065,6 +1178,7 @@ function PropostaEditor() {
           }
         });
         setShowNewClientModal(false);
+        setQuickClientFeedback(null);
         setNewClientForm({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', contatoCargo: '', segmento: '' });
       } else {
         showAlert(res.error, 'error', 'Erro');
@@ -7909,11 +8023,63 @@ function PropostaEditor() {
          {showNewClientModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
                <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-modal-in">
-                  <div className="bg-[#1B4D3E] text-white p-4 flex justify-between items-center">
-                     <h3 className="font-bold text-sm uppercase tracking-wider">Cadastrar Novo Cliente</h3>
-                     <button onClick={() => setShowNewClientModal(false)} className="text-white/80 hover:text-white"><X size={18} /></button>
+                  <div className="bg-[#1B4D3E] text-white p-4 flex justify-between items-center gap-3">
+                     <div>
+                        <h3 className="font-bold text-sm uppercase tracking-wider">Cadastrar Novo Cliente</h3>
+                        <p className="text-[10px] text-emerald-200 font-medium mt-0.5">Digite o CNPJ ou suba o PDF do Cartão CNPJ / Ficha Cadastral para preenchimento automático</p>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <input
+                           ref={quickClientPdfRef}
+                           type="file"
+                           accept=".pdf,application/pdf"
+                           onChange={handleQuickClientPdfUpload}
+                           className="hidden"
+                        />
+                        <button
+                           type="button"
+                           onClick={() => quickClientPdfRef.current?.click()}
+                           disabled={uploadingQuickClientPdf || searchingQuickCnpj}
+                           className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-300/30 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all disabled:opacity-50"
+                        >
+                           <Upload size={13} />
+                           {uploadingQuickClientPdf ? 'Lendo PDF...' : 'Subir PDF / CNPJ'}
+                        </button>
+                        <button onClick={() => setShowNewClientModal(false)} className="text-white/80 hover:text-white p-1"><X size={18} /></button>
+                     </div>
                   </div>
+                  {quickClientFeedback && (
+                     <div className="mx-6 mt-4 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                        <Check size={14} className="text-emerald-600 shrink-0" />
+                        <span>{quickClientFeedback}</span>
+                     </div>
+                  )}
                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[70vh]">
+                     <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                           <label className="text-[10px] font-bold text-slate-500 uppercase">CNPJ (Busca Automática)</label>
+                           {searchingQuickCnpj && <span className="text-[10px] font-bold text-[#1B4D3E] animate-pulse">Consultando Receita...</span>}
+                        </div>
+                        <div className="flex gap-1.5">
+                           <input
+                              type="text"
+                              placeholder="00.000.000/0000-00"
+                              className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800"
+                              value={newClientForm.cnpj}
+                              onChange={handleQuickClientCnpjChange}
+                           />
+                           <button
+                              type="button"
+                              onClick={() => handleQuickClientCnpjSearch()}
+                              disabled={searchingQuickCnpj}
+                              className="px-3 py-2 bg-[#1B4D3E] hover:bg-[#12362b] text-white rounded text-xs font-bold flex items-center gap-1 shrink-0 disabled:opacity-50"
+                              title="Consultar dados na Receita Federal pelo CNPJ"
+                           >
+                              <Search size={13} />
+                              Puxar
+                           </button>
+                        </div>
+                     </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Nome Fantasia *</label>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.nomeFantasia} onChange={e => setNewClientForm({...newClientForm, nomeFantasia: e.target.value})} />
@@ -7923,8 +8089,8 @@ function PropostaEditor() {
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.razaoSocial} onChange={e => setNewClientForm({...newClientForm, razaoSocial: e.target.value})} />
                      </div>
                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">CNPJ</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.cnpj} onChange={e => setNewClientForm({...newClientForm, cnpj: e.target.value})} />
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Endereço Completo</label>
+                        <input type="text" placeholder="Rua, Nº, Bairro, Cidade - UF" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.endereco} onChange={e => setNewClientForm({...newClientForm, endereco: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">E-mail Comercial</label>
@@ -7942,7 +8108,7 @@ function PropostaEditor() {
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Cargo do Contato</label>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.contatoCargo || ''} onChange={e => setNewClientForm({...newClientForm, contatoCargo: e.target.value})} />
                      </div>
-                     <div className="space-y-1">
+                     <div className="space-y-1 md:col-span-2">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Segmento</label>
                         <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.segmento} onChange={e => setNewClientForm({...newClientForm, segmento: e.target.value})}>
                            <option value="" className="text-slate-800 bg-white">Selecione...</option>
