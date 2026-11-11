@@ -22,6 +22,7 @@ export async function generateMetadata({
   }
 
   const canonicalUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
+  const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}`;
 
   return {
     title: article.title,
@@ -41,7 +42,7 @@ export async function generateMetadata({
       locale: 'pt_BR',
       images: [
         {
-          url: '/og-image.jpg',
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: article.title,
@@ -52,7 +53,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: article.title,
       description: article.metaDescription,
-      images: ['/og-image.jpg'],
+      images: [ogImageUrl],
     },
   };
 }

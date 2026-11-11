@@ -1141,16 +1141,68 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
 #Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
 }
 
+const LINKEDIN_CONFIG_KEY = '[SEO_LINKEDIN_CONFIG]';
+
+export interface LinkedInAutopilotConfig {
+  clientId?: string;
+  clientSecret?: string;
+  accessToken?: string;
+  personUrn?: string;
+  personName?: string;
+  webhookUrl?: string;
+  updatedAt?: string;
+}
+
+export async function getLinkedInConfig(): Promise<LinkedInAutopilotConfig> {
+  try {
+    const rec = await prisma.faqPadrao.findFirst({
+      where: { pergunta: LINKEDIN_CONFIG_KEY },
+    });
+    if (rec?.resposta) {
+      return JSON.parse(rec.resposta) as LinkedInAutopilotConfig;
+    }
+  } catch {}
+  return {
+    accessToken: process.env.LINKEDIN_ACCESS_TOKEN || '',
+    personUrn: process.env.LINKEDIN_PERSON_URN || '',
+    webhookUrl: process.env.LINKEDIN_WEBHOOK_URL || '',
+  };
+}
+
+export async function saveLinkedInConfig(partial: Partial<LinkedInAutopilotConfig>): Promise<LinkedInAutopilotConfig> {
+  const current = await getLinkedInConfig();
+  const merged: LinkedInAutopilotConfig = {
+    ...current,
+    ...partial,
+    updatedAt: new Date().toISOString(),
+  };
+  await prisma.faqPadrao.deleteMany({ where: { pergunta: LINKEDIN_CONFIG_KEY } });
+  await prisma.faqPadrao.create({
+    data: {
+      pergunta: LINKEDIN_CONFIG_KEY,
+      resposta: JSON.stringify(merged),
+      ordem: -998,
+      tenantId: null,
+    },
+  });
+  return merged;
+}
+
 /**
- * Publica automaticamente o artigo do dia no LinkedIn via API Oficial (LINKEDIN_ACCESS_TOKEN + LINKEDIN_PERSON_URN)
- * ou via Webhook de Automação (LINKEDIN_WEBHOOK_URL - Make.com / Zapier / n8n)
+ * Publica automaticamente o artigo do dia no LinkedIn (com a Imagem Executiva gerada + Texto + Link)
+ * via API Oficial do LinkedIn ou Webhook
  */
-export async function publishToLinkedInAutopilot(article: SeoArticle): Promise<boolean> {
+export async function publishToLinkedInAutopilot(article: SeoArticle): Promise<{
+  ok: boolean;
+  message: string;
+}> {
+  const cfg = await getLinkedInConfig();
   const postText = buildLinkedInPostFromArticle(article);
   const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
+  const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}`;
 
   // 1. Webhook direto (Make.com / Zapier / n8n)
-  const webhookUrl = process.env.LINKEDIN_WEBHOOK_URL;
+  const webhookUrl = cfg.webhookUrl || process.env.LINKEDIN_WEBHOOK_URL;
   if (webhookUrl) {
     try {
       await fetch(webhookUrl, {
@@ -1160,54 +1212,151 @@ export async function publishToLinkedInAutopilot(article: SeoArticle): Promise<b
           title: article.title,
           excerpt: article.excerpt,
           url: articleUrl,
+          imageUrl: ogImageUrl,
           lpUrl: 'https://www.smartbidhub.com.br/lp',
           linkedinPostText: postText,
           publishedAt: article.publishedAt,
         }),
         signal: AbortSignal.timeout(8000),
       });
-      return true;
+      return { ok: true, message: 'Publicado via Webhook LinkedIn!' };
+    } catch (e: any) {
+      return { ok: false, message: e?.message || 'Erro no Webhook' };
+    }
+  }
+
+  // 2. API Oficial do LinkedIn (v2/ugcPosts com Upload Nativo da Imagem Executiva do Artigo!)
+  const accessToken = cfg.accessToken || process.env.LINKEDIN_ACCESS_TOKEN;
+  let authorUrn = cfg.personUrn || process.env.LINKEDIN_PERSON_URN;
+
+  if (!accessToken) {
+    return { ok: false, message: 'Token do LinkedIn ainda não configurado.' };
+  }
+
+  // Se tiver token mas ainda não descobriu o personUrn, consulta /v2/userinfo automaticamente
+  if (!authorUrn) {
+    try {
+      const meRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        if (meData?.sub) {
+          authorUrn = `urn:li:person:${meData.sub}`;
+          await saveLinkedInConfig({ personUrn: authorUrn, personName: meData.name || 'Cristiano Silva' });
+        }
+      }
     } catch {}
   }
 
-  // 2. API Oficial do LinkedIn (v2/ugcPosts)
-  const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
-  const authorUrn = process.env.LINKEDIN_PERSON_URN; // ex: urn:li:person:XXXX ou urn:li:organization:XXXX
-  if (accessToken && authorUrn) {
+  if (!authorUrn) {
+    return { ok: false, message: 'Não foi possível identificar o ID do perfil no LinkedIn (verifique a permissão OpenID Connect).' };
+  }
+
+  const normalizedUrn = authorUrn.startsWith('urn:li:') ? authorUrn : `urn:li:person:${authorUrn}`;
+
+  try {
+    // Tenta fazer upload nativo da imagem gerada (/api/seo/og?slug=...) no LinkedIn para o post sair com Imagem Grande Nativa!
+    let uploadedAssetUrn: string | null = null;
     try {
-      const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify({
-          author: authorUrn.startsWith('urn:li:') ? authorUrn : `urn:li:person:${authorUrn}`,
-          lifecycleState: 'PUBLISHED',
-          specificContent: {
-            'com.linkedin.ugc.ShareContent': {
-              shareCommentary: { text: postText },
-              shareMediaCategory: 'ARTICLE',
-              media: [
-                {
-                  status: 'READY',
-                  description: { text: article.metaDescription },
-                  originalUrl: articleUrl,
-                  title: { text: article.title },
-                },
-              ],
-            },
-          },
-          visibility: {
-            'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+          registerUploadRequest: {
+            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+            owner: normalizedUrn,
+            serviceRelationships: [
+              {
+                relationshipType: 'OWNER',
+                identifier: 'urn:li:userGeneratedContent',
+              },
+            ],
           },
         }),
-        signal: AbortSignal.timeout(10000),
       });
-      return res.ok;
-    } catch {}
-  }
 
-  return false;
+      if (registerRes.ok) {
+        const regData = await registerRes.json();
+        const uploadUrl =
+          regData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+        const asset = regData?.value?.asset;
+
+        if (uploadUrl && asset) {
+          const imgRes = await fetch(ogImageUrl);
+          if (imgRes.ok) {
+            const imgBuffer = await imgRes.arrayBuffer();
+            const upRes = await fetch(uploadUrl, {
+              method: 'PUT',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'image/png',
+              },
+              body: imgBuffer,
+            });
+            if (upRes.ok || upRes.status === 201) {
+              uploadedAssetUrn = asset;
+            }
+          }
+        }
+      }
+    } catch {}
+
+    const shareContent = uploadedAssetUrn
+      ? {
+          shareCommentary: { text: postText },
+          shareMediaCategory: 'IMAGE',
+          media: [
+            {
+              status: 'READY',
+              description: { text: article.metaDescription },
+              media: uploadedAssetUrn,
+              title: { text: article.title },
+            },
+          ],
+        }
+      : {
+          shareCommentary: { text: postText },
+          shareMediaCategory: 'ARTICLE',
+          media: [
+            {
+              status: 'READY',
+              description: { text: article.metaDescription },
+              originalUrl: articleUrl,
+              title: { text: article.title },
+            },
+          ],
+        };
+
+    const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify({
+        author: normalizedUrn,
+        lifecycleState: 'PUBLISHED',
+        specificContent: {
+          'com.linkedin.ugc.ShareContent': shareContent,
+        },
+        visibility: {
+          'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+        },
+      }),
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (res.ok) {
+      return { ok: true, message: 'Publicado automaticamente no seu feed do LinkedIn com Imagem Executiva!' };
+    }
+    const errText = await res.text();
+    return { ok: false, message: `Erro API LinkedIn (${res.status}): ${errText.slice(0, 140)}` };
+  } catch (err: any) {
+    return { ok: false, message: err?.message || 'Erro de conexão com API do LinkedIn' };
+  }
 }

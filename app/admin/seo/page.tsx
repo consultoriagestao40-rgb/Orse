@@ -26,6 +26,22 @@ export default function AdminSeoPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [copiedLinkedinSlug, setCopiedLinkedinSlug] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [liStatus, setLiStatus] = useState<any>(null);
+  const [liClientId, setLiClientId] = useState('');
+  const [liClientSecret, setLiClientSecret] = useState('');
+  const [showLiConfig, setShowLiConfig] = useState(false);
+  const [savingLi, setSavingLi] = useState(false);
+
+  const loadLinkedInStatus = async () => {
+    try {
+      const res = await fetch('/api/seo/linkedin');
+      const data = await res.json();
+      if (data.success) {
+        setLiStatus(data);
+        if (data.clientId) setLiClientId(data.clientId);
+      }
+    } catch {}
+  };
 
   const loadSeoData = async (withLiveTrends = false) => {
     if (withLiveTrends) setLoadingTrends(true);
@@ -51,7 +67,59 @@ export default function AdminSeoPage() {
 
   useEffect(() => {
     loadSeoData();
+    loadLinkedInStatus();
   }, []);
+
+  const handleConnectLinkedInOAuth = async () => {
+    setSavingLi(true);
+    try {
+      const res = await fetch('/api/seo/linkedin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: liClientId,
+          clientSecret: liClientSecret || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.oauthUrl) {
+        window.location.href = data.oauthUrl;
+      } else {
+        setFeedback('⚠️ Informe o Client ID e Client Secret do seu App do LinkedIn.');
+      }
+    } catch {
+      setFeedback('❌ Erro ao iniciar conexão com LinkedIn.');
+    } finally {
+      setSavingLi(false);
+    }
+  };
+
+  const handlePublishLinkedInApiNow = async (art: any) => {
+    if (!liStatus?.connected) {
+      shareDirectOnLinkedIn(art);
+      return;
+    }
+    setCopiedLinkedinSlug(art.slug);
+    setFeedback(`🚀 Publicando "${art.title}" com Imagem Executiva direto na API do seu LinkedIn...`);
+    try {
+      const res = await fetch('/api/seo/linkedin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'publish_now', slug: art.slug }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFeedback(`✅ ${data.message}`);
+      } else {
+        setFeedback(`⚠️ ${data.message} — Abrindo janela manual do LinkedIn como alternativa...`);
+        shareDirectOnLinkedIn(art);
+      }
+    } catch {
+      shareDirectOnLinkedIn(art);
+    } finally {
+      setTimeout(() => setCopiedLinkedinSlug(null), 2500);
+    }
+  };
 
   const handleGenerate = async (topic?: string) => {
     setGenerating(true);
@@ -190,15 +258,57 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
               </p>
             )}
           </div>
-          <button
-            onClick={() => loadSeoData(true)}
-            disabled={loadingTrends || generating}
-            className="shrink-0 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 cursor-pointer transition-all"
-          >
-            <RefreshCw size={14} className={loadingTrends ? 'animate-spin' : ''} />
-            {loadingTrends ? 'Consultando Google...' : 'Buscar Termos Mais Pesquisados no Google'}
-          </button>
-        </div>
+            <button
+              onClick={() => setShowLiConfig(!showLiConfig)}
+              className="shrink-0 bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <Sparkles size={14} />
+              {liStatus?.connected
+                ? `LinkedIn Conectado (${liStatus.personName || 'Ativo'}) 🟢`
+                : 'Conectar API Oficial LinkedIn (100% Automático)'}
+            </button>
+          </div>
+
+          {showLiConfig && (
+            <div className="bg-white rounded-2xl border border-blue-200 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0A66C2]">
+                    Conexão Oficial API do LinkedIn (Postagem Diária 100% Automática com Imagem)
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Na aba <strong>Auth</strong> do seu App em <code className="bg-slate-100 px-1.5 py-0.5 rounded">linkedin.com/developers/apps</code>, adicione a Redirect URL:{' '}
+                    <code className="bg-blue-50 text-[#0A66C2] font-bold px-1.5 py-0.5 rounded select-all">
+                      https://www.smartbidhub.com.br/api/seo/linkedin/callback
+                    </code>
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  value={liClientId}
+                  onChange={(e) => setLiClientId(e.target.value)}
+                  placeholder="Client ID do App LinkedIn"
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-[#0A66C2]"
+                />
+                <input
+                  type="password"
+                  value={liClientSecret}
+                  onChange={(e) => setLiClientSecret(e.target.value)}
+                  placeholder="Primary Client Secret do App LinkedIn"
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-[#0A66C2]"
+                />
+                <button
+                  onClick={handleConnectLinkedInOAuth}
+                  disabled={savingLi}
+                  className="bg-[#0A66C2] hover:bg-[#004182] text-white font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {savingLi ? 'Redirecionando...' : 'Autorizar e Conectar Meu LinkedIn'}
+                </button>
+              </div>
+            </div>
+          )}
 
         {/* Gerador por IA */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
@@ -306,12 +416,12 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
-                      onClick={() => shareDirectOnLinkedIn(art)}
+                      onClick={() => handlePublishLinkedInApiNow(art)}
                       className="px-3.5 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                     >
                       {copiedLinkedinSlug === art.slug ? (
                         <>
-                          <Check size={14} className="text-white" /> Abrindo LinkedIn...
+                          <Check size={14} className="text-white" /> Enviando LinkedIn...
                         </>
                       ) : (
                         <>
@@ -319,6 +429,15 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
                         </>
                       )}
                     </button>
+                    <a
+                      href={`/api/seo/og?slug=${encodeURIComponent(art.slug)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                      title="Ver Imagem Executiva gerada automaticamente para este artigo"
+                    >
+                      Ver Arte <ExternalLink size={13} />
+                    </a>
                     <button
                       onClick={() => copyUrl(art.slug)}
                       className="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer"
