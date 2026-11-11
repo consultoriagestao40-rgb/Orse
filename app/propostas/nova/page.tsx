@@ -7,7 +7,7 @@ import {
   FileText, PieChart, Save, Plus, Trash2, ClipboardList, X,
   Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, Eye, RefreshCw, ArrowUpRight, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { calculateEnterprisePrice } from '@/lib/pricingEngine';
+import { calculateEnterprisePrice, calculateLaborCost } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
@@ -280,6 +280,34 @@ function PropostaEditor() {
   const [webQuoteResult, setWebQuoteResult] = useState<any | null>(null);
   const [webQuoteError, setWebQuoteError] = useState<string | null>(null);
   const [applyingWebQuote, setApplyingWebQuote] = useState(false);
+
+  // Modal de Busca por Lupa de Insumos/Materiais/Máquinas/Descartáveis
+  const [insumoPickerModal, setInsumoPickerModal] = useState<{
+    tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis';
+    categorias: string[];
+    titulo: string;
+    targetRowId?: string | null;
+  } | null>(null);
+  const [insumoPickerQuery, setInsumoPickerQuery] = useState('');
+  const [insumoPickerAllCategories, setInsumoPickerAllCategories] = useState(false);
+  const [insumoPickerQuoteProdId, setInsumoPickerQuoteProdId] = useState<string | null>(null);
+
+  // Modal de Busca por Lupa de Função/Cargo (CLT) ou Serviço/Equipe (SPOT)
+  const [cargoPickerModal, setCargoPickerModal] = useState<{
+    postoId: string;
+    mode: 'CLT' | 'SPOT';
+  } | null>(null);
+  const [cargoPickerQuery, setCargoPickerQuery] = useState('');
+  const [cargoPickerShowAllCcts, setCargoPickerShowAllCcts] = useState(false);
+
+  // Modal de Detalhamento de Custos do Cargo (CCT: Salário, Benefícios, Sindicato, EPIs) ou Equipe Spot
+  const [cargoCostDetailsModal, setCargoCostDetailsModal] = useState<{
+    mode: 'CLT' | 'SPOT';
+    cargo?: any;
+    cct?: any;
+    posto?: any;
+    equipeTecnica?: any;
+  } | null>(null);
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [presentationMode, setPresentationMode] = useState(false);
@@ -1507,6 +1535,138 @@ function PropostaEditor() {
   const totalMaquinasNaoLocadas = detalheMaquinas
     .filter((item: any) => !isLocado(item.descricao))
     .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+
+  const addEmptyInsumoRow = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis') => {
+    const current = proposta.insumos[tipo] || [];
+    const newRowId = `row_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newItem = {
+      id: newRowId,
+      codigo: '-',
+      descricao: '',
+      unidade: 'UN',
+      precoUnitario: 0,
+      quantidade: 1,
+      vidaUtil: 1,
+      custoMensal: 0
+    };
+    const newList = [...current, newItem];
+    const total = newList.reduce((acc: number, x: any) => acc + (Number(x.custoMensal) || 0), 0);
+    const tipoTotal = tipo.replace('detalhe', '').toLowerCase();
+    setProposta({
+      ...proposta,
+      insumos: {
+        ...proposta.insumos,
+        [tipo]: newList,
+        [tipoTotal]: total
+      }
+    });
+  };
+
+  const openInsumoPicker = (
+    tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis',
+    categorias: string[],
+    titulo: string,
+    targetRowId?: string | null
+  ) => {
+    setInsumoPickerModal({ tipo, categorias, titulo, targetRowId: targetRowId || null });
+    setInsumoPickerQuery('');
+    setInsumoPickerAllCategories(false);
+    setInsumoPickerQuoteProdId(null);
+    setWebQuoteResult(null);
+    setWebQuoteError(null);
+  };
+
+  const selectProductForInsumoRow = async (
+    tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis',
+    targetRowId: string | null | undefined,
+    produto: any,
+    customPrice?: number,
+    alsoUpdateCatalog: boolean = false
+  ) => {
+    const effectivePrice = customPrice !== undefined ? Number(customPrice) : Number(produto.precoUnitario || 0);
+    const current = proposta.insumos[tipo] || [];
+
+    let newList: any[];
+    if (targetRowId) {
+      newList = current.map((x: any) => {
+        if (x.id === targetRowId) {
+          const qty = Number(x.quantidade) || 1;
+          const vu = Number(x.vidaUtil) || 1;
+          return {
+            ...x,
+            id: produto.id || x.id,
+            codigo: produto.codigo ?? '-',
+            descricao: produto.descricao || '',
+            unidade: produto.unidade || 'UN',
+            precoUnitario: effectivePrice,
+            quantidade: qty,
+            vidaUtil: vu,
+            custoMensal: (qty * effectivePrice) / vu
+          };
+        }
+        return x;
+      });
+    } else {
+      const existingIdx = current.findIndex((x: any) => x.id === produto.id);
+      if (existingIdx >= 0) {
+        newList = current.map((x: any, idx: number) => {
+          if (idx === existingIdx) {
+            const qty = Number(x.quantidade) || 1;
+            const vu = Number(x.vidaUtil) || 1;
+            return {
+              ...x,
+              precoUnitario: effectivePrice,
+              custoMensal: (qty * effectivePrice) / vu
+            };
+          }
+          return x;
+        });
+      } else {
+        newList = [
+          ...current,
+          {
+            id: produto.id,
+            codigo: produto.codigo,
+            descricao: produto.descricao,
+            unidade: produto.unidade || 'UN',
+            precoUnitario: effectivePrice,
+            quantidade: 1,
+            vidaUtil: 1,
+            custoMensal: effectivePrice
+          }
+        ];
+      }
+    }
+
+    const total = newList.reduce((acc: number, x: any) => acc + (Number(x.custoMensal) || 0), 0);
+    const tipoTotal = tipo.replace('detalhe', '').toLowerCase();
+    setProposta({
+      ...proposta,
+      insumos: {
+        ...proposta.insumos,
+        [tipo]: newList,
+        [tipoTotal]: total
+      }
+    });
+
+    if (alsoUpdateCatalog && customPrice !== undefined && produto?.id) {
+      try {
+        await updateProduto(produto.id, {
+          descricao: produto.descricao,
+          unidade: produto.unidade || 'UN',
+          categoria: produto.categoria || 'Geral',
+          precoUnitario: effectivePrice,
+        });
+        setProdutosDb(prev => prev.map(p => p.id === produto.id ? { ...p, precoUnitario: effectivePrice } : p));
+      } catch (err) {
+        console.error('Erro ao atualizar preço base do produto no catálogo:', err);
+      }
+    }
+
+    setInsumoPickerModal(null);
+    setInsumoPickerQuoteProdId(null);
+    setWebQuoteResult(null);
+  };
 
   const addInsumoItem = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', produto: any) => {
     const current = proposta.insumos[tipo] || [];
@@ -2971,89 +3131,90 @@ function PropostaEditor() {
   const renderInsumosTab = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', categorias: string[], titulo: string) => {
     const itens = proposta.insumos[tipo] || [];
     const total = proposta.insumos[tipo.replace('detalhe', '').toLowerCase()] || 0;
-    
-    const normalizedCats = categorias.map(c => normalizeText(c));
-    const query = productSearch[tipo] || '';
-    const produtosFiltrados = produtosDb.filter(p => {
-      const matchesCategory = normalizedCats.includes(normalizeText(p.categoria));
-      if (!matchesCategory) return false;
-      if (!query) return true;
-      
-      const normalizedQuery = normalizeText(query);
-      const matchesDesc = normalizeText(p.descricao).includes(normalizedQuery);
-      const matchesCodigo = p.codigo.toString().includes(normalizedQuery);
-      return matchesDesc || matchesCodigo;
-    });
 
     return (
       <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
-        <div className="bg-[#1B4D3E] px-6 py-4 flex justify-between items-center border-b border-[#13382D]">
+        <div className="bg-[#1B4D3E] px-6 py-4 flex flex-wrap justify-between items-center gap-3 border-b border-[#13382D]">
           <h2 className="text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
             <Box size={16} /> {titulo}
           </h2>
-          <div className="text-white font-bold text-lg">
-            Total Mensal: {formatCurrency(total)}
+          <div className="flex items-center gap-4">
+            <div className="text-white font-bold text-lg">
+              Total Mensal: {formatCurrency(total)}
+            </div>
+            <button
+              type="button"
+              onClick={() => addEmptyInsumoRow(tipo)}
+              className="bg-white hover:bg-emerald-50 text-[#1B4D3E] text-xs font-extrabold uppercase tracking-wider px-4 py-2 rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={14} /> Inserir Item
+            </button>
           </div>
         </div>
 
         <div className="p-6">
-          <div className="mb-6">
-            
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-slate-500 uppercase block">Adicionar Item da Tabela de Produtos</label>
-              <button 
-                 onClick={() => {
-                    setActiveProdutoTipo(tipo);
-                    setShowNewProductModal(true);
-                 }}
-                 className="text-[10px] text-[#1B4D3E] font-bold uppercase tracking-wider hover:text-[#12362b] transition-colors bg-emerald-50 px-2 py-1 rounded border border-emerald-200"
+          <div className="mb-4 flex flex-wrap justify-between items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+            <p className="text-xs text-slate-600 font-medium">
+              Clique em <strong>+ Inserir Item</strong> para criar uma linha na tabela e clique na <strong>🔍 Lupa</strong> do item para pesquisar no catálogo e consultar preços atualizados na Web.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openInsumoPicker(tipo, categorias, titulo, null)}
+                className="text-[11px] bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                 + Novo Produto
+                <Search size={13} /> Buscar no Catálogo
               </button>
-            </div>
-
-            <div className="mb-3">
-              <SearchableSelect
-                value=""
-                clearOnSelect={true}
-                onChange={(prodId) => {
-                  const prod = produtosDb.find(p => p.id === prodId);
-                  if (prod) {
-                    addInsumoItem(tipo, prod);
-                  }
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveProdutoTipo(tipo);
+                  setShowNewProductModal(true);
                 }}
-                placeholder={produtosFiltrados.length === 0 ? "Nenhum produto cadastrado nesta categoria..." : "🔍 Digite o nome, código ou selecione um produto para adicionar..."}
-                searchPlaceholder="Digitar código, descrição ou marca..."
-                emptyMessage="Nenhum produto correspondente encontrado."
-                options={produtosFiltrados.map(p => ({
-                  value: p.id,
-                  label: `[${p.codigo}] ${p.descricao}`,
-                  sublabel: p.marca ? `Marca: ${p.marca} • Unidade: ${p.unidade || 'UN'}` : `Unidade: ${p.unidade || 'UN'}`,
-                  badge: formatCurrency(p.precoUnitario),
-                  keywords: [String(p.codigo), p.descricao, p.marca || '', p.categoria || '']
-                }))}
-              />
+                className="text-[11px] text-[#1B4D3E] font-bold uppercase tracking-wider hover:bg-emerald-100 transition-colors bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 cursor-pointer flex items-center gap-1"
+              >
+                <Plus size={13} /> Novo Produto
+              </button>
             </div>
           </div>
 
           <table className="w-full text-left text-sm border-collapse">
             <thead>
               <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                <th className="px-4 py-2 w-20">Cód.</th>
-                <th className="px-4 py-2">Descrição</th>
-                <th className="px-4 py-2 text-right">Preço Unit. / Cotação Web</th>
-                <th className="px-4 py-2 text-center w-20">Qtd.</th>
-                <th className="px-4 py-2 text-center w-24">Vida Útil (Meses)</th>
-                <th className="px-4 py-2 text-right">Custo Mensal</th>
-                <th className="px-4 py-2 text-center w-16">Ação</th>
+                <th className="px-4 py-2.5 w-20">Cód.</th>
+                <th className="px-4 py-2.5">Descrição do Item / Produto</th>
+                <th className="px-4 py-2.5 text-right">Preço Unit. / Cotação Web</th>
+                <th className="px-4 py-2.5 text-center w-20">Qtd.</th>
+                <th className="px-4 py-2.5 text-center w-24">Vida Útil (Meses)</th>
+                <th className="px-4 py-2.5 text-right">Custo Mensal</th>
+                <th className="px-4 py-2.5 text-center w-16">Ação</th>
               </tr>
             </thead>
             <tbody>
               {itens.map((item: any) => (
                 <tr key={item.id} className="border-b border-slate-200 hover:bg-slate-50">
-                  <td className="px-4 py-2 font-mono text-xs text-slate-500">{item.codigo}</td>
-                  <td className="px-4 py-2 font-medium text-slate-800">{item.descricao}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500 font-bold">{item.codigo || '-'}</td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Clique na lupa 🔍 ao lado para selecionar ou digite a descrição..."
+                        className="flex-1 bg-white text-slate-800 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]"
+                        value={item.descricao || ''}
+                        onChange={(e) => updateInsumoItem(tipo, item.id, 'descricao', e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openInsumoPicker(tipo, categorias, titulo, item.id)}
+                        className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs"
+                        title="Abrir Catálogo com Filtro e Pesquisa de Preço Web"
+                      >
+                        <Search size={13} />
+                        <span className="hidden sm:inline">Buscar</span>
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <input 
                         type="number" 
@@ -3064,15 +3225,21 @@ function PropostaEditor() {
                       />
                       <button
                         type="button"
-                        onClick={() => openInsumoWebQuote(tipo, item)}
-                        className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded text-[10px] font-black uppercase flex items-center gap-1 transition-all shrink-0"
+                        onClick={() => {
+                          if (!item.descricao || !item.descricao.trim()) {
+                            openInsumoPicker(tipo, categorias, titulo, item.id);
+                          } else {
+                            openInsumoWebQuote(tipo, item);
+                          }
+                        }}
+                        className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded text-[10px] font-black uppercase flex items-center gap-1 transition-all shrink-0 cursor-pointer"
                         title="Pesquisar Preço Mínimo, Médio e Ofertas na Web"
                       >
                         <Globe size={11} /> Cotar Web
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2.5">
                     <input 
                       type="number" 
                       className="bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E] mx-auto block"
@@ -3081,7 +3248,7 @@ function PropostaEditor() {
                       style={{ width: `${Math.max(3, String(item.quantidade || '').length) + 3}ch`, minWidth: '60px' }}
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2.5">
                     <input 
                       type="number" 
                       className="bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E] mx-auto block"
@@ -3090,11 +3257,11 @@ function PropostaEditor() {
                       style={{ width: `${Math.max(3, String(item.vidaUtil || '').length) + 3}ch`, minWidth: '60px' }}
                     />
                   </td>
-                  <td className="px-4 py-2 text-right font-bold text-[#1B4D3E] bg-emerald-50">
+                  <td className="px-4 py-2.5 text-right font-bold text-[#1B4D3E] bg-emerald-50">
                     {formatCurrency(item.custoMensal)}
                   </td>
-                  <td className="px-4 py-2 text-center">
-                    <button onClick={() => removeInsumoItem(tipo, item.id)} className="text-slate-400 hover:text-red-600 transition-colors">
+                  <td className="px-4 py-2.5 text-center">
+                    <button onClick={() => removeInsumoItem(tipo, item.id)} className="text-slate-400 hover:text-red-600 transition-colors cursor-pointer">
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -3102,7 +3269,9 @@ function PropostaEditor() {
               ))}
               {itens.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-400 italic">Nenhum item adicionado. Selecione um produto acima.</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-400 italic">
+                    Nenhum item adicionado. Clique em <strong>"+ Inserir Item"</strong> acima e use a <strong>🔍 Lupa</strong> para selecionar o produto.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -3927,40 +4096,68 @@ function PropostaEditor() {
                                        />
                                     </td>
                                     <td className="px-6 py-4">
-                                       <SearchableSelect
-                                          value={p.equipeTecnicaId || ''}
-                                          onChange={(eqId) => {
-                                             const eq = equipesTecnicasDb.find(x => x.id === eqId);
-                                             if (eq) {
-                                                const preco = p.unidadeMedida === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido;
-                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {
-                                                   ...x, 
-                                                   tipoItem: 'SPOT',
-                                                   nomeCargo: eq.nome, 
-                                                   equipeTecnicaId: eq.id, 
-                                                   precoUnitarioDemanda: preco,
-                                                   quantidade: 1,
-                                                   quantidadeDemanda: x.quantidadeDemanda ?? 1,
-                                                   unidadeMedida: x.unidadeMedida || 'DIA',
-                                                   ativosConfig: {
-                                                      custoMensalMaoObra: eq.custoMensalMaoObra,
-                                                      custoMensalVeiculo: eq.custoMensalVeiculo,
-                                                      custoMensalCombustivel: eq.custoMensalCombustivel,
-                                                      custoMensalTotal: eq.custoMensalTotal
-                                                   }
-                                                } : x);
-                                                setProposta({...proposta, equipe: newE});
-                                             }
-                                          }}
-                                          placeholder="Selecione o Serviço/Equipe..."
-                                          searchPlaceholder="Filtrar serviço..."
-                                          options={equipesTecnicasDb.map((eq: any) => ({
-                                             value: eq.id,
-                                             label: eq.nome,
-                                             sublabel: `Diária: R$ ${eq.valorDiariaSugerido || 0} | Hora: R$ ${eq.valorHoraSugerido || 0}`,
-                                             keywords: [eq.nome]
-                                          }))}
-                                       />
+                                       {(() => {
+                                          const eqSelected = equipesTecnicasDb.find((x: any) => x.id === p.equipeTecnicaId);
+                                          const hasSelectedSpot = Boolean(eqSelected || (p.nomeCargo && p.nomeCargo !== 'Selecione o Serviço/Equipe'));
+                                          return (
+                                             <div className="flex items-center gap-2">
+                                                <div
+                                                   onClick={() => {
+                                                      setCargoPickerModal({ postoId: p.id, mode: 'SPOT' });
+                                                      setCargoPickerQuery('');
+                                                   }}
+                                                   className={`flex-1 px-3 py-2 rounded-lg border text-xs cursor-pointer transition-all flex items-center justify-between gap-2 ${
+                                                      hasSelectedSpot
+                                                         ? 'bg-white border-slate-300 hover:border-blue-600 text-slate-800 font-bold'
+                                                         : 'bg-slate-50 border-dashed border-slate-300 hover:border-blue-500 text-slate-400 italic'
+                                                   }`}
+                                                >
+                                                   <div className="truncate">
+                                                      <span>{eqSelected?.nome || (hasSelectedSpot ? p.nomeCargo : 'Clique na lupa 🔍 para selecionar o Serviço/Equipe...')}</span>
+                                                      {eqSelected && (
+                                                         <span className="block text-[10px] text-slate-500 font-normal">
+                                                            Diária: {formatCurrency(Number(eqSelected.valorDiariaSugerido) || 0)} • Hora: {formatCurrency(Number(eqSelected.valorHoraSugerido) || 0)}
+                                                         </span>
+                                                      )}
+                                                   </div>
+                                                </div>
+                                                <button
+                                                   type="button"
+                                                   onClick={() => {
+                                                      setCargoPickerModal({ postoId: p.id, mode: 'SPOT' });
+                                                      setCargoPickerQuery('');
+                                                   }}
+                                                   className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs"
+                                                   title="Buscar Serviço / Equipe Técnica com Filtro"
+                                                >
+                                                   <Search size={13} />
+                                                   <span className="hidden sm:inline">Buscar</span>
+                                                </button>
+                                                {hasSelectedSpot && (
+                                                   <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                         setCargoCostDetailsModal({
+                                                            mode: 'SPOT',
+                                                            posto: p,
+                                                            equipeTecnica: eqSelected || {
+                                                               nome: p.nomeCargo,
+                                                               valorDiariaSugerido: p.precoUnitarioDemanda,
+                                                               valorHoraSugerido: p.precoUnitarioDemanda,
+                                                               ...(p.ativosConfig || {})
+                                                            }
+                                                         })
+                                                      }
+                                                      className="px-2.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded-lg text-xs font-extrabold flex items-center gap-1 transition-all shrink-0 cursor-pointer"
+                                                      title="Ver Composição de Custos deste Serviço / Equipe"
+                                                   >
+                                                      <Eye size={13} />
+                                                      <span className="hidden md:inline">Custos</span>
+                                                   </button>
+                                                )}
+                                             </div>
+                                          );
+                                       })()}
                                     </td>
                                     <td className="px-6 py-4">
                                        <select 
@@ -4088,50 +4285,74 @@ function PropostaEditor() {
                                           <input type="number" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
                                        </td>
                                        <td className="px-6 py-4">
-                                          <SearchableSelect
-                                             value={currentSelectValue}
-                                             disabled={!proposta.cliente.sindicatoId && ccts.length > 0}
-                                             onChange={(val) => {
-                                                if (!val) return;
-                                                const [cctId, cargoId] = val.includes('|') ? val.split('|') : ['', val];
-                                                const c = ccts.find(x => x.id === cctId) || ccts.find(x => x.cargos?.some((cg: any) => cg.id === cargoId));
-                                                if(c) {
-                                                   const cargo = c.cargos?.find((x: any) => x.id === cargoId);
-                                                   if (cargo) {
-                                                      const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, nomeCargo: cargo.nome, cargo: cargo, cctBase: c} : x);
-                                                      setProposta({...proposta, equipe: newE});
-                                                   }
-                                                }
-                                             }}
-                                             placeholder={!proposta.cliente.sindicatoId ? "⚠️ Selecione o Sindicato na Aba 1" : "Selecione a Função..."}
-                                             searchPlaceholder="Buscar função ou cargo..."
-                                             emptyMessage="Nenhuma função encontrada."
-                                             options={(() => {
-                                                const opts: SearchableSelectOption[] = [];
-                                                const availableCcts = ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId || c.id === currentCctId);
-                                                availableCcts.forEach((c: any) => {
-                                                   const groupName = `${c.nome} (${c.uf})`;
-                                                   c.cargos?.forEach((cg: any) => {
-                                                      opts.push({
-                                                         value: `${c.id}|${cg.id}`,
-                                                         label: cg.nome,
-                                                         group: groupName,
-                                                         badge: `R$ ${cg.pisoSalarial}`,
-                                                         keywords: [cg.nome, c.nome, c.uf, String(cg.pisoSalarial)]
-                                                      });
-                                                   });
-                                                });
-                                                if (currentCargoId && !opts.some(o => o.value === currentSelectValue)) {
-                                                   opts.unshift({
-                                                      value: currentSelectValue,
-                                                      label: p.cargo?.nome || p.nomeCargo || 'Função Atual',
-                                                      badge: `R$ ${p.cargo?.pisoSalarial || '0.00'}`,
-                                                      keywords: [p.cargo?.nome || p.nomeCargo || '']
-                                                   });
-                                                }
-                                                return opts;
-                                             })()}
-                                          />
+                                          {(() => {
+                                             const cctObj = ccts.find((x: any) => x.id === currentCctId) || ccts.find((x: any) => x.id === proposta.cliente.sindicatoId) || p.cctBase || {};
+                                             const cargoObj = (cctObj?.cargos || []).find((cg: any) => cg.id === currentCargoId) || p.cargo || {};
+                                             const hasSelectedCargo = Boolean(currentCargoId || (p.nomeCargo && p.nomeCargo !== 'Selecione a Função'));
+                                             const displayCargoName = cargoObj?.nome || (hasSelectedCargo ? p.nomeCargo : '');
+                                             const displayPiso = Number(cargoObj?.pisoSalarial || p.cargo?.pisoSalarial || 0);
+
+                                             return (
+                                                <div className="flex items-center gap-2">
+                                                   <div
+                                                      onClick={() => {
+                                                         setCargoPickerModal({ postoId: p.id, mode: 'CLT' });
+                                                         setCargoPickerQuery('');
+                                                         setCargoPickerShowAllCcts(!proposta.cliente.sindicatoId);
+                                                      }}
+                                                      className={`flex-1 px-3 py-2 rounded-lg border text-xs cursor-pointer transition-all flex items-center justify-between gap-2 ${
+                                                         hasSelectedCargo
+                                                            ? 'bg-white border-slate-300 hover:border-[#1B4D3E] text-slate-800 font-bold'
+                                                            : 'bg-slate-50 border-dashed border-slate-300 hover:border-[#1B4D3E] text-slate-400 italic'
+                                                      }`}
+                                                   >
+                                                      <div className="truncate">
+                                                         <span>
+                                                            {displayCargoName || (!proposta.cliente.sindicatoId ? '⚠️ Selecione o Sindicato na Aba 1 ou clique na 🔍 Lupa...' : 'Clique na 🔍 Lupa para selecionar a Função...')}
+                                                         </span>
+                                                         {hasSelectedCargo && (
+                                                            <span className="block text-[10px] text-slate-500 font-normal">
+                                                               Piso: {formatCurrency(displayPiso)} {cctObj?.nome ? `• ${cctObj.nome} (${cctObj.uf || ''})` : ''}
+                                                            </span>
+                                                         )}
+                                                      </div>
+                                                   </div>
+
+                                                   <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                         setCargoPickerModal({ postoId: p.id, mode: 'CLT' });
+                                                         setCargoPickerQuery('');
+                                                         setCargoPickerShowAllCcts(!proposta.cliente.sindicatoId);
+                                                      }}
+                                                      className="px-3 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs"
+                                                      title="Abrir Lista de Funções / Cargos com Filtro de Pesquisa"
+                                                   >
+                                                      <Search size={13} />
+                                                      <span className="hidden sm:inline">Buscar</span>
+                                                   </button>
+
+                                                   {hasSelectedCargo && (
+                                                      <button
+                                                         type="button"
+                                                         onClick={() =>
+                                                            setCargoCostDetailsModal({
+                                                               mode: 'CLT',
+                                                               cargo: cargoObj,
+                                                               cct: cctObj,
+                                                               posto: p
+                                                            })
+                                                         }
+                                                         className="px-2.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded-lg text-xs font-extrabold flex items-center gap-1 transition-all shrink-0 cursor-pointer shadow-xs"
+                                                         title="Ver Composição Completa de Custos deste Cargo (Salário, Benefícios, Sindicato e EPIs da CCT)"
+                                                      >
+                                                         <Eye size={13} />
+                                                         <span className="hidden xl:inline">Custos CCT</span>
+                                                      </button>
+                                                   )}
+                                                </div>
+                                             );
+                                          })()}
                                        </td>
                                        <td className="px-6 py-4">
                                           <input
@@ -4143,9 +4364,10 @@ function PropostaEditor() {
                                           />
                                        </td>
                                        <td className="px-6 py-4">
-                                          <SearchableSelect
+                                          <select
                                              value={effectiveEscalaValue}
-                                             onChange={(val) => {
+                                             onChange={(e) => {
+                                                const val = e.target.value;
                                                 const chosenEscala = escalasDb.find((esc: any) => esc.nome === val);
                                                 if (chosenEscala) {
                                                    const param = {...p.parametrosPosto, diasTrabalhadosMes: chosenEscala.diasTrabalhadosMes};
@@ -4155,15 +4377,15 @@ function PropostaEditor() {
                                                    updatePosto(p.id, 'escala', val);
                                                 }
                                              }}
-                                             placeholder="Selecione a Escala..."
-                                             searchPlaceholder="Filtrar escala..."
-                                             options={escalasDb.map((esc: any) => ({
-                                                value: esc.nome,
-                                                label: esc.nome,
-                                                sublabel: `${esc.diasTrabalhadosMes || 0} dias/mês`,
-                                                keywords: [esc.nome, String(esc.diasTrabalhadosMes || '')]
-                                             }))}
-                                          />
+                                             className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                                          >
+                                             <option value="">Selecione a Escala...</option>
+                                             {escalasDb.map((esc: any) => (
+                                                <option key={esc.id || esc.nome} value={esc.nome}>
+                                                   {esc.nome} ({esc.diasTrabalhadosMes || 0} dias/mês)
+                                                </option>
+                                             ))}
+                                          </select>
                                        </td>
                                        <td className="px-6 py-4 text-right">
                                           <div className="flex items-center justify-end gap-2.5">
@@ -8397,6 +8619,943 @@ function PropostaEditor() {
                      <button onClick={() => setShowNewClientModal(false)} className="px-4 py-2 rounded text-sm font-bold text-slate-600 hover:bg-slate-200">Cancelar</button>
                      <button onClick={handleSaveNewClient} disabled={savingClient} className="px-4 py-2 rounded text-sm font-bold bg-[#1B4D3E] text-white hover:bg-[#12362b] disabled:opacity-50">
                         {savingClient ? 'Salvando...' : 'Salvar Cliente'}
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* MODAL DE PESQUISA POR LUPA DE EQUIPAMENTOS, INSUMOS E PRODUTOS (COM COTAÇÃO WEB INTEGRADA) */}
+         {insumoPickerModal && (
+            <div className="fixed inset-0 z-[75] flex items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4">
+               <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden animate-modal-in border border-slate-200 max-h-[88vh]">
+                  <div className="bg-[#1B4D3E] text-white px-6 py-4 flex flex-wrap justify-between items-center gap-3">
+                     <div>
+                        <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                           <Search size={16} className="text-emerald-300" />
+                           Selecionar Item — {insumoPickerModal.titulo}
+                        </h3>
+                        <p className="text-[11px] text-emerald-100 mt-0.5">
+                           Digite para filtrar instantaneamente, consulte o preço atualizado na Web e clique em <strong>Selecionar</strong>.
+                        </p>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <button
+                           type="button"
+                           onClick={() => {
+                              setActiveProdutoTipo(insumoPickerModal.tipo);
+                              setShowNewProductModal(true);
+                           }}
+                           className="bg-white/15 hover:bg-white/25 text-white border border-white/30 px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer"
+                        >
+                           <Plus size={13} /> Novo Produto
+                        </button>
+                        <button
+                           type="button"
+                           onClick={() => {
+                              setInsumoPickerModal(null);
+                              setInsumoPickerQuoteProdId(null);
+                              setWebQuoteResult(null);
+                           }}
+                           className="text-white/80 hover:text-white p-1 cursor-pointer"
+                        >
+                           <X size={20} />
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* Barra de Pesquisa e Filtro de Categoria */}
+                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                     <div className="relative flex-1">
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                           type="text"
+                           autoFocus
+                           placeholder="Digite o nome do produto, código ou marca para filtrar..."
+                           className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/20"
+                           value={insumoPickerQuery}
+                           onChange={(e) => setInsumoPickerQuery(e.target.value)}
+                        />
+                     </div>
+                     <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shrink-0">
+                        <button
+                           type="button"
+                           onClick={() => setInsumoPickerAllCategories(false)}
+                           className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase transition-all cursor-pointer ${
+                              !insumoPickerAllCategories
+                                 ? 'bg-[#1B4D3E] text-white shadow-xs'
+                                 : 'text-slate-600 hover:bg-slate-100'
+                           }`}
+                        >
+                           Desta Categoria
+                        </button>
+                        <button
+                           type="button"
+                           onClick={() => setInsumoPickerAllCategories(true)}
+                           className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase transition-all cursor-pointer ${
+                              insumoPickerAllCategories
+                                 ? 'bg-[#1B4D3E] text-white shadow-xs'
+                                 : 'text-slate-600 hover:bg-slate-100'
+                           }`}
+                        >
+                           Todos ({produtosDb.length})
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* Lista Filtrada de Produtos */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                     {(() => {
+                        const normalizedCats = insumoPickerModal.categorias.map((c) => normalizeText(c));
+                        const q = normalizeText(insumoPickerQuery);
+                        const list = produtosDb.filter((p) => {
+                           if (!insumoPickerAllCategories) {
+                              const matchesCat = normalizedCats.includes(normalizeText(p.categoria));
+                              if (!matchesCat) return false;
+                           }
+                           if (!q) return true;
+                           return (
+                              normalizeText(p.descricao).includes(q) ||
+                              String(p.codigo || '').toLowerCase().includes(q) ||
+                              normalizeText(p.marca || '').includes(q) ||
+                              normalizeText(p.categoria || '').includes(q)
+                           );
+                        });
+
+                        if (list.length === 0) {
+                           return (
+                              <div className="p-12 text-center space-y-3">
+                                 <p className="text-sm font-bold text-slate-500">
+                                    Nenhum produto encontrado com "{insumoPickerQuery}".
+                                 </p>
+                                 {!insumoPickerAllCategories && (
+                                    <button
+                                       type="button"
+                                       onClick={() => setInsumoPickerAllCategories(true)}
+                                       className="text-xs font-extrabold text-[#1B4D3E] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-4 py-2 rounded-lg cursor-pointer"
+                                    >
+                                       Pesquisar em Todas as Categorias ({produtosDb.length} itens)
+                                    </button>
+                                 )}
+                              </div>
+                           );
+                        }
+
+                        return list.map((prod: any) => {
+                           const isQuotingThis = insumoPickerQuoteProdId === prod.id;
+                           return (
+                              <div key={prod.id} className="p-4 hover:bg-slate-50/80 transition-colors">
+                                 <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                       <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="font-mono text-[11px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
+                                             #{prod.codigo}
+                                          </span>
+                                          <span className="text-sm font-extrabold text-slate-800">
+                                             {prod.descricao}
+                                          </span>
+                                       </div>
+                                       <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 font-semibold">
+                                          <span>Unidade: <strong>{prod.unidade || 'UN'}</strong></span>
+                                          {prod.categoria && <span>• Categoria: <strong>{prod.categoria}</strong></span>}
+                                          {prod.marca && <span>• Marca: <strong>{prod.marca}</strong></span>}
+                                       </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 shrink-0">
+                                       <div className="text-right mr-1">
+                                          <span className="text-[10px] font-bold text-slate-400 uppercase block">Preço Base</span>
+                                          <span className="text-sm font-black text-[#1B4D3E]">
+                                             {formatCurrency(Number(prod.precoUnitario) || 0)}
+                                          </span>
+                                       </div>
+
+                                       <button
+                                          type="button"
+                                          onClick={() => {
+                                             if (isQuotingThis) {
+                                                setInsumoPickerQuoteProdId(null);
+                                                setWebQuoteResult(null);
+                                                setWebQuoteError(null);
+                                             } else {
+                                                setInsumoPickerQuoteProdId(prod.id);
+                                                fetchWebQuoteForProduct(prod.descricao, prod.unidade);
+                                             }
+                                          }}
+                                          className={`px-3 py-2 rounded-xl text-xs font-extrabold uppercase flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                             isQuotingThis
+                                                ? 'bg-emerald-100 text-[#1B4D3E] border-emerald-300'
+                                                : 'bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border-emerald-200'
+                                          }`}
+                                          title="Pesquisar Preço Atualizado na Web para este Produto"
+                                       >
+                                          <Globe size={13} />
+                                          <span>{isQuotingThis ? 'Fechar Cotação' : 'Cotar Web'}</span>
+                                       </button>
+
+                                       <button
+                                          type="button"
+                                          onClick={() =>
+                                             selectProductForInsumoRow(
+                                                insumoPickerModal.tipo,
+                                                insumoPickerModal.targetRowId,
+                                                prod
+                                             )
+                                          }
+                                          className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                                       >
+                                          <Check size={14} /> Selecionar
+                                       </button>
+                                    </div>
+                                 </div>
+
+                                 {/* Painel Expansível de Pesquisa de Preço Web para este Produto */}
+                                 {isQuotingThis && (
+                                    <div className="mt-3 p-4 bg-emerald-50/40 border border-emerald-200 rounded-xl space-y-3">
+                                       {webQuoteLoading ? (
+                                          <div className="py-4 text-center flex items-center justify-center gap-2 text-xs font-bold text-[#1B4D3E]">
+                                             <RefreshCw size={16} className="animate-spin" />
+                                             <span>Buscando preços em tempo real na Web para "{prod.descricao}"...</span>
+                                          </div>
+                                       ) : webQuoteError ? (
+                                          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-bold text-rose-700">
+                                             {webQuoteError}
+                                          </div>
+                                       ) : webQuoteResult ? (
+                                          <div className="space-y-3">
+                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <div className="bg-white border border-slate-200 rounded-xl p-3 text-center">
+                                                   <span className="text-[10px] font-black text-slate-400 uppercase block">Preço no Catálogo</span>
+                                                   <span className="text-base font-black text-slate-800 block mt-0.5">
+                                                      {formatCurrency(Number(prod.precoUnitario) || 0)}
+                                                   </span>
+                                                </div>
+                                                <div className="bg-white border border-emerald-300 rounded-xl p-3 text-center flex flex-col justify-between">
+                                                   <div>
+                                                      <span className="text-[10px] font-black text-emerald-700 uppercase block">Preço Mínimo (Web)</span>
+                                                      <span className="text-base font-black text-emerald-900 block mt-0.5">
+                                                         {formatCurrency(webQuoteResult.precoMinimo)}
+                                                      </span>
+                                                   </div>
+                                                   <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                         selectProductForInsumoRow(
+                                                            insumoPickerModal.tipo,
+                                                            insumoPickerModal.targetRowId,
+                                                            prod,
+                                                            webQuoteResult.precoMinimo,
+                                                            true
+                                                         )
+                                                      }
+                                                      className="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase py-1.5 rounded-lg transition-colors cursor-pointer"
+                                                   >
+                                                      Usar Mínimo e Selecionar
+                                                   </button>
+                                                </div>
+                                                <div className="bg-white border border-blue-300 rounded-xl p-3 text-center flex flex-col justify-between">
+                                                   <div>
+                                                      <span className="text-[10px] font-black text-blue-700 uppercase block">Preço Médio (Web)</span>
+                                                      <span className="text-base font-black text-blue-900 block mt-0.5">
+                                                         {formatCurrency(webQuoteResult.precoMedio)}
+                                                      </span>
+                                                   </div>
+                                                   <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                         selectProductForInsumoRow(
+                                                            insumoPickerModal.tipo,
+                                                            insumoPickerModal.targetRowId,
+                                                            prod,
+                                                            webQuoteResult.precoMedio,
+                                                            true
+                                                         )
+                                                      }
+                                                      className="mt-2 w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase py-1.5 rounded-lg transition-colors cursor-pointer"
+                                                   >
+                                                      Usar Médio e Selecionar
+                                                   </button>
+                                                </div>
+                                             </div>
+
+                                             {(webQuoteResult.ofertas || []).length > 0 && (
+                                                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto divide-y divide-slate-100">
+                                                   {(webQuoteResult.ofertas || []).map((of: any, idx: number) => (
+                                                      <div key={idx} className="px-3 py-2 flex items-center justify-between gap-2 text-xs hover:bg-slate-50">
+                                                         <div className="min-w-0 flex-1">
+                                                            <span className="font-bold text-slate-800 truncate block">{of.titulo}</span>
+                                                            <span className="text-[10px] text-slate-500 font-semibold uppercase">{of.loja}</span>
+                                                         </div>
+                                                         <div className="flex items-center gap-2 shrink-0">
+                                                            <span className="font-black text-slate-900">{formatCurrency(of.preco)}</span>
+                                                            <button
+                                                               type="button"
+                                                               onClick={() =>
+                                                                  selectProductForInsumoRow(
+                                                                     insumoPickerModal.tipo,
+                                                                     insumoPickerModal.targetRowId,
+                                                                     prod,
+                                                                     of.preco,
+                                                                     true
+                                                                  )
+                                                               }
+                                                               className="px-2.5 py-1 bg-slate-100 hover:bg-[#1B4D3E] hover:text-white text-slate-700 rounded text-[10px] font-bold uppercase transition-colors cursor-pointer"
+                                                            >
+                                                               Usar Este
+                                                            </button>
+                                                         </div>
+                                                      </div>
+                                                   ))}
+                                                </div>
+                                             )}
+                                          </div>
+                                       ) : null}
+                                    </div>
+                                 )}
+                              </div>
+                           );
+                        });
+                     })()}
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* MODAL DE SELEÇÃO DE FUNÇÃO / CARGO (CCT) OU SERVIÇO / EQUIPE (SPOT) COM LUPA DE CUSTOS */}
+         {cargoPickerModal && (
+            <div className="fixed inset-0 z-[75] flex items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4">
+               <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden animate-modal-in border border-slate-200 max-h-[88vh]">
+                  <div className="bg-[#1B4D3E] text-white px-6 py-4 flex justify-between items-center">
+                     <div>
+                        <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                           <UserCheck size={16} className="text-emerald-300" />
+                           {cargoPickerModal.mode === 'SPOT'
+                              ? 'Selecionar Serviço / Equipe Técnica (Spot)'
+                              : 'Selecionar Função / Cargo Vinculado à CCT'}
+                        </h3>
+                        <p className="text-[11px] text-emerald-100 mt-0.5">
+                           Digite para filtrar instantaneamente e clique na <strong>🔍 Lupa (Ver Custos)</strong> para inspecionar Salário, Benefícios, Sindicato e EPIs do cargo.
+                        </p>
+                     </div>
+                     <button
+                        type="button"
+                        onClick={() => setCargoPickerModal(null)}
+                        className="text-white/80 hover:text-white p-1 cursor-pointer"
+                     >
+                        <X size={20} />
+                     </button>
+                  </div>
+
+                  {/* Barra de Pesquisa Digitável */}
+                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                     <div className="relative flex-1">
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                           type="text"
+                           autoFocus
+                           placeholder={
+                              cargoPickerModal.mode === 'SPOT'
+                                 ? 'Digite o nome do serviço ou equipe técnica para filtrar...'
+                                 : 'Digite o nome da função/cargo, sindicato, UF ou piso salarial...'
+                           }
+                           className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/20"
+                           value={cargoPickerQuery}
+                           onChange={(e) => setCargoPickerQuery(e.target.value)}
+                        />
+                     </div>
+
+                     {cargoPickerModal.mode === 'CLT' && proposta.cliente.sindicatoId && (
+                        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shrink-0">
+                           <button
+                              type="button"
+                              onClick={() => setCargoPickerShowAllCcts(false)}
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase transition-all cursor-pointer ${
+                                 !cargoPickerShowAllCcts
+                                    ? 'bg-[#1B4D3E] text-white shadow-xs'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                           >
+                              Sindicato da Proposta
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => setCargoPickerShowAllCcts(true)}
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase transition-all cursor-pointer ${
+                                 cargoPickerShowAllCcts
+                                    ? 'bg-[#1B4D3E] text-white shadow-xs'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                           >
+                              Todas as CCTs
+                           </button>
+                        </div>
+                     )}
+                  </div>
+
+                  {/* Lista de Cargos / Funções ou Equipes Spot */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                     {cargoPickerModal.mode === 'SPOT' ? (
+                        (() => {
+                           const q = normalizeText(cargoPickerQuery);
+                           const list = equipesTecnicasDb.filter((eq: any) => {
+                              if (!q) return true;
+                              return normalizeText(eq.nome || '').includes(q);
+                           });
+
+                           if (list.length === 0) {
+                              return (
+                                 <div className="p-12 text-center text-sm font-bold text-slate-400">
+                                    Nenhum serviço ou equipe técnica encontrado para "{cargoPickerQuery}".
+                                 </div>
+                              );
+                           }
+
+                           return list.map((eq: any) => (
+                              <div key={eq.id} className="p-4 hover:bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+                                 <div className="min-w-0 flex-1">
+                                    <span className="text-sm font-extrabold text-slate-800 block">{eq.nome}</span>
+                                    <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-600">
+                                       <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-bold">
+                                          Diária Sugerida: {formatCurrency(Number(eq.valorDiariaSugerido) || 0)}
+                                       </span>
+                                       <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-bold">
+                                          Hora Sugerida: {formatCurrency(Number(eq.valorHoraSugerido) || 0)}
+                                       </span>
+                                       {Number(eq.custoMensalTotal) > 0 && (
+                                          <span className="text-[11px] text-slate-500 font-semibold">
+                                             Custo Mensal Base: {formatCurrency(Number(eq.custoMensalTotal))}
+                                          </span>
+                                       )}
+                                    </div>
+                                 </div>
+
+                                 <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                       type="button"
+                                       onClick={() =>
+                                          setCargoCostDetailsModal({
+                                             mode: 'SPOT',
+                                             equipeTecnica: eq
+                                          })
+                                       }
+                                       className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer"
+                                       title="Ver Composição de Custos desta Equipe Técnica"
+                                    >
+                                       <Search size={13} /> Ver Custos
+                                    </button>
+                                    <button
+                                       type="button"
+                                       onClick={() => {
+                                          const newE = proposta.equipe.map((x: any) => {
+                                             if (x.id === cargoPickerModal.postoId) {
+                                                const unit = x.unidadeMedida || 'DIA';
+                                                const preco = unit === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido;
+                                                return {
+                                                   ...x,
+                                                   tipoItem: 'SPOT',
+                                                   nomeCargo: eq.nome,
+                                                   equipeTecnicaId: eq.id,
+                                                   precoUnitarioDemanda: preco,
+                                                   quantidade: 1,
+                                                   quantidadeDemanda: x.quantidadeDemanda ?? 1,
+                                                   unidadeMedida: unit,
+                                                   ativosConfig: {
+                                                      custoMensalMaoObra: eq.custoMensalMaoObra,
+                                                      custoMensalVeiculo: eq.custoMensalVeiculo,
+                                                      custoMensalCombustivel: eq.custoMensalCombustivel,
+                                                      custoMensalTotal: eq.custoMensalTotal
+                                                   }
+                                                };
+                                             }
+                                             return x;
+                                          });
+                                          setProposta({ ...proposta, equipe: newE });
+                                          setCargoPickerModal(null);
+                                       }}
+                                       className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                                    >
+                                       <Check size={14} /> Selecionar
+                                    </button>
+                                 </div>
+                              </div>
+                           ));
+                        })()
+                     ) : (
+                        (() => {
+                           const q = normalizeText(cargoPickerQuery);
+                           const targetPosto = proposta.equipe.find((x: any) => x.id === cargoPickerModal.postoId);
+                           const availableCcts = ccts.filter(
+                              (c: any) =>
+                                 cargoPickerShowAllCcts ||
+                                 !proposta.cliente.sindicatoId ||
+                                 c.id === proposta.cliente.sindicatoId
+                           );
+
+                           const entries: { cct: any; cargo: any }[] = [];
+                           availableCcts.forEach((c: any) => {
+                              (c.cargos || []).forEach((cg: any) => {
+                                 if (!q) {
+                                    entries.push({ cct: c, cargo: cg });
+                                 } else {
+                                    const match =
+                                       normalizeText(cg.nome || '').includes(q) ||
+                                       normalizeText(c.nome || '').includes(q) ||
+                                       normalizeText(c.uf || '').includes(q) ||
+                                       String(cg.pisoSalarial || '').includes(q);
+                                    if (match) entries.push({ cct: c, cargo: cg });
+                                 }
+                              });
+                           });
+
+                           if (entries.length === 0) {
+                              return (
+                                 <div className="p-12 text-center space-y-3">
+                                    <p className="text-sm font-bold text-slate-500">
+                                       Nenhuma função encontrada{cargoPickerQuery ? ` para "${cargoPickerQuery}"` : ''}.
+                                    </p>
+                                    {!cargoPickerShowAllCcts && proposta.cliente.sindicatoId && (
+                                       <button
+                                          type="button"
+                                          onClick={() => setCargoPickerShowAllCcts(true)}
+                                          className="text-xs font-extrabold text-[#1B4D3E] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-4 py-2 rounded-lg cursor-pointer"
+                                       >
+                                          Mostrar Funções de Todos os Sindicatos / CCTs
+                                       </button>
+                                    )}
+                                 </div>
+                              );
+                           }
+
+                           return entries.map(({ cct, cargo }) => {
+                              const epiMensal = Array.isArray(cargo.episConfig)
+                                 ? cargo.episConfig.reduce(
+                                      (acc: number, it: any) =>
+                                         acc + (Number(it.precoUnitario || 0) * Number(it.quantidade || 0)) / (Number(it.vidaUtil) || 1),
+                                      0
+                                   )
+                                 : Number(cargo.uniformeEpi || cct.uniformeEpi || 0);
+
+                              return (
+                                 <div key={`${cct.id}_${cargo.id}`} className="p-4 hover:bg-slate-50 transition-colors flex flex-wrap items-center justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                       <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="text-sm font-extrabold text-slate-900">{cargo.nome}</span>
+                                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                             {cct.nome} ({cct.uf})
+                                          </span>
+                                       </div>
+                                       <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
+                                          <span className="bg-emerald-50 text-[#1B4D3E] border border-emerald-200 px-2 py-0.5 rounded font-extrabold">
+                                             Salário Base: {formatCurrency(Number(cargo.pisoSalarial) || 0)}
+                                          </span>
+                                          <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-bold">
+                                             VA ({cct.vaTipo === 'DIARIO' ? 'Diário' : 'Mensal'}): {formatCurrency(Number(cct.vaValor) || 0)}
+                                          </span>
+                                          {Number(cct.custosSindicato) > 0 && (
+                                             <span className="bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded font-bold">
+                                                Sindicato: {formatCurrency(Number(cct.custosSindicato))}
+                                             </span>
+                                          )}
+                                          <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-bold">
+                                             Uniforme/EPIs: {formatCurrency(epiMensal)}/mês
+                                          </span>
+                                          {Number(cargo.insalubridadePercent) > 0 && (
+                                             <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded font-bold">
+                                                Insalubridade: {cargo.insalubridadePercent}%
+                                             </span>
+                                          )}
+                                          {cargo.periculosidade && (
+                                             <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded font-bold">
+                                                Periculosidade: 30%
+                                             </span>
+                                          )}
+                                       </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                       <button
+                                          type="button"
+                                          onClick={() =>
+                                             setCargoCostDetailsModal({
+                                                mode: 'CLT',
+                                                cargo,
+                                                cct,
+                                                posto: targetPosto
+                                             })
+                                          }
+                                          className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer"
+                                          title="Ver Composição Detalhada de Custos deste Cargo (Salário, Benefícios, Sindicato e EPIs)"
+                                       >
+                                          <Search size={13} /> Ver Custos
+                                       </button>
+
+                                       <button
+                                          type="button"
+                                          onClick={() => {
+                                             const newE = proposta.equipe.map((x: any) =>
+                                                x.id === cargoPickerModal.postoId
+                                                   ? { ...x, nomeCargo: cargo.nome, cargo: cargo, cctBase: cct }
+                                                   : x
+                                             );
+                                             setProposta({
+                                                ...proposta,
+                                                cliente: {
+                                                   ...proposta.cliente,
+                                                   sindicatoId: proposta.cliente.sindicatoId || cct.id
+                                                },
+                                                equipe: newE
+                                             });
+                                             setCargoPickerModal(null);
+                                          }}
+                                          className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                                       >
+                                          <Check size={14} /> Selecionar
+                                       </button>
+                                    </div>
+                                 </div>
+                              );
+                           });
+                        })()
+                     )}
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* MODAL DE COMPOSIÇÃO DETALHADA DE CUSTOS DO CARGO (CCT: SALÁRIO, BENEFÍCIOS, SINDICATO, EPIs) */}
+         {cargoCostDetailsModal && (
+            <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+               <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full flex flex-col overflow-hidden animate-modal-in border border-slate-200 max-h-[90vh]">
+                  <div className="bg-[#1B4D3E] text-white px-6 py-4 flex justify-between items-center">
+                     <div>
+                        <h3 className="font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                           <Calculator size={16} className="text-emerald-300" />
+                           {cargoCostDetailsModal.mode === 'SPOT'
+                              ? `Composição de Custos — ${cargoCostDetailsModal.equipeTecnica?.nome || 'Serviço / Equipe'}`
+                              : `Composição de Custos do Cargo (CCT) — ${cargoCostDetailsModal.cargo?.nome || 'Função'}`}
+                        </h3>
+                        <p className="text-[11px] text-emerald-100 mt-0.5">
+                           {cargoCostDetailsModal.mode === 'SPOT'
+                              ? 'Detalhamento da estrutura de custos mensais, diária e hora técnica sugerida.'
+                              : `Sindicato / CCT: ${cargoCostDetailsModal.cct?.nome || 'Padrão'} (${cargoCostDetailsModal.cct?.uf || '-'})`}
+                        </p>
+                     </div>
+                     <button
+                        type="button"
+                        onClick={() => setCargoCostDetailsModal(null)}
+                        className="text-white/80 hover:text-white p-1 cursor-pointer"
+                     >
+                        <X size={20} />
+                     </button>
+                  </div>
+
+                  <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-800">
+                     {cargoCostDetailsModal.mode === 'SPOT' ? (
+                        (() => {
+                           const eq = cargoCostDetailsModal.equipeTecnica || {};
+                           const mObra = Number(eq.custoMensalMaoObra || 0);
+                           const veic = Number(eq.custoMensalVeiculo || 0);
+                           const comb = Number(eq.custoMensalCombustivel || 0);
+                           const totalMensal = Number(eq.custoMensalTotal || mObra + veic + comb);
+                           return (
+                              <div className="space-y-4">
+                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                                       <span className="text-[10px] font-black text-slate-400 uppercase block">Mão de Obra Mensal</span>
+                                       <span className="text-base font-black text-slate-800 mt-1 block">{formatCurrency(mObra)}</span>
+                                    </div>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                                       <span className="text-[10px] font-black text-slate-400 uppercase block">Veículo / Frota Mensal</span>
+                                       <span className="text-base font-black text-slate-800 mt-1 block">{formatCurrency(veic)}</span>
+                                    </div>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                                       <span className="text-[10px] font-black text-slate-400 uppercase block">Combustível / Outros</span>
+                                       <span className="text-base font-black text-slate-800 mt-1 block">{formatCurrency(comb)}</span>
+                                    </div>
+                                 </div>
+                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
+                                       <span className="text-[10px] font-black text-emerald-700 uppercase block">Custo Mensal Total</span>
+                                       <span className="text-base font-black text-[#1B4D3E] mt-1 block">{formatCurrency(totalMensal)}</span>
+                                    </div>
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5">
+                                       <span className="text-[10px] font-black text-blue-700 uppercase block">Valor Diária Sugerido (÷22)</span>
+                                       <span className="text-base font-black text-blue-900 mt-1 block">{formatCurrency(Number(eq.valorDiariaSugerido) || totalMensal / 22)}</span>
+                                    </div>
+                                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3.5">
+                                       <span className="text-[10px] font-black text-indigo-700 uppercase block">Valor Hora Sugerido (÷176)</span>
+                                       <span className="text-base font-black text-indigo-900 mt-1 block">{formatCurrency(Number(eq.valorHoraSugerido) || totalMensal / 176)}</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           );
+                        })()
+                     ) : (
+                        (() => {
+                           const cargo = cargoCostDetailsModal.cargo || {};
+                           const cct = cargoCostDetailsModal.cct || {};
+                           const posto = cargoCostDetailsModal.posto || {
+                              quantidade: 1,
+                              escala: '5x2',
+                              parametrosPosto: { diasTrabalhadosMes: 22 }
+                           };
+
+                           const simColab = {
+                              ...posto,
+                              cargo,
+                              cctBase: cct,
+                              parametrosPosto: posto?.parametrosPosto || { diasTrabalhadosMes: 22 }
+                           };
+
+                           const calc = calculateLaborCost(simColab, {
+                              ...proposta.premissas,
+                              encargos: proposta.encargos,
+                              cctGlobal: cct,
+                              maquinas: proposta.insumos?.maquinas || 0,
+                              totalEquipeQuantidade:
+                                 proposta.equipe.reduce((acc: number, e: any) => acc + (Number(e.quantidade) || 1), 0) || 1
+                           });
+
+                           const dA = calc.detalheBlocoA || {};
+                           const dC = calc.detalheBlocoC || {};
+                           const episCct: any[] = Array.isArray(cargo.episConfig) ? cargo.episConfig : [];
+                           const episPosto: any[] = Array.isArray(posto?.parametrosPosto?.episAdicionais)
+                              ? posto.parametrosPosto.episAdicionais
+                              : [];
+                           const diasTrab = Number(posto?.parametrosPosto?.diasTrabalhadosMes) || 22;
+                           const qtdPosto = Number(posto?.quantidade) || 1;
+
+                           return (
+                              <div className="space-y-5">
+                                 {/* Cards Resumo Topo */}
+                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                                       <span className="text-[10px] font-black text-slate-400 uppercase block">1. Mão de Obra + Encargos</span>
+                                       <span className="text-sm font-black text-slate-800 mt-1 block">{formatCurrency(calc.blocoA || 0)}</span>
+                                    </div>
+                                    <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-3">
+                                       <span className="text-[10px] font-black text-blue-700 uppercase block">2. Benefícios (CCT)</span>
+                                       <span className="text-sm font-black text-blue-900 mt-1 block">{formatCurrency(calc.beneficios || 0)}</span>
+                                    </div>
+                                    <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3">
+                                       <span className="text-[10px] font-black text-amber-800 uppercase block">3. Uniformes e EPIs</span>
+                                       <span className="text-sm font-black text-amber-900 mt-1 block">{formatCurrency(calc.ativos || 0)}</span>
+                                    </div>
+                                    <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3">
+                                       <span className="text-[10px] font-black text-[#1B4D3E] uppercase block">Custo Unit. / Colaborador</span>
+                                       <span className="text-base font-black text-[#1B4D3E] mt-0.5 block">{formatCurrency(calc.custoTotal || 0)}</span>
+                                    </div>
+                                 </div>
+
+                                 {/* BLOCO 1: SALÁRIO E ENCARGOS */}
+                                 <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <div className="bg-slate-100 px-4 py-2.5 font-extrabold text-[11px] uppercase tracking-wider text-slate-700 flex justify-between items-center">
+                                       <span>1. Salário Base, Adicionais e Encargos Sociais (Bloco A)</span>
+                                       <span className="text-[#1B4D3E]">{formatCurrency(calc.blocoA || 0)}</span>
+                                    </div>
+                                    <div className="divide-y divide-slate-100 p-3 space-y-1.5">
+                                       <div className="flex justify-between py-1">
+                                          <span className="font-semibold text-slate-600">Piso Salarial Base (CCT)</span>
+                                          <span className="font-bold text-slate-900">{formatCurrency(dA.salarioBase || cargo.pisoSalarial || 0)}</span>
+                                       </div>
+                                       {Number(dA.insalubridade) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">
+                                                Adicional de Insalubridade ({cargo.insalubridadePercent || posto?.parametrosPosto?.insalubridadePercent || 0}%)
+                                             </span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dA.insalubridade)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dA.periculosidade) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Adicional de Periculosidade (30%)</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dA.periculosidade)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dA.outros) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Gratificações / Assiduidade / Adicionais CCT</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dA.outros)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dA.noturno) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Adicional Noturno</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dA.noturno)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dA.intrajornada) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Intrajornada</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dA.intrajornada)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dA.dsr) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">DSR sobre Adicionais</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dA.dsr)}</span>
+                                          </div>
+                                       )}
+                                       <div className="flex justify-between py-1.5 bg-slate-50 px-2 rounded font-bold">
+                                          <span>Total da Remuneração Bruta</span>
+                                          <span>{formatCurrency(calc.remuneracao || 0)}</span>
+                                       </div>
+                                       <div className="flex justify-between py-1">
+                                          <span className="font-semibold text-slate-600">
+                                             Encargos Sociais e Trabalhistas ({totalGeralEncargos.toFixed(2)}%)
+                                          </span>
+                                          <span className="font-bold text-slate-900">{formatCurrency(calc.encargos || 0)}</span>
+                                       </div>
+                                    </div>
+                                 </div>
+
+                                 {/* BLOCO 2: BENEFÍCIOS DA CCT */}
+                                 <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <div className="bg-slate-100 px-4 py-2.5 font-extrabold text-[11px] uppercase tracking-wider text-slate-700 flex justify-between items-center">
+                                       <span>2. Benefícios e Custos Sindicais Previstos na CCT ({diasTrab} dias/mês)</span>
+                                       <span className="text-blue-800">{formatCurrency(calc.beneficios || 0)}</span>
+                                    </div>
+                                    <div className="divide-y divide-slate-100 p-3 space-y-1.5">
+                                       <div className="flex justify-between py-1">
+                                          <span className="font-semibold text-slate-600">
+                                             Vale Alimentação ({cct.vaTipo === 'DIARIO' ? `${formatCurrency(Number(cct.vaValor) || 0)}/dia × ${diasTrab}d` : 'Mensal'})
+                                          </span>
+                                          <span className="font-bold text-slate-900">{formatCurrency(dC.va || 0)}</span>
+                                       </div>
+                                       <div className="flex justify-between py-1">
+                                          <span className="font-semibold text-slate-600">
+                                             Vale Transporte ({formatCurrency(Number(cct.vtValor) || 0)}/dia × {diasTrab}d)
+                                          </span>
+                                          <span className="font-bold text-slate-900">{formatCurrency(dC.vt || 0)}</span>
+                                       </div>
+                                       <div className="flex justify-between py-1">
+                                          <span className="font-semibold text-slate-600">
+                                             Custos com Sindicatos (Assist. Médica, Social e Formação - CCT)
+                                          </span>
+                                          <span className="font-bold text-slate-900">{formatCurrency(dC.custosSindicato || 0)}</span>
+                                       </div>
+                                       {Number(dC.vaFerias) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Provisão de Vale Alimentação sobre Férias (1/12)</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dC.vaFerias)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dC.cestaBasica) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Cesta Básica / Assiduidade (CCT)</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dC.cestaBasica)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dC.exames) > 0 && (
+                                          <div className="flex justify-between py-1">
+                                             <span className="font-semibold text-slate-600">Exames Médicos Ocupacionais (PCMSO)</span>
+                                             <span className="font-bold text-slate-900">{formatCurrency(dC.exames)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dC.descontoVA) > 0 && (
+                                          <div className="flex justify-between py-1 text-rose-600">
+                                             <span className="font-semibold">(-) Desconto Legal de Vale Alimentação ({cct.vaDescPercent || 0}%)</span>
+                                             <span className="font-bold">-{formatCurrency(dC.descontoVA)}</span>
+                                          </div>
+                                       )}
+                                       {Number(dC.descontoVT) > 0 && (
+                                          <div className="flex justify-between py-1 text-rose-600">
+                                             <span className="font-semibold">(-) Desconto Legal de Vale Transporte ({cct.vtDescPercent ?? 6}%)</span>
+                                             <span className="font-bold">-{formatCurrency(dC.descontoVT)}</span>
+                                          </div>
+                                       )}
+                                    </div>
+                                 </div>
+
+                                 {/* BLOCO 3: UNIFORMES E EPIs DA CCT */}
+                                 <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <div className="bg-slate-100 px-4 py-2.5 font-extrabold text-[11px] uppercase tracking-wider text-slate-700 flex justify-between items-center">
+                                       <span>3. Composição de Uniformes e EPIs deste Cargo (CCT)</span>
+                                       <span className="text-amber-800">{formatCurrency(calc.ativos || 0)}/mês</span>
+                                    </div>
+                                    <div className="p-3">
+                                       {episCct.length > 0 ? (
+                                          <table className="w-full text-left border-collapse text-[11px]">
+                                             <thead>
+                                                <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
+                                                   <th className="py-1.5">Item (EPI / Uniforme)</th>
+                                                   <th className="py-1.5 text-center">Qtd.</th>
+                                                   <th className="py-1.5 text-right">Preço Unit.</th>
+                                                   <th className="py-1.5 text-center">Vida Útil</th>
+                                                   <th className="py-1.5 text-right">Custo Mensal</th>
+                                                </tr>
+                                             </thead>
+                                             <tbody className="divide-y divide-slate-100">
+                                                {episCct.map((ep: any, idx: number) => {
+                                                   const cMensal =
+                                                      (Number(ep.precoUnitario || 0) * Number(ep.quantidade || 0)) /
+                                                      (Number(ep.vidaUtil) || 1);
+                                                   return (
+                                                      <tr key={idx}>
+                                                         <td className="py-1.5 font-semibold text-slate-800">{ep.descricao || ep.nome || 'Item EPI'}</td>
+                                                         <td className="py-1.5 text-center font-bold">{ep.quantidade || 1}</td>
+                                                         <td className="py-1.5 text-right">{formatCurrency(Number(ep.precoUnitario) || 0)}</td>
+                                                         <td className="py-1.5 text-center">{ep.vidaUtil || 1}m</td>
+                                                         <td className="py-1.5 text-right font-bold text-[#1B4D3E]">{formatCurrency(cMensal)}</td>
+                                                      </tr>
+                                                   );
+                                                })}
+                                                {episPosto.map((ep: any, idx: number) => {
+                                                   const cMensal =
+                                                      (Number(ep.precoUnitario || 0) * Number(ep.quantidade || 0)) /
+                                                      (Number(ep.vidaUtil) || 1);
+                                                   return (
+                                                      <tr key={`extra_${idx}`} className="bg-amber-50/40">
+                                                         <td className="py-1.5 font-semibold text-amber-900">
+                                                            [EPI Especial do Posto] {ep.descricao}
+                                                         </td>
+                                                         <td className="py-1.5 text-center font-bold">{ep.quantidade || 1}</td>
+                                                         <td className="py-1.5 text-right">{formatCurrency(Number(ep.precoUnitario) || 0)}</td>
+                                                         <td className="py-1.5 text-center">{ep.vidaUtil || 1}m</td>
+                                                         <td className="py-1.5 text-right font-bold text-amber-800">{formatCurrency(cMensal)}</td>
+                                                      </tr>
+                                                   );
+                                                })}
+                                             </tbody>
+                                          </table>
+                                       ) : (
+                                          <p className="text-slate-500 italic py-2">
+                                             Valor fixo mensal de Uniformes/EPIs na CCT: <strong>{formatCurrency(calc.ativos || 0)}</strong>
+                                          </p>
+                                       )}
+                                    </div>
+                                 </div>
+
+                                 {/* Rodapé de Totalização do Posto */}
+                                 <div className="bg-[#1B4D3E] text-white rounded-xl p-4 flex flex-wrap justify-between items-center gap-3">
+                                    <div>
+                                       <span className="text-[10px] uppercase tracking-wider text-emerald-200 font-bold block">
+                                          Custo Direto Mensal por Colaborador
+                                       </span>
+                                       <span className="text-lg font-black">{formatCurrency(calc.custoTotal || 0)}</span>
+                                    </div>
+                                    <div className="text-right">
+                                       <span className="text-[10px] uppercase tracking-wider text-emerald-200 font-bold block">
+                                          Total do Posto ({qtdPosto} colaborador{qtdPosto > 1 ? 'es' : ''})
+                                       </span>
+                                       <span className="text-lg font-black text-emerald-300">
+                                          {formatCurrency((calc.custoTotal || 0) * qtdPosto)}
+                                       </span>
+                                    </div>
+                                 </div>
+                              </div>
+                           );
+                        })()
+                     )}
+                  </div>
+
+                  <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                     <button
+                        type="button"
+                        onClick={() => setCargoCostDetailsModal(null)}
+                        className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider cursor-pointer"
+                     >
+                        Fechar Detalhamento
                      </button>
                   </div>
                </div>
