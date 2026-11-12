@@ -181,28 +181,42 @@ export default function AdminSeoPage() {
   };
 
   const buildLinkedInText = (art: any) => {
-    const bullets =
+    const cleanTitle = (art.title || '')
+      .replace(/\(Guia 2026\)/gi, '(Guia 2027)')
+      .replace(/\(2026\)/gi, '(2027)')
+      .replace(/no SmartBid Hub/gi, 'na prática')
+      .replace(/SmartBid Hub/gi, '');
+
+    const cleanExcerpt = (art.excerpt || art.metaDescription || '')
+      .replace(/no SmartBid Hub/gi, 'com automação de cálculo')
+      .replace(/para o SmartBid Hub/gi, 'para um sistema integrado')
+      .replace(/SmartBid Hub/gi, 'sistema especializado');
+
+    const bullets = (
       art.sections?.[0]?.bullets?.slice(0, 3) || [
         'Memória de cálculo auditável de Montantes A, B e C por CCT;',
-        'Simulação automática de tributos por dentro (Gross-up) incluindo Reforma Tributária (IBS e CBS);',
+        'Simulação automática de tributos por dentro (Gross-up) incluindo a virada de 2027 da Reforma Tributária (IBS e CBS);',
         'Geração imediata de Proposta Comercial interativa com rastreamento de abertura.',
-      ];
-    return `📊 ${art.title}
+      ]
+    ).map((b: string) =>
+      b
+        .replace(/SmartBid Hub\s*\([^)]*\):\s*/gi, '')
+        .replace(/no SmartBid Hub/gi, 'em plataforma especializada')
+        .replace(/SmartBid Hub/gi, 'plataforma especializada')
+    );
+    return `📊 ${cleanTitle.trim()}
 
-Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante os 12 meses do contrato.
+Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante o contrato — e com a virada tributária de 2027 (extinção de PIS/COFINS e entrada da CBS e do Split Payment), o rigor técnico na precificação passa a ser questão de sobrevivência.
 
-${art.excerpt || art.metaDescription}
+${cleanExcerpt}
 
 Pontos críticos que todo diretor e orçamentista precisa blindar antes de enviar uma proposta:
 ${bullets.map((b: string) => `✅ ${b}`).join('\n')}
 
-Acabamos de publicar um guia técnico completo com a memória de cálculo detalhada na Central Técnica da SmartBid Hub:
-👉 Leia o guia completo: https://www.smartbidhub.com.br/conteudos/${art.slug}
-
 🚀 Quer substituir planilhas soltas de Excel por um motor completo de Engenharia de Custos (FPV por CCT), CRM e Propostas Interativas?
-Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/lp
+Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
 
-#Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
+#Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria2027`;
   };
 
   const shareDirectOnLinkedIn = (art: any, customText?: string) => {

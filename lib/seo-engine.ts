@@ -172,44 +172,44 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
   },
   {
     slug: 'reforma-tributaria-ibs-cbs-impacto-empresas-limpeza-portaria-facilities',
-    title: 'Reforma Tributária (IBS e CBS) em Facilities e Terceirização: Impacto na Planilha de Custos e Preços (2026)',
+    title: 'Reforma Tributária (IBS e CBS) em Facilities e Terceirização: Impacto Real na Planilha de Custos em 2027',
     metaDescription:
-      'Guia completo sobre a Reforma Tributária (IBS e CBS) para empresas de Facilities, limpeza, portaria e terceirização: simulação de alíquotas, Split Payment, créditos B2B e FPV.',
+      'Guia completo sobre a Reforma Tributária (IBS e CBS) para empresas de Facilities, limpeza, portaria e terceirização: o que muda na virada de 2027, Split Payment, créditos B2B e FPV.',
     category: 'Tributação & Reforma Tributária',
     readTimeMinutes: 9,
     publishedAt: '2026-11-03T10:00:00.000Z',
     updatedAt: '2026-11-11T19:20:00.000Z',
     keywords: [
-      'reforma tributária facilities',
+      'reforma tributária facilities 2027',
       'IBS e CBS terceirização de mão de obra',
       'impacto reforma tributária limpeza e portaria',
       'como calcular IBS e CBS na planilha de custos',
-      'substituição PIS COFINS ISS por IBS CBS serviços',
+      'substituição PIS COFINS ISS por IBS CBS serviços 2027',
       'simples híbrido reforma tributária facilities',
       'split payment terceirização de serviços',
     ],
     excerpt:
-      'Entenda por que o setor de Facilities e Terceirização de Mão de Obra é o mais impactado pelo IVA Dual (IBS e CBS) e veja como simular os 3 cenários tributários na sua FPV.',
+      'Entenda por que 2027 é o ano da virada tributária real (extinção do PIS/COFINS e entrada cheia da CBS e do Split Payment) para o setor de Facilities e Terceirização de Mão de Obra.',
     sections: [
       {
-        heading: '1. Por que as Empresas de Facilities e Terceirização são as mais afetadas pelo IBS e CBS?',
+        heading: '1. Por que 2027 é a Virada Real da Reforma Tributária (CBS e IBS) para Facilities e Terceirização?',
         paragraphs: [
-          'Com a Emenda Constitucional 132/2023 e a Lei Complementar do IVA Dual (EC 132 e PLP 68/2024), os tributos cumulativos e mistos sobre o faturamento das prestadoras de serviços — PIS (0,65% ou 1,65%), COFINS (3,00% ou 7,60%) e ISS municipal (2% a 5%) — dão lugar à CBS (Contribuição sobre Bens e Serviços, federal) e ao IBS (Imposto sobre Bens e Serviços, estadual e municipal).',
+          'Enquanto 2026 funciona apenas como ano de teste operacional (alíquota simbólica de 0,9% de CBS e 0,1% de IBS compensável com PIS/COFINS, sem impacto real de caixa), é em 2027 que a Reforma Tributária muda efetivamente o jogo para as empresas de prestação de serviços: o PIS e a COFINS são extintos e entra em vigor a cobrança cheia da CBS federal, acompanhada da implantação do Split Payment.',
           'O grande desafio para empresas de limpeza e conservação, portaria, vigilância, recepção e manutenção predial está na estrutura de custos: entre 70% e 82% do custo direto de um contrato de Facilities é composto por Folha de Pagamento e Encargos Sociais (Montante A), que não geram crédito de IBS/CBS na mesma proporção de insumos industriais.',
         ],
         bullets: [
-          'CBS (Contribuição sobre Bens e Serviços — Federal): Substitui o PIS e a COFINS sob lógica de não cumulatividade plena.',
-          'IBS (Imposto sobre Bens e Serviços — Estadual/Municipal): Substitui gradualmente o ISS e o ICMS, unificando a tributação no destino (local da prestação do serviço).',
+          'CBS em 2027 (Contribuição sobre Bens e Serviços — Federal): Extingue definitivamente o PIS (0,65% ou 1,65%) e a COFINS (3,00% ou 7,60%) sob lógica de não cumulatividade plena.',
+          'IBS (Imposto sobre Bens e Serviços — Estadual/Municipal): Substitui gradualmente o ISS municipal (2% a 5%), unificando a tributação no destino (local da prestação do serviço).',
           'Split Payment (Recolhimento na Liquidação Financeira): O tributo passa a ser separado automaticamente no momento do pagamento da Nota Fiscal pelo cliente contratante, exigindo cálculo exato do capital de giro.',
-          'Transferência Integral de Crédito B2B: Clientes contratantes no regime regular do IBS/CBS passarão a descontar integralmente o IVA destacado na nota fiscal da terceirizada, mudando a comparação de preços entre fornecedores do Simples, Lucro Presumido e Lucro Real.',
+          'Transferência Integral de Crédito B2B: Clientes contratantes no regime regular passarão a descontar integralmente o tributo destacado na nota fiscal da terceirizada, mudando a comparação de preços entre fornecedores do Simples, Lucro Presumido e Lucro Real.',
         ],
         highlightBox: {
-          title: 'O Primeiro Software de FPV do Brasil já Pronto para IBS e CBS',
-          text: 'Enquanto planilhas tradicionais de Excel continuam presas apenas a PIS/COFINS/ISS, o SmartBid Hub já possui seletor nativo de Reforma Tributária na Empresa Emissora e na Aba 2 da FPV, permitindo alternar em 1 clique entre Sistema Atual, Transição Fase 1 (CBS + ISS) e IVA Dual Pleno (IBS + CBS).',
+          title: 'Simule a Virada de 2027 (CBS + IBS) na sua Planilha de Custos (FPV)',
+          text: 'Como contratos de terceirização assinados agora atravessam o ano de 2027, toda proposta comercial já precisa simular a transição entre o Regime Atual (PIS/COFINS/ISS), a Virada de 2027 (CBS + ISS) e o IVA Dual Pleno (IBS + CBS).',
         },
       },
       {
-        heading: '2. Os 3 Cenários Tributários que toda Proposta de Facilities precisa Simular (2026 a 2033)',
+        heading: '2. Os 3 Cenários Tributários que toda Proposta de Facilities precisa Simular (2027 a 2033)',
         paragraphs: [
           'Como os contratos de prestação de serviços continuados têm duração de 12 a 60 meses, enviar uma proposta comercial sem simular a transição tributária e sem incluir cláusula de reequilíbrio econômico-financeiro expõe a prestadora a prejuízos severos:',
         ],
@@ -459,7 +459,7 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
   },
   {
     slug: 'software-montagem-de-propostas-terceirizacao-servicos-facilities',
-    title: 'Software de Montagem de Propostas e Orçamento para Terceirização de Serviços e Facilities (Guia 2026)',
+    title: 'Software de Montagem de Propostas e Orçamento para Terceirização de Serviços e Facilities (Guia 2027)',
     metaDescription:
       'Conheça o melhor software para montagem de propostas comerciais e cálculo de custos (encargos trabalhistas, CCT, benefícios, insumos e margem) para empresas de terceirização, limpeza, portaria e segurança.',
     category: 'Softwares & Comparativos',
@@ -525,7 +525,7 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
   },
   {
     slug: 'como-montar-orcamento-anual-de-facilities-do-zero-planilha-controle',
-    title: 'Como Montar o Orçamento Anual de Facilities do Zero + Planilha de Controle de Facilities (Guia 2026)',
+    title: 'Como Montar o Orçamento Anual de Facilities do Zero + Planilha de Controle de Facilities (Guia 2027)',
     metaDescription:
       'Passo a passo completo de como montar o orçamento anual de Facilities do zero e evoluir da planilha de controle de Facilities em Excel para o SmartBid Hub.',
     category: 'Orçamento & Gestão de Facilities',
@@ -807,6 +807,8 @@ export function normalizePortugueseTopic(text: string): string {
     [/\breforma tributária empresas de serviços\b/gi, 'Reforma Tributária para Empresas de Serviços'],
     [/\bimpacto reforma tributária terceirização\b/gi, 'Impacto da Reforma Tributária na Terceirização'],
     [/\bsoftware para orçamento de facilities\b/gi, 'Software para Orçamento de Facilities'],
+    [/\(Guia 2026\)/gi, '(Guia 2027)'],
+    [/\(2026\)/gi, '(2027)'],
   ];
 
   let result = text.trim();
@@ -1167,7 +1169,7 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
     const cleanTitle =
       chosenTopic.length > 72
         ? chosenTopic
-        : `${chosenTopic}: Guia Prático e Memória de Cálculo (2026)`;
+        : `${chosenTopic}: Guia Prático e Memória de Cálculo (2027)`;
 
     generated = {
       slug: baseSlug,
@@ -1282,29 +1284,43 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
  * Monta um post executivo de alta conversão para o LinkedIn (em 1ª pessoa como Especialista em Facilities & Founder da SmartBid Hub)
  */
 export function buildLinkedInPostFromArticle(article: SeoArticle): string {
-  const bullets =
+  const cleanTitle = article.title
+    .replace(/\(Guia 2026\)/gi, '(Guia 2027)')
+    .replace(/\(2026\)/gi, '(2027)')
+    .replace(/no SmartBid Hub/gi, 'na prática')
+    .replace(/SmartBid Hub/gi, '');
+
+  const cleanExcerpt = (article.excerpt || article.metaDescription || '')
+    .replace(/no SmartBid Hub/gi, 'com automação de cálculo')
+    .replace(/para o SmartBid Hub/gi, 'para um sistema integrado')
+    .replace(/SmartBid Hub/gi, 'sistema especializado');
+
+  const bullets = (
     article.sections?.[0]?.bullets?.slice(0, 3) || [
       'Memória de cálculo auditável de Montantes A, B e C por CCT;',
-      'Simulação automática de tributos por dentro (Gross-up) incluindo Reforma Tributária (IBS e CBS);',
+      'Simulação automática de tributos por dentro (Gross-up) incluindo a virada de 2027 da Reforma Tributária (IBS e CBS);',
       'Geração imediata de Proposta Comercial interativa com rastreamento de abertura.',
-    ];
+    ]
+  ).map((b) =>
+    b
+      .replace(/SmartBid Hub\s*\([^)]*\):\s*/gi, '')
+      .replace(/no SmartBid Hub/gi, 'em plataforma especializada')
+      .replace(/SmartBid Hub/gi, 'plataforma especializada')
+  );
 
-  return `📊 ${article.title}
+  return `📊 ${cleanTitle.trim()}
 
-Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante os 12 meses do contrato.
+Quem vive a operação e a área comercial de Facilities e Terceirização de Serviços (Limpeza, Portaria, Vigilância e Manutenção) sabe: um único erro de fórmula na planilha de custos corrói de 4% a 8% da margem líquida durante o contrato — e com a virada tributária de 2027 (extinção de PIS/COFINS e entrada da CBS e do Split Payment), o rigor técnico na precificação passa a ser questão de sobrevivência.
 
-${article.excerpt || article.metaDescription}
+${cleanExcerpt}
 
 Pontos críticos que todo diretor e orçamentista precisa blindar antes de enviar uma proposta:
 ${bullets.map((b) => `✅ ${b}`).join('\n')}
 
-Acabamos de publicar um guia técnico completo com a memória de cálculo detalhada na Central Técnica da SmartBid Hub:
-👉 Leia o guia completo: https://www.smartbidhub.com.br/conteudos/${article.slug}
-
 🚀 Quer substituir planilhas soltas de Excel por um motor completo de Engenharia de Custos (FPV por CCT), CRM e Propostas Interativas?
-Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/lp
+Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
 
-#Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
+#Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria2027`;
 }
 
 const LINKEDIN_CONFIG_KEY = '[SEO_LINKEDIN_CONFIG]';

@@ -3,6 +3,15 @@ import { getSeoArticleBySlug, normalizePortugueseTopic } from '@/lib/seo-engine'
 
 export const runtime = 'nodejs';
 
+function stripBrandFromEditorialText(text: string): string {
+  return normalizePortugueseTopic(text)
+    .replace(/\(Guia 2026\)/gi, '(Guia 2027)')
+    .replace(/\(2026\)/gi, '(2027)')
+    .replace(/no SmartBid Hub/gi, 'em sistema especializado')
+    .replace(/para o SmartBid Hub/gi, 'para plataforma integrada')
+    .replace(/SmartBid Hub/gi, 'Sistema Especializado');
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug') || '';
@@ -10,21 +19,27 @@ export async function GET(request: Request) {
 
   const rawTitle =
     article?.title ||
-    'Como Montar Propostas e Planilhas de Custos (FPV) para Terceirização e Facilities';
-  const title = normalizePortugueseTopic(rawTitle);
+    'Como Montar Propostas e Planilhas de Custos (FPV) para Terceirização e Facilities (Guia 2027)';
+  const title = stripBrandFromEditorialText(rawTitle);
 
   const category = (article?.category || 'Engenharia de Custos & FPV').toUpperCase();
   const rawSummary =
     article?.excerpt ||
     article?.metaDescription ||
-    'Guia técnico completo sobre formação de preço de venda (FPV por CCT), encargos trabalhistas, tributação e propostas comerciais para empresas de Facilities e Terceirização.';
-  const summary = normalizePortugueseTopic(rawSummary);
+    'Guia técnico completo sobre formação de preço de venda (FPV por CCT), encargos trabalhistas, virada da Reforma Tributária em 2027 (IBS/CBS) e propostas comerciais B2B.';
+  const summary = stripBrandFromEditorialText(rawSummary);
 
-  const tableRows = article?.sections?.find((s) => s.table?.rows?.length)?.table?.rows?.slice(0, 3) || [
+  const rawRows = article?.sections?.find((s) => s.table?.rows?.length)?.table?.rows?.slice(0, 3) || [
     ['Montante A — Mão de Obra + Encargos Sociais', 'Piso Sindical da CCT + Adicionais + Grupos A a F (68% a 78%)', '58% a 65% do PV'],
     ['Montante B & C — Benefícios, EPIs e Materiais', 'Vale-Transporte (dedução 6%), VA/VR por escala, Uniformes e Insumos', '12% a 18% do PV'],
-    ['BDI, Tributos (IBS/CBS) e Margem Líquida', 'Cálculo por dentro (Gross-up) no Simples, Presumido ou Lucro Real', '20% a 28% do PV'],
+    ['BDI, Tributos 2027 (IBS/CBS) e Margem Líquida', 'Cálculo por dentro (Gross-up) no Simples, Presumido ou Lucro Real', '20% a 28% do PV'],
   ];
+
+  const tableRows = rawRows.map((r) => [
+    stripBrandFromEditorialText(r[0] || ''),
+    stripBrandFromEditorialText(r[1] || ''),
+    stripBrandFromEditorialText(r[2] || ''),
+  ]);
 
   // Formato Quadrado 1:1 (1350 x 1350 px) — Padrão Ouro Oficial do Feed do LinkedIn (Desktop + Mobile sem nenhum corte)
   return new ImageResponse(
@@ -51,7 +66,7 @@ export async function GET(request: Request) {
             background: '#FAF7F2',
           }}
         >
-          {/* Masthead */}
+          {/* Masthead Editorial Neutro (Sem nome pessoal ou marca no topo) */}
           <div
             style={{
               display: 'flex',
@@ -65,7 +80,7 @@ export async function GET(request: Request) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
               <div
                 style={{
-                  width: '56px',
+                  width: '62px',
                   height: '56px',
                   borderRadius: '14px',
                   background: '#112A22',
@@ -73,22 +88,23 @@ export async function GET(request: Request) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#FFFFFF',
-                  fontSize: '30px',
+                  fontSize: '21px',
                   fontWeight: 900,
+                  letterSpacing: '-0.02em',
                 }}
               >
-                S
+                FPV
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span
                   style={{
-                    fontSize: '26px',
+                    fontSize: '25px',
                     fontWeight: 900,
                     color: '#0F172A',
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  SMARTBID HUB
+                  ENGENHARIA DE CUSTOS & PRECIFICAÇÃO B2B
                 </span>
                 <span
                   style={{
@@ -203,7 +219,7 @@ export async function GET(request: Request) {
                 borderRadius: '999px',
               }}
             >
-              PADRÃO B2B • CCT + IBS/CBS
+              CCT + REFORMA 2027 (IBS/CBS)
             </span>
           </div>
 
@@ -235,7 +251,7 @@ export async function GET(request: Request) {
                 <div style={{ width: '13px', height: '13px', borderRadius: '99px', background: '#F59E0B' }} />
                 <div style={{ width: '13px', height: '13px', borderRadius: '99px', background: '#10B981' }} />
                 <span style={{ fontSize: '17px', fontWeight: 800, marginLeft: '10px', color: '#F8FAFC' }}>
-                  ESTRUTURA DE FORMAÇÃO DE PREÇO DE VENDA (FPV) • SMARTBID HUB
+                  MATRIZ DE COMPOSIÇÃO DE CUSTOS E FORMAÇÃO DE PREÇOS (FPV)
                 </span>
               </div>
               <span
@@ -245,7 +261,7 @@ export async function GET(request: Request) {
                   color: '#34D399',
                 }}
               >
-                CÁLCULO POR DENTRO (GROSS-UP)
+                AUDITORIA DE MARGEM B2B
               </span>
             </div>
 
@@ -340,7 +356,7 @@ export async function GET(request: Request) {
             </div>
           </div>
 
-          {/* Rodapé de Autoridade e Assinatura */}
+          {/* Rodapé Técnico Editorial (100% neutro, sem nome pessoal e sem marca) */}
           <div
             style={{
               display: 'flex',
@@ -350,8 +366,8 @@ export async function GET(request: Request) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 800, color: '#F8FAFC' }}>
-                CRISTIANO SILVA • CENTRAL TÉCNICA SMARTBID HUB
+              <span style={{ fontSize: '18px', fontWeight: 800, color: '#E2E8F0' }}>
+                ENGENHARIA DE CUSTOS • CONVENÇÕES COLETIVAS (CCT) & GESTÃO DE MARGEM
               </span>
             </div>
             <div
@@ -361,20 +377,18 @@ export async function GET(request: Request) {
                 gap: '14px',
               }}
             >
-              <span style={{ fontSize: '19px', fontWeight: 900, color: '#FDBA74' }}>
-                www.smartbidhub.com.br
-              </span>
               <span
                 style={{
                   fontSize: '16px',
                   fontWeight: 900,
-                  background: '#E07A2F',
-                  color: '#FFFFFF',
-                  padding: '8px 18px',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: '#FDBA74',
+                  padding: '9px 18px',
                   borderRadius: '10px',
                 }}
               >
-                Teste Grátis por 30 Dias
+                DIRETRIZES TÉCNICAS PARA 2027
               </span>
             </div>
           </div>
