@@ -1386,7 +1386,7 @@ export async function publishToLinkedInAutopilot(
   const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
   const postText = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
   const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
-  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=cover';
+  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=cascade';
   const photoParam =
     options?.photo !== undefined && options?.photo !== null ? `&photo=${encodeURIComponent(String(options.photo))}` : '';
   const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;

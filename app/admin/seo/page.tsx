@@ -33,7 +33,7 @@ export default function AdminSeoPage() {
   const [savingLi, setSavingLi] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<any | null>(null);
   const [previewText, setPreviewText] = useState('');
-  const [previewStyle, setPreviewStyle] = useState<'cover' | 'infographic'>('cover');
+  const [previewStyle, setPreviewStyle] = useState<'cascade' | 'lphero'>('cascade');
   const [previewPhoto, setPreviewPhoto] = useState<number | null>(null);
   const [publishingLi, setPublishingLi] = useState(false);
 
@@ -102,7 +102,7 @@ export default function AdminSeoPage() {
   const openLinkedInReviewModal = (art: any) => {
     setPreviewArticle(art);
     setPreviewText(buildLinkedInText(art));
-    setPreviewStyle('cover');
+    setPreviewStyle('cascade');
     setPreviewPhoto(null);
   };
 
@@ -542,27 +542,18 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-black uppercase tracking-wider text-slate-700">
-                      1. Arte do Post ({previewStyle === 'cover' ? 'Capa Editorial 4:5 — Foto + Texto Grande' : 'Infográfico Técnico 1:1 — Raio-X FPV'}):
+                      1. Arte do Post ({previewStyle === 'cascade' ? 'Modelo 01: Cascata 3D de Agência (Padrão)' : 'Modelo 02: Hero Nativo da LP'}):
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
-                      {previewStyle === 'cover' && (
-                        <button
-                          type="button"
-                          onClick={() => setPreviewPhoto((prev) => (prev === null ? 0 : (prev + 1) % 16))}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <RefreshCw size={12} /> Trocar Foto de Fundo
-                        </button>
-                      )}
                       <button
                         type="button"
-                        onClick={() => setPreviewStyle((prev) => (prev === 'cover' ? 'infographic' : 'cover'))}
+                        onClick={() => setPreviewStyle((prev) => (prev === 'cascade' ? 'lphero' : 'cascade'))}
                         className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 cursor-pointer"
                       >
-                        {previewStyle === 'cover' ? '📊 Ver Modelo Infográfico' : '📸 Voltar para Capa Foto + Texto'}
+                        {previewStyle === 'cascade' ? '💻 Alternar para Modelo 02 (Hero da LP)' : '🎨 Voltar para Modelo 01 (Cascata 3D)'}
                       </button>
                       <a
-                        href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}${previewPhoto !== null ? `&photo=${previewPhoto}` : ''}`}
+                        href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
@@ -573,7 +564,7 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                   </div>
                   <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm max-w-[480px] mx-auto">
                     <img
-                      src={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}${previewPhoto !== null ? `&photo=${previewPhoto}` : ''}`}
+                      src={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}`}
                       alt={previewArticle.title}
                       className="w-full h-auto block"
                     />
