@@ -107,9 +107,10 @@ export default function AdminSeoPage() {
   };
 
   const openLinkedInReviewModal = (art: any, idx = 0) => {
+    const autoStyle = getAutoStyleForIndex(idx);
     setPreviewArticle(art);
-    setPreviewText(buildLinkedInText(art));
-    setPreviewStyle(getAutoStyleForIndex(idx));
+    setPreviewStyle(autoStyle);
+    setPreviewText(buildLinkedInText(art, autoStyle));
     setPreviewPhoto(null);
   };
 
@@ -193,7 +194,7 @@ export default function AdminSeoPage() {
     setTimeout(() => setCopiedSlug(null), 2000);
   };
 
-  const buildLinkedInText = (art: any) => {
+  const buildLinkedInText = (art: any, style: 'cascade' | 'light' | 'lphero' = 'cascade') => {
     const cleanTitle = (art.title || '')
       .replace(/\(Guia 2026\)/gi, '(Guia 2027)')
       .replace(/\(2026\)/gi, '(2027)')
@@ -227,7 +228,7 @@ Pontos críticos que todo diretor e orçamentista precisa blindar antes de envia
 ${bullets.map((b: string) => `✅ ${b}`).join('\n')}
 
 🚀 Quer substituir planilhas soltas de Excel por um motor completo de Engenharia de Custos (FPV por CCT), CRM e Propostas Interativas?
-Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
+Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(art.slug)}&s=${style}
 
 #Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria2027`;
   };
@@ -601,7 +602,10 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                     <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => setPreviewStyle('cascade')}
+                        onClick={() => {
+                          setPreviewStyle('cascade');
+                          setPreviewText((prev) => prev.replace(/&s=(cascade|light|lphero)/g, '&s=cascade'));
+                        }}
                         className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer ${
                           previewStyle === 'cascade'
                             ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
@@ -612,7 +616,10 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPreviewStyle('light')}
+                        onClick={() => {
+                          setPreviewStyle('light');
+                          setPreviewText((prev) => prev.replace(/&s=(cascade|light|lphero)/g, '&s=light'));
+                        }}
                         className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer ${
                           previewStyle === 'light'
                             ? 'bg-[#E05A1B] text-white border-[#E05A1B]'
@@ -623,7 +630,10 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPreviewStyle('lphero')}
+                        onClick={() => {
+                          setPreviewStyle('lphero');
+                          setPreviewText((prev) => prev.replace(/&s=(cascade|light|lphero)/g, '&s=lphero'));
+                        }}
                         className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer ${
                           previewStyle === 'lphero'
                             ? 'bg-[#0F172A] text-white border-[#0F172A]'
