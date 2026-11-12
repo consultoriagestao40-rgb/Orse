@@ -3,39 +3,40 @@ import { getSeoArticleBySlug, normalizePortugueseTopic } from '@/lib/seo-engine'
 
 export const runtime = 'nodejs';
 
+// 16 Fotografias 100% SEM PESSOAS (Elementos Arquitetônicos, Prédios Corporativos, Dashboards, Ambientes Operacionais e Engenharia)
 const THEMATIC_PHOTOS: string[] = [
-  // 0: Torres Corporativas Financeiras (Reforma Tributária / B2B)
+  // 0: Fachada de Arranha-Céu Corporativo em Vidro
   'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=85',
-  // 1: Reunião Executiva / Propostas Comerciais
-  'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=85',
-  // 2: Auditoria de Folha e Encargos Trabalhistas
-  'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=85',
-  // 3: Complexo Predial & Gestão de Facilities
-  'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=85',
-  // 4: Ambiente Corporativo Moderno
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=85',
-  // 5: Lobby Corporativo / Portaria & Controle de Acesso 12x36
+  // 1: Sala de Conselho / Diretoria Vazia em Vidro
   'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=85',
-  // 6: Contratos, Repactuação & Assinatura Jurídica
-  'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=85',
-  // 7: Operação Técnica de Limpeza e Higienização Profissional
-  'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1200&q=85',
-  // 8: Inteligência de Dados, Regime Tributário & Dashboards
+  // 2: Dashboard Financeiro & Gráficos na Tela
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=85',
+  // 3: Complexo Predial & Torres Corporativas
+  'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=85',
+  // 4: Escritório Corporativo Moderno Vazio
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=85',
+  // 5: Lobby e Controle de Acesso Corporativo (Sem Pessoas)
+  'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85',
+  // 6: Mesa Executiva Minimalista & Planejamento
+  'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=1200&q=85',
+  // 7: Corredor Corporativo Limpo e Iluminado
+  'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=85',
+  // 8: Notebook com Indicadores e Análise de Custos
   'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=85',
-  // 9: Condomínios Empresariais & Patrimônio
+  // 9: Arquitetura de Condomínio Empresarial em Concreto e Vidro
   'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=85',
-  // 10: Planejamento Orçamentário & Planilha de Custos (FPV)
-  'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=85',
-  // 11: Engenharia de Manutenção Predial & Equipamentos
-  'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=85',
-  // 12: Apresentação de Proposta Comercial para Diretoria
-  'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=85',
-  // 13: Operações Industriais & Logística B2B
+  // 10: Prédios Espelhados Corporativos
+  'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1200&q=85',
+  // 11: Estrutura de Engenharia e Manutenção Predial
+  'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=85',
+  // 12: Torres Empresariais Modernas
+  'https://images.unsplash.com/photo-1464938050520-ef2270bb8ce8?auto=format&fit=crop&w=1200&q=85',
+  // 13: Galpão Industrial e Logístico Automatizado
   'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=85',
-  // 14: Negociação Comercial B2B & Fechamento
-  'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=85',
-  // 15: Executivo Sênior / BDI e Margem de Lucro
-  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=85',
+  // 14: Geometria Arquitetônica Predial
+  'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=85',
+  // 15: Complexo Empresarial Iluminado
+  'https://images.unsplash.com/photo-1508450859948-4e04fabaa4ea?auto=format&fit=crop&w=1200&q=85',
 ];
 
 const SLUG_PHOTO_MAP: Record<string, number> = {
@@ -70,23 +71,23 @@ function selectPhotoUrl(slug: string, title: string, photoParam: string | null):
     return THEMATIC_PHOTOS[pool[hash % pool.length]];
   }
   if (lower.includes('portaria') || lower.includes('12x36') || lower.includes('vigil') || lower.includes('acesso')) {
-    const pool = [5, 9, 3];
+    const pool = [5, 9, 14];
     return THEMATIC_PHOTOS[pool[hash % pool.length]];
   }
   if (lower.includes('manutencao') || lower.includes('manutenção') || lower.includes('pmoc') || lower.includes('máquina')) {
-    const pool = [11, 13, 3];
+    const pool = [11, 13, 14];
     return THEMATIC_PHOTOS[pool[hash % pool.length]];
   }
   if (lower.includes('reforma') || lower.includes('tribut') || lower.includes('ibs') || lower.includes('simples')) {
-    const pool = [0, 8, 10, 2];
+    const pool = [0, 8, 2, 10];
     return THEMATIC_PHOTOS[pool[hash % pool.length]];
   }
   if (lower.includes('contrato') || lower.includes('repactua') || lower.includes('reajuste')) {
-    const pool = [6, 14, 15];
+    const pool = [6, 12, 15];
     return THEMATIC_PHOTOS[pool[hash % pool.length]];
   }
   if (lower.includes('proposta') || lower.includes('comercial') || lower.includes('vendas')) {
-    const pool = [12, 1, 14];
+    const pool = [1, 4, 12];
     return THEMATIC_PHOTOS[pool[hash % pool.length]];
   }
 
@@ -95,38 +96,45 @@ function selectPhotoUrl(slug: string, title: string, photoParam: string | null):
 
 function stripBrandFromEditorialText(text: string): string {
   return normalizePortugueseTopic(text)
-    .replace(/\(Guia 2026\)/gi, '(Guia 2027)')
-    .replace(/\(2026\)/gi, '(2027)')
+    .replace(/\(Guia 2026\)/gi, '')
+    .replace(/\(Guia 2027\)/gi, '')
+    .replace(/\(2026\)/gi, '')
+    .replace(/\(2027\)/gi, '')
+    .replace(/:\s*Guia Prático e Memória de Cálculo/gi, '')
+    .replace(/:\s*Guia Prático Completo/gi, '')
+    .replace(/:\s*Guia Completo/gi, '')
+    .replace(/:\s*Guia Prático/gi, '')
     .replace(/no SmartBid Hub/gi, 'em sistema especializado')
     .replace(/para o SmartBid Hub/gi, 'para plataforma integrada')
-    .replace(/SmartBid Hub/gi, 'Sistema Especializado');
+    .replace(/SmartBid Hub/gi, 'Sistema Especializado')
+    .trim();
 }
 
-function splitHeadlineForHighlight(title: string): { before: string; highlight: string; after: string } {
-  const clean = title.replace(/\s*\(Guia 2027\)/i, '').replace(/\s*\(2027\)/i, '').trim();
-  const words = clean.split(/\s+/);
-  if (words.length <= 6) {
-    const half = Math.ceil(words.length / 2);
+/**
+ * Divide o título principal em 2 blocos empilhados verticalmente:
+ * - topText: primeira metade em texto branco gigante
+ * - highlightBoxText: segunda metade dentro de um bloco com cor de fundo em destaque (#E07A2F)
+ * Como são dois <div> separados em coluna, NUNCA há risco de sobreposição de palavras!
+ */
+function splitHeadlineIntoTwoBlocks(cleanTitle: string): { topText: string; highlightBoxText: string } {
+  const words = cleanTitle.split(/\s+/).filter(Boolean);
+  if (words.length <= 4) {
     return {
-      before: words.slice(0, half).join(' ') + ' ',
-      highlight: words.slice(half).join(' '),
-      after: '',
+      topText: words.slice(0, 2).join(' '),
+      highlightBoxText: words.slice(2).join(' ') || cleanTitle,
     };
   }
-  // Destaca o trecho central/final mais forte (4 a 5 palavras) em laranja dourado
-  const startHighlight = Math.max(2, Math.floor(words.length * 0.38));
-  const endHighlight = Math.min(words.length, startHighlight + 4);
+  const splitIndex = Math.ceil(words.length * 0.52);
   return {
-    before: words.slice(0, startHighlight).join(' ') + ' ',
-    highlight: words.slice(startHighlight, endHighlight).join(' '),
-    after: endHighlight < words.length ? ' ' + words.slice(endHighlight).join(' ') : '',
+    topText: words.slice(0, splitIndex).join(' '),
+    highlightBoxText: words.slice(splitIndex).join(' '),
   };
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug') || '';
-  const style = searchParams.get('style') || 'cover'; // 'cover' (padrão Forbes/Exame) ou 'infographic'
+  const style = searchParams.get('style') || 'cover';
   const photoParam = searchParams.get('photo');
 
   const article = slug ? await getSeoArticleBySlug(slug).catch(() => null) : null;
@@ -135,15 +143,9 @@ export async function GET(request: Request) {
     article?.title ||
     'Como Montar Propostas e Planilhas de Custos (FPV) para Terceirização e Facilities';
   const title = stripBrandFromEditorialText(rawTitle);
-
   const category = (article?.category || 'Engenharia de Custos & FPV').toUpperCase();
-  const rawSummary =
-    article?.excerpt ||
-    article?.metaDescription ||
-    'Guia técnico completo sobre formação de preço de venda (FPV por CCT), encargos trabalhistas, virada da Reforma Tributária em 2027 (IBS/CBS) e propostas comerciais B2B.';
-  const summary = stripBrandFromEditorialText(rawSummary);
 
-  // ESTILO 1 (PADRÃO): CAPA EDITORIAL FOTOGRÁFICA DE IMPACTO (1080 x 1350 px — Formato 4:5 Oficial Instagram & LinkedIn)
+  // ESTILO CAPA EDITORIAL (1080 x 1350 px — Sem pessoas, apenas o Texto Principal Grande + Destaque com Cor de Fundo)
   if (style !== 'infographic') {
     const photoUrl = selectPhotoUrl(slug, title, photoParam);
     let photoDataUrl = photoUrl;
@@ -156,7 +158,7 @@ export async function GET(request: Request) {
       }
     } catch {}
 
-    const cleanHeadline = title.replace(/\s*\(Guia 2027\)/i, '').replace(/\s*\(2027\)/i, '').trim();
+    const { topText, highlightBoxText } = splitHeadlineIntoTwoBlocks(title);
 
     return new ImageResponse(
       (
@@ -173,7 +175,7 @@ export async function GET(request: Request) {
             overflow: 'hidden',
           }}
         >
-          {/* Fotografia Temática Realista de Fundo */}
+          {/* Fotografia de Elementos Arquitetônicos / Operacionais (Sem Pessoas) */}
           <img
             src={photoDataUrl}
             width={1080}
@@ -188,7 +190,7 @@ export async function GET(request: Request) {
             }}
           />
 
-          {/* Camada Gradiente Cinematográfica (Estilo Forbes / Exame / HBR) */}
+          {/* Vinheta Cinematográfica Escura para Contraste Total do Texto */}
           <div
             style={{
               position: 'absolute',
@@ -198,19 +200,19 @@ export async function GET(request: Request) {
               height: '1350px',
               display: 'flex',
               background:
-                'linear-gradient(180deg, rgba(6,19,14,0.68) 0%, rgba(6,19,14,0.32) 28%, rgba(6,19,14,0.90) 60%, rgba(4,13,9,0.98) 100%)',
+                'linear-gradient(180deg, rgba(6,19,14,0.65) 0%, rgba(6,19,14,0.35) 30%, rgba(6,19,14,0.88) 62%, rgba(4,13,9,0.97) 100%)',
             }}
           />
 
-          {/* Topo Minimalista Editorial */}
+          {/* Topo Minimalista */}
           <div
             style={{
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              width: '100%',
-              padding: '62px 68px 0 68px',
+              width: '1080px',
+              padding: '64px 72px 0 72px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -225,12 +227,12 @@ export async function GET(request: Request) {
               <span
                 style={{
                   color: '#F8FAFC',
-                  fontSize: '17px',
+                  fontSize: '18px',
                   fontWeight: 800,
                   letterSpacing: '0.12em',
                 }}
               >
-                INTELIGÊNCIA B2B • FACILITIES & TERCEIRIZAÇÃO
+                FACILITIES & TERCEIRIZAÇÃO B2B
               </span>
             </div>
 
@@ -240,8 +242,8 @@ export async function GET(request: Request) {
                 alignItems: 'center',
                 padding: '10px 22px',
                 borderRadius: '999px',
-                background: 'rgba(15, 23, 42, 0.72)',
-                border: '1px solid rgba(253, 186, 116, 0.45)',
+                background: 'rgba(15, 23, 42, 0.78)',
+                border: '1px solid rgba(253, 186, 116, 0.5)',
                 color: '#FDBA74',
                 fontSize: '15px',
                 fontWeight: 800,
@@ -252,91 +254,72 @@ export async function GET(request: Request) {
             </div>
           </div>
 
-          {/* Bloco Inferior com Manchete Gigante de Impacto (Nó de texto único para quebra de linha 100% nativa no Satori) */}
+          {/* Centro/Base: APENAS O TEXTO PRINCIPAL GRANDE + PARTE EM DESTAQUE COM COR DE FUNDO (Sem subtexto!) */}
           <div
             style={{
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              padding: '0 68px 72px 68px',
-              gap: '26px',
+              padding: '0 72px 84px 72px',
+              gap: '24px',
               width: '1080px',
             }}
           >
-            {/* Barra Laranja + Sub-selo Dourado */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-              <div
-                style={{
-                  width: '84px',
-                  height: '8px',
-                  borderRadius: '4px',
-                  background: '#E07A2F',
-                  display: 'flex',
-                }}
-              />
-              <span
-                style={{
-                  fontSize: '18px',
-                  fontWeight: 900,
-                  color: '#FDBA74',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                DIRETRIZES TÉCNICAS & GESTÃO DE MARGEM
-              </span>
-            </div>
-
-            {/* Título Editorial Grande (Nó de texto simples para quebra de linha perfeita sem sobreposição) */}
+            {/* Parte 1 do Tema em Texto Gigante Branco */}
             <div
               style={{
-                fontSize: cleanHeadline.length > 85 ? '50px' : '56px',
+                fontSize: title.length > 75 ? '60px' : '68px',
+                fontWeight: 900,
+                lineHeight: 1.12,
+                letterSpacing: '-0.03em',
+                color: '#FFFFFF',
+                display: 'flex',
+                width: '936px',
+              }}
+            >
+              {topText}
+            </div>
+
+            {/* Parte 2 do Tema em Destaque com Cor de Fundo Laranja Executivo (#E07A2F) */}
+            <div
+              style={{
+                display: 'flex',
+                background: '#E07A2F',
+                borderRadius: '18px',
+                padding: '18px 28px',
+                fontSize: title.length > 75 ? '54px' : '62px',
                 fontWeight: 900,
                 lineHeight: 1.14,
                 letterSpacing: '-0.02em',
                 color: '#FFFFFF',
-                display: 'flex',
-                width: '944px',
+                width: '936px',
+                boxShadow: '0 18px 40px rgba(0, 0, 0, 0.35)',
               }}
             >
-              {cleanHeadline}
+              {highlightBoxText}
             </div>
 
-            {/* Subtítulo Executivo Conciso */}
+            {/* Rodapé Minimalista */}
             <div
               style={{
-                fontSize: '25px',
-                fontWeight: 500,
-                lineHeight: 1.42,
-                color: '#E2E8F0',
-                display: 'flex',
-                width: '944px',
-                borderLeft: '5px solid #E07A2F',
-                paddingLeft: '22px',
-              }}
-            >
-              {summary}
-            </div>
-
-            {/* Rodapé Editorial Limpo (Funciona no LinkedIn e no Instagram) */}
-            <div
-              style={{
-                paddingTop: '24px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.18)',
+                paddingTop: '28px',
+                marginTop: '10px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                width: '944px',
+                width: '936px',
               }}
             >
               <span
                 style={{
-                  fontSize: '17px',
+                  fontSize: '18px',
                   fontWeight: 800,
-                  color: '#94A3B8',
+                  color: '#CBD5E1',
                   letterSpacing: '0.08em',
                 }}
               >
-                ENGENHARIA DE CUSTOS • CCT • FPV • 2027
+                ENGENHARIA DE CUSTOS • CCT • FPV
               </span>
               <span
                 style={{
@@ -345,7 +328,7 @@ export async function GET(request: Request) {
                   color: '#FDBA74',
                 }}
               >
-                Leia a análise completa na legenda ↓
+                Confira os detalhes na legenda ↓
               </span>
             </div>
           </div>
@@ -358,7 +341,13 @@ export async function GET(request: Request) {
     );
   }
 
-  // ESTILO 2 (OPCIONAL / SEGUNDO SLIDE DE CARROSSEL): INFOGRÁFICO TÉCNICO (1350 x 1350 px)
+  // ESTILO 2 (OPCIONAL): INFOGRÁFICO TÉCNICO (1350 x 1350 px)
+  const rawSummary =
+    article?.excerpt ||
+    article?.metaDescription ||
+    'Guia técnico completo sobre formação de preço de venda (FPV por CCT), encargos trabalhistas, virada da Reforma Tributária em 2027 (IBS/CBS) e propostas comerciais B2B.';
+  const summary = stripBrandFromEditorialText(rawSummary);
+
   const rawRows = article?.sections?.find((s) => s.table?.rows?.length)?.table?.rows?.slice(0, 3) || [
     ['Montante A — Mão de Obra + Encargos Sociais', 'Piso Sindical da CCT + Adicionais + Grupos A a F (68% a 78%)', '58% a 65% do PV'],
     ['Montante B & C — Benefícios, EPIs e Materiais', 'Vale-Transporte (dedução 6%), VA/VR por escala, Uniformes e Insumos', '12% a 18% do PV'],
