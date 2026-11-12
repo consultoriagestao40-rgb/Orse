@@ -10,11 +10,11 @@ export async function generateMetadata({
   const postSlug = typeof params?.post === 'string' ? params.post : '';
   const style = typeof params?.s === 'string' ? params.s : 'cascade';
 
-  const officialLogoUrl = 'https://www.smartbidhub.com.br/whatsapp-profile-smartbid.jpg?v=2027';
+  const officialLogoUrl = 'https://www.smartbidhub.com.br/og-image.jpg?v=logo2027';
 
   const canonicalOrShareUrl = postSlug
-    ? `https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(postSlug)}&s=${encodeURIComponent(style)}&v=logo`
-    : 'https://www.smartbidhub.com.br/lp?v=logo';
+    ? `https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(postSlug)}&s=${encodeURIComponent(style)}&v=logo2`
+    : 'https://www.smartbidhub.com.br/lp?v=logo2';
 
   return {
     title: 'SmartBid • Software de Montagem de Propostas, Orçamentos e Custos (FPV) para Terceirização e Facilities',

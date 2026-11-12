@@ -30,6 +30,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/slides/') ||
     pathname.startsWith('/uploads/') ||
     pathname === '/og-image.jpg' ||
+    pathname === '/whatsapp-profile-smartbid.jpg' ||
+    /\.(jpg|jpeg|png|svg|webp|ico|gif)$/i.test(pathname) ||
     pathname === '/sitemap.xml' ||
     pathname === '/robots.txt' ||
     pathname === '/llms.txt' ||
