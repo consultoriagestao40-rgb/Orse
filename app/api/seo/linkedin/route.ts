@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   getLinkedInConfig,
   saveLinkedInConfig,
+  normalizeOrganizationId,
   getSeoArticleBySlug,
   publishToLinkedInAutopilot,
 } from '@/lib/seo-engine';
@@ -13,6 +14,7 @@ export async function GET() {
     connected: Boolean(cfg.accessToken),
     personName: cfg.personName || null,
     personUrn: cfg.personUrn || null,
+    organizationId: cfg.organizationId || '',
     clientId: cfg.clientId || '',
     hasClientSecret: Boolean(cfg.clientSecret),
     updatedAt: cfg.updatedAt || null,
@@ -40,12 +42,27 @@ export async function POST(request: Request) {
       });
     }
 
-    // Ação 2: Salvar Client ID / Secret / Access Token e iniciar OAuth se necessário
+    // Ação 2: Salvar apenas Organization ID da Company Page (sem redirecionar OAuth)
+    if (body.action === 'save_org') {
+      const orgId = normalizeOrganizationId(body.organizationId ? String(body.organizationId) : '');
+      const saved = await saveLinkedInConfig({ organizationId: orgId });
+      return NextResponse.json({
+        success: true,
+        organizationId: saved.organizationId || '',
+        message: orgId
+          ? `Company Page SmartBid (${orgId}) vinculada para disparo duplo (Perfil Pessoal + Página)!`
+          : 'ID da Company Page removido.',
+      });
+    }
+
+    // Ação 3: Salvar Client ID / Secret / Access Token e iniciar OAuth se necessário
     const saved = await saveLinkedInConfig({
       clientId: body.clientId !== undefined ? String(body.clientId).trim() : undefined,
       clientSecret: body.clientSecret !== undefined ? String(body.clientSecret).trim() : undefined,
       accessToken: body.accessToken !== undefined ? String(body.accessToken).trim() : undefined,
       personUrn: body.personUrn !== undefined ? String(body.personUrn).trim() : undefined,
+      organizationId:
+        body.organizationId !== undefined ? normalizeOrganizationId(String(body.organizationId)) : undefined,
     });
 
     const redirectUri = 'https://www.smartbidhub.com.br/api/seo/linkedin/callback';

@@ -29,6 +29,7 @@ export default function AdminSeoPage() {
   const [liStatus, setLiStatus] = useState<any>(null);
   const [liClientId, setLiClientId] = useState('');
   const [liClientSecret, setLiClientSecret] = useState('');
+  const [liOrgId, setLiOrgId] = useState('');
   const [showLiConfig, setShowLiConfig] = useState(false);
   const [savingLi, setSavingLi] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<any | null>(null);
@@ -44,6 +45,7 @@ export default function AdminSeoPage() {
       if (data.success) {
         setLiStatus(data);
         if (data.clientId) setLiClientId(data.clientId);
+        if (data.organizationId) setLiOrgId(data.organizationId);
       }
     } catch {}
   };
@@ -352,6 +354,41 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                   {savingLi ? 'Redirecionando...' : 'Autorizar e Conectar Meu LinkedIn'}
                 </button>
               </div>
+              <div className="pt-2 border-t border-slate-100 flex flex-col md:flex-row md:items-center gap-3">
+                <div className="flex-1">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block mb-1">
+                    🏢 Publicação Dupla: ID ou Link da Company Page do SmartBid no LinkedIn:
+                  </label>
+                  <input
+                    type="text"
+                    value={liOrgId}
+                    onChange={(e) => setLiOrgId(e.target.value)}
+                    placeholder="Ex: 105482910 ou cole o link https://www.linkedin.com/company/.../admin/"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-medium outline-none focus:border-[#0A66C2]"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/seo/linkedin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'save_org', organizationId: liOrgId }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setLiOrgId(data.organizationId || '');
+                        setFeedback(`✅ ${data.message}`);
+                        await loadLinkedInStatus();
+                      }
+                    } catch {}
+                  }}
+                  className="md:mt-5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer shrink-0"
+                >
+                  Salvar Company Page SmartBid
+                </button>
+              </div>
             </div>
           )}
 
@@ -636,6 +673,21 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                   Cancelar
                 </button>
                 <div className="flex flex-wrap items-center gap-2.5">
+                  {liOrgId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(previewText);
+                        const companyAdminUrl = /^\d+$/.test(liOrgId)
+                          ? `https://www.linkedin.com/company/${liOrgId}/admin/page-posts/published/?share=true`
+                          : `https://www.linkedin.com/company/${liOrgId}/admin/`;
+                        window.open(companyAdminUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl border border-emerald-700 text-emerald-800 hover:bg-emerald-50 text-xs font-bold cursor-pointer"
+                    >
+                      🏢 Abrir Company Page (Texto Copiado)
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       shareDirectOnLinkedIn(previewArticle, previewText);
@@ -653,6 +705,8 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                     <Sparkles size={15} />
                     {publishingLi
                       ? 'Publicando no LinkedIn...'
+                      : liOrgId
+                      ? '✅ Confirmar e Publicar (Meu Perfil + Página SmartBid)'
                       : '✅ Confirmar e Publicar Agora no Meu LinkedIn'}
                   </button>
                 </div>
