@@ -10,13 +10,11 @@ export async function generateMetadata({
   const postSlug = typeof params?.post === 'string' ? params.post : '';
   const style = typeof params?.s === 'string' ? params.s : 'cascade';
 
-  const ogImageUrl = postSlug
-    ? `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(postSlug)}&style=${encodeURIComponent(style)}`
-    : 'https://www.smartbidhub.com.br/api/seo/og?style=lphero&v=2027';
+  const officialLogoUrl = 'https://www.smartbidhub.com.br/whatsapp-profile-smartbid.jpg?v=2027';
 
   const canonicalOrShareUrl = postSlug
-    ? `https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(postSlug)}&s=${encodeURIComponent(style)}`
-    : 'https://www.smartbidhub.com.br/lp?v=2027';
+    ? `https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(postSlug)}&s=${encodeURIComponent(style)}&v=logo`
+    : 'https://www.smartbidhub.com.br/lp?v=logo';
 
   return {
     title: 'SmartBid • Software de Montagem de Propostas, Orçamentos e Custos (FPV) para Terceirização e Facilities',
@@ -33,10 +31,10 @@ export async function generateMetadata({
       siteName: 'SmartBid Hub',
       images: [
         {
-          url: ogImageUrl,
-          width: 1080,
-          height: 1350,
-          alt: 'SmartBid • Software de Montagem de Propostas e Custos para Terceirização e Facilities',
+          url: officialLogoUrl,
+          width: 1024,
+          height: 1024,
+          alt: 'SmartBid Hub Oficial • Software de Propostas e Custos para Terceirização e Facilities',
         },
       ],
       locale: 'pt_BR',
@@ -47,7 +45,7 @@ export async function generateMetadata({
       title: 'SmartBid • Software de Propostas, Orçamentos e Custos (FPV) para Terceirização e Facilities',
       description:
         'Transforme a sua prestadora de serviços numa máquina de contratos previsíveis: da prospecção de decisores à blindagem de margem.',
-      images: [ogImageUrl],
+      images: [officialLogoUrl],
     },
   };
 }

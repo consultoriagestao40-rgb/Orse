@@ -228,7 +228,7 @@ Pontos críticos que todo diretor e orçamentista precisa blindar antes de envia
 ${bullets.map((b: string) => `✅ ${b}`).join('\n')}
 
 🚀 Quer substituir planilhas soltas de Excel por um motor completo de Engenharia de Custos (FPV por CCT), CRM e Propostas Interativas?
-Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(art.slug)}&s=${style}
+Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(art.slug)}&s=${style}&v=logo
 
 #Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria2027`;
   };
