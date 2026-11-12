@@ -75,9 +75,14 @@ function trimTrailingStopwords(words: string[]): string[] {
 }
 
 function splitUpperHeadline(text: string): { whitePart: string; orangePart: string } {
-  const clean = cleanArticleHeadline(text).toUpperCase();
+  let clean = cleanArticleHeadline(text).toUpperCase();
+  if (clean.includes('?')) {
+    clean = `${clean.split('?')[0].trim()}?`;
+  } else if (clean.includes(':')) {
+    clean = clean.split(':')[0].trim();
+  }
   const words = clean.split(/\s+/).filter(Boolean);
-  const compactWords = trimTrailingStopwords(words.length > 10 ? words.slice(0, 10) : words);
+  const compactWords = trimTrailingStopwords(words.length > 11 ? words.slice(0, 11) : words);
   const splitIdx = Math.ceil(compactWords.length * 0.5);
   const first = compactWords.slice(0, splitIdx).join(' ');
   const second = compactWords.slice(splitIdx).join(' ');
@@ -85,7 +90,12 @@ function splitUpperHeadline(text: string): { whitePart: string; orangePart: stri
 }
 
 function splitSentenceHeadline(text: string): { firstHalf: string; secondHalf: string } {
-  const clean = cleanArticleHeadline(text);
+  let clean = cleanArticleHeadline(text);
+  if (clean.includes('?')) {
+    clean = `${clean.split('?')[0].trim()}?`;
+  } else if (clean.includes(':')) {
+    clean = clean.split(':')[0].trim();
+  }
   const words = clean.split(/\s+/).filter(Boolean);
   const compactWords = trimTrailingStopwords(words.length > 11 ? words.slice(0, 11) : words);
   const splitIdx = Math.ceil(compactWords.length * 0.52);
@@ -463,10 +473,13 @@ export async function GET(request: Request) {
   }
 
   // ============================================================================
-  // MODELO 03: VITRINE HERO NATIVA DA LP + JANELA DO SISTEMA (style=lphero) — 1080 x 1350 px
+  // MODELO 03: VITRINE HERO NATIVA DA LP + TELA DO SISTEMA (style=lphero) — 1080 x 1350 px
   // ============================================================================
   if (resolvedStyle === 'lphero') {
-    const { firstHalf, secondHalf } = splitSentenceHeadline(rawTitle);
+    const { whitePart, orangePart } = splitUpperHeadline(rawTitle);
+    const isCommercialScreen =
+      /proposta|revis|comercial|venda|funil|radar|pipeline|contrato|meta|cliente/i.test(rawTitle) &&
+      !/planilha de custos aberta|extrato|demonstrativo/i.test(rawTitle);
 
     return new ImageResponse(
       (
@@ -490,7 +503,7 @@ export async function GET(request: Request) {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              padding: '64px 64px 0 64px',
+              padding: '56px 58px 0 58px',
               background: 'linear-gradient(145deg, #1E5D47 0%, #0E3427 48%, #071D15 100%)',
             }}
           >
@@ -503,7 +516,7 @@ export async function GET(request: Request) {
                 width: '1100px',
                 height: '1100px',
                 borderRadius: '9999px',
-                border: '1px solid rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.06)',
                 display: 'flex',
               }}
             />
@@ -515,7 +528,7 @@ export async function GET(request: Request) {
                 width: '1400px',
                 height: '1400px',
                 borderRadius: '9999px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.04)',
                 display: 'flex',
               }}
             />
@@ -524,253 +537,611 @@ export async function GET(request: Request) {
             <div
               style={{
                 position: 'absolute',
-                bottom: '-180px',
-                right: '-180px',
-                width: '540px',
-                height: '540px',
+                bottom: '-160px',
+                right: '-160px',
+                width: '520px',
+                height: '520px',
                 borderRadius: '9999px',
-                background: 'radial-gradient(circle, rgba(224,90,27,0.38) 0%, rgba(224,90,27,0) 70%)',
+                background: 'radial-gradient(circle, rgba(224,90,27,0.34) 0%, rgba(224,90,27,0) 70%)',
                 display: 'flex',
               }}
             />
 
-            {/* Ponto Luminoso Laranja do Radar da LP */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '500px',
-                right: '96px',
-                width: '12px',
-                height: '12px',
-                borderRadius: '999px',
-                background: '#FF6B2B',
-                display: 'flex',
-              }}
-            />
-
-            {/* Topo + Manchete Principal */}
-            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '30px', width: '904px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '904px' }}>
+            {/* TOPO: Tag + Manchete Archivo Black Caixa Alta (Creme #F5EFE6 + Laranja #FF7838) + 3 Pílulas */}
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '20px', width: '916px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '916px' }}>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
-                    padding: '10px 22px',
+                    gap: '10px',
+                    padding: '9px 20px',
                     borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(255,255,255,0.14)',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
                   }}
                 >
-                  <div style={{ width: '9px', height: '9px', borderRadius: '999px', background: '#FF6B2B', display: 'flex' }} />
-                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#E2E8F0' }}>
-                    Plataforma para prestadoras de serviços terceirizados
+                  <div style={{ width: '9px', height: '9px', borderRadius: '999px', background: '#FF7838', display: 'flex' }} />
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: '#E2E8F0', letterSpacing: '0.08em' }}>
+                    {category}
                   </span>
                 </div>
 
                 <div
                   style={{
-                    padding: '5px',
+                    padding: '10px 22px',
                     borderRadius: '999px',
-                    background: 'rgba(224,90,27,0.28)',
-                    border: '1px solid rgba(255,122,51,0.38)',
-                    display: 'flex',
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '11px 24px',
-                      borderRadius: '999px',
-                      background: '#E05A1B',
-                      color: '#FFFFFF',
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <span>Teste grátis de 30 dias ↗</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Manchete em 2 blocos empilhados (Branco + Laranja) + Sublinhado Laranja */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '904px' }}>
-                <div
-                  style={{
-                    fontSize: '62px',
-                    fontWeight: 800,
-                    lineHeight: 1.06,
-                    letterSpacing: '-0.035em',
+                    background: '#E05A1B',
                     color: '#FFFFFF',
-                    display: 'flex',
-                    width: '904px',
-                  }}
-                >
-                  {firstHalf}
-                </div>
-                <div
-                  style={{
-                    fontSize: '62px',
+                    fontSize: '15px',
                     fontWeight: 800,
-                    lineHeight: 1.06,
-                    letterSpacing: '-0.035em',
-                    color: '#FF7332',
                     display: 'flex',
-                    width: '904px',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
                 >
-                  {secondHalf}
+                  <span>Teste grátis de 30 dias ↗</span>
                 </div>
-                <div
-                  style={{
-                    width: '480px',
-                    height: '8px',
-                    borderRadius: '999px',
-                    background: '#E86325',
-                    marginTop: '12px',
-                    display: 'flex',
-                  }}
-                />
               </div>
 
-              {/* Subtítulo idêntico à estrutura da LP */}
+              {/* Manchete em Archivo Black Uppercase (idêntica ao Slide 01 aprovado) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '916px', marginTop: '2px' }}>
+                <div
+                  style={{
+                    fontFamily: '"Archivo Black", "Plus Jakarta Sans", sans-serif',
+                    fontSize: '54px',
+                    fontWeight: 400,
+                    lineHeight: 1.0,
+                    letterSpacing: '-0.025em',
+                    color: '#F5EFE6',
+                    display: 'flex',
+                    width: '916px',
+                  }}
+                >
+                  {whitePart}
+                </div>
+                <div
+                  style={{
+                    fontFamily: '"Archivo Black", "Plus Jakarta Sans", sans-serif',
+                    fontSize: '54px',
+                    fontWeight: 400,
+                    lineHeight: 1.0,
+                    letterSpacing: '-0.025em',
+                    color: '#FF7838',
+                    display: 'flex',
+                    width: '916px',
+                  }}
+                >
+                  {orangePart}
+                </div>
+              </div>
+
+              {/* Subtítulo Executivo */}
               <div
                 style={{
-                  fontSize: '22px',
+                  fontSize: '20px',
                   fontWeight: 500,
-                  lineHeight: 1.4,
-                  color: '#CBD5E1',
+                  lineHeight: 1.38,
+                  color: '#D8E6DD',
                   display: 'flex',
-                  width: '820px',
+                  width: '890px',
                 }}
               >
-                Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma. Da primeira ligação à blindagem de margem.
+                {isCommercialScreen
+                  ? 'Acompanhe todas as versões (REV-01, REV-02), metas da equipe e saiba o minuto exato em que o comprador abriu sua proposta:'
+                  : 'Pare de enviar seu Excel interno para o setor de Compras. Gere o Extrato Analítico Auditável (Montantes A, B, BDI e Impostos) em 1 clique:'}
+              </div>
+
+              {/* 3 Pílulas de Benefício */}
+              <div style={{ display: 'flex', gap: '14px', width: '916px' }}>
+                <div
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    color: '#FFFFFF',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    display: 'flex',
+                  }}
+                >
+                  {isCommercialScreen ? '✓ Histórico REV-01 e REV-02' : '✓ Protege seu Excel interno'}
+                </div>
+                <div
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    color: '#FFFFFF',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    display: 'flex',
+                  }}
+                >
+                  {isCommercialScreen ? '✓ Rastreio de Leitura ao Vivo' : '✓ Padrão Compras B2B & Editais'}
+                </div>
+                <div
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '14px',
+                    background: 'rgba(224,90,27,0.22)',
+                    border: '1px solid rgba(255,120,56,0.45)',
+                    color: '#FF9E6D',
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    display: 'flex',
+                  }}
+                >
+                  {isCommercialScreen ? '⚡ Radar de Metas & Conversão' : '⚡ Gerado em 1 clique na FPV'}
+                </div>
               </div>
             </div>
 
-            {/* Janela Branca da LP na Base */}
+            {/* BASE: JANELA REALISTA DO SISTEMA SMARTBID (100% DADOS SINTÉTICOS DE DEMONSTRAÇÃO) */}
             <div
               style={{
                 position: 'relative',
+                width: '916px',
+                borderRadius: '26px 26px 0 0',
+                background: '#0B231A',
+                padding: '14px 14px 0 14px',
+                border: '1.5px solid rgba(255,255,255,0.18)',
                 display: 'flex',
                 flexDirection: 'column',
-                background: 'rgba(255,255,255,0.13)',
-                padding: '14px 14px 0 14px',
-                borderRadius: '30px 30px 0 0',
-                border: '1px solid rgba(255,255,255,0.18)',
-                width: '904px',
               }}
             >
               <div
                 style={{
                   background: '#FFFFFF',
-                  borderRadius: '20px 20px 0 0',
-                  padding: '26px 30px 40px 30px',
+                  borderRadius: '18px 18px 0 0',
+                  overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '22px',
-                  width: '876px',
+                  width: '888px',
                 }}
               >
+                {/* Barra superior do navegador app.smartbidhub.com.br */}
                 <div
                   style={{
+                    background: '#F8FAFC',
+                    padding: '13px 22px',
+                    borderBottom: '1px solid #E2E8F0',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    borderBottom: '1px solid #F1F5F9',
-                    paddingBottom: '16px',
-                    width: '816px',
+                    width: '888px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0', display: 'flex' }} />
-                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0', display: 'flex' }} />
-                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0', display: 'flex' }} />
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#64748B', marginLeft: '8px' }}>
-                      app.smartbidhub.com.br
+                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#CBD5E1', display: 'flex' }} />
+                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#CBD5E1', display: 'flex' }} />
+                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#CBD5E1', display: 'flex' }} />
+                    <span style={{ marginLeft: '10px', fontSize: '13px', fontWeight: 700, color: '#64748B' }}>
+                      {isCommercialScreen
+                        ? 'app.smartbidhub.com.br • Central de Propostas & Radar Comercial'
+                        : 'app.smartbidhub.com.br • Extrato da Proposta #FPV-2027'}
                     </span>
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: '#F4F5F7',
-                      padding: '5px',
-                      borderRadius: '12px',
-                    }}
-                  >
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', padding: '6px 12px' }}>
-                      Link da proposta
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <span
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '99px',
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {isCommercialScreen ? '✓ Assinatura Digital Ativa' : '✓ Memória Auditada por CCT'}
                     </span>
                     <span
                       style={{
+                        padding: '4px 12px',
+                        borderRadius: '99px',
+                        background: '#FFF7ED',
+                        color: '#C2410C',
                         fontSize: '12px',
                         fontWeight: 800,
-                        color: '#0F172A',
-                        background: '#FFFFFF',
-                        padding: '6px 14px',
-                        borderRadius: '8px',
                       }}
                     >
-                      Rastreio de leitura
-                    </span>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', padding: '6px 12px' }}>
-                      Radar comercial
-                    </span>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', padding: '6px 12px' }}>
-                      DRE do projeto
+                      {isCommercialScreen ? 'Telemetria em Tempo Real' : 'Fórmulas Internas Protegidas'}
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px', width: '816px' }}>
-                  {cards.slice(0, 3).map((c, idx) => (
+                {isCommercialScreen ? (
+                  /* TELA 2: PROPOSTAS COMERCIAIS, REVISÕES (REV-01/REV-02) & RADAR DE METAS */
+                  <div style={{ padding: '18px 22px 24px 22px', display: 'flex', flexDirection: 'column', gap: '14px', width: '888px' }}>
                     <div
-                      key={idx}
                       style={{
-                        flex: 1,
-                        background: idx === 2 ? '#FFF7ED' : '#F8FAFC',
-                        border: idx === 2 ? '1px solid #FED7AA' : '1px solid #E2E8F0',
-                        borderRadius: '18px',
-                        padding: '20px',
+                        borderRadius: '16px',
+                        background: 'linear-gradient(135deg, #1E3A8A 0%, #172554 100%)',
+                        padding: '16px 22px',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: '#FFFFFF',
+                        width: '844px',
                       }}
                     >
-                      <span
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              padding: '3px 9px',
+                              borderRadius: '99px',
+                              background: 'rgba(255,255,255,0.14)',
+                            }}
+                          >
+                            META CORPORATIVA
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#BFDBFE', fontWeight: 600 }}>
+                            Cockpit Executivo de Conversão & Pipeline
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
+                          <div
+                            style={{
+                              background: 'rgba(255,255,255,0.09)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '10px',
+                              padding: '7px 12px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                            }}
+                          >
+                            <span style={{ fontSize: '10px', color: '#93C5FD', fontWeight: 700 }}>PROJEÇÃO MENSAL (RUN-RATE)</span>
+                            <span style={{ fontSize: '15px', fontWeight: 800 }}>R$ 784.500,00</span>
+                          </div>
+                          <div
+                            style={{
+                              background: 'rgba(255,255,255,0.09)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '10px',
+                              padding: '7px 12px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                            }}
+                          >
+                            <span style={{ fontSize: '10px', color: '#93C5FD', fontWeight: 700 }}>PIPELINE EM NEGOCIAÇÃO</span>
+                            <span style={{ fontSize: '15px', fontWeight: 800 }}>R$ 1.840.200,00</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                          <span style={{ fontSize: '10px', color: '#93C5FD', fontWeight: 700 }}>FATURAMENTO ACEITO / META</span>
+                          <span style={{ fontSize: '24px', fontWeight: 800 }}>R$ 312.800,00</span>
+                          <span style={{ fontSize: '11px', color: '#CBD5E1' }}>Meta Mensal: R$ 400.000,00</span>
+                        </div>
+                        <div
+                          style={{
+                            background: 'rgba(255,255,255,0.09)',
+                            borderRadius: '12px',
+                            padding: '8px 14px',
+                            border: '1px solid rgba(255,255,255,0.16)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span style={{ fontSize: '20px', fontWeight: 800, color: '#FBBF24' }}>78.2%</span>
+                          <span style={{ fontSize: '10px', fontWeight: 800, color: '#FDE68A' }}>RITMO FORTE</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tabela de Propostas Comerciais e Revisões (Dados Sintéticos) */}
+                    <div
+                      style={{
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: '1px solid #CBD5E1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '844px',
+                      }}
+                    >
+                      <div
                         style={{
+                          background: '#163B88',
+                          padding: '10px 16px',
+                          display: 'flex',
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          color: '#FFFFFF',
+                          width: '844px',
+                        }}
+                      >
+                        <span style={{ width: '155px' }}>FPV REFERÊNCIA</span>
+                        <span style={{ width: '250px' }}>CLIENTE (DEMONSTRAÇÃO B2B)</span>
+                        <span style={{ width: '140px' }}>RESPONSÁVEL</span>
+                        <span style={{ width: '120px' }}>VALOR MENSAL</span>
+                        <span style={{ width: '95px' }}>STATUS</span>
+                        <span style={{ width: '52px' }}>RASTREIO</span>
+                      </div>
+
+                      {[
+                        {
+                          ref: 'FPV-108-REV-02',
+                          client: 'Condomínio Corporate Tower',
+                          owner: 'Lucas Mendes',
+                          val: 'R$ 42.890,00',
+                          status: 'APROVADA',
+                          track: 'Lida 4x',
+                          muted: false,
+                        },
+                        {
+                          ref: 'FPV-108-REV-01',
+                          client: 'Condomínio Corporate Tower',
+                          owner: 'Lucas Mendes',
+                          val: 'R$ 45.120,00',
+                          status: 'REVISADA v1',
+                          track: 'Salvo',
+                          muted: true,
+                        },
+                        {
+                          ref: 'FPV-107-REV-01',
+                          client: 'Indústria Metalúrgica Atlas S/A',
+                          owner: 'Camila Rocha',
+                          val: 'R$ 68.450,00',
+                          status: 'APROVADA',
+                          track: 'Lida 6x',
+                          muted: false,
+                        },
+                        {
+                          ref: 'FPV-106-REV-01',
+                          client: 'Centro Logístico Sul Brasil',
+                          owner: 'Rafael Costa',
+                          val: 'R$ 31.940,00',
+                          status: 'EM ANÁLISE',
+                          track: 'Há 4 min',
+                          muted: false,
+                        },
+                      ].map((row, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '12px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderBottom: idx < 3 ? '1px solid #E2E8F0' : 'none',
+                            fontSize: '12px',
+                            background: row.muted ? '#F8FAFC' : '#FFFFFF',
+                            width: '844px',
+                          }}
+                        >
+                          <span style={{ width: '155px', fontWeight: 800, color: row.muted ? '#64748B' : '#0F172A' }}>{row.ref}</span>
+                          <span style={{ width: '250px', fontWeight: 700, color: row.muted ? '#64748B' : '#1E293B' }}>{row.client}</span>
+                          <span style={{ width: '140px', color: '#475569', fontWeight: 600 }}>{row.owner}</span>
+                          <span style={{ width: '120px', fontWeight: 800, color: row.muted ? '#64748B' : '#163B88' }}>{row.val}</span>
+                          <span style={{ width: '95px', fontWeight: 800, color: row.muted ? '#64748B' : '#0F172A', fontSize: '10px' }}>
+                            {row.status}
+                          </span>
+                          <span style={{ width: '52px', fontWeight: 800, color: '#059669', fontSize: '11px' }}>{row.track}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  /* TELA 1: PLANILHA DE CUSTOS — DEMONSTRATIVO ANALÍTICO (IDÊNTICO AO SLIDE 01 APROVADO) */
+                  <div style={{ padding: '18px 22px 24px 22px', display: 'flex', flexDirection: 'column', width: '888px' }}>
+                    <div
+                      style={{
+                        borderRadius: '14px',
+                        overflow: 'hidden',
+                        border: '1px solid #CBD5E1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '844px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: '#163B88',
+                          padding: '13px 20px',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          color: '#FFFFFF',
+                          fontSize: '17px',
+                          fontWeight: 800,
+                          letterSpacing: '0.12em',
+                          borderBottom: '1px solid rgba(255,255,255,0.18)',
+                          width: '844px',
+                        }}
+                      >
+                        PLANILHA DE CUSTOS — DEMONSTRATIVO ANALÍTICO
+                      </div>
+                      <div
+                        style={{
+                          background: '#1E4699',
+                          padding: '7px 20px',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          color: '#E2E8F0',
                           fontSize: '11px',
                           fontWeight: 800,
-                          color: idx === 2 ? '#9A3412' : '#64748B',
+                          letterSpacing: '0.08em',
+                          width: '844px',
                         }}
                       >
-                        {`0${idx + 1}. ${c.metric}`}
-                      </span>
-                      <span
+                        {`MONTANTE "A" - MÃO DE OBRA + ENCARGOS SOCIAIS (CCT)`}
+                      </div>
+
+                      <div
                         style={{
-                          fontSize: '21px',
+                          background: '#F8FAFC',
+                          padding: '9px 20px',
+                          display: 'flex',
+                          fontSize: '11px',
                           fontWeight: 800,
-                          color: idx === 2 ? '#C2410C' : '#0F172A',
+                          color: '#475569',
+                          borderBottom: '1px solid #E2E8F0',
+                          width: '844px',
                         }}
                       >
-                        {c.title}
-                      </span>
-                      <span
+                        <span style={{ width: '400px' }}>1) FUNÇÃO / ESCALA</span>
+                        <span style={{ width: '90px' }}>POSTOS</span>
+                        <span style={{ width: '120px' }}>ESCALA</span>
+                        <span style={{ width: '110px' }}>UNITÁRIO</span>
+                        <span style={{ width: '84px' }}>TOTAL</span>
+                      </div>
+
+                      <div
                         style={{
+                          padding: '11px 20px',
+                          display: 'flex',
                           fontSize: '13px',
-                          fontWeight: 700,
-                          color: idx === 0 ? '#15803D' : idx === 1 ? '#E05A1B' : '#9A3412',
+                          color: '#0F172A',
+                          borderBottom: '1px solid #F1F5F9',
+                          alignItems: 'center',
+                          width: '844px',
                         }}
                       >
-                        {`✓ ${c.subtitle}`}
-                      </span>
+                        <span style={{ width: '400px', fontWeight: 700 }}>Auxiliar de Limpeza & Conservação (Insalub. 20%)</span>
+                        <span style={{ width: '90px', fontWeight: 800 }}>04</span>
+                        <span style={{ width: '120px', fontWeight: 600, color: '#475569' }}>5x2 (44h)</span>
+                        <span style={{ width: '110px', fontWeight: 600, color: '#334155' }}>R$ 4.605,00</span>
+                        <span style={{ width: '84px', fontWeight: 800 }}>R$ 18.420,00</span>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: '11px 20px',
+                          display: 'flex',
+                          fontSize: '13px',
+                          color: '#0F172A',
+                          borderBottom: '1px solid #E2E8F0',
+                          alignItems: 'center',
+                          width: '844px',
+                        }}
+                      >
+                        <span style={{ width: '400px', fontWeight: 700 }}>Líder de Limpeza Técnica & Conservação Predial</span>
+                        <span style={{ width: '90px', fontWeight: 800 }}>01</span>
+                        <span style={{ width: '120px', fontWeight: 600, color: '#475569' }}>5x2 (44h)</span>
+                        <span style={{ width: '110px', fontWeight: 600, color: '#334155' }}>R$ 5.480,00</span>
+                        <span style={{ width: '84px', fontWeight: 800 }}>R$ 5.480,00</span>
+                      </div>
+
+                      <div
+                        style={{
+                          background: '#163B88',
+                          padding: '9px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          color: '#FFFFFF',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          width: '844px',
+                        }}
+                      >
+                        <span>{`TOTAL DO MONTANTE "A" (BLOCO A)`}</span>
+                        <span>R$ 23.900,00</span>
+                      </div>
+
+                      <div
+                        style={{
+                          background: '#1E4699',
+                          padding: '7px 20px',
+                          display: 'flex',
+                          color: '#E2E8F0',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          letterSpacing: '0.06em',
+                          width: '844px',
+                        }}
+                      >
+                        {`MONTANTE "B" - INSUMOS, UNIFORMES, EPIS E EQUIPAMENTOS`}
+                      </div>
+
+                      <div
+                        style={{
+                          padding: '10px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '13px',
+                          color: '#1E293B',
+                          borderBottom: '1px solid #F1F5F9',
+                          background: '#FFFFFF',
+                          width: '844px',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>1) Materiais Químicos, Saneantes e Descartáveis</span>
+                        <span style={{ fontWeight: 700 }}>R$ 1.540,00</span>
+                      </div>
+                      <div
+                        style={{
+                          padding: '10px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '13px',
+                          color: '#1E293B',
+                          borderBottom: '1px solid #E2E8F0',
+                          background: '#FFFFFF',
+                          width: '844px',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>2) Enxoval de Uniformes, EPIs (NR-6) e Depreciação de Máquinas</span>
+                        <span style={{ fontWeight: 700 }}>R$ 1.120,00</span>
+                      </div>
+
+                      <div
+                        style={{
+                          background: '#1E4699',
+                          padding: '7px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          color: '#FFFFFF',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          width: '844px',
+                        }}
+                      >
+                        <span>{`MONTANTE "D" - BDI (TAXA ADM + LUCRO) + IMPOSTOS POR DENTRO`}</span>
+                        <span>27.25%</span>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: '10px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '13px',
+                          color: '#0F172A',
+                          background: '#E2E8F0',
+                          fontWeight: 800,
+                          width: '844px',
+                        }}
+                      >
+                        <span>BDI (13.00%) + Impostos Gross-up (ISS / PIS / COFINS / CBS 14.25%)</span>
+                        <span>R$ 9.955,39</span>
+                      </div>
+
+                      <div
+                        style={{
+                          background: '#0F296B',
+                          padding: '13px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          color: '#FFFFFF',
+                          width: '844px',
+                        }}
+                      >
+                        <span style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '0.06em' }}>
+                          TOTAL MENSAL DOS MONTANTES + IMPOSTOS
+                        </span>
+                        <span style={{ fontSize: '20px', fontWeight: 800, color: '#FF9E6D' }}>R$ 36.515,39</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -601,6 +601,9 @@ export const PILLAR_SEO_ARTICLES: SeoArticle[] = [
 ];
 
 export const AUTOPILOT_SEO_TOPICS = [
+  'Você trava quando o cliente pede sua planilha de custos aberta? Como enviar o Demonstrativo Analítico de Custos (FPV) sem expor seu Excel',
+  'Controle de propostas comerciais e revisões (REV-01 e REV-02) em empresas de Facilities: como rastrear a abertura pelo cliente em tempo real',
+  'Como estruturar o funil comercial de conversão na terceirização: de leads e visitas técnicas ao fechamento de contratos B2B',
   'Como montar proposta comercial de limpeza e conservação para condomínios e empresas (Modelo e Custos)',
   'Como calcular adicional de insalubridade 20% e 40% na limpeza de banheiros de uso coletivo (Súmula 448 TST)',
   'Planilha de custos para portaria presencial 24 horas: cálculo de 4 postos 12x36, intrajornada e adicional noturno',
