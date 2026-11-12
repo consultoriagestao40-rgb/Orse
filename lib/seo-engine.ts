@@ -1655,7 +1655,7 @@ export async function publishToMetaAutopilot(
   const jpgImageUrl = `https://www.smartbidhub.com.br/api/seo/og-jpg?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;
 
   let pageAccessToken = rawToken;
-  let igUserId = (cfg.instagramAccountId || process.env.INSTAGRAM_ACCOUNT_ID || '').trim();
+  let igUserId = (cfg.instagramAccountId || process.env.INSTAGRAM_ACCOUNT_ID || '17841420092802894').trim();
 
   // Descobre automaticamente o Page Access Token e o ID da Conta Comercial do Instagram (@smartbidhub) vinculada à Página 1510660472123825
   try {
@@ -1668,7 +1668,7 @@ export async function publishToMetaAutopilot(
       if (pageData?.access_token) {
         pageAccessToken = pageData.access_token;
       }
-      if (pageData?.instagram_business_account?.id && !igUserId) {
+      if (pageData?.instagram_business_account?.id) {
         igUserId = String(pageData.instagram_business_account.id);
         await saveLinkedInConfig({ instagramAccountId: igUserId, facebookPageId: pageId });
       }
@@ -1702,7 +1702,7 @@ export async function publishToMetaAutopilot(
     }
   }
 
-  // 2. Publica no Feed do Instagram (@smartbidhub) em 2 etapas (Container -> Publish)
+  // 2. Publica no Feed do Instagram (@smartbidhub - 17841420092802894) em 2 etapas (Container -> Publish)
   if (igUserId) {
     try {
       const containerRes = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(igUserId)}/media`, {
@@ -1719,6 +1719,7 @@ export async function publishToMetaAutopilot(
         const containerData = await containerRes.json();
         const creationId = containerData?.id;
         if (creationId) {
+          await new Promise((r) => setTimeout(r, 4000));
           const pubRes = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(igUserId)}/media_publish`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
