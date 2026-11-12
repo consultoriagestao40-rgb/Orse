@@ -101,9 +101,8 @@ export default function AdminSeoPage() {
     }
   };
 
-  const getAutoStyleForIndex = (idx: number): 'cascade' | 'light' | 'lphero' => {
-    const cycle: Array<'cascade' | 'light' | 'lphero'> = ['cascade', 'light', 'lphero'];
-    return cycle[Math.max(0, idx) % cycle.length];
+  const getAutoStyleForIndex = (_idx: number): 'cascade' | 'light' | 'lphero' => {
+    return 'lphero';
   };
 
   const openLinkedInReviewModal = (art: any, idx = 0) => {

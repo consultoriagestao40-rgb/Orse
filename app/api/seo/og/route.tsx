@@ -159,24 +159,12 @@ function getCascadeCardsForArticle(slug: string, title: string): Array<{ title: 
   ];
 }
 
-const STYLE_CYCLE: Array<'cascade' | 'light' | 'lphero'> = ['cascade', 'light', 'lphero'];
-
-async function resolveStyleForSlug(slug: string, requestedStyle: string | null): Promise<'cascade' | 'light' | 'lphero'> {
+async function resolveStyleForSlug(_slug: string, requestedStyle: string | null): Promise<'cascade' | 'light' | 'lphero'> {
   if (requestedStyle === 'cascade' || requestedStyle === 'light' || requestedStyle === 'lphero') {
     return requestedStyle;
   }
-  try {
-    const all = await getAllSeoArticles();
-    const idx = all.findIndex((a) => a.slug === slug);
-    if (idx >= 0) {
-      return STYLE_CYCLE[idx % STYLE_CYCLE.length];
-    }
-  } catch {}
-  let hash = 0;
-  for (let i = 0; i < slug.length; i++) {
-    hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
-  }
-  return STYLE_CYCLE[hash % STYLE_CYCLE.length];
+  // Por padrão (ou style=auto), usa o Modelo 03 (Vitrine LP + Telas Reais do Sistema com dados sintéticos) aprovado pelo usuário
+  return 'lphero';
 }
 
 export async function GET(request: Request) {
@@ -474,12 +462,69 @@ export async function GET(request: Request) {
 
   // ============================================================================
   // MODELO 03: VITRINE HERO NATIVA DA LP + TELA DO SISTEMA (style=lphero) — 1080 x 1350 px
+  // Suporta 4 telas reais do SmartBid (100% dados sintéticos de demonstração):
+  // 1) fpv_table (Demonstrativo Analítico de Custos Montantes A, B, D e Impostos)
+  // 2) proposals_radar (Propostas Comerciais, Revisões REV-01/REV-02 e Radar Comercial)
+  // 3) sales_funnel (Funil Comercial de Conversão em 5 Etapas: Leads -> Fechamentos)
+  // 4) annual_pipeline (Pipeline de Orçamentos Anuais, Dissídio CCT & Reforma 2027)
   // ============================================================================
   if (resolvedStyle === 'lphero') {
     const { whitePart, orangePart } = splitUpperHeadline(rawTitle);
-    const isCommercialScreen =
-      /proposta|revis|comercial|venda|funil|radar|pipeline|contrato|meta|cliente/i.test(rawTitle) &&
-      !/planilha de custos aberta|extrato|demonstrativo/i.test(rawTitle);
+    const textKey = `${slug} ${rawTitle}`.toLowerCase();
+
+    let screenVariant: 'fpv_table' | 'proposals_radar' | 'sales_funnel' | 'annual_pipeline' = 'fpv_table';
+    if (/funil|prospec|visita|lead|convers/i.test(textKey)) {
+      screenVariant = 'sales_funnel';
+    } else if (/revis|rev-01|controle de proposta|rastre|abertura|vendedor/i.test(textKey)) {
+      screenVariant = 'proposals_radar';
+    } else if (/anual|repactua|reajuste|diss[ií]dio|reforma|ibs|cbs|contrato/i.test(textKey)) {
+      screenVariant = 'annual_pipeline';
+    } else if (/proposta comercial/i.test(textKey) && !/planilha|custo|insalub|encargo/i.test(textKey)) {
+      screenVariant = 'proposals_radar';
+    } else {
+      screenVariant = 'fpv_table';
+    }
+
+    const subtitleByVariant: Record<typeof screenVariant, string> = {
+      fpv_table:
+        'Pare de enviar seu Excel interno para o setor de Compras. Gere o Extrato Analítico Auditável (Montantes A, B, BDI e Impostos) em 1 clique:',
+      proposals_radar:
+        'Acompanhe todas as versões (REV-01, REV-02), metas da equipe e saiba o minuto exato em que o comprador abriu sua proposta:',
+      sales_funnel:
+        'Visualize a conversão real de Leads → Contatos → Visitas Técnicas → Propostas Emitidas → Contratos Fechados em tempo real:',
+      annual_pipeline:
+        'Controle o pipeline anual de orçamentos, alertas de data-base da CCT e simule a transição PIS/COFINS → IBS/CBS 2027 sem perder margem:',
+    };
+
+    const pillsByVariant: Record<typeof screenVariant, [string, string, string]> = {
+      fpv_table: ['✓ Protege seu Excel interno', '✓ Padrão Compras B2B & Editais', '⚡ Gerado em 1 clique na FPV'],
+      proposals_radar: ['✓ Histórico REV-01 e REV-02', '✓ Rastreio de Leitura ao Vivo', '⚡ Radar de Metas & Conversão'],
+      sales_funnel: ['✓ 5 Etapas do Funil B2B', '✓ Gestão de Visitas & ATAs', '⚡ Taxa de Fechamento ao Vivo'],
+      annual_pipeline: ['✓ Alerta Automático de CCT', '✓ Simulador IBS + CBS 2027', '⚡ Memória de Repactuação'],
+    };
+
+    const windowBarByVariant: Record<typeof screenVariant, { url: string; badge1: string; badge2: string }> = {
+      fpv_table: {
+        url: 'app.smartbidhub.com.br • Extrato da Proposta #FPV-2027',
+        badge1: '✓ Memória Auditada por CCT',
+        badge2: 'Fórmulas Internas Protegidas',
+      },
+      proposals_radar: {
+        url: 'app.smartbidhub.com.br • Central de Propostas & Radar Comercial',
+        badge1: '✓ Assinatura Digital Ativa',
+        badge2: 'Telemetria em Tempo Real',
+      },
+      sales_funnel: {
+        url: 'app.smartbidhub.com.br • Funil Comercial de Conversão',
+        badge1: 'CONV. LEADS → VENDAS: 7.4%',
+        badge2: 'FECHAMENTO PROPOSTAS: 18.5%',
+      },
+      annual_pipeline: {
+        url: 'app.smartbidhub.com.br • Pipeline de Orçamentos Anuais & Repactuação',
+        badge1: '✓ Motor Tributário 2027 Ativo',
+        badge2: '3 CCTs com Data-Base no Mês',
+      },
+    };
 
     return new ImageResponse(
       (
@@ -627,9 +672,7 @@ export async function GET(request: Request) {
                   width: '890px',
                 }}
               >
-                {isCommercialScreen
-                  ? 'Acompanhe todas as versões (REV-01, REV-02), metas da equipe e saiba o minuto exato em que o comprador abriu sua proposta:'
-                  : 'Pare de enviar seu Excel interno para o setor de Compras. Gere o Extrato Analítico Auditável (Montantes A, B, BDI e Impostos) em 1 clique:'}
+                {subtitleByVariant[screenVariant]}
               </div>
 
               {/* 3 Pílulas de Benefício */}
@@ -646,7 +689,7 @@ export async function GET(request: Request) {
                     display: 'flex',
                   }}
                 >
-                  {isCommercialScreen ? '✓ Histórico REV-01 e REV-02' : '✓ Protege seu Excel interno'}
+                  {pillsByVariant[screenVariant][0]}
                 </div>
                 <div
                   style={{
@@ -660,7 +703,7 @@ export async function GET(request: Request) {
                     display: 'flex',
                   }}
                 >
-                  {isCommercialScreen ? '✓ Rastreio de Leitura ao Vivo' : '✓ Padrão Compras B2B & Editais'}
+                  {pillsByVariant[screenVariant][1]}
                 </div>
                 <div
                   style={{
@@ -674,7 +717,7 @@ export async function GET(request: Request) {
                     display: 'flex',
                   }}
                 >
-                  {isCommercialScreen ? '⚡ Radar de Metas & Conversão' : '⚡ Gerado em 1 clique na FPV'}
+                  {pillsByVariant[screenVariant][2]}
                 </div>
               </div>
             </div>
@@ -719,9 +762,7 @@ export async function GET(request: Request) {
                     <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#CBD5E1', display: 'flex' }} />
                     <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#CBD5E1', display: 'flex' }} />
                     <span style={{ marginLeft: '10px', fontSize: '13px', fontWeight: 700, color: '#64748B' }}>
-                      {isCommercialScreen
-                        ? 'app.smartbidhub.com.br • Central de Propostas & Radar Comercial'
-                        : 'app.smartbidhub.com.br • Extrato da Proposta #FPV-2027'}
+                      {windowBarByVariant[screenVariant].url}
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -735,7 +776,7 @@ export async function GET(request: Request) {
                         fontWeight: 800,
                       }}
                     >
-                      {isCommercialScreen ? '✓ Assinatura Digital Ativa' : '✓ Memória Auditada por CCT'}
+                      {windowBarByVariant[screenVariant].badge1}
                     </span>
                     <span
                       style={{
@@ -747,12 +788,12 @@ export async function GET(request: Request) {
                         fontWeight: 800,
                       }}
                     >
-                      {isCommercialScreen ? 'Telemetria em Tempo Real' : 'Fórmulas Internas Protegidas'}
+                      {windowBarByVariant[screenVariant].badge2}
                     </span>
                   </div>
                 </div>
 
-                {isCommercialScreen ? (
+                {screenVariant === 'proposals_radar' ? (
                   /* TELA 2: PROPOSTAS COMERCIAIS, REVISÕES (REV-01/REV-02) & RADAR DE METAS */
                   <div style={{ padding: '18px 22px 24px 22px', display: 'flex', flexDirection: 'column', gap: '14px', width: '888px' }}>
                     <div
@@ -927,6 +968,221 @@ export async function GET(request: Request) {
                           <span style={{ width: '52px', fontWeight: 800, color: '#059669', fontSize: '11px' }}>{row.track}</span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                ) : screenVariant === 'sales_funnel' ? (
+                  /* TELA 3: FUNIL COMERCIAL DE CONVERSÃO EM 5 ETAPAS (100% DADOS SINTÉTICOS) */
+                  <div style={{ padding: '18px 22px 24px 22px', display: 'flex', flexDirection: 'column', gap: '14px', width: '888px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '844px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#163B88', letterSpacing: '0.04em' }}>
+                          FUNIL COMERCIAL DE CONVERSÃO (VOLUME EM QUANTIDADES)
+                        </span>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748B', letterSpacing: '0.03em' }}>
+                          JORNADA COMPLETA: PROSPECÇÃO, PRIMEIRO CONTATO, VISITAS TÉCNICAS, PROPOSTAS E FECHAMENTO
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '844px' }}>
+                      {/* Pirâmide Invertida em 5 Degraus */}
+                      <div style={{ width: '440px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        {[
+                          { w: '430px', bg: '#1D4ED8', num: '240', label: 'LEADS' },
+                          { w: '360px', bg: '#4338CA', num: '68', label: 'CONTATADOS' },
+                          { w: '295px', bg: '#D97706', num: '42', label: 'VISITAS' },
+                          { w: '235px', bg: '#7E22CE', num: '96', label: 'EMITIDAS' },
+                          { w: '180px', bg: '#059669', num: '18', label: 'FECHAMENTOS' },
+                        ].map((st, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              width: st.w,
+                              height: '58px',
+                              borderRadius: '12px',
+                              background: st.bg,
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '10px',
+                            }}
+                          >
+                            <span style={{ fontSize: '26px', fontWeight: 800 }}>{st.num}</span>
+                            <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.06em' }}>{st.label}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 5 Cards de Taxa de Conversão */}
+                      <div style={{ width: '384px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {[
+                          { step: '1. LEADS', desc: 'Oportunidades no radar', metric: '100%', color: '#1D4ED8', bg: '#FFFFFF' },
+                          { step: '2. CONTATOS', desc: 'Primeiro contato ativo', metric: '28.3%', color: '#4338CA', bg: '#FFFFFF' },
+                          { step: '3. VISITAS', desc: 'Vistorias técnicas & ATAs', metric: '61.8%', color: '#D97706', bg: '#FFFFFF' },
+                          { step: '4. PROPOSTAS', desc: 'Propostas + revisões (REV)', metric: '228%', color: '#7E22CE', bg: '#FFFFFF' },
+                          { step: '5. VENDAS FECHADAS', desc: 'Contratos convertidos', metric: '18.5%', color: '#059669', bg: '#ECFDF5' },
+                        ].map((card, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              width: '384px',
+                              height: '58px',
+                              borderRadius: '12px',
+                              border: idx === 4 ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
+                              background: card.bg,
+                              padding: '0 16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 800, color: card.color }}>{card.step}</span>
+                              <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>{card.desc}</span>
+                            </div>
+                            <span style={{ fontSize: '18px', fontWeight: 800, color: card.color }}>{card.metric}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : screenVariant === 'annual_pipeline' ? (
+                  /* TELA 4: PIPELINE DE ORÇAMENTOS ANUAIS, DISSÍDIO CCT & REFORMA 2027 (100% DADOS SINTÉTICOS) */
+                  <div style={{ padding: '18px 22px 24px 22px', display: 'flex', flexDirection: 'column', gap: '14px', width: '888px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '844px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#163B88' }}>
+                          PIPELINE DE ORÇAMENTOS & CONTRATOS ANUAIS
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            color: '#475569',
+                            background: '#F1F5F9',
+                            padding: '3px 10px',
+                            borderRadius: '6px',
+                          }}
+                        >
+                          TOTAL: 94 ATIVOS
+                        </span>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          color: '#059669',
+                          background: '#ECFDF5',
+                          padding: '5px 12px',
+                          borderRadius: '8px',
+                        }}
+                      >
+                        Receita Anual Sob Gestão: R$ 14.820.000,00
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: '1px solid #CBD5E1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '844px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: '#163B88',
+                          padding: '10px 16px',
+                          display: 'flex',
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          color: '#FFFFFF',
+                          width: '844px',
+                        }}
+                      >
+                        <span style={{ width: '120px' }}>ID / PROPOSTA</span>
+                        <span style={{ width: '250px' }}>CLIENTE CORPORATIVO (EXEMPLO)</span>
+                        <span style={{ width: '145px' }}>REGIME / IMPOSTO</span>
+                        <span style={{ width: '130px' }}>VALOR ANUAL (12M)</span>
+                        <span style={{ width: '100px' }}>STATUS</span>
+                        <span style={{ width: '65px' }}>VERSÃO</span>
+                      </div>
+
+                      {[
+                        {
+                          id: 'FPV-114 (Jan)',
+                          client: 'Complexo Empresarial Alpha Park',
+                          tax: 'IVA Dual (IBS/CBS)',
+                          val: 'R$ 514.680,00',
+                          st: 'APROVADA',
+                          ver: 'v2 (CCT)',
+                        },
+                        {
+                          id: 'FPV-113 (Fev)',
+                          client: 'Hospital & Maternidade Santa Clara',
+                          tax: 'Lucro Real (Crédito)',
+                          val: 'R$ 1.284.900,00',
+                          st: 'APROVADA',
+                          ver: 'v1',
+                        },
+                        {
+                          id: 'FPV-112 (Mar)',
+                          client: 'Rede Atacadista Sul Brasil (6 Lojas)',
+                          tax: 'Lucro Presumido',
+                          val: 'R$ 892.400,00',
+                          st: 'EM REAJUSTE',
+                          ver: '+6.8% CCT',
+                        },
+                        {
+                          id: 'FPV-111 (Abr)',
+                          client: 'Parque Industrial Metropolitano',
+                          tax: 'IVA Dual (IBS/CBS)',
+                          val: 'R$ 748.200,00',
+                          st: 'APROVADA',
+                          ver: 'v1',
+                        },
+                      ].map((row, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '12px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderBottom: idx < 3 ? '1px solid #E2E8F0' : 'none',
+                            fontSize: '12px',
+                            background: '#FFFFFF',
+                            width: '844px',
+                          }}
+                        >
+                          <span style={{ width: '120px', fontWeight: 800, color: '#0F172A' }}>{row.id}</span>
+                          <span style={{ width: '250px', fontWeight: 700, color: '#1E293B' }}>{row.client}</span>
+                          <span style={{ width: '145px', fontWeight: 700, color: '#1D4ED8' }}>{row.tax}</span>
+                          <span style={{ width: '130px', fontWeight: 800, color: '#0F172A' }}>{row.val}</span>
+                          <span style={{ width: '100px', fontWeight: 800, color: '#334155', fontSize: '10px' }}>{row.st}</span>
+                          <span style={{ width: '65px', fontWeight: 800, color: '#059669', fontSize: '11px' }}>{row.ver}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div
+                      style={{
+                        borderRadius: '12px',
+                        background: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        padding: '11px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '844px',
+                      }}
+                    >
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                        ✓ Memória de Repactuação: Quadro Comparativo Antes vs. Depois (Montante A por CCT + Montante B por IPCA + Gross-up 2027)
+                      </span>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669' }}>Margem Blindada ✓</span>
                     </div>
                   </div>
                 ) : (

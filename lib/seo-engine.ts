@@ -604,6 +604,7 @@ export const AUTOPILOT_SEO_TOPICS = [
   'Você trava quando o cliente pede sua planilha de custos aberta? Como enviar o Demonstrativo Analítico de Custos (FPV) sem expor seu Excel',
   'Controle de propostas comerciais e revisões (REV-01 e REV-02) em empresas de Facilities: como rastrear a abertura pelo cliente em tempo real',
   'Como estruturar o funil comercial de conversão na terceirização: de leads e visitas técnicas ao fechamento de contratos B2B',
+  'Seu orçamento anual de Facilities está pronto para o dissídio da CCT e o IVA 2027 (IBS e CBS)? Como blindar a margem na repactuação',
   'Como montar proposta comercial de limpeza e conservação para condomínios e empresas (Modelo e Custos)',
   'Como calcular adicional de insalubridade 20% e 40% na limpeza de banheiros de uso coletivo (Súmula 448 TST)',
   'Planilha de custos para portaria presencial 24 horas: cálculo de 4 postos 12x36, intrajornada e adicional noturno',
@@ -1407,7 +1408,7 @@ export async function publishToLinkedInAutopilot(
   const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
   const postText = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
   const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
-  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=cascade';
+  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=lphero';
   const photoParam =
     options?.photo !== undefined && options?.photo !== null ? `&photo=${encodeURIComponent(String(options.photo))}` : '';
   const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;
