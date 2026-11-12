@@ -31,6 +31,9 @@ export default function AdminSeoPage() {
   const [liClientSecret, setLiClientSecret] = useState('');
   const [showLiConfig, setShowLiConfig] = useState(false);
   const [savingLi, setSavingLi] = useState(false);
+  const [previewArticle, setPreviewArticle] = useState<any | null>(null);
+  const [previewText, setPreviewText] = useState('');
+  const [publishingLi, setPublishingLi] = useState(false);
 
   const loadLinkedInStatus = async () => {
     try {
@@ -94,29 +97,46 @@ export default function AdminSeoPage() {
     }
   };
 
-  const handlePublishLinkedInApiNow = async (art: any) => {
+  const openLinkedInReviewModal = (art: any) => {
+    setPreviewArticle(art);
+    setPreviewText(buildLinkedInText(art));
+  };
+
+  const handleConfirmPublishLinkedIn = async () => {
+    if (!previewArticle) return;
+    const art = previewArticle;
     if (!liStatus?.connected) {
-      shareDirectOnLinkedIn(art);
+      shareDirectOnLinkedIn(art, previewText);
+      setPreviewArticle(null);
       return;
     }
+    setPublishingLi(true);
     setCopiedLinkedinSlug(art.slug);
-    setFeedback(`🚀 Publicando "${art.title}" com Imagem Executiva direto na API do seu LinkedIn...`);
+    setFeedback(`🚀 Publicando "${art.title}" com Arte Editorial revisada na API do seu LinkedIn...`);
     try {
       const res = await fetch('/api/seo/linkedin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'publish_now', slug: art.slug }),
+        body: JSON.stringify({
+          action: 'publish_now',
+          slug: art.slug,
+          postText: previewText,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         setFeedback(`✅ ${data.message}`);
+        setPreviewArticle(null);
       } else {
-        setFeedback(`⚠️ ${data.message} — Abrindo janela manual do LinkedIn como alternativa...`);
-        shareDirectOnLinkedIn(art);
+        setFeedback(`⚠️ ${data.message} — Abrindo janela manual do LinkedIn com o texto já copiado...`);
+        shareDirectOnLinkedIn(art, previewText);
+        setPreviewArticle(null);
       }
     } catch {
-      shareDirectOnLinkedIn(art);
+      shareDirectOnLinkedIn(art, previewText);
+      setPreviewArticle(null);
     } finally {
+      setPublishingLi(false);
       setTimeout(() => setCopiedLinkedinSlug(null), 2500);
     }
   };
@@ -185,8 +205,8 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
 #Facilities #Terceirizacao #EngenhariaDeCustos #GestaoDeContratos #LimpezaEConservacao #Portaria #ReformaTributaria #SmartBidHub`;
   };
 
-  const shareDirectOnLinkedIn = (art: any) => {
-    const postText = buildLinkedInText(art);
+  const shareDirectOnLinkedIn = (art: any, customText?: string) => {
+    const postText = customText || buildLinkedInText(art);
     navigator.clipboard.writeText(postText);
     setCopiedLinkedinSlug(art.slug);
     setFeedback(`💼 Texto copiado e janela de publicação do LinkedIn aberta já preenchida!`);
@@ -416,7 +436,7 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
-                      onClick={() => handlePublishLinkedInApiNow(art)}
+                      onClick={() => openLinkedInReviewModal(art)}
                       className="px-3.5 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                     >
                       {copiedLinkedinSlug === art.slug ? (
@@ -425,7 +445,7 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
                         </>
                       ) : (
                         <>
-                          <Sparkles size={14} /> Postar no LinkedIn
+                          <Sparkles size={14} /> Revisar & Postar no LinkedIn
                         </>
                       )}
                     </button>
@@ -434,7 +454,7 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5"
-                      title="Ver Imagem Executiva gerada automaticamente para este artigo"
+                      title="Ver Arte Editorial gerada automaticamente para este artigo"
                     >
                       Ver Arte <ExternalLink size={13} />
                     </a>
@@ -475,6 +495,99 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
             </div>
           )}
         </div>
+
+        {/* MODAL DE REVISÃO E VALIDAÇÃO PRÉ-POSTAGEM NO LINKEDIN */}
+        {previewArticle && (
+          <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-4xl w-full border border-slate-200 shadow-2xl overflow-hidden my-8">
+              <div className="bg-[#0F172A] text-white px-6 py-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">
+                    Revisão Obrigatória Antes da Publicação
+                  </span>
+                  <h3 className="text-base font-black">
+                    Valide a Arte Editorial e o Texto antes de publicar no LinkedIn
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setPreviewArticle(null)}
+                  className="text-slate-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded-lg bg-white/10 cursor-pointer"
+                >
+                  Fechar ✕
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+                {/* Preview da Arte Editorial Criativa */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-700">
+                      1. Arte Editorial do Post (1200x630px — Infográfico Técnico B2B):
+                    </label>
+                    <a
+                      href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
+                    >
+                      Abrir imagem em tela cheia <ExternalLink size={12} />
+                    </a>
+                  </div>
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
+                    <img
+                      src={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&t=${Date.now()}`}
+                      alt={previewArticle.title}
+                      className="w-full h-auto block"
+                    />
+                  </div>
+                </div>
+
+                {/* Editor de Texto do Post */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                    2. Texto do Post no LinkedIn (Você pode revisar ou editar qualquer palavra abaixo):
+                  </label>
+                  <textarea
+                    value={previewText}
+                    onChange={(e) => setPreviewText(e.target.value)}
+                    rows={12}
+                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-4 text-xs font-medium text-slate-800 leading-relaxed focus:border-[#0A66C2] focus:bg-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <button
+                  onClick={() => setPreviewArticle(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    onClick={() => {
+                      shareDirectOnLinkedIn(previewArticle, previewText);
+                      setPreviewArticle(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-[#0A66C2] text-[#0A66C2] hover:bg-blue-50 text-xs font-bold cursor-pointer"
+                  >
+                    Abrir no LinkedIn Manualmente
+                  </button>
+                  <button
+                    onClick={handleConfirmPublishLinkedIn}
+                    disabled={publishingLi}
+                    className="px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:opacity-60 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <Sparkles size={15} />
+                    {publishingLi
+                      ? 'Publicando no LinkedIn...'
+                      : '✅ Confirmar e Publicar Agora no Meu LinkedIn'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

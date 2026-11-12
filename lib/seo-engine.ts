@@ -633,18 +633,18 @@ export const AUTOPILOT_SEO_TOPICS = [
 ];
 
 const GOOGLE_SUGGEST_SEEDS = [
-  'planilha de custos terceirizacao ',
+  'planilha de custos de terceirização ',
   'como calcular posto 12x36 ',
-  'proposta comercial limpeza e conservacao ',
-  'orcamento de portaria e limpeza ',
-  'software propostas terceirizacao ',
-  'calculo encargos sociais terceirizacao ',
-  'formacao de preco servicos terceirizados ',
-  'planilha orcamentaria facilities ',
-  'reajuste contrato prestacao de servicos ',
-  'custo funcionario limpeza terceirizada ',
-  'reforma tributaria empresas de servicos ibs cbs ',
-  'impacto reforma tributaria terceirizacao ',
+  'proposta comercial de limpeza e conservação ',
+  'orçamento de portaria e limpeza ',
+  'software de propostas para terceirização ',
+  'cálculo de encargos sociais na terceirização ',
+  'formação de preço de serviços terceirizados ',
+  'planilha orçamentária de facilities ',
+  'reajuste de contrato de prestação de serviços ',
+  'custo de funcionário de limpeza terceirizada ',
+  'reforma tributária para empresas de serviços ibs cbs ',
+  'impacto da reforma tributária na terceirização ',
 ];
 
 /**
@@ -653,8 +653,14 @@ const GOOGLE_SUGGEST_SEEDS = [
  */
 export async function fetchTrendingGoogleSearchTerms(): Promise<string[]> {
   const collected = new Set<string>();
+
+  // 1. Prioriza os temas estratégicos BOFU já revisados com ortografia e gramática perfeitas
+  for (const topic of AUTOPILOT_SEO_TOPICS) {
+    collected.add(normalizePortugueseTopic(topic));
+  }
+
   const dayOfYear = Math.floor(Date.now() / 86400000);
-  // Seleciona 4 sementes rotativas por consulta para ser ultrarrápido
+  // Seleciona 4 sementes rotativas por consulta para enriquecer com buscas ao vivo
   const seedsToQuery = [
     GOOGLE_SUGGEST_SEEDS[dayOfYear % GOOGLE_SUGGEST_SEEDS.length],
     GOOGLE_SUGGEST_SEEDS[(dayOfYear + 2) % GOOGLE_SUGGEST_SEEDS.length],
@@ -676,9 +682,9 @@ export async function fetchTrendingGoogleSearchTerms(): Promise<string[]> {
           for (const s of suggestions) {
             const clean = String(s || '').trim();
             if (clean.length >= 18) {
-              // Formata com inicial maiúscula como tema editorial
-              const formatted = clean.charAt(0).toUpperCase() + clean.slice(1);
-              collected.add(formatted);
+              // Normaliza ortografia, acentuação e preposições antes de adicionar
+              const normalized = normalizePortugueseTopic(clean);
+              collected.add(normalized);
             }
           }
         }
@@ -688,12 +694,158 @@ export async function fetchTrendingGoogleSearchTerms(): Promise<string[]> {
     })
   );
 
-  // Combina os termos ao vivo do Google com o banco estratégico BOFU
-  for (const topic of AUTOPILOT_SEO_TOPICS) {
-    collected.add(topic);
-  }
-
   return Array.from(collected);
+}
+
+/**
+ * Corretor ortográfico, gramatical e normalizador de acentuação técnica em Português
+ * para evitar erros vindos de buscas telegráficas brutas do Google.
+ */
+export function normalizePortugueseTopic(text: string): string {
+  if (!text) return '';
+  const wordReplacements: Array<[RegExp, string]> = [
+    [/\bperceiriza(c|ç)(a|ã)o\b/gi, 'terceirização'],
+    [/\bperceirizad(o|a|os|as)\b/gi, 'terceirizad$1'],
+    [/\bterceirizacao\b/gi, 'terceirização'],
+    [/\bfacilites\b/gi, 'Facilities'],
+    [/\borcamento\b/gi, 'orçamento'],
+    [/\borcamentos\b/gi, 'orçamentos'],
+    [/\borcamentaria\b/gi, 'orçamentária'],
+    [/\borcamentarias\b/gi, 'orçamentárias'],
+    [/\borcamentario\b/gi, 'orçamentário'],
+    [/\bformacao\b/gi, 'formação'],
+    [/\bpreco\b/gi, 'preço'],
+    [/\bprecos\b/gi, 'preços'],
+    [/\bprecificacao\b/gi, 'precificação'],
+    [/\bcalculo\b/gi, 'cálculo'],
+    [/\bcalculos\b/gi, 'cálculos'],
+    [/\bmanutencao\b/gi, 'manutenção'],
+    [/\bconservacao\b/gi, 'conservação'],
+    [/\bvigilancia\b/gi, 'vigilância'],
+    [/\bconvencao\b/gi, 'convenção'],
+    [/\bconvencoes\b/gi, 'convenções'],
+    [/\brepactuacao\b/gi, 'repactuação'],
+    [/\btributaria\b/gi, 'tributária'],
+    [/\btributario\b/gi, 'tributário'],
+    [/\btributacao\b/gi, 'tributação'],
+    [/\bsalario\b/gi, 'salário'],
+    [/\bsalarios\b/gi, 'salários'],
+    [/\bbeneficio\b/gi, 'benefício'],
+    [/\bbeneficios\b/gi, 'benefícios'],
+    [/\bprovisao\b/gi, 'provisão'],
+    [/\bprovisoes\b/gi, 'provisões'],
+    [/\brescisao\b/gi, 'rescisão'],
+    [/\bferias\b/gi, 'férias'],
+    [/\bcondominios\b/gi, 'condomínios'],
+    [/\bcondominio\b/gi, 'condomínio'],
+    [/\bindustrias\b/gi, 'indústrias'],
+    [/\bindustria\b/gi, 'indústria'],
+    [/\bliquida\b/gi, 'líquida'],
+    [/\bliquido\b/gi, 'líquido'],
+    [/\bservicos\b/gi, 'serviços'],
+    [/\bservico\b/gi, 'serviço'],
+    [/\bprestacao\b/gi, 'prestação'],
+    [/\bfuncionario\b/gi, 'funcionário'],
+    [/\bfuncionarios\b/gi, 'funcionários'],
+    [/\bgestao\b/gi, 'gestão'],
+    [/\boperacao\b/gi, 'operação'],
+    [/\boperacoes\b/gi, 'operações'],
+    [/\bimplantacao\b/gi, 'implantação'],
+    [/\bapresentacao\b/gi, 'apresentação'],
+    [/\blicitacao\b/gi, 'licitação'],
+    [/\blicitacoes\b/gi, 'licitações'],
+    [/\bcontratacao\b/gi, 'contratação'],
+    [/\badministracao\b/gi, 'administração'],
+    [/\bremuneracao\b/gi, 'remuneração'],
+    [/\balimentacao\b/gi, 'alimentação'],
+    [/\brefeicao\b/gi, 'refeição'],
+    [/\bmaquinas\b/gi, 'máquinas'],
+    [/\bmaquina\b/gi, 'máquina'],
+    [/\bdepreciacao\b/gi, 'depreciação'],
+    [/\bquimicos\b/gi, 'químicos'],
+    [/\bhigienico\b/gi, 'higiênico'],
+    [/\beletrica\b/gi, 'elétrica'],
+    [/\bhidraulica\b/gi, 'hidráulica'],
+    [/\bprevio\b/gi, 'prévio'],
+    [/\bhorario\b/gi, 'horário'],
+    [/\bsumula\b/gi, 'Súmula'],
+    [/\bdissidio\b/gi, 'dissídio'],
+    [/\beconomico\b/gi, 'econômico'],
+    [/\bclausula\b/gi, 'cláusula'],
+    [/\bsolidario\b/gi, 'solidário'],
+    [/\bseguranca\b/gi, 'segurança'],
+    [/\bpratico\b/gi, 'prático'],
+    [/\bpratica\b/gi, 'prática'],
+    [/\btecnico\b/gi, 'técnico'],
+    [/\btecnica\b/gi, 'técnica'],
+    [/\bmemoria\b/gi, 'memória'],
+    [/\banalise\b/gi, 'análise'],
+    [/\bprotecao\b/gi, 'proteção'],
+    [/\breposicao\b/gi, 'reposição'],
+    [/\baliquotas\b/gi, 'alíquotas'],
+    [/\baliquota\b/gi, 'alíquota'],
+    [/\bmao de obra\b/gi, 'mão de obra'],
+    [/\bareas\b/gi, 'áreas'],
+    [/\barea\b/gi, 'área'],
+    [/\bpos-obra\b/gi, 'pós-obra'],
+    [/\b13o\b/gi, '13º'],
+  ];
+
+  // Correções de expressões telegráficas (sem preposição) vindas de pesquisas do Google
+  const phraseReplacements: Array<[RegExp, string]> = [
+    [/\bplanilha orçamentária facilities\b/gi, 'Planilha Orçamentária de Facilities'],
+    [/\bprecificação serviços terceirizados\b/gi, 'Precificação de Serviços Terceirizados'],
+    [/\bsistema de precificação serviços terceirizados\b/gi, 'Sistema de Precificação de Serviços Terceirizados'],
+    [/\bformação de preço serviços terceirizados\b/gi, 'Formação de Preço de Serviços Terceirizados'],
+    [/\bplanilha de custos terceirização\b/gi, 'Planilha de Custos de Terceirização'],
+    [/\bproposta comercial limpeza e conservação\b/gi, 'Proposta Comercial de Limpeza e Conservação'],
+    [/\bsoftware propostas terceirização\b/gi, 'Software de Propostas para Terceirização'],
+    [/\bsoftware montagem de propostas terceirização\b/gi, 'Software de Montagem de Propostas para Terceirização'],
+    [/\bcálculo encargos sociais terceirização\b/gi, 'Cálculo de Encargos Sociais na Terceirização'],
+    [/\breajuste contrato prestação de serviços\b/gi, 'Reajuste de Contrato de Prestação de Serviços'],
+    [/\bcusto funcionário limpeza terceirizada\b/gi, 'Custo de Funcionário de Limpeza Terceirizada'],
+    [/\breforma tributária empresas de serviços\b/gi, 'Reforma Tributária para Empresas de Serviços'],
+    [/\bimpacto reforma tributária terceirização\b/gi, 'Impacto da Reforma Tributária na Terceirização'],
+    [/\bsoftware para orçamento de facilities\b/gi, 'Software para Orçamento de Facilities'],
+  ];
+
+  let result = text.trim();
+  for (const [regex, replacement] of wordReplacements) {
+    result = result.replace(regex, replacement);
+  }
+  for (const [regex, replacement] of phraseReplacements) {
+    result = result.replace(regex, replacement);
+  }
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+/**
+ * Sanitiza todos os campos de texto de um artigo SEO para garantir zero erros ortográficos
+ */
+export function sanitizeSeoArticleOrthography(art: SeoArticle): SeoArticle {
+  return {
+    ...art,
+    title: normalizePortugueseTopic(art.title),
+    metaDescription: normalizePortugueseTopic(art.metaDescription),
+    excerpt: normalizePortugueseTopic(art.excerpt),
+    keywords: (art.keywords || []).map((k) => normalizePortugueseTopic(k)),
+    sections: (art.sections || []).map((sec) => ({
+      ...sec,
+      heading: normalizePortugueseTopic(sec.heading),
+      paragraphs: (sec.paragraphs || []).map((p) => normalizePortugueseTopic(p)),
+      bullets: sec.bullets ? sec.bullets.map((b) => normalizePortugueseTopic(b)) : undefined,
+      highlightBox: sec.highlightBox
+        ? {
+            title: normalizePortugueseTopic(sec.highlightBox.title),
+            text: normalizePortugueseTopic(sec.highlightBox.text),
+          }
+        : undefined,
+    })),
+    faqs: (art.faqs || []).map((f) => ({
+      question: normalizePortugueseTopic(f.question),
+      answer: normalizePortugueseTopic(f.answer),
+    })),
+  };
 }
 
 function slugify(text: string): string {
@@ -723,7 +875,9 @@ export async function getAllSeoArticles(): Promise<SeoArticle[]> {
       try {
         const parsed = JSON.parse(r.resposta) as SeoArticle;
         if (parsed && parsed.slug && parsed.title) {
-          customArticles.push({ ...parsed, isCustom: true });
+          // Ignora registros antigos com erro ortográfico no slug
+          if (parsed.slug.includes('perceiriza')) continue;
+          customArticles.push(sanitizeSeoArticleOrthography({ ...parsed, isCustom: true }));
         }
       } catch {
         // ignora registro malformado
@@ -749,9 +903,21 @@ export async function getAllSeoArticles(): Promise<SeoArticle[]> {
   );
 }
 
+const LEGACY_SLUG_REDIRECTS: Record<string, string> = {
+  'software-montagem-de-propostas-perceirizacao':
+    'software-montagem-de-propostas-terceirizacao-servicos-facilities',
+  'software-para-orcamento-de-facilities':
+    'software-montagem-de-propostas-terceirizacao-servicos-facilities',
+  'planilha-orcamentaria-facilities':
+    'como-montar-orcamento-anual-de-facilities-do-zero-planilha-controle',
+  'sistema-de-precificacao-servicos-terceirizados':
+    'planilha-formacao-de-preco-de-venda-fpv-facilities-terceirizacao',
+};
+
 export async function getSeoArticleBySlug(slug: string): Promise<SeoArticle | null> {
   const all = await getAllSeoArticles();
-  return all.find(a => a.slug === slug) || null;
+  const mappedSlug = LEGACY_SLUG_REDIRECTS[slug] || slug;
+  return all.find((a) => a.slug === mappedSlug) || null;
 }
 
 export async function deleteCustomSeoArticle(slug: string): Promise<boolean> {
@@ -824,19 +990,20 @@ export async function generateAndPublishSeoArticle(topicOrKeyword?: string): Pro
   const existing = await getAllSeoArticles();
   const existingSlugs = new Set(existing.map(a => a.slug));
 
-  let chosenTopic = (topicOrKeyword || '').trim();
+  let chosenTopic = normalizePortugueseTopic(topicOrKeyword || '');
   if (!chosenTopic) {
     // 1. Prioriza a fila curada de alta intenção comercial ainda não publicada
     const availableCurated = AUTOPILOT_SEO_TOPICS.filter(t => !existingSlugs.has(slugify(t)));
     if (availableCurated.length > 0) {
-      chosenTopic = availableCurated[0];
+      chosenTopic = normalizePortugueseTopic(availableCurated[0]);
     } else {
       // 2. Consulta ao vivo o Google Autocomplete Brasil para capturar novos termos em alta
       const trending = await fetchTrendingGoogleSearchTerms();
       const availableLive = trending.filter(t => !existingSlugs.has(slugify(t)));
-      chosenTopic =
+      chosenTopic = normalizePortugueseTopic(
         availableLive[0] ||
-        `Guia prático de formação de preços e orçamento de terceirização (${new Date().toLocaleDateString('pt-BR')})`;
+          `Guia prático de formação de preços e orçamento de terceirização (${new Date().toLocaleDateString('pt-BR')})`
+      );
     }
   }
 
@@ -1096,6 +1263,8 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
     };
   }
 
+  generated = sanitizeSeoArticleOrthography(generated);
+
   // Salva no banco de dados (tabela FaqPadrao com prefixo [SEO_ARTICLE]:slug)
   await prisma.faqPadrao.create({
     data: {
@@ -1105,9 +1274,6 @@ Retorne APENAS um JSON válido (sem markdown) no seguinte formato exato:
       tenantId: null,
     },
   });
-
-  // Dispara publicação automática no LinkedIn caso Webhook/Token esteja configurado
-  await publishToLinkedInAutopilot(generated).catch(() => {});
 
   return generated;
 }
@@ -1192,12 +1358,16 @@ export async function saveLinkedInConfig(partial: Partial<LinkedInAutopilotConfi
  * Publica automaticamente o artigo do dia no LinkedIn (com a Imagem Executiva gerada + Texto + Link)
  * via API Oficial do LinkedIn ou Webhook
  */
-export async function publishToLinkedInAutopilot(article: SeoArticle): Promise<{
+export async function publishToLinkedInAutopilot(
+  article: SeoArticle,
+  customPostText?: string
+): Promise<{
   ok: boolean;
   message: string;
 }> {
   const cfg = await getLinkedInConfig();
-  const postText = buildLinkedInPostFromArticle(article);
+  const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
+  const postText = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
   const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
   const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}`;
 

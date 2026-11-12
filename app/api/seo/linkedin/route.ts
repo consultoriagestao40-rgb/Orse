@@ -23,13 +23,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Ação 1: Publicar um artigo específico via API Oficial do LinkedIn agora
+    // Ação 1: Publicar um artigo específico via API Oficial do LinkedIn agora (após aprovação no modal)
     if (body.action === 'publish_now' && body.slug) {
       const article = await getSeoArticleBySlug(String(body.slug));
       if (!article) {
         return NextResponse.json({ success: false, error: 'Artigo não encontrado' }, { status: 404 });
       }
-      const result = await publishToLinkedInAutopilot(article);
+      const customPostText = body.postText ? String(body.postText) : undefined;
+      const result = await publishToLinkedInAutopilot(article, customPostText);
       return NextResponse.json({
         success: result.ok,
         message: result.message,
