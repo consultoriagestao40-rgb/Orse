@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getSeoArticleBySlug, normalizePortugueseTopic } from '@/lib/seo-engine';
+import { getSeoArticleBySlug, getAllSeoArticles, normalizePortugueseTopic } from '@/lib/seo-engine';
 
 export const runtime = 'nodejs';
 
@@ -41,6 +41,7 @@ function cleanArticleHeadline(raw: string): string {
     .replace(/\(2027\)/gi, '')
     .replace(/\(Modelo e Custos\)/gi, '')
     .replace(/\(Grupos A a F\)/gi, '')
+    .replace(/\(Súmula 448 TST\)/gi, 'Súmula 448 TST')
     .replace(/:\s*Guia Prático e Memória de Cálculo/gi, '')
     .replace(/:\s*Guia Prático Completo.*$/gi, '')
     .replace(/:\s*Guia Completo.*$/gi, '')
@@ -61,7 +62,6 @@ function cleanArticleHeadline(raw: string): string {
 function splitUpperHeadline(text: string): { whitePart: string; orangePart: string } {
   const clean = cleanArticleHeadline(text).toUpperCase();
   const words = clean.split(/\s+/).filter(Boolean);
-  // Limita a ~8 palavras para manter impacto gigante estilo pôster de agência
   const compactWords = words.length > 9 ? words.slice(0, 9) : words;
   const splitIdx = Math.ceil(compactWords.length * 0.5);
   const first = compactWords.slice(0, splitIdx).join(' ');
@@ -72,107 +72,413 @@ function splitUpperHeadline(text: string): { whitePart: string; orangePart: stri
   return { whitePart: first, orangePart: second };
 }
 
-function getCascadeCardsForArticle(slug: string, title: string): Array<{ title: string; subtitle: string }> {
+function splitSentenceHeadline(text: string): { firstHalf: string; secondHalf: string } {
+  const clean = cleanArticleHeadline(text);
+  const words = clean.split(/\s+/).filter(Boolean);
+  const compactWords = words.length > 10 ? words.slice(0, 10) : words;
+  const splitIdx = Math.ceil(compactWords.length * 0.52);
+  const firstHalf = compactWords.slice(0, splitIdx).join(' ');
+  let secondHalf = compactWords.slice(splitIdx).join(' ');
+  if (!secondHalf.endsWith('.') && !secondHalf.endsWith('?')) {
+    secondHalf = `${secondHalf}.`;
+  }
+  return { firstHalf, secondHalf };
+}
+
+function getCascadeCardsForArticle(slug: string, title: string): Array<{ title: string; subtitle: string; metric: string }> {
   const lower = `${slug} ${title}`.toLowerCase();
 
   if (lower.includes('reforma') || lower.includes('ibs') || lower.includes('cbs') || lower.includes('simples')) {
     return [
-      { title: 'Extinção PIS/COFINS', subtitle: 'Virada real em 2027 com entrada da CBS' },
-      { title: 'Split Payment', subtitle: 'Retenção automática na liquidação da NF' },
-      { title: 'Créditos Montante B', subtitle: 'Abatimento sobre EPIs, químicos e insumos' },
-      { title: 'Simples vs. Presumido', subtitle: 'Transferência de crédito para cliente B2B' },
-      { title: 'Gross-up na FPV', subtitle: 'Cálculo por dentro e reequilíbrio contratual' },
+      { title: 'Extinção PIS/COFINS', subtitle: 'Virada real em 2027 com entrada da CBS', metric: '2027' },
+      { title: 'Split Payment', subtitle: 'Retenção automática na liquidação da NF', metric: '100% Auto' },
+      { title: 'Créditos Montante B', subtitle: 'Abatimento sobre EPIs, químicos e insumos', metric: 'IBS + CBS' },
+      { title: 'Simples vs. Presumido', subtitle: 'Transferência de crédito para cliente B2B', metric: 'B2B' },
+      { title: 'Gross-up na FPV', subtitle: 'Cálculo por dentro e reequilíbrio contratual', metric: 'DRE Real' },
     ];
   }
 
   if (lower.includes('12x36') || lower.includes('portaria') || lower.includes('noturno') || lower.includes('vigil')) {
     return [
-      { title: '4 Postos por Turno', subtitle: 'Cobertura 24h diurna e noturna sem furo' },
-      { title: 'Adicional Noturno', subtitle: '20% + hora reduzida (52m30s) e prorrogação' },
-      { title: 'Intrajornada', subtitle: 'Cobertura de almocista ou indenização CCT' },
-      { title: 'Reflexo no DSR', subtitle: 'Incidência sobre adicionais na folha' },
-      { title: 'Benefícios por Escala', subtitle: 'VT (teto 6%) e VA/VR por plantões efetivos' },
+      { title: '4 Postos por Turno', subtitle: 'Cobertura 24h diurna e noturna sem furo', metric: '24x7' },
+      { title: 'Adicional Noturno', subtitle: '20% + hora reduzida (52m30s) e prorrogação', metric: '+20% CCT' },
+      { title: 'Intrajornada', subtitle: 'Cobertura de almocista ou indenização CCT', metric: '1h Turno' },
+      { title: 'Reflexo no DSR', subtitle: 'Incidência sobre adicionais na folha', metric: 'Grupo A' },
+      { title: 'Benefícios por Escala', subtitle: 'VT (teto 6%) e VA/VR por plantões efetivos', metric: '15,22 d/mês' },
     ];
   }
 
-  if (lower.includes('limpeza') || lower.includes('insalub') || lower.includes('m²') || lower.includes('epi')) {
+  if (lower.includes('limpeza') || lower.includes('insalub') || lower.includes('banheiro') || lower.includes('m²') || lower.includes('epi')) {
     return [
-      { title: 'Piso & Insalubridade', subtitle: 'Grau médio (20%) ou máximo (40% TST)' },
-      { title: 'Produtividade m²', subtitle: 'Dimensionamento técnico ABNT NBR 14082' },
-      { title: 'Enxoval & EPIs', subtitle: 'Vida útil mensal de uniformes e botas NR-6' },
-      { title: 'Químicos & Papéis', subtitle: 'Rateio mensal per capita e diluição' },
-      { title: 'Depreciação', subtitle: 'Lavadoras, enceradeiras e manutenção' },
+      { title: 'Insalubridade Súmula 448', subtitle: 'Grau médio (20%) ou máximo (40% TST)', metric: '20% a 40%' },
+      { title: 'Reflexo nos Encargos', subtitle: 'Incidência direta sobre 13º, Férias e FGTS', metric: 'Grupos A/B' },
+      { title: 'Produtividade m²', subtitle: 'Dimensionamento técnico ABNT NBR 14082', metric: 'SLA / m²' },
+      { title: 'Enxoval & EPIs NR-6', subtitle: 'Vida útil mensal de luvas, botas e uniformes', metric: 'Montante B' },
+      { title: 'Químicos & Papéis', subtitle: 'Rateio mensal per capita e diluição técnica', metric: 'R$ / Posto' },
     ];
   }
 
   if (lower.includes('repactua') || lower.includes('reajuste') || lower.includes('contrato')) {
     return [
-      { title: 'Data-Base da CCT', subtitle: 'Direito ao reequilíbrio de mão de obra' },
-      { title: 'Montante A (CCT)', subtitle: 'Repasse integral do dissídio e benefícios' },
-      { title: 'Montante B (IPCA)', subtitle: 'Correção de materiais, EPIs e máquinas' },
-      { title: 'Memória Analítica', subtitle: 'Quadro comparativo antes vs. depois' },
-      { title: 'Aditivo & Margem', subtitle: 'Proteção do lucro líquido e retroativo' },
+      { title: 'Data-Base da CCT', subtitle: 'Direito ao reequilíbrio de mão de obra', metric: 'Anual' },
+      { title: 'Montante A (CCT)', subtitle: 'Repasse integral do dissídio e benefícios', metric: '100% CCT' },
+      { title: 'Montante B (IPCA)', subtitle: 'Correção de materiais, EPIs e máquinas', metric: 'IPCA/IGP-M' },
+      { title: 'Memória Analítica', subtitle: 'Quadro comparativo antes vs. depois', metric: 'Auditável' },
+      { title: 'Aditivo & Margem', subtitle: 'Proteção do lucro líquido e retroativo', metric: 'Blindagem' },
     ];
   }
 
   return [
-    { title: 'Piso & CCT', subtitle: 'Salário normativo, escalas e adicionais' },
-    { title: 'Encargos A a F', subtitle: 'Provisões trabalhistas e reflexos auditados' },
-    { title: 'Reforma 2027', subtitle: 'Simulação CBS, IBS e Gross-up por dentro' },
-    { title: 'Proposta por Link', subtitle: 'Rastreio de abertura e leitura ao vivo' },
-    { title: 'Blindagem de Margem', subtitle: 'DRE do projeto e reajuste anual' },
+    { title: 'Piso & CCT', subtitle: 'Salário normativo, escalas e adicionais', metric: 'Montante A' },
+    { title: 'Encargos A a F', subtitle: 'Provisões trabalhistas e reflexos auditados', metric: '68% a 84%' },
+    { title: 'Reforma 2027', subtitle: 'Simulação CBS, IBS e Gross-up por dentro', metric: 'IBS / CBS' },
+    { title: 'Proposta por Link', subtitle: 'Rastreio de abertura e leitura ao vivo', metric: 'Ao Vivo' },
+    { title: 'Blindagem de Margem', subtitle: 'DRE do projeto e reajuste anual', metric: 'Lucro Real' },
   ];
+}
+
+const STYLE_CYCLE: Array<'cascade' | 'light' | 'lphero'> = ['cascade', 'light', 'lphero'];
+
+async function resolveStyleForSlug(slug: string, requestedStyle: string | null): Promise<'cascade' | 'light' | 'lphero'> {
+  if (requestedStyle === 'cascade' || requestedStyle === 'light' || requestedStyle === 'lphero') {
+    return requestedStyle;
+  }
+  try {
+    const all = await getAllSeoArticles();
+    const idx = all.findIndex((a) => a.slug === slug);
+    if (idx >= 0) {
+      return STYLE_CYCLE[idx % STYLE_CYCLE.length];
+    }
+  } catch {}
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) {
+    hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
+  }
+  return STYLE_CYCLE[hash % STYLE_CYCLE.length];
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug') || '';
-  const style = searchParams.get('style') || 'cascade'; // 'cascade' (Opção 1 Padrão) ou 'lphero' (Opção 2 Hero da LP)
+  const rawStyleParam = searchParams.get('style');
 
-  const [article, fonts] = await Promise.all([
+  const [article, fonts, resolvedStyle] = await Promise.all([
     slug ? getSeoArticleBySlug(slug).catch(() => null) : Promise.resolve(null),
     loadBrandFonts(),
+    resolveStyleForSlug(slug, rawStyleParam),
   ]);
 
-  const rawTitle =
-    article?.title ||
-    'Montagem de Propostas e Orçamento de Facilities';
+  const rawTitle = article?.title || 'Montagem de Propostas e Orçamento de Facilities';
   const category = (article?.category || 'Engenharia de Custos').toUpperCase();
   const cards = getCascadeCardsForArticle(slug, rawTitle);
 
   // ============================================================================
-  // OPÇÃO 2: MODELO HERO NATIVO DA LP (style=lphero)
+  // MODELO 02: EDITORIAL CLARO DA LP + BENTO GRID DE MÉTRICAS (style=light) — 1080 x 1350 px
+  // Inspirado no bloco claro da LP ("O fim do PDF que vai por e-mail e nunca mais volta.")
   // ============================================================================
-  if (style === 'lphero') {
-    const cleanTitle = cleanArticleHeadline(rawTitle);
-    const words = cleanTitle.split(/\s+/).filter(Boolean);
-    const splitIdx = Math.ceil(words.length * 0.52);
-    const firstHalf = words.slice(0, splitIdx).join(' ');
-    const secondHalf = words.slice(splitIdx).join(' ') + '.';
+  if (resolvedStyle === 'light') {
+    const { firstHalf, secondHalf } = splitSentenceHeadline(rawTitle);
 
     return new ImageResponse(
       (
         <div
           style={{
-            width: '1200px',
+            width: '1080px',
+            height: '1350px',
+            position: 'relative',
+            overflow: 'hidden',
+            background: '#F6F5F0',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '64px 68px 58px 68px',
+            fontFamily: '"Plus Jakarta Sans", sans-serif',
+          }}
+        >
+          {/* Arcos Geométricos Sutis no Fundo Claro */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '-280px',
+              right: '-280px',
+              width: '860px',
+              height: '860px',
+              borderRadius: '9999px',
+              border: '1.5px solid rgba(27,77,62,0.08)',
+              display: 'flex',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '-160px',
+              right: '-160px',
+              width: '620px',
+              height: '620px',
+              borderRadius: '9999px',
+              border: '1.5px solid rgba(224,90,27,0.10)',
+              display: 'flex',
+            }}
+          />
+
+          {/* TOPO: Tag Editorial + Selo de Série */}
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '28px', width: '944px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '944px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 22px',
+                  borderRadius: '999px',
+                  background: '#FFFFFF',
+                  border: '1.5px solid #E2E0D8',
+                  boxShadow: '0 4px 14px rgba(15,23,42,0.04)',
+                }}
+              >
+                <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: '#E05A1B', display: 'flex' }} />
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#1B4D3E', letterSpacing: '0.08em' }}>
+                  {category}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 20px',
+                  borderRadius: '999px',
+                  background: '#0E3427',
+                  color: '#FFFFFF',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                }}
+              >
+                <span>Engenharia de Custos • Guia 2027</span>
+              </div>
+            </div>
+
+            {/* MANCHETE ESTILO LP CLARA: Preto Profundo #0F172A + Destaque Laranja #E05A1B */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '944px', marginTop: '4px' }}>
+              <div
+                style={{
+                  fontSize: '64px',
+                  fontWeight: 800,
+                  lineHeight: 1.05,
+                  letterSpacing: '-0.035em',
+                  color: '#0F172A',
+                  display: 'flex',
+                  width: '944px',
+                }}
+              >
+                {firstHalf}
+              </div>
+              <div
+                style={{
+                  fontSize: '64px',
+                  fontWeight: 800,
+                  lineHeight: 1.05,
+                  letterSpacing: '-0.035em',
+                  color: '#E05A1B',
+                  display: 'flex',
+                  width: '944px',
+                }}
+              >
+                {secondHalf}
+              </div>
+            </div>
+          </div>
+
+          {/* CENTRO: BENTO GRID EXECUTIVO (Card Destaque Verde-Floresta + 4 Cards Técnicos) */}
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '18px', width: '944px' }}>
+            {/* Card Principal Escuro (Contraste com o Fundo Claro) */}
+            <div
+              style={{
+                width: '944px',
+                borderRadius: '28px',
+                background: 'linear-gradient(135deg, #184E3B 0%, #092219 100%)',
+                padding: '32px 38px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: '0 20px 45px rgba(9,34,25,0.16)',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '630px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#FF7838', letterSpacing: '0.12em' }}>
+                  PONTO CRÍTICO NA PLANILHA DE CUSTOS (FPV)
+                </span>
+                <span style={{ fontSize: '28px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>
+                  Um erro nesta rubrica corrói de 4% a 8% da margem líquida do contrato.
+                </span>
+              </div>
+              <div
+                style={{
+                  padding: '18px 26px',
+                  borderRadius: '20px',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span style={{ fontSize: '34px', fontWeight: 800, color: '#FF7838' }}>{cards[0]?.metric || 'FPV'}</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#D8E6DD' }}>{cards[0]?.title}</span>
+              </div>
+            </div>
+
+            {/* Grid 2x2 de Cards Claros */}
+            <div style={{ display: 'flex', gap: '18px', width: '944px' }}>
+              {cards.slice(0, 2).map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    background: '#FFFFFF',
+                    borderRadius: '24px',
+                    padding: '26px 28px',
+                    border: '1.5px solid #E5E3DC',
+                    boxShadow: '0 8px 24px rgba(15,23,42,0.04)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        color: '#E05A1B',
+                        background: '#FFF3ED',
+                        padding: '5px 12px',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      {`PILAR 0${i + 1}`}
+                    </span>
+                    <span style={{ fontSize: '15px', fontWeight: 800, color: '#1B4D3E' }}>{c.metric}</span>
+                  </div>
+                  <span style={{ fontSize: '23px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>{c.title}</span>
+                  <span style={{ fontSize: '16px', fontWeight: 500, color: '#475569', lineHeight: 1.35 }}>{c.subtitle}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '18px', width: '944px' }}>
+              {cards.slice(2, 4).map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    background: '#FFFFFF',
+                    borderRadius: '24px',
+                    padding: '26px 28px',
+                    border: '1.5px solid #E5E3DC',
+                    boxShadow: '0 8px 24px rgba(15,23,42,0.04)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        color: '#1B4D3E',
+                        background: '#ECFDF5',
+                        padding: '5px 12px',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      {`PILAR 0${i + 3}`}
+                    </span>
+                    <span style={{ fontSize: '15px', fontWeight: 800, color: '#E05A1B' }}>{c.metric}</span>
+                  </div>
+                  <span style={{ fontSize: '23px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>{c.title}</span>
+                  <span style={{ fontSize: '16px', fontWeight: 500, color: '#475569', lineHeight: 1.35 }}>{c.subtitle}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RODAPÉ: Barra de Conversão Conectada à LP */}
+          <div
+            style={{
+              width: '944px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '18px',
+              borderTop: '1.5px solid #E2E0D8',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>✓ Custos por CCT</span>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>✓ Proposta por link</span>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>✓ DRE do projeto</span>
+            </div>
+
+            <div
+              style={{
+                padding: '16px 32px',
+                borderRadius: '999px',
+                background: '#E05A1B',
+                color: '#FFFFFF',
+                fontSize: '18px',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                boxShadow: '0 10px 25px rgba(224,90,27,0.28)',
+              }}
+            >
+              <span>Testar grátis por 30 dias →</span>
+            </div>
+          </div>
+        </div>
+      ),
+      {
+        width: 1080,
+        height: 1350,
+        fonts,
+      }
+    );
+  }
+
+  // ============================================================================
+  // MODELO 03: VITRINE HERO NATIVA DA LP + JANELA DO SISTEMA (style=lphero) — 1080 x 1350 px
+  // ============================================================================
+  if (resolvedStyle === 'lphero') {
+    const { firstHalf, secondHalf } = splitSentenceHeadline(rawTitle);
+
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: '1080px',
             height: '1350px',
             display: 'flex',
             background: '#F6F5F0',
-            padding: '28px',
+            padding: '24px',
             fontFamily: '"Plus Jakarta Sans", sans-serif',
           }}
         >
           <div
             style={{
-              width: '1144px',
-              height: '1294px',
-              borderRadius: '38px',
+              width: '1032px',
+              height: '1302px',
+              borderRadius: '36px',
               position: 'relative',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              padding: '72px 76px 0 76px',
+              padding: '64px 64px 0 64px',
               background: 'linear-gradient(145deg, #1E5D47 0%, #0E3427 48%, #071D15 100%)',
             }}
           >
@@ -182,8 +488,8 @@ export async function GET(request: Request) {
                 position: 'absolute',
                 top: '-220px',
                 left: '-320px',
-                width: '1150px',
-                height: '1150px',
+                width: '1100px',
+                height: '1100px',
                 borderRadius: '9999px',
                 border: '1px solid rgba(255,255,255,0.07)',
                 display: 'flex',
@@ -194,8 +500,8 @@ export async function GET(request: Request) {
                 position: 'absolute',
                 top: '-340px',
                 left: '-440px',
-                width: '1450px',
-                height: '1450px',
+                width: '1400px',
+                height: '1400px',
                 borderRadius: '9999px',
                 border: '1px solid rgba(255,255,255,0.05)',
                 display: 'flex',
@@ -208,8 +514,8 @@ export async function GET(request: Request) {
                 position: 'absolute',
                 bottom: '-180px',
                 right: '-180px',
-                width: '560px',
-                height: '560px',
+                width: '540px',
+                height: '540px',
                 borderRadius: '9999px',
                 background: 'radial-gradient(circle, rgba(224,90,27,0.38) 0%, rgba(224,90,27,0) 70%)',
                 display: 'flex',
@@ -220,8 +526,8 @@ export async function GET(request: Request) {
             <div
               style={{
                 position: 'absolute',
-                top: '520px',
-                right: '115px',
+                top: '500px',
+                right: '96px',
                 width: '12px',
                 height: '12px',
                 borderRadius: '999px',
@@ -231,21 +537,21 @@ export async function GET(request: Request) {
             />
 
             {/* Topo + Manchete Principal */}
-            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '32px', width: '992px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '992px' }}>
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '30px', width: '904px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '904px' }}>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    padding: '11px 24px',
+                    padding: '10px 22px',
                     borderRadius: '999px',
                     background: 'rgba(255,255,255,0.07)',
                     border: '1px solid rgba(255,255,255,0.14)',
                   }}
                 >
-                  <div style={{ width: '9px', height: '9px', borderRadius: '999px', background: '#FF6B2B' }} />
-                  <span style={{ fontSize: '16px', fontWeight: 700, color: '#E2E8F0' }}>
+                  <div style={{ width: '9px', height: '9px', borderRadius: '999px', background: '#FF6B2B', display: 'flex' }} />
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#E2E8F0' }}>
                     Plataforma para prestadoras de serviços terceirizados
                   </span>
                 </div>
@@ -261,11 +567,11 @@ export async function GET(request: Request) {
                 >
                   <div
                     style={{
-                      padding: '12px 26px',
+                      padding: '11px 24px',
                       borderRadius: '999px',
                       background: '#E05A1B',
                       color: '#FFFFFF',
-                      fontSize: '16px',
+                      fontSize: '15px',
                       fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
@@ -278,43 +584,57 @@ export async function GET(request: Request) {
               </div>
 
               {/* Manchete em 2 blocos empilhados (Branco + Laranja) + Sublinhado Laranja */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '992px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '904px' }}>
                 <div
                   style={{
-                    fontSize: '68px',
+                    fontSize: '62px',
                     fontWeight: 800,
                     lineHeight: 1.06,
                     letterSpacing: '-0.035em',
                     color: '#FFFFFF',
                     display: 'flex',
-                    width: '992px',
+                    width: '904px',
                   }}
                 >
                   {firstHalf}
                 </div>
                 <div
                   style={{
-                    fontSize: '68px',
+                    fontSize: '62px',
                     fontWeight: 800,
                     lineHeight: 1.06,
                     letterSpacing: '-0.035em',
                     color: '#FF7332',
                     display: 'flex',
-                    width: '992px',
+                    width: '904px',
                   }}
                 >
                   {secondHalf}
                 </div>
                 <div
                   style={{
-                    width: '540px',
+                    width: '480px',
                     height: '8px',
                     borderRadius: '999px',
                     background: '#E86325',
-                    marginTop: '14px',
+                    marginTop: '12px',
                     display: 'flex',
                   }}
                 />
+              </div>
+
+              {/* Subtítulo idêntico à estrutura da LP */}
+              <div
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 500,
+                  lineHeight: 1.4,
+                  color: '#CBD5E1',
+                  display: 'flex',
+                  width: '820px',
+                }}
+              >
+                Prospecção de decisores, custos por CCT, proposta rastreada e reajustes anuais numa só plataforma. Da primeira ligação à blindagem de margem.
               </div>
             </div>
 
@@ -325,21 +645,21 @@ export async function GET(request: Request) {
                 display: 'flex',
                 flexDirection: 'column',
                 background: 'rgba(255,255,255,0.13)',
-                padding: '16px 16px 0 16px',
-                borderRadius: '32px 32px 0 0',
+                padding: '14px 14px 0 14px',
+                borderRadius: '30px 30px 0 0',
                 border: '1px solid rgba(255,255,255,0.18)',
-                width: '992px',
+                width: '904px',
               }}
             >
               <div
                 style={{
                   background: '#FFFFFF',
-                  borderRadius: '22px 22px 0 0',
-                  padding: '28px 34px 44px 34px',
+                  borderRadius: '20px 20px 0 0',
+                  padding: '26px 30px 40px 30px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '24px',
-                  width: '960px',
+                  gap: '22px',
+                  width: '876px',
                 }}
               >
                 <div
@@ -348,14 +668,14 @@ export async function GET(request: Request) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     borderBottom: '1px solid #F1F5F9',
-                    paddingBottom: '18px',
-                    width: '892px',
+                    paddingBottom: '16px',
+                    width: '816px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0' }} />
-                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0' }} />
-                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0' }} />
+                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0', display: 'flex' }} />
+                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0', display: 'flex' }} />
+                    <div style={{ width: '11px', height: '11px', borderRadius: '99px', background: '#E2E8F0', display: 'flex' }} />
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#64748B', marginLeft: '8px' }}>
                       app.smartbidhub.com.br
                     </span>
@@ -370,31 +690,31 @@ export async function GET(request: Request) {
                       borderRadius: '12px',
                     }}
                   >
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', padding: '7px 14px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', padding: '6px 12px' }}>
                       Link da proposta
                     </span>
                     <span
                       style={{
-                        fontSize: '13px',
+                        fontSize: '12px',
                         fontWeight: 800,
                         color: '#0F172A',
                         background: '#FFFFFF',
-                        padding: '7px 16px',
+                        padding: '6px 14px',
                         borderRadius: '8px',
                       }}
                     >
                       Rastreio de leitura
                     </span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', padding: '7px 14px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', padding: '6px 12px' }}>
                       Radar comercial
                     </span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', padding: '7px 14px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', padding: '6px 12px' }}>
                       DRE do projeto
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px', width: '892px' }}>
+                <div style={{ display: 'flex', gap: '16px', width: '816px' }}>
                   {cards.slice(0, 3).map((c, idx) => (
                     <div
                       key={idx}
@@ -403,7 +723,7 @@ export async function GET(request: Request) {
                         background: idx === 2 ? '#FFF7ED' : '#F8FAFC',
                         border: idx === 2 ? '1px solid #FED7AA' : '1px solid #E2E8F0',
                         borderRadius: '18px',
-                        padding: '22px',
+                        padding: '20px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '8px',
@@ -411,16 +731,16 @@ export async function GET(request: Request) {
                     >
                       <span
                         style={{
-                          fontSize: '12px',
+                          fontSize: '11px',
                           fontWeight: 800,
                           color: idx === 2 ? '#9A3412' : '#64748B',
                         }}
                       >
-                        {`0${idx + 1}. ${category}`}
+                        {`0${idx + 1}. ${c.metric}`}
                       </span>
                       <span
                         style={{
-                          fontSize: '24px',
+                          fontSize: '21px',
                           fontWeight: 800,
                           color: idx === 2 ? '#C2410C' : '#0F172A',
                         }}
@@ -445,7 +765,7 @@ export async function GET(request: Request) {
         </div>
       ),
       {
-        width: 1200,
+        width: 1080,
         height: 1350,
         fonts,
       }
@@ -453,7 +773,7 @@ export async function GET(request: Request) {
   }
 
   // ============================================================================
-  // OPÇÃO 1 (PADRÃO OFICIAL): MODELO CASCATA 3D DE AGÊNCIA + CORES DA LP (1080 x 1350 px)
+  // MODELO 01: CASCATA 3D DE AGÊNCIA + CORES DA LP (style=cascade) — 1080 x 1350 px
   // ============================================================================
   const { whitePart, orangePart } = splitUpperHeadline(rawTitle);
   const spacedKicker = category.split('').join(' ');

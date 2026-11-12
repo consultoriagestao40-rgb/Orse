@@ -973,6 +973,10 @@ export async function ensureDailyAutopilotArticle(): Promise<{
     }
 
     const newArticle = await generateAndPublishSeoArticle();
+    // Dispara também no LinkedIn automaticamente quando o artigo do dia é criado
+    try {
+      await publishToLinkedInAutopilot(newArticle, undefined, { style: 'auto' });
+    } catch {}
     return {
       triggered: true,
       article: newArticle,

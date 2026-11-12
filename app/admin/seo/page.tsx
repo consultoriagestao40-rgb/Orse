@@ -33,7 +33,7 @@ export default function AdminSeoPage() {
   const [savingLi, setSavingLi] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<any | null>(null);
   const [previewText, setPreviewText] = useState('');
-  const [previewStyle, setPreviewStyle] = useState<'cascade' | 'lphero'>('cascade');
+  const [previewStyle, setPreviewStyle] = useState<'cascade' | 'light' | 'lphero'>('cascade');
   const [previewPhoto, setPreviewPhoto] = useState<number | null>(null);
   const [publishingLi, setPublishingLi] = useState(false);
 
@@ -99,10 +99,15 @@ export default function AdminSeoPage() {
     }
   };
 
-  const openLinkedInReviewModal = (art: any) => {
+  const getAutoStyleForIndex = (idx: number): 'cascade' | 'light' | 'lphero' => {
+    const cycle: Array<'cascade' | 'light' | 'lphero'> = ['cascade', 'light', 'lphero'];
+    return cycle[Math.max(0, idx) % cycle.length];
+  };
+
+  const openLinkedInReviewModal = (art: any, idx = 0) => {
     setPreviewArticle(art);
     setPreviewText(buildLinkedInText(art));
-    setPreviewStyle('cascade');
+    setPreviewStyle(getAutoStyleForIndex(idx));
     setPreviewPhoto(null);
   };
 
@@ -434,12 +439,23 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
             <div className="p-10 text-center text-sm text-slate-400 font-semibold">Carregando artigos publicados...</div>
           ) : (
             <div className="divide-y divide-slate-200">
-              {articles.map((art) => (
+              {articles.map((art, idx) => {
+                const autoStyle = getAutoStyleForIndex(idx);
+                const autoStyleLabel =
+                  autoStyle === 'cascade'
+                    ? '🎨 Arte 01: Cascata 3D'
+                    : autoStyle === 'light'
+                    ? '☀️ Arte 02: Claro LP'
+                    : '💻 Arte 03: Hero LP';
+                return (
                 <div key={art.slug} className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70">
                   <div className="space-y-1 max-w-3xl">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#1B4D3E] border border-emerald-200">
                         {art.category}
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-orange-50 text-[#E05A1B] border border-orange-200">
+                        {autoStyleLabel}
                       </span>
                       {art.isCustom && (
                         <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
@@ -456,7 +472,7 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
-                      onClick={() => openLinkedInReviewModal(art)}
+                      onClick={() => openLinkedInReviewModal(art, idx)}
                       className="px-3.5 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
                     >
                       {copiedLinkedinSlug === art.slug ? (
@@ -470,7 +486,7 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                       )}
                     </button>
                     <a
-                      href={`/api/seo/og?slug=${encodeURIComponent(art.slug)}`}
+                      href={`/api/seo/og?slug=${encodeURIComponent(art.slug)}&style=${autoStyle}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5"
@@ -511,7 +527,8 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -542,21 +559,47 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-black uppercase tracking-wider text-slate-700">
-                      1. Arte do Post ({previewStyle === 'cascade' ? 'Modelo 01: Cascata 3D de Agência (Padrão)' : 'Modelo 02: Hero Nativo da LP'}):
+                      1. Arte do Post ({previewStyle === 'cascade' ? 'Modelo 01: Cascata 3D (Escuro LP)' : previewStyle === 'light' ? 'Modelo 02: Bento Editorial (Claro LP)' : 'Modelo 03: Hero & Sistema (LP)'}):
                     </label>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => setPreviewStyle((prev) => (prev === 'cascade' ? 'lphero' : 'cascade'))}
-                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 cursor-pointer"
+                        onClick={() => setPreviewStyle('cascade')}
+                        className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer ${
+                          previewStyle === 'cascade'
+                            ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                        }`}
                       >
-                        {previewStyle === 'cascade' ? '💻 Alternar para Modelo 02 (Hero da LP)' : '🎨 Voltar para Modelo 01 (Cascata 3D)'}
+                        🎨 Modelo 01 (Cascata 3D)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewStyle('light')}
+                        className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer ${
+                          previewStyle === 'light'
+                            ? 'bg-[#E05A1B] text-white border-[#E05A1B]'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                        }`}
+                      >
+                        ☀️ Modelo 02 (Claro LP)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewStyle('lphero')}
+                        className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer ${
+                          previewStyle === 'lphero'
+                            ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                        }`}
+                      >
+                        💻 Modelo 03 (Hero LP)
                       </button>
                       <a
                         href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1 ml-1"
                       >
                         Baixar HD <ExternalLink size={12} />
                       </a>

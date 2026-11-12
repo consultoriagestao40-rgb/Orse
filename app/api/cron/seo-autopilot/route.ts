@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
-import { generateAndPublishSeoArticle } from '@/lib/seo-engine';
+import { ensureDailyAutopilotArticle, publishToLinkedInAutopilot } from '@/lib/seo-engine';
 
 export async function GET() {
   try {
-    const article = await generateAndPublishSeoArticle();
+    const daily = await ensureDailyAutopilotArticle();
+    const article = daily.article;
+    let linkedinResult: { ok: boolean; message: string } | null = null;
+    if (article) {
+      linkedinResult = await publishToLinkedInAutopilot(article, undefined, { style: 'auto' });
+    }
     return NextResponse.json({
       success: true,
-      message: 'Artigo de SEO gerado e publicado automaticamente no sitemap.xml!',
-      slug: article.slug,
-      title: article.title,
-      url: `https://smartbidhub.com.br/conteudos/${article.slug}`,
+      message: 'Artigo de SEO gerado, indexado no sitemap.xml e enviado para o LinkedIn!',
+      slug: article?.slug,
+      title: article?.title,
+      url: article ? `https://www.smartbidhub.com.br/conteudos/${article.slug}` : null,
+      linkedin: linkedinResult,
     });
   } catch (err: any) {
     return NextResponse.json(
