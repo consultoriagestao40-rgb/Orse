@@ -30,6 +30,7 @@ export default function AdminSeoPage() {
   const [liClientId, setLiClientId] = useState('');
   const [liClientSecret, setLiClientSecret] = useState('');
   const [liOrgId, setLiOrgId] = useState('');
+  const [metaToken, setMetaToken] = useState('');
   const [showLiConfig, setShowLiConfig] = useState(false);
   const [savingLi, setSavingLi] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<any | null>(null);
@@ -387,6 +388,50 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post
                   className="md:mt-5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer shrink-0"
                 >
                   Salvar Company Page SmartBid
+                </button>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex flex-col md:flex-row md:items-center gap-3">
+                <div className="flex-1">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-pink-700 block mb-1">
+                    📸 Automação Instagram (@smartbidhub) + Página Facebook (SmartBid Hub - ID 1510660472123825):
+                  </label>
+                  <input
+                    type="password"
+                    value={metaToken}
+                    onChange={(e) => setMetaToken(e.target.value)}
+                    placeholder={
+                      liStatus?.metaConnected
+                        ? '🟢 Token da Meta Conectado! (Cole um novo aqui se quiser atualizar)'
+                        : 'Cole aqui o Token Permanente do Usuário do Sistema da Meta (Graph API)'
+                    }
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-medium outline-none focus:border-pink-600"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/seo/linkedin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'save_org',
+                          organizationId: liOrgId || '145437619',
+                          metaAccessToken: metaToken,
+                          facebookPageId: '1510660472123825',
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setMetaToken('');
+                        setFeedback(`✅ ${data.message}`);
+                        await loadLinkedInStatus();
+                      }
+                    } catch {}
+                  }}
+                  className="md:mt-5 bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer shrink-0"
+                >
+                  Salvar Token Instagram & Facebook
                 </button>
               </div>
             </div>

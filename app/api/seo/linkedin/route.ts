@@ -14,9 +14,12 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     connected: Boolean(cfg.accessToken),
+    metaConnected: Boolean(cfg.metaAccessToken),
     personName: cfg.personName || null,
     personUrn: cfg.personUrn || null,
-    organizationId: cfg.organizationId || '',
+    organizationId: cfg.organizationId || '145437619',
+    facebookPageId: cfg.facebookPageId || '1510660472123825',
+    instagramAccountId: cfg.instagramAccountId || '',
     clientId: cfg.clientId || '',
     hasClientSecret: Boolean(cfg.clientSecret),
     updatedAt: cfg.updatedAt || null,
@@ -44,16 +47,24 @@ export async function POST(request: Request) {
       });
     }
 
-    // Ação 2: Salvar apenas Organization ID da Company Page (sem redirecionar OAuth)
+    // Ação 2: Salvar Organization ID da Company Page e/ou Token da Meta (Instagram @smartbidhub + Facebook 1510660472123825)
     if (body.action === 'save_org') {
-      const orgId = normalizeOrganizationId(body.organizationId ? String(body.organizationId) : '');
-      const saved = await saveLinkedInConfig({ organizationId: orgId });
+      const orgId = normalizeOrganizationId(body.organizationId ? String(body.organizationId) : '145437619');
+      const partial: any = { organizationId: orgId };
+      if (body.metaAccessToken !== undefined && String(body.metaAccessToken).trim() !== '') {
+        partial.metaAccessToken = String(body.metaAccessToken).trim();
+      }
+      if (body.facebookPageId !== undefined && String(body.facebookPageId).trim() !== '') {
+        partial.facebookPageId = String(body.facebookPageId).trim();
+      }
+      const saved = await saveLinkedInConfig(partial);
       return NextResponse.json({
         success: true,
-        organizationId: saved.organizationId || '',
-        message: orgId
-          ? `Company Page SmartBid (${orgId}) vinculada para disparo duplo (Perfil Pessoal + Página)!`
-          : 'ID da Company Page removido.',
+        organizationId: saved.organizationId || '145437619',
+        metaConnected: Boolean(saved.metaAccessToken),
+        message: saved.metaAccessToken
+          ? `LinkedIn + Instagram (@smartbidhub) + Página Facebook (${saved.facebookPageId || '1510660472123825'}) vinculados para disparo automático às 06h!`
+          : `Company Page SmartBid (${orgId}) vinculada!`,
       });
     }
 

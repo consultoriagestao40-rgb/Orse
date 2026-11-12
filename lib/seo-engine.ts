@@ -1341,6 +1341,9 @@ export interface LinkedInAutopilotConfig {
   personName?: string;
   organizationId?: string;
   webhookUrl?: string;
+  metaAccessToken?: string;
+  facebookPageId?: string;
+  instagramAccountId?: string;
   updatedAt?: string;
 }
 
@@ -1606,14 +1609,145 @@ export async function publishToLinkedInAutopilot(
     );
 
     if (publishedLabels.length > 0) {
+      let metaSuffix = '';
+      if (cfg.metaAccessToken || process.env.META_ACCESS_TOKEN) {
+        const metaRes = await publishToMetaAutopilot(article, postText, options);
+        if (metaRes.ok) {
+          publishedLabels.push(metaRes.message);
+        } else {
+          warnings.push(`Instagram/FB: ${metaRes.message}`);
+        }
+      }
       const msg =
         warnings.length > 0
-          ? `Publicado automaticamente em: ${publishedLabels.join(' + ')}! (Aviso Company Page: requer permissão w_organization_social ou Repostar da sua conta pessoal para a página)`
-          : `Publicado automaticamente em: ${publishedLabels.join(' + ')} com Arte HD!`;
+          ? `Publicado automaticamente em: ${publishedLabels.join(' + ')}! (${warnings.join(' | ')})`
+          : `Publicado automaticamente em: ${publishedLabels.join(' + ')} com Arte HD!${metaSuffix}`;
       return { ok: true, message: msg };
     }
     return { ok: false, message: `Erro API LinkedIn: ${warnings.join(' | ')}` };
   } catch (err: any) {
     return { ok: false, message: err?.message || 'Erro de conexão com API do LinkedIn' };
   }
+}
+
+/**
+ * Publica automaticamente no Instagram Oficial (@smartbidhub) e na Página do Facebook (SmartBid Hub)
+ * via Meta Graph API (v21.0) usando a arte 1080x1350 em formato JPEG nativo.
+ */
+export async function publishToMetaAutopilot(
+  article: SeoArticle,
+  customPostText?: string,
+  options?: { style?: string; photo?: number | null }
+): Promise<{ ok: boolean; message: string }> {
+  const cfg = await getLinkedInConfig();
+  const rawToken = (cfg.metaAccessToken || process.env.META_ACCESS_TOKEN || '').trim();
+  const pageId = (cfg.facebookPageId || process.env.FACEBOOK_PAGE_ID || '1510660472123825').trim();
+
+  if (!rawToken) {
+    return { ok: false, message: 'Token da Meta (Instagram/Facebook) ainda não configurado.' };
+  }
+
+  const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
+  const caption = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
+  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=lphero';
+  const photoParam =
+    options?.photo !== undefined && options?.photo !== null ? `&photo=${encodeURIComponent(String(options.photo))}` : '';
+  const jpgImageUrl = `https://www.smartbidhub.com.br/api/seo/og-jpg?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;
+
+  let pageAccessToken = rawToken;
+  let igUserId = (cfg.instagramAccountId || process.env.INSTAGRAM_ACCOUNT_ID || '').trim();
+
+  // Descobre automaticamente o Page Access Token e o ID da Conta Comercial do Instagram (@smartbidhub) vinculada à Página 1510660472123825
+  try {
+    const pageRes = await fetch(
+      `https://graph.facebook.com/v21.0/${encodeURIComponent(pageId)}?fields=access_token,instagram_business_account&access_token=${encodeURIComponent(rawToken)}`,
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (pageRes.ok) {
+      const pageData = await pageRes.json();
+      if (pageData?.access_token) {
+        pageAccessToken = pageData.access_token;
+      }
+      if (pageData?.instagram_business_account?.id && !igUserId) {
+        igUserId = String(pageData.instagram_business_account.id);
+        await saveLinkedInConfig({ instagramAccountId: igUserId, facebookPageId: pageId });
+      }
+    }
+  } catch {}
+
+  const okTargets: string[] = [];
+  const errTargets: string[] = [];
+
+  // 1. Publica na Página do Facebook (SmartBid Hub - 1510660472123825)
+  if (pageId) {
+    try {
+      const fbRes = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(pageId)}/photos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: jpgImageUrl,
+          caption,
+          access_token: pageAccessToken,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (fbRes.ok) {
+        okTargets.push('Página Facebook (SmartBid Hub)');
+      } else {
+        const err = await fbRes.text();
+        errTargets.push(`FB (${fbRes.status}): ${err.slice(0, 70)}`);
+      }
+    } catch (e: any) {
+      errTargets.push(`FB: ${e?.message || 'erro'}`);
+    }
+  }
+
+  // 2. Publica no Feed do Instagram (@smartbidhub) em 2 etapas (Container -> Publish)
+  if (igUserId) {
+    try {
+      const containerRes = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(igUserId)}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_url: jpgImageUrl,
+          caption,
+          access_token: pageAccessToken,
+        }),
+        signal: AbortSignal.timeout(12000),
+      });
+      if (containerRes.ok) {
+        const containerData = await containerRes.json();
+        const creationId = containerData?.id;
+        if (creationId) {
+          const pubRes = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(igUserId)}/media_publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              creation_id: creationId,
+              access_token: pageAccessToken,
+            }),
+            signal: AbortSignal.timeout(12000),
+          });
+          if (pubRes.ok) {
+            okTargets.push('Instagram (@smartbidhub)');
+          } else {
+            const err = await pubRes.text();
+            errTargets.push(`IG Publish (${pubRes.status}): ${err.slice(0, 70)}`);
+          }
+        }
+      } else {
+        const err = await containerRes.text();
+        errTargets.push(`IG Media (${containerRes.status}): ${err.slice(0, 70)}`);
+      }
+    } catch (e: any) {
+      errTargets.push(`IG: ${e?.message || 'erro'}`);
+    }
+  } else {
+    errTargets.push('IG: Conta comercial @smartbidhub ainda não localizada pelo token');
+  }
+
+  if (okTargets.length > 0) {
+    return { ok: true, message: okTargets.join(' + ') };
+  }
+  return { ok: false, message: errTargets.join(' | ') };
 }
