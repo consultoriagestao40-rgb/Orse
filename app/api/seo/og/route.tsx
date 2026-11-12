@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { getSeoArticleBySlug, getAllSeoArticles, normalizePortugueseTopic } from '@/lib/seo-engine';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const FONT_URLS = {
   archivoBlack: 'https://fonts.gstatic.com/s/archivoblack/v23/HTxqL289NzCGg4MzN6KJ7eW6OYs.ttf',

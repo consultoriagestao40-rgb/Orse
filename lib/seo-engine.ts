@@ -1460,141 +1460,143 @@ export async function publishToLinkedInAutopilot(
 
   const normalizedUrn = authorUrn.startsWith('urn:li:') ? authorUrn : `urn:li:person:${authorUrn}`;
   let rawOrgId = normalizeOrganizationId(cfg.organizationId || process.env.LINKEDIN_ORGANIZATION_ID || 'smartbid-hub');
-  if (rawOrgId && !/^\d+$/.test(rawOrgId)) {
-    try {
-      const orgRes = await fetch(
-        `https://api.linkedin.com/v2/organizations?q=vanityName&vanityName=${encodeURIComponent(rawOrgId)}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      if (orgRes.ok) {
-        const orgData = await orgRes.json();
-        const foundId = orgData?.elements?.[0]?.id;
-        if (foundId) rawOrgId = String(foundId);
-      }
-    } catch {}
-  }
-  const orgUrn = rawOrgId && /^\d+$/.test(rawOrgId) ? `urn:li:organization:${rawOrgId}` : null;
-
-  // Lista de destinos: Perfil Pessoal + Company Page SmartBid (se configurada com ID numérico)
-  const targetAuthors: Array<{ urn: string; label: string }> = [
-    { urn: normalizedUrn, label: `Perfil Pessoal (${cfg.personName || 'Cristiano Silva'})` },
-  ];
-  if (orgUrn) {
-    targetAuthors.push({ urn: orgUrn, label: `Company Page SmartBid (${rawOrgId})` });
-  }
-
   try {
-    let imgBuffer: ArrayBuffer | null = null;
-    try {
-      const imgRes = await fetch(ogImageUrl);
-      if (imgRes.ok) {
-        imgBuffer = await imgRes.arrayBuffer();
-      }
-    } catch {}
+    const [imgBuffer, resolvedOrgId] = await Promise.all([
+      fetch(ogImageUrl, { signal: AbortSignal.timeout(9000) })
+        .then((r) => (r.ok ? r.arrayBuffer() : null))
+        .catch(() => null),
+      (async () => {
+        if (!rawOrgId) return '';
+        if (/^\d+$/.test(rawOrgId)) return rawOrgId;
+        try {
+          const orgRes = await fetch(
+            `https://api.linkedin.com/v2/organizations?q=vanityName&vanityName=${encodeURIComponent(rawOrgId)}`,
+            { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(3500) }
+          );
+          if (orgRes.ok) {
+            const orgData = await orgRes.json();
+            const foundId = orgData?.elements?.[0]?.id;
+            if (foundId) return String(foundId);
+          }
+        } catch {}
+        return '';
+      })(),
+    ]);
+
+    const targetAuthors: Array<{ urn: string; label: string }> = [
+      { urn: normalizedUrn, label: `Perfil Pessoal (${cfg.personName || 'Cristiano Silva'})` },
+    ];
+    if (resolvedOrgId && /^\d+$/.test(resolvedOrgId)) {
+      targetAuthors.push({ urn: `urn:li:organization:${resolvedOrgId}`, label: `Company Page SmartBid (${resolvedOrgId})` });
+    }
 
     const publishedLabels: string[] = [];
     const warnings: string[] = [];
 
-    for (const target of targetAuthors) {
-      let uploadedAssetUrn: string | null = null;
-      if (imgBuffer) {
-        try {
-          const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              registerUploadRequest: {
-                recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-                owner: target.urn,
-                serviceRelationships: [
-                  {
-                    relationshipType: 'OWNER',
-                    identifier: 'urn:li:userGeneratedContent',
-                  },
-                ],
+    await Promise.all(
+      targetAuthors.map(async (target) => {
+        let uploadedAssetUrn: string | null = null;
+        if (imgBuffer) {
+          try {
+            const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
               },
-            }),
-          });
-
-          if (registerRes.ok) {
-            const regData = await registerRes.json();
-            const uploadUrl =
-              regData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
-            const asset = regData?.value?.asset;
-
-            if (uploadUrl && asset) {
-              const upRes = await fetch(uploadUrl, {
-                method: 'PUT',
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                  'Content-Type': 'image/png',
+              body: JSON.stringify({
+                registerUploadRequest: {
+                  recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                  owner: target.urn,
+                  serviceRelationships: [
+                    {
+                      relationshipType: 'OWNER',
+                      identifier: 'urn:li:userGeneratedContent',
+                    },
+                  ],
                 },
-                body: imgBuffer,
-              });
-              if (upRes.ok || upRes.status === 201) {
-                uploadedAssetUrn = asset;
+              }),
+              signal: AbortSignal.timeout(6000),
+            });
+
+            if (registerRes.ok) {
+              const regData = await registerRes.json();
+              const uploadUrl =
+                regData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+              const asset = regData?.value?.asset;
+
+              if (uploadUrl && asset) {
+                const upRes = await fetch(uploadUrl, {
+                  method: 'PUT',
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'image/png',
+                  },
+                  body: imgBuffer,
+                  signal: AbortSignal.timeout(8000),
+                });
+                if (upRes.ok || upRes.status === 201) {
+                  uploadedAssetUrn = asset;
+                }
               }
             }
-          }
-        } catch {}
-      }
+          } catch {}
+        }
 
-      const shareContent = uploadedAssetUrn
-        ? {
-            shareCommentary: { text: postText },
-            shareMediaCategory: 'IMAGE',
-            media: [
-              {
-                status: 'READY',
-                description: { text: article.metaDescription },
-                media: uploadedAssetUrn,
-                title: { text: article.title },
-              },
-            ],
-          }
-        : {
-            shareCommentary: { text: postText },
-            shareMediaCategory: 'ARTICLE',
-            media: [
-              {
-                status: 'READY',
-                description: { text: article.metaDescription },
-                originalUrl: articleUrl,
-                title: { text: article.title },
-              },
-            ],
-          };
+        const shareContent = uploadedAssetUrn
+          ? {
+              shareCommentary: { text: postText },
+              shareMediaCategory: 'IMAGE',
+              media: [
+                {
+                  status: 'READY',
+                  description: { text: article.metaDescription },
+                  media: uploadedAssetUrn,
+                  title: { text: article.title },
+                },
+              ],
+            }
+          : {
+              shareCommentary: { text: postText },
+              shareMediaCategory: 'ARTICLE',
+              media: [
+                {
+                  status: 'READY',
+                  description: { text: article.metaDescription },
+                  originalUrl: `https://www.smartbidhub.com.br/lp?post=${encodeURIComponent(article.slug)}`,
+                  title: { text: article.title },
+                },
+              ],
+            };
 
-      const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
-        },
-        body: JSON.stringify({
-          author: target.urn,
-          lifecycleState: 'PUBLISHED',
-          specificContent: {
-            'com.linkedin.ugc.ShareContent': shareContent,
+        const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Restli-Protocol-Version': '2.0.0',
           },
-          visibility: {
-            'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-          },
-        }),
-        signal: AbortSignal.timeout(12000),
-      });
+          body: JSON.stringify({
+            author: target.urn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+              'com.linkedin.ugc.ShareContent': shareContent,
+            },
+            visibility: {
+              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+            },
+          }),
+          signal: AbortSignal.timeout(8000),
+        });
 
-      if (res.ok) {
-        publishedLabels.push(target.label);
-      } else {
-        const errText = await res.text();
-        warnings.push(`${target.label}: (${res.status}) ${errText.slice(0, 90)}`);
-      }
-    }
+        if (res.ok) {
+          publishedLabels.push(target.label);
+        } else {
+          const errText = await res.text();
+          warnings.push(`${target.label}: (${res.status}) ${errText.slice(0, 90)}`);
+        }
+      })
+    );
 
     if (publishedLabels.length > 0) {
       const msg =

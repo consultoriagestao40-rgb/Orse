@@ -7,6 +7,8 @@ import {
   publishToLinkedInAutopilot,
 } from '@/lib/seo-engine';
 
+export const maxDuration = 60;
+
 export async function GET() {
   const cfg = await getLinkedInConfig();
   return NextResponse.json({
