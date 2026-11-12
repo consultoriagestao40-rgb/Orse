@@ -60,9 +60,9 @@ export const metadata: Metadata = {
     siteName: "SmartBid",
     images: [
       {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
+        url: "/api/seo/og?style=lphero",
+        width: 1080,
+        height: 1350,
         alt: "SmartBid • Ecossistema de Inteligência Comercial e Custos para Facilities",
       },
     ],
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SmartBid • Inteligência Comercial & Custos para Prestadoras de Serviços",
     description: "Transforme a sua prestadora de serviços numa máquina de contratos previsíveis: da prospecção de grandes contas à blindagem de margem e reajustes automáticos.",
-    images: ["/og-image.jpg"],
+    images: ["/api/seo/og?style=lphero"],
   },
   robots: {
     index: true,
