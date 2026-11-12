@@ -12,13 +12,18 @@ export async function GET(request: Request) {
     article?.title ||
     'SmartBid Hub • Engenharia de Custos (FPV), Propostas e Contratos para Facilities';
   const category = article?.category || 'Engenharia de Custos & Facilities';
-  const bullets = (
-    article?.sections?.[0]?.bullets?.slice(0, 3) || [
-      'Cálculo automatizado de Montantes A, B, C e BDI por CCT',
-      'Simulação nativa da Reforma Tributária (IBS e CBS / Simples Híbrido)',
-      'Propostas comerciais interativas com rastreamento em tempo real',
+  const summary =
+    article?.excerpt ||
+    article?.metaDescription ||
+    'Guia técnico completo sobre formação de preço de venda (FPV por CCT), encargos trabalhistas, tributação e propostas comerciais para empresas de Facilities e Terceirização.';
+
+  const tags = (
+    article?.keywords?.slice(0, 3) || [
+      'Formação de Preço (FPV)',
+      'CCT & Encargos Sociais',
+      'Propostas Comerciais B2B',
     ]
-  ).map((b) => (b.length > 92 ? b.slice(0, 90) + '...' : b));
+  ).map((k) => k.charAt(0).toUpperCase() + k.slice(1));
 
   return new ImageResponse(
     (
@@ -30,7 +35,7 @@ export async function GET(request: Request) {
           flexDirection: 'column',
           justifyContent: 'space-between',
           background: 'linear-gradient(135deg, #0D2920 0%, #1B4D3E 60%, #143A2F 100%)',
-          padding: '54px 64px',
+          padding: '52px 64px',
           color: '#FFFFFF',
           fontFamily: 'sans-serif',
         }}
@@ -47,14 +52,14 @@ export async function GET(request: Request) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div
               style={{
-                width: '44px',
-                height: '44px',
+                width: '46px',
+                height: '46px',
                 borderRadius: '12px',
                 background: '#E07A2F',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px',
+                fontSize: '25px',
                 fontWeight: 900,
                 color: '#FFFFFF',
               }}
@@ -75,7 +80,7 @@ export async function GET(request: Request) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '10px 20px',
+              padding: '10px 22px',
               borderRadius: '999px',
               background: 'rgba(224, 122, 47, 0.22)',
               border: '1px solid rgba(224, 122, 47, 0.55)',
@@ -89,11 +94,11 @@ export async function GET(request: Request) {
           </div>
         </div>
 
-        {/* Center Title & Bullets */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '12px' }}>
+        {/* Center Title + Complete Executive Summary + Keyword Pills */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
           <div
             style={{
-              fontSize: title.length > 85 ? '40px' : '46px',
+              fontSize: title.length > 90 ? '38px' : '44px',
               fontWeight: 800,
               lineHeight: 1.18,
               color: '#FFFFFF',
@@ -107,44 +112,36 @@ export async function GET(request: Request) {
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-              background: 'rgba(255, 255, 255, 0.07)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.16)',
               borderRadius: '18px',
-              padding: '20px 26px',
+              padding: '22px 28px',
+              fontSize: '21px',
+              lineHeight: 1.48,
+              color: '#ECFDF5',
+              fontWeight: 500,
             }}
           >
-            {bullets.map((item, idx) => (
+            {summary}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {tags.map((tag, idx) => (
               <div
                 key={idx}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '14px',
-                  fontSize: '19px',
-                  color: '#ECFDF5',
-                  fontWeight: 500,
+                  padding: '8px 18px',
+                  borderRadius: '999px',
+                  background: 'rgba(16, 185, 129, 0.16)',
+                  border: '1px solid rgba(52, 211, 153, 0.35)',
+                  color: '#A7F3D0',
+                  fontSize: '15px',
+                  fontWeight: 700,
                 }}
               >
-                <div
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '999px',
-                    background: '#10B981',
-                    color: '#06281E',
-                    fontSize: '13px',
-                    fontWeight: 900,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  {idx + 1}
-                </div>
-                <span>{item}</span>
+                {tag}
               </div>
             ))}
           </div>
@@ -157,11 +154,11 @@ export async function GET(request: Request) {
             alignItems: 'center',
             justifyContent: 'space-between',
             borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-            paddingTop: '20px',
+            paddingTop: '18px',
             width: '100%',
           }}
         >
-          <span style={{ fontSize: '17px', color: '#D1FAE5', fontWeight: 600 }}>
+          <span style={{ fontSize: '18px', color: '#D1FAE5', fontWeight: 700 }}>
             www.smartbidhub.com.br
           </span>
           <div
