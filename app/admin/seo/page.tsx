@@ -678,9 +678,7 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
                       type="button"
                       onClick={() => {
                         navigator.clipboard.writeText(previewText);
-                        const companyAdminUrl = /^\d+$/.test(liOrgId)
-                          ? `https://www.linkedin.com/company/${liOrgId}/admin/page-posts/published/?share=true`
-                          : `https://www.linkedin.com/company/${liOrgId}/admin/`;
+                        const companyAdminUrl = `https://www.linkedin.com/company/${liOrgId}/admin/page-posts/published/?share=true`;
                         window.open(companyAdminUrl, '_blank', 'noopener,noreferrer');
                       }}
                       className="px-3.5 py-2.5 rounded-xl border border-emerald-700 text-emerald-800 hover:bg-emerald-50 text-xs font-bold cursor-pointer"

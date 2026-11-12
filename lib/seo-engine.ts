@@ -1459,7 +1459,20 @@ export async function publishToLinkedInAutopilot(
   }
 
   const normalizedUrn = authorUrn.startsWith('urn:li:') ? authorUrn : `urn:li:person:${authorUrn}`;
-  const rawOrgId = normalizeOrganizationId(cfg.organizationId || process.env.LINKEDIN_ORGANIZATION_ID || '');
+  let rawOrgId = normalizeOrganizationId(cfg.organizationId || process.env.LINKEDIN_ORGANIZATION_ID || 'smartbid-hub');
+  if (rawOrgId && !/^\d+$/.test(rawOrgId)) {
+    try {
+      const orgRes = await fetch(
+        `https://api.linkedin.com/v2/organizations?q=vanityName&vanityName=${encodeURIComponent(rawOrgId)}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (orgRes.ok) {
+        const orgData = await orgRes.json();
+        const foundId = orgData?.elements?.[0]?.id;
+        if (foundId) rawOrgId = String(foundId);
+      }
+    } catch {}
+  }
   const orgUrn = rawOrgId && /^\d+$/.test(rawOrgId) ? `urn:li:organization:${rawOrgId}` : null;
 
   // Lista de destinos: Perfil Pessoal + Company Page SmartBid (se configurada com ID numérico)
