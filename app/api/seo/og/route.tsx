@@ -21,267 +21,241 @@ export async function GET(request: Request) {
   const summary = normalizePortugueseTopic(rawSummary);
 
   const tableRows = article?.sections?.find((s) => s.table?.rows?.length)?.table?.rows?.slice(0, 3) || [
-    ['Montante A (Mão de Obra + Encargos)', 'Piso CCT + 68% a 78% Encargos', '58% a 65% do PV'],
-    ['Montante B (Benefícios + Insumos)', 'VT, VA, VR, Uniformes, EPIs e Químicos', '12% a 18% do PV'],
-    ['BDI, Tributos (IBS/CBS) e Margem', 'Cálculo por dentro (Gross-up)', '20% a 28% do PV'],
+    ['Montante A — Mão de Obra + Encargos Sociais', 'Piso Sindical da CCT + Adicionais + Grupos A a F (68% a 78%)', '58% a 65% do PV'],
+    ['Montante B & C — Benefícios, EPIs e Materiais', 'Vale-Transporte (dedução 6%), VA/VR por escala, Uniformes e Insumos', '12% a 18% do PV'],
+    ['BDI, Tributos (IBS/CBS) e Margem Líquida', 'Cálculo por dentro (Gross-up) no Simples, Presumido ou Lucro Real', '20% a 28% do PV'],
   ];
 
+  // Formato Quadrado 1:1 (1350 x 1350 px) — Padrão Ouro Oficial do Feed do LinkedIn (Desktop + Mobile sem nenhum corte)
   return new ImageResponse(
     (
       <div
         style={{
-          width: '1200px',
-          height: '630px',
+          width: '1350px',
+          height: '1350px',
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
           background: '#FAF7F2',
           fontFamily: 'sans-serif',
           overflow: 'hidden',
         }}
       >
-        {/* COLUNA ESQUERDA: Editorial Magazine Layout (Papel Arquitetônico Quente) */}
+        {/* BLOCO SUPERIOR: Editorial Magazine Header + Manchete de Alto Contraste */}
         <div
           style={{
-            width: '690px',
-            height: '630px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: '46px 52px',
+            padding: '60px 72px 44px 72px',
+            gap: '28px',
             background: '#FAF7F2',
-            borderRight: '2px solid #E6E0D6',
           }}
         >
-          {/* Topo Editorial / Masthead */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Masthead */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              paddingBottom: '24px',
+              borderBottom: '3px solid #0F172A',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '14px',
+                  background: '#112A22',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: '30px',
+                  fontWeight: 900,
+                }}
+              >
+                S
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span
+                  style={{
+                    fontSize: '26px',
+                    fontWeight: 900,
+                    color: '#0F172A',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  SMARTBID HUB
+                </span>
+                <span
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    color: '#475569',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  CADERNO TÉCNICO EXECUTIVO • FACILITIES & TERCEIRIZAÇÃO
+                </span>
+              </div>
+            </div>
+
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '10px',
-                    background: '#112A22',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#FFFFFF',
-                    fontSize: '20px',
-                    fontWeight: 900,
-                  }}
-                >
-                  S
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span
-                    style={{
-                      fontSize: '18px',
-                      fontWeight: 900,
-                      color: '#0F172A',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    SMARTBID HUB
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#64748B',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    CADERNO EXECUTIVO • FACILITIES & B2B
-                  </span>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '6px 14px',
-                  borderRadius: '6px',
-                  background: '#E07A2F',
-                  color: '#FFFFFF',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  letterSpacing: '0.05em',
-                }}
-              >
-                {category}
-              </div>
-            </div>
-
-            <div style={{ width: '100%', height: '2px', background: '#0F172A', display: 'flex' }} />
-          </div>
-
-          {/* Manchete Editorial + Tese Técnica */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div
-              style={{
-                fontSize: title.length > 85 ? '33px' : '37px',
-                fontWeight: 900,
-                lineHeight: 1.15,
-                color: '#0F172A',
-                letterSpacing: '-0.03em',
-                display: 'flex',
-              }}
-            >
-              {title}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                borderLeft: '5px solid #E07A2F',
-                paddingLeft: '18px',
+                padding: '12px 24px',
+                borderRadius: '10px',
+                background: '#E07A2F',
+                color: '#FFFFFF',
                 fontSize: '17px',
-                lineHeight: 1.46,
-                color: '#334155',
-                fontWeight: 500,
+                fontWeight: 900,
+                letterSpacing: '0.05em',
               }}
             >
-              {summary}
+              {category}
             </div>
           </div>
 
-          {/* Rodapé de Autoridade */}
+          {/* Manchete Principal Super Nítida */}
+          <div
+            style={{
+              fontSize: title.length > 90 ? '48px' : '54px',
+              fontWeight: 900,
+              lineHeight: 1.13,
+              color: '#0F172A',
+              letterSpacing: '-0.03em',
+              display: 'flex',
+            }}
+          >
+            {title}
+          </div>
+
+          {/* Tese Executiva com Barra Laranja */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingTop: '16px',
-              borderTop: '1px solid #DFD9CE',
+              borderLeft: '7px solid #E07A2F',
+              paddingLeft: '24px',
+              fontSize: '24px',
+              lineHeight: 1.44,
+              color: '#334155',
+              fontWeight: 600,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '999px',
-                  background: '#1B4D3E',
-                }}
-              />
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#1E293B' }}>
-                CRISTIANO SILVA • ENGENHARIA DE CUSTOS & FPV
-              </span>
-            </div>
-            <span
-              style={{
-                fontSize: '14px',
-                fontWeight: 900,
-                color: '#E07A2F',
-              }}
-            >
-              smartbidhub.com.br
-            </span>
+            {summary}
           </div>
         </div>
 
-        {/* COLUNA DIREITA: Infográfico Técnico / Blueprint FPV Realista */}
+        {/* BLOCO INFERIOR: Infográfico Técnico / Planilha Auditada de Engenharia de Custos */}
         <div
           style={{
-            width: '510px',
-            height: '630px',
-            background: 'linear-gradient(155deg, #0D261E 0%, #153B2E 100%)',
-            padding: '38px 34px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            background: 'linear-gradient(160deg, #0D261E 0%, #153B2E 100%)',
+            padding: '48px 72px 54px 72px',
+            flex: 1,
+            gap: '28px',
           }}
         >
-          {/* Selo Superior Direito */}
+          {/* Cabeçalho da Seção do Infográfico */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              width: '100%',
             }}
           >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '999px',
+                  background: '#34D399',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 900,
+                  color: '#6EE7B7',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                RAIO-X TÉCNICO • MEMÓRIA DE CÁLCULO AUDITADA NA FPV
+              </span>
+            </div>
+
             <span
               style={{
-                fontSize: '12px',
-                fontWeight: 800,
-                color: '#6EE7B7',
-                letterSpacing: '0.08em',
-              }}
-            >
-              RAIO-X TÉCNICO DA OPERAÇÃO
-            </span>
-            <span
-              style={{
-                fontSize: '11px',
+                fontSize: '16px',
                 fontWeight: 800,
                 color: '#FDBA74',
-                background: 'rgba(224, 122, 47, 0.22)',
-                border: '1px solid rgba(224, 122, 47, 0.5)',
-                padding: '4px 10px',
+                background: 'rgba(224, 122, 47, 0.24)',
+                border: '1px solid rgba(224, 122, 47, 0.55)',
+                padding: '7px 18px',
                 borderRadius: '999px',
               }}
             >
-              MEMÓRIA AUDITÁVEL
+              PADRÃO B2B • CCT + IBS/CBS
             </span>
           </div>
 
-          {/* Card Flutuante Estilo Planilha Executiva / Dashboard */}
+          {/* Card Branco de Alta Nitidez (Planilha Executiva) */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               background: '#FFFFFF',
-              borderRadius: '18px',
+              borderRadius: '24px',
               overflow: 'hidden',
-              boxShadow: '0 20px 45px rgba(0, 0, 0, 0.35)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.4)',
+              border: '2px solid rgba(255, 255, 255, 0.2)',
             }}
           >
-            {/* Barra de Título da Planilha */}
+            {/* Topo da Janela da Planilha */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 background: '#0F172A',
-                padding: '14px 18px',
+                padding: '18px 28px',
                 color: '#FFFFFF',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <div style={{ width: '9px', height: '9px', borderRadius: '99px', background: '#EF4444' }} />
-                <div style={{ width: '9px', height: '9px', borderRadius: '99px', background: '#F59E0B' }} />
-                <div style={{ width: '9px', height: '9px', borderRadius: '99px', background: '#10B981' }} />
-                <span style={{ fontSize: '12px', fontWeight: 800, marginLeft: '6px', color: '#E2E8F0' }}>
-                  MATRIZ DE COMPOSIÇÃO • FPV B2B
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '13px', height: '13px', borderRadius: '99px', background: '#EF4444' }} />
+                <div style={{ width: '13px', height: '13px', borderRadius: '99px', background: '#F59E0B' }} />
+                <div style={{ width: '13px', height: '13px', borderRadius: '99px', background: '#10B981' }} />
+                <span style={{ fontSize: '17px', fontWeight: 800, marginLeft: '10px', color: '#F8FAFC' }}>
+                  ESTRUTURA DE FORMAÇÃO DE PREÇO DE VENDA (FPV) • SMARTBID HUB
                 </span>
               </div>
               <span
                 style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
+                  fontSize: '16px',
+                  fontWeight: 900,
                   color: '#34D399',
                 }}
               >
-                CCT + IBS/CBS
+                CÁLCULO POR DENTRO (GROSS-UP)
               </span>
             </div>
 
-            {/* Linhas Reais da Tabela do Artigo */}
+            {/* 3 Linhas Técnicas Amplas */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '16px 18px',
-                gap: '12px',
+                padding: '24px 28px',
+                gap: '16px',
               }}
             >
               {tableRows.map((row, idx) => (
@@ -289,102 +263,127 @@ export async function GET(request: Request) {
                   key={idx}
                   style={{
                     display: 'flex',
-                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     background: idx === 0 ? '#F0FDF4' : '#F8FAFC',
-                    border: idx === 0 ? '1px solid #BBF7D0' : '1px solid #E2E8F0',
-                    borderRadius: '12px',
-                    padding: '12px 14px',
-                    gap: '4px',
+                    border: idx === 0 ? '2px solid #86EFAC' : '1px solid #CBD5E1',
+                    borderRadius: '16px',
+                    padding: '18px 24px',
+                    gap: '20px',
                   }}
                 >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxWidth: '860px' }}>
+                    <span
+                      style={{
+                        fontSize: '22px',
+                        fontWeight: 900,
+                        color: '#0F172A',
+                      }}
+                    >
+                      {`0${idx + 1}. ${row[0] || ''}`}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '18px',
+                        color: '#334155',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {row[1] || ''}
+                    </span>
+                  </div>
+
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      justifyContent: 'center',
+                      fontSize: '17px',
+                      fontWeight: 900,
+                      color: idx === 0 ? '#166534' : '#9A3412',
+                      background: idx === 0 ? '#DCFCE7' : '#FFEDD5',
+                      border: idx === 0 ? '1px solid #86EFAC' : '1px solid #FDBA74',
+                      padding: '10px 18px',
+                      borderRadius: '12px',
+                      flexShrink: 0,
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 800,
-                        color: '#0F172A',
-                      }}
-                    >
-                      { `0${idx + 1}. ${row[0] || ''}` }
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        color: idx === 0 ? '#166534' : '#9A3412',
-                        background: idx === 0 ? '#DCFCE7' : '#FFEDD5',
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {row[2] && row[2].length <= 24 ? row[2] : idx === 0 ? 'Montante A • CCT' : idx === 1 ? 'Montante B & C' : 'Gross-Up & BDI'}
-                    </span>
+                    {row[2] && row[2].length <= 24
+                      ? row[2]
+                      : idx === 0
+                      ? 'Montante A • CCT'
+                      : idx === 1
+                      ? 'Montante B & C'
+                      : 'Gross-Up & BDI'}
                   </div>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      color: '#475569',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {row[1] || ''}
-                  </span>
                 </div>
               ))}
             </div>
 
-            {/* Fórmula Gross-Up no Rodapé do Card */}
+            {/* Faixa de Fórmula Técnica no Rodapé da Planilha */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 background: '#FFF7ED',
-                borderTop: '1px solid #FED7AA',
-                padding: '12px 18px',
+                borderTop: '2px solid #FED7AA',
+                padding: '16px 28px',
               }}
             >
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#9A3412' }}>
-                CÁLCULO POR DENTRO (GROSS-UP):
+              <span style={{ fontSize: '17px', fontWeight: 800, color: '#9A3412' }}>
+                EQUAÇÃO DE BLINDAGEM DE MARGEM (GROSS-UP):
               </span>
-              <span style={{ fontSize: '12px', fontWeight: 900, color: '#C2410C' }}>
-                PV = CD ÷ (1 − BDI%)
+              <span style={{ fontSize: '19px', fontWeight: 900, color: '#C2410C' }}>
+                Preço Final = Custo Direto ÷ (1 − [Tributos% + Adm% + Lucro%])
               </span>
             </div>
           </div>
 
-          {/* Rodapé Direito */}
+          {/* Rodapé de Autoridade e Assinatura */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              borderRadius: '12px',
-              padding: '12px 16px',
+              paddingTop: '8px',
             }}
           >
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#E2E8F0' }}>
-              Plataforma SaaS de Engenharia de Custos
-            </span>
-            <span style={{ fontSize: '12px', fontWeight: 900, color: '#FDBA74' }}>
-              30 Dias Grátis →
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '18px', fontWeight: 800, color: '#F8FAFC' }}>
+                CRISTIANO SILVA • CENTRAL TÉCNICA SMARTBID HUB
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+              }}
+            >
+              <span style={{ fontSize: '19px', fontWeight: 900, color: '#FDBA74' }}>
+                www.smartbidhub.com.br
+              </span>
+              <span
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 900,
+                  background: '#E07A2F',
+                  color: '#FFFFFF',
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                }}
+              >
+                Teste Grátis por 30 Dias
+              </span>
+            </div>
           </div>
         </div>
       </div>
     ),
     {
-      width: 1200,
-      height: 630,
+      width: 1350,
+      height: 1350,
     }
   );
 }

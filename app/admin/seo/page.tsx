@@ -522,7 +522,7 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black uppercase tracking-wider text-slate-700">
-                      1. Arte Editorial do Post (1200x630px — Infográfico Técnico B2B):
+                      1. Arte Editorial do Post (1350x1350px HD — Formato Quadrado 1:1 Oficial do Feed do LinkedIn):
                     </label>
                     <a
                       href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}`}
@@ -530,10 +530,10 @@ Libere 30 dias de teste grátis na sua empresa: https://www.smartbidhub.com.br/l
                       rel="noopener noreferrer"
                       className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
                     >
-                      Abrir imagem em tela cheia <ExternalLink size={12} />
+                      Abrir imagem em Alta Definição (HD) <ExternalLink size={12} />
                     </a>
                   </div>
-                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm max-w-[560px] mx-auto">
                     <img
                       src={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&t=${Date.now()}`}
                       alt={previewArticle.title}
