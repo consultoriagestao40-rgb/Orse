@@ -33,6 +33,8 @@ export default function AdminSeoPage() {
   const [savingLi, setSavingLi] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<any | null>(null);
   const [previewText, setPreviewText] = useState('');
+  const [previewStyle, setPreviewStyle] = useState<'cover' | 'infographic'>('cover');
+  const [previewPhoto, setPreviewPhoto] = useState<number | null>(null);
   const [publishingLi, setPublishingLi] = useState(false);
 
   const loadLinkedInStatus = async () => {
@@ -100,6 +102,8 @@ export default function AdminSeoPage() {
   const openLinkedInReviewModal = (art: any) => {
     setPreviewArticle(art);
     setPreviewText(buildLinkedInText(art));
+    setPreviewStyle('cover');
+    setPreviewPhoto(null);
   };
 
   const handleConfirmPublishLinkedIn = async () => {
@@ -121,6 +125,8 @@ export default function AdminSeoPage() {
           action: 'publish_now',
           slug: art.slug,
           postText: previewText,
+          style: previewStyle,
+          photo: previewPhoto,
         }),
       });
       const data = await res.json();
@@ -533,23 +539,41 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp
 
               <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
                 {/* Preview da Arte Editorial Criativa */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-black uppercase tracking-wider text-slate-700">
-                      1. Arte Editorial do Post (1350x1350px HD — Formato Quadrado 1:1 Oficial do Feed do LinkedIn):
+                      1. Arte do Post ({previewStyle === 'cover' ? 'Capa Editorial 4:5 — Foto + Texto Grande' : 'Infográfico Técnico 1:1 — Raio-X FPV'}):
                     </label>
-                    <a
-                      href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
-                    >
-                      Abrir imagem em Alta Definição (HD) <ExternalLink size={12} />
-                    </a>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {previewStyle === 'cover' && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewPhoto((prev) => (prev === null ? 0 : (prev + 1) % 16))}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <RefreshCw size={12} /> Trocar Foto de Fundo
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setPreviewStyle((prev) => (prev === 'cover' ? 'infographic' : 'cover'))}
+                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 cursor-pointer"
+                      >
+                        {previewStyle === 'cover' ? '📊 Ver Modelo Infográfico' : '📸 Voltar para Capa Foto + Texto'}
+                      </button>
+                      <a
+                        href={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}${previewPhoto !== null ? `&photo=${previewPhoto}` : ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
+                      >
+                        Baixar HD <ExternalLink size={12} />
+                      </a>
+                    </div>
                   </div>
-                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm max-w-[560px] mx-auto">
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm max-w-[480px] mx-auto">
                     <img
-                      src={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&t=${Date.now()}`}
+                      src={`/api/seo/og?slug=${encodeURIComponent(previewArticle.slug)}&style=${previewStyle}${previewPhoto !== null ? `&photo=${previewPhoto}` : ''}`}
                       alt={previewArticle.title}
                       className="w-full h-auto block"
                     />

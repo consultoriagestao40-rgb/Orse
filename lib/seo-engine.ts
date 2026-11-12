@@ -1376,7 +1376,8 @@ export async function saveLinkedInConfig(partial: Partial<LinkedInAutopilotConfi
  */
 export async function publishToLinkedInAutopilot(
   article: SeoArticle,
-  customPostText?: string
+  customPostText?: string,
+  options?: { style?: string; photo?: number | null }
 ): Promise<{
   ok: boolean;
   message: string;
@@ -1385,7 +1386,10 @@ export async function publishToLinkedInAutopilot(
   const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
   const postText = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
   const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
-  const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}`;
+  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=cover';
+  const photoParam =
+    options?.photo !== undefined && options?.photo !== null ? `&photo=${encodeURIComponent(String(options.photo))}` : '';
+  const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;
 
   // 1. Webhook direto (Make.com / Zapier / n8n)
   const webhookUrl = cfg.webhookUrl || process.env.LINKEDIN_WEBHOOK_URL;

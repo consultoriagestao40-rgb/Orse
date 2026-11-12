@@ -30,7 +30,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Artigo não encontrado' }, { status: 404 });
       }
       const customPostText = body.postText ? String(body.postText) : undefined;
-      const result = await publishToLinkedInAutopilot(article, customPostText);
+      const result = await publishToLinkedInAutopilot(article, customPostText, {
+        style: body.style ? String(body.style) : 'cover',
+        photo: body.photo !== undefined && body.photo !== null ? Number(body.photo) : null,
+      });
       return NextResponse.json({
         success: result.ok,
         message: result.message,
