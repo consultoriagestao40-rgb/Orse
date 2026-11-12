@@ -121,13 +121,29 @@ export async function GET(request: Request) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: '14px',
                   fontSize: '19px',
                   color: '#ECFDF5',
                   fontWeight: 500,
                 }}
               >
-                <span style={{ color: '#34D399', fontWeight: 900 }}>✓</span>
+                <div
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '999px',
+                    background: '#10B981',
+                    color: '#06281E',
+                    fontSize: '13px',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {idx + 1}
+                </div>
                 <span>{item}</span>
               </div>
             ))}
