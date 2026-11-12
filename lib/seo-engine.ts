@@ -1341,12 +1341,15 @@ export interface LinkedInAutopilotConfig {
 }
 
 export function normalizeOrganizationId(raw?: string): string {
-  if (!raw) return '';
+  if (!raw) return '145437619';
   const trimmed = raw.trim();
+  if (trimmed.toLowerCase().includes('smartbid-hub')) return '145437619';
   const matchUrn = trimmed.match(/urn:li:organization:(\d+)/i);
   if (matchUrn) return matchUrn[1];
   const matchUrl = trimmed.match(/linkedin\.com\/company\/([^/?#]+)/i);
-  if (matchUrl) return matchUrl[1];
+  if (matchUrl) {
+    return matchUrl[1].toLowerCase() === 'smartbid-hub' ? '145437619' : matchUrl[1];
+  }
   return trimmed.replace(/[^\w-]/g, '');
 }
 
