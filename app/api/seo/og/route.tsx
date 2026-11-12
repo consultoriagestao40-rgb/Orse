@@ -60,23 +60,34 @@ function cleanArticleHeadline(raw: string): string {
     .trim();
 }
 
+const STOPWORD_ENDINGS = new Set([
+  'DE', 'DA', 'DO', 'DAS', 'DOS', 'NA', 'NO', 'NAS', 'NOS',
+  'EM', 'PARA', 'POR', 'COM', 'SEM', 'SOBRE', 'ENTRE',
+  'E', 'OU', 'A', 'O', 'AS', 'OS', 'UM', 'UMA', 'QUE', 'USO',
+]);
+
+function trimTrailingStopwords(words: string[]): string[] {
+  const copy = [...words];
+  while (copy.length > 4 && STOPWORD_ENDINGS.has(copy[copy.length - 1].replace(/[^A-ZÀ-Ú0-9]/gi, '').toUpperCase())) {
+    copy.pop();
+  }
+  return copy;
+}
+
 function splitUpperHeadline(text: string): { whitePart: string; orangePart: string } {
   const clean = cleanArticleHeadline(text).toUpperCase();
   const words = clean.split(/\s+/).filter(Boolean);
-  const compactWords = words.length > 9 ? words.slice(0, 9) : words;
+  const compactWords = trimTrailingStopwords(words.length > 10 ? words.slice(0, 10) : words);
   const splitIdx = Math.ceil(compactWords.length * 0.5);
   const first = compactWords.slice(0, splitIdx).join(' ');
-  let second = compactWords.slice(splitIdx).join(' ');
-  if (!second.endsWith('?') && !second.endsWith('.')) {
-    second = `${second}?`;
-  }
+  const second = compactWords.slice(splitIdx).join(' ');
   return { whitePart: first, orangePart: second };
 }
 
 function splitSentenceHeadline(text: string): { firstHalf: string; secondHalf: string } {
   const clean = cleanArticleHeadline(text);
   const words = clean.split(/\s+/).filter(Boolean);
-  const compactWords = words.length > 10 ? words.slice(0, 10) : words;
+  const compactWords = trimTrailingStopwords(words.length > 11 ? words.slice(0, 11) : words);
   const splitIdx = Math.ceil(compactWords.length * 0.52);
   const firstHalf = compactWords.slice(0, splitIdx).join(' ');
   let secondHalf = compactWords.slice(splitIdx).join(' ');
