@@ -156,7 +156,7 @@ export async function GET(request: Request) {
       }
     } catch {}
 
-    const { before, highlight, after } = splitHeadlineForHighlight(title);
+    const cleanHeadline = title.replace(/\s*\(Guia 2027\)/i, '').replace(/\s*\(2027\)/i, '').trim();
 
     return new ImageResponse(
       (
@@ -198,7 +198,7 @@ export async function GET(request: Request) {
               height: '1350px',
               display: 'flex',
               background:
-                'linear-gradient(180deg, rgba(6,19,14,0.68) 0%, rgba(6,19,14,0.32) 30%, rgba(6,19,14,0.88) 62%, rgba(4,13,9,0.98) 100%)',
+                'linear-gradient(180deg, rgba(6,19,14,0.68) 0%, rgba(6,19,14,0.32) 28%, rgba(6,19,14,0.90) 60%, rgba(4,13,9,0.98) 100%)',
             }}
           />
 
@@ -252,54 +252,66 @@ export async function GET(request: Request) {
             </div>
           </div>
 
-          {/* Bloco Inferior com Manchete Gigante de Impacto */}
+          {/* Bloco Inferior com Manchete Gigante de Impacto (Nó de texto único para quebra de linha 100% nativa no Satori) */}
           <div
             style={{
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               padding: '0 68px 72px 68px',
-              gap: '30px',
+              gap: '26px',
+              width: '1080px',
             }}
           >
-            {/* Barra Laranja de Destaque */}
-            <div
-              style={{
-                width: '96px',
-                height: '8px',
-                borderRadius: '4px',
-                background: '#E07A2F',
-                display: 'flex',
-              }}
-            />
+            {/* Barra Laranja + Sub-selo Dourado */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              <div
+                style={{
+                  width: '84px',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: '#E07A2F',
+                  display: 'flex',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 900,
+                  color: '#FDBA74',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                DIRETRIZES TÉCNICAS & GESTÃO DE MARGEM
+              </span>
+            </div>
 
-            {/* Título Editorial Grande com Palavras-Chave em Destaque Dourado */}
+            {/* Título Editorial Grande (Nó de texto simples para quebra de linha perfeita sem sobreposição) */}
             <div
               style={{
-                fontSize: title.length > 85 ? '54px' : '62px',
+                fontSize: cleanHeadline.length > 85 ? '50px' : '56px',
                 fontWeight: 900,
-                lineHeight: 1.09,
-                letterSpacing: '-0.03em',
+                lineHeight: 1.14,
+                letterSpacing: '-0.02em',
                 color: '#FFFFFF',
                 display: 'flex',
-                flexWrap: 'wrap',
+                width: '944px',
               }}
             >
-              <span>
-                {before}
-                <span style={{ color: '#FDBA74' }}>{highlight}</span>
-                {after}
-              </span>
+              {cleanHeadline}
             </div>
 
             {/* Subtítulo Executivo Conciso */}
             <div
               style={{
-                fontSize: '26px',
+                fontSize: '25px',
                 fontWeight: 500,
-                lineHeight: 1.4,
+                lineHeight: 1.42,
                 color: '#E2E8F0',
                 display: 'flex',
+                width: '944px',
+                borderLeft: '5px solid #E07A2F',
+                paddingLeft: '22px',
               }}
             >
               {summary}
@@ -313,7 +325,7 @@ export async function GET(request: Request) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                width: '100%',
+                width: '944px',
               }}
             >
               <span
