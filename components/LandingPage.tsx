@@ -949,21 +949,32 @@ export default function LandingPage() {
       </section>
 
       {/* SOLUÇÃO */}
-      <section id="solucao" className="lp-hero-band relative overflow-hidden py-24 md:py-28 text-white">
+      <section id="solucao" className="lp-hero-band relative overflow-hidden py-16 md:py-28 text-white">
         <div className="lp-dots" aria-hidden />
         <div className="lp-grain" aria-hidden />
-        <div className="relative max-w-[1200px] mx-auto px-6">
-          <p className="text-[14px] text-white/85 mb-6">O que é o SmartBid</p>
-          <p className="text-[30px] md:text-[40px] leading-[1.18] max-w-[980px]" style={{ ...serif, fontWeight: 600, letterSpacing: '-0.025em' }}>
+        <div className="relative max-w-[1200px] mx-auto px-5 sm:px-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[12px] font-medium text-[#FFB27A] mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF7A2F]" />
+            O que é o SmartBid
+          </div>
+          <p className="text-[24px] sm:text-[30px] md:text-[40px] leading-[1.2] max-w-[980px]" style={{ ...serif, fontWeight: 600, letterSpacing: '-0.025em' }}>
             Uma esteira única, feita para a realidade de prestadoras de limpeza, portaria, segurança e apoio operacional.
-            <span className="text-white/85"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
+            <span className="text-white/80"> Não é um CRM genérico: ela conduz a operação do primeiro contato com o decisor até cada reajuste e aditivo do contrato.</span>
           </p>
 
-          <div data-reveal className="lp-timeline relative mt-16 pt-10">
-            {/* trilho e linha laranja que se desenha */}
+          <div data-reveal className="lp-timeline relative mt-10 lg:mt-16 lg:pt-10">
+            {/* Trilho horizontal (Desktop lg+) */}
             <span className="hidden lg:block absolute left-0 right-0 top-0 h-px bg-white/15" aria-hidden />
             <span className="lp-line-draw hidden lg:block absolute left-0 top-0 h-[2px] -mt-[0.5px] w-[90%] rounded-full" style={{ background: 'linear-gradient(90deg, #FF7A2F, #EA580C 70%, rgba(234,88,12,0.2))', transitionDuration: '1.6s' }} aria-hidden />
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-y-10">
+
+            {/* Trilho vertical conectado (Mobile & Tablet < lg) */}
+            <span
+              className="lg:hidden absolute left-[19px] top-5 bottom-5 w-[2px] rounded-full"
+              style={{ background: 'linear-gradient(180deg, #FF7A2F 0%, #EA580C 75%, rgba(234,88,12,0.18) 100%)' }}
+              aria-hidden
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3.5 lg:gap-6">
               {[
                 ['Prospecção', 'Decisores via Google Places'],
                 ['Custos', 'Multi-CCT, encargos e benefícios'],
@@ -971,17 +982,46 @@ export default function LandingPage() {
                 ['Proposta por link', 'Rastreio e aceite online'],
                 ['Contratos', 'Vigência e alerta de reajuste'],
               ].map(([t, d], i) => (
-                <div key={t} className="lp-phase group relative pr-6" style={{ '--i': i } as React.CSSProperties}>
-                  {/* marcador da fase, sentado na linha */}
-                  <span className="lp-phase-dot absolute -top-10 left-0 lg:-translate-y-1/2 flex items-center justify-center" aria-hidden>
+                <div
+                  key={t}
+                  className="lp-phase group relative flex lg:block items-center gap-4 lg:pr-4"
+                  style={{ '--i': i } as React.CSSProperties}
+                >
+                  {/* Marcador Desktop (sentado na linha horizontal) */}
+                  <span className="lp-phase-dot hidden lg:flex absolute -top-10 left-0 -translate-y-1/2 items-center justify-center" aria-hidden>
                     <span className="lp-phase-halo absolute rounded-full" />
                     <span className="relative w-[14px] h-[14px] rounded-full border-2 flex items-center justify-center" style={{ borderColor: '#FF7A2F', background: '#0F3A2E' }}>
                       <span className="w-[6px] h-[6px] rounded-full" style={{ background: '#FF7A2F' }} />
                     </span>
                   </span>
-                  <p className="text-[13px] tabular-nums font-semibold transition-colors duration-300 group-hover:text-[#FF9A5C]" style={{ color: '#FFB27A' }}>0{i + 1}</p>
-                  <p className="text-[17px] font-medium mt-2">{t}</p>
-                  <p className="text-[14px] text-white/85 mt-1">{d}</p>
+
+                  {/* Marcador Mobile (círculo numerado alinhado no trilho vertical) */}
+                  <div
+                    className="lg:hidden relative z-10 shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-md"
+                    style={{ borderColor: '#FF7A2F', background: '#0F3A2E' }}
+                  >
+                    <span className="text-[12px] font-bold tabular-nums" style={{ color: '#FFB27A' }}>
+                      0{i + 1}
+                    </span>
+                  </div>
+
+                  {/* Card da Etapa (Glassmorphism no Mobile + Bloco limpo no Desktop) */}
+                  <div className="flex-1 rounded-xl border border-white/12 bg-white/[0.06] lg:bg-transparent lg:border-0 px-4 py-3.5 lg:p-0 backdrop-blur-sm lg:backdrop-blur-none">
+                    <div className="flex items-center justify-between lg:block">
+                      <p className="hidden lg:block text-[13px] tabular-nums font-semibold transition-colors duration-300 group-hover:text-[#FF9A5C]" style={{ color: '#FFB27A' }}>
+                        0{i + 1}
+                      </p>
+                      <p className="text-[16px] lg:text-[17px] font-semibold lg:font-medium text-white lg:mt-2">
+                        {t}
+                      </p>
+                      <span className="lg:hidden text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-[#FFB27A]">
+                        Etapa {i + 1}
+                      </span>
+                    </div>
+                    <p className="text-[13.5px] lg:text-[14px] text-white/80 lg:text-white/85 mt-1">
+                      {d}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
