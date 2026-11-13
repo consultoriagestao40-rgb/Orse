@@ -20,7 +20,8 @@ import {
   updateDocumentoStatus, 
   deleteDocumentoProposta,
   getPropostasComerciaisPageData,
-  getCreateProposalModalData
+  getCreateProposalModalData,
+  getDocumentosProposta
 } from './actions';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
@@ -721,8 +722,19 @@ export default function PropostasComerciaisDashboard() {
     }
   };
 
+  const PRESET_COLORS = [
+    // Row 1: Soft Pastels
+    '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
+    // Row 2: Standard Vibrant
+    '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
+    // Row 3: Bright Neon / Vivid
+    '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
+    // Row 4: Deep / Dark
+    '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
+  ];
+
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const renderKanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
@@ -1012,7 +1024,7 @@ export default function PropostasComerciaisDashboard() {
     return 'bg-slate-100/50 border border-slate-200/50';
   };
 
-  const renderKanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
+  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
     label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void; isFirst?: boolean;
   }) => {
     const resolvedHex = resolveColorToHex(color);
