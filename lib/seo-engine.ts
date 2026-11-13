@@ -655,12 +655,14 @@ const GOOGLE_SUGGEST_SEEDS = [
  * Consulta em tempo real o Google Autocomplete Brasil (termos mais pesquisados pelos usuários no Google)
  * para descobrir dúvidas e buscas reais do mercado de Terceirização e Facilities.
  */
-export async function fetchTrendingGoogleSearchTerms(): Promise<string[]> {
+export async function fetchTrendingGoogleSearchTerms(liveOnly = false): Promise<string[]> {
   const collected = new Set<string>();
 
-  // 1. Prioriza os temas estratégicos BOFU já revisados com ortografia e gramática perfeitas
-  for (const topic of AUTOPILOT_SEO_TOPICS) {
-    collected.add(normalizePortugueseTopic(topic));
+  // 1. Temas estratégicos revisados (reserva). Com liveOnly, retorna apenas as buscas em alta do Google.
+  if (!liveOnly) {
+    for (const topic of AUTOPILOT_SEO_TOPICS) {
+      collected.add(normalizePortugueseTopic(topic));
+    }
   }
 
   const dayOfYear = Math.floor(Date.now() / 86400000);
@@ -976,8 +978,23 @@ export async function ensureDailyAutopilotArticle(): Promise<{
       };
     }
 
-    const newArticle = await generateAndPublishSeoArticle();
-    // Dispara também no LinkedIn automaticamente quando o artigo do dia é criado
+    // Trava atômica do dia: a chave primária impede que sitemap, página de conteúdos e cron
+    // gerem e publiquem o mesmo dia em paralelo (causa dos posts duplicados).
+    const lockId = `seo-lock-${todayDateKey}`;
+    try {
+      await prisma.faqPadrao.create({ data: { id: lockId, pergunta: '[SEO_DAILY_LOCK]', resposta: todayDateKey } });
+    } catch {
+      return { triggered: false, todayDateKey };
+    }
+
+    let newArticle: SeoArticle;
+    try {
+      newArticle = await generateAndPublishSeoArticle();
+    } catch (genErr) {
+      await prisma.faqPadrao.delete({ where: { id: lockId } }).catch(() => {});
+      throw genErr;
+    }
+    // Dispara também no LinkedIn / Instagram / Facebook uma única vez, quando o artigo do dia é criado
     try {
       await publishToLinkedInAutopilot(newArticle, undefined, { style: 'auto' });
     } catch {}
@@ -1002,16 +1019,16 @@ export async function generateAndPublishSeoArticle(topicOrKeyword?: string): Pro
 
   let chosenTopic = normalizePortugueseTopic(topicOrKeyword || '');
   if (!chosenTopic) {
-    // 1. Prioriza a fila curada de alta intenção comercial ainda não publicada
-    const availableCurated = AUTOPILOT_SEO_TOPICS.filter(t => !existingSlugs.has(slugify(t)));
-    if (availableCurated.length > 0) {
-      chosenTopic = normalizePortugueseTopic(availableCurated[0]);
+    // 1. Prioriza o que está em alta agora no Google (Autocomplete Brasil) e ainda não foi publicado
+    const trending = await fetchTrendingGoogleSearchTerms(true);
+    const availableLive = trending.filter(t => !existingSlugs.has(slugify(t)));
+    if (availableLive.length > 0) {
+      chosenTopic = normalizePortugueseTopic(availableLive[0]);
     } else {
-      // 2. Consulta ao vivo o Google Autocomplete Brasil para capturar novos termos em alta
-      const trending = await fetchTrendingGoogleSearchTerms();
-      const availableLive = trending.filter(t => !existingSlugs.has(slugify(t)));
+      // 2. Reserva: fila curada de alta intenção comercial ainda não publicada
+      const availableCurated = AUTOPILOT_SEO_TOPICS.filter(t => !existingSlugs.has(slugify(t)));
       chosenTopic = normalizePortugueseTopic(
-        availableLive[0] ||
+        availableCurated[0] ||
           `Guia prático de formação de preços e orçamento de terceirização (${new Date().toLocaleDateString('pt-BR')})`
       );
     }

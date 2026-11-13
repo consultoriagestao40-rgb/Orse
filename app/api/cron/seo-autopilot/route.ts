@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server';
-import { ensureDailyAutopilotArticle, publishToLinkedInAutopilot } from '@/lib/seo-engine';
+import { ensureDailyAutopilotArticle } from '@/lib/seo-engine';
 
 export async function GET() {
   try {
+    // A publicação nas redes acontece UMA vez, dentro de ensureDailyAutopilotArticle (com trava).
+    // Aqui não publicamos de novo, para não duplicar o post.
     const daily = await ensureDailyAutopilotArticle();
     const article = daily.article;
-    let linkedinResult: { ok: boolean; message: string } | null = null;
-    if (article) {
-      linkedinResult = await publishToLinkedInAutopilot(article, undefined, { style: 'auto' });
-    }
     return NextResponse.json({
       success: true,
-      message: 'Artigo de SEO gerado, indexado no sitemap.xml e enviado para o LinkedIn!',
+      message: daily.triggered
+        ? 'Artigo do dia gerado e publicado nas redes uma única vez.'
+        : 'Artigo do dia já tratado (nenhuma nova publicação).',
+      triggered: daily.triggered,
       slug: article?.slug,
       title: article?.title,
       url: article ? `https://www.smartbidhub.com.br/conteudos/${article.slug}` : null,
-      linkedin: linkedinResult,
     });
   } catch (err: any) {
     return NextResponse.json(
