@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       }
       const customPostText = body.postText ? String(body.postText) : undefined;
       const result = await publishToLinkedInAutopilot(article, customPostText, {
-        style: body.style ? String(body.style) : 'cascade',
+        style: body.style ? String(body.style) : 'auto',
         photo: body.photo !== undefined && body.photo !== null ? Number(body.photo) : null,
       });
       return NextResponse.json({

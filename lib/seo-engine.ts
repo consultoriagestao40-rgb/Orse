@@ -906,9 +906,45 @@ export async function getAllSeoArticles(): Promise<SeoArticle[]> {
     }
   }
 
-  return Array.from(map.values()).sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
+  return Array.from(map.values()).sort((a, b) => {
+    const diff = new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    return diff !== 0 ? diff : b.slug.localeCompare(a.slug);
+  });
+}
+
+export const ART_STYLE_ROTATION = ['cascade', 'light', 'lphero'] as const;
+export type SeoArtStyle = (typeof ART_STYLE_ROTATION)[number];
+
+/**
+ * Resolve de forma determinística e rotativa o layout da arte editorial (1080x1350) de cada artigo.
+ * Usa o índice cronológico (do mais antigo para o mais recente) para garantir matematicamente que:
+ * 1) Dias consecutivos NUNCA repitam o mesmo modelo (ciclo estrito: Cascata 3D -> Claro Bento -> Hero LP).
+ * 2) A publicação de novos artigos nunca altere o modelo dos artigos anteriores.
+ */
+export async function resolveAutoArtStyle(
+  slug: string,
+  preloadedArticles?: SeoArticle[]
+): Promise<{ style: SeoArtStyle; chronoIdx: number }> {
+  const all = preloadedArticles ?? (await getAllSeoArticles().catch(() => []));
+  if (all.length > 0 && slug) {
+    const cleanSlug = slug.trim().toLowerCase();
+    const redirected = LEGACY_SLUG_REDIRECTS[cleanSlug] || cleanSlug;
+    const foundDescIdx = all.findIndex((a) => a.slug === redirected || a.slug === cleanSlug);
+    if (foundDescIdx >= 0) {
+      const chronoIdx = Math.max(0, all.length - 1 - foundDescIdx);
+      return {
+        style: ART_STYLE_ROTATION[chronoIdx % ART_STYLE_ROTATION.length],
+        chronoIdx,
+      };
+    }
+  }
+  // Fallback determinístico pelo dia no fuso de Brasília (UTC-3) quando o slug não for informado
+  const brtDayIndex = Math.floor((Date.now() - 3 * 3600 * 1000) / 86400000);
+  const safeIdx = ((brtDayIndex % ART_STYLE_ROTATION.length) + ART_STYLE_ROTATION.length) % ART_STYLE_ROTATION.length;
+  return {
+    style: ART_STYLE_ROTATION[safeIdx],
+    chronoIdx: Math.max(0, brtDayIndex),
+  };
 }
 
 const LEGACY_SLUG_REDIRECTS: Record<string, string> = {
@@ -1428,7 +1464,11 @@ export async function publishToLinkedInAutopilot(
   const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
   const postText = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
   const articleUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
-  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=lphero';
+  const resolvedStyle: SeoArtStyle =
+    options?.style === 'cascade' || options?.style === 'light' || options?.style === 'lphero'
+      ? options.style
+      : (await resolveAutoArtStyle(article.slug)).style;
+  const styleParam = `&style=${encodeURIComponent(resolvedStyle)}`;
   const photoParam =
     options?.photo !== undefined && options?.photo !== null ? `&photo=${encodeURIComponent(String(options.photo))}` : '';
   const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;
@@ -1628,7 +1668,7 @@ export async function publishToLinkedInAutopilot(
     if (publishedLabels.length > 0) {
       let metaSuffix = '';
       if (cfg.metaAccessToken || process.env.META_ACCESS_TOKEN) {
-        const metaRes = await publishToMetaAutopilot(article, postText, options);
+        const metaRes = await publishToMetaAutopilot(article, postText, { ...options, style: resolvedStyle });
         if (metaRes.ok) {
           publishedLabels.push(metaRes.message);
         } else {
@@ -1666,7 +1706,11 @@ export async function publishToMetaAutopilot(
 
   const rawText = (customPostText || '').trim() || buildLinkedInPostFromArticle(article);
   const caption = rawText.replace(/perceiriza(c|ç)(a|ã)o/gi, 'Terceirização');
-  const styleParam = options?.style ? `&style=${encodeURIComponent(options.style)}` : '&style=lphero';
+  const resolvedMetaStyle: SeoArtStyle =
+    options?.style === 'cascade' || options?.style === 'light' || options?.style === 'lphero'
+      ? options.style
+      : (await resolveAutoArtStyle(article.slug)).style;
+  const styleParam = `&style=${encodeURIComponent(resolvedMetaStyle)}`;
   const photoParam =
     options?.photo !== undefined && options?.photo !== null ? `&photo=${encodeURIComponent(String(options.photo))}` : '';
   const jpgImageUrl = `https://www.smartbidhub.com.br/api/seo/og-jpg?slug=${encodeURIComponent(article.slug)}${styleParam}${photoParam}`;

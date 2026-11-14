@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getSeoArticleBySlug, getAllSeoArticles } from '@/lib/seo-engine';
+import { getSeoArticleBySlug, getAllSeoArticles, resolveAutoArtStyle } from '@/lib/seo-engine';
 import { ArrowLeft, ArrowRight, Clock, CheckCircle2, TrendingUp, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,8 @@ export async function generateMetadata({
   }
 
   const canonicalUrl = `https://www.smartbidhub.com.br/conteudos/${article.slug}`;
-  const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}`;
+  const { style: autoArtStyle } = await resolveAutoArtStyle(article.slug);
+  const ogImageUrl = `https://www.smartbidhub.com.br/api/seo/og?slug=${encodeURIComponent(article.slug)}&style=${encodeURIComponent(autoArtStyle)}`;
 
   return {
     title: article.title,

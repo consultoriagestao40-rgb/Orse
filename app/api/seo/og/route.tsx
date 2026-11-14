@@ -1,5 +1,11 @@
 import { ImageResponse } from 'next/og';
-import { getSeoArticleBySlug, getAllSeoArticles, normalizePortugueseTopic } from '@/lib/seo-engine';
+import {
+  getAllSeoArticles,
+  normalizePortugueseTopic,
+  resolveAutoArtStyle,
+  type SeoArticle,
+  type SeoArtStyle,
+} from '@/lib/seo-engine';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -159,24 +165,34 @@ function getCascadeCardsForArticle(slug: string, title: string): Array<{ title: 
   ];
 }
 
-async function resolveStyleForSlug(_slug: string, requestedStyle: string | null): Promise<'cascade' | 'light' | 'lphero'> {
+async function resolveStyleForSlug(
+  slug: string,
+  requestedStyle: string | null,
+  preloadedArticles?: SeoArticle[]
+): Promise<{ style: SeoArtStyle; chronoIdx: number }> {
+  const autoResolved = await resolveAutoArtStyle(slug, preloadedArticles);
   if (requestedStyle === 'cascade' || requestedStyle === 'light' || requestedStyle === 'lphero') {
-    return requestedStyle;
+    return { style: requestedStyle, chronoIdx: autoResolved.chronoIdx };
   }
-  // Por padrão (ou style=auto), usa o Modelo 03 (Vitrine LP + Telas Reais do Sistema com dados sintéticos) aprovado pelo usuário
-  return 'lphero';
+  // Rotação diária determinística garantida: Modelo 01 (Cascata 3D) -> Modelo 02 (Claro Bento) -> Modelo 03 (Hero LP + Sistema)
+  return autoResolved;
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug') || '';
   const rawStyleParam = searchParams.get('style');
+  const rawScreenParam = searchParams.get('screen');
 
-  const [article, fonts, resolvedStyle] = await Promise.all([
-    slug ? getSeoArticleBySlug(slug).catch(() => null) : Promise.resolve(null),
+  const [allArticles, fonts] = await Promise.all([
+    getAllSeoArticles().catch(() => [] as SeoArticle[]),
     loadBrandFonts(),
-    resolveStyleForSlug(slug, rawStyleParam),
   ]);
+  const cleanSlug = slug.trim().toLowerCase();
+  const article = cleanSlug ? allArticles.find((a) => a.slug === cleanSlug) || null : null;
+  const resolvedInfo = await resolveStyleForSlug(slug, rawStyleParam, allArticles);
+  const resolvedStyle = resolvedInfo.style;
+  const chronoIdx = resolvedInfo.chronoIdx;
 
   const rawTitle = article?.title || 'Montagem de Propostas e Orçamento de Facilities';
   const category = (article?.category || 'Engenharia de Custos').toUpperCase();
@@ -428,9 +444,26 @@ export async function GET(request: Request) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>✓ Custos por CCT</span>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>✓ Proposta por link</span>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>✓ DRE do projeto</span>
+              {['Custos por CCT', 'Proposta por link', 'DRE do projeto'].map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '999px',
+                      background: '#DCFCE7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13L9 17L19 7" stroke="#15803D" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>{item}</span>
+                </div>
+              ))}
             </div>
 
             <div
@@ -472,17 +505,23 @@ export async function GET(request: Request) {
     const { whitePart, orangePart } = splitUpperHeadline(rawTitle);
     const textKey = `${slug} ${rawTitle}`.toLowerCase();
 
-    let screenVariant: 'fpv_table' | 'proposals_radar' | 'sales_funnel' | 'annual_pipeline' = 'fpv_table';
-    if (/funil|prospec|visita|lead|convers/i.test(textKey)) {
+    const LPHERO_SCREENS = ['fpv_table', 'proposals_radar', 'sales_funnel', 'annual_pipeline'] as const;
+    type LpHeroScreen = (typeof LPHERO_SCREENS)[number];
+
+    let screenVariant: LpHeroScreen = LPHERO_SCREENS[Math.floor(chronoIdx / 3) % LPHERO_SCREENS.length];
+    if (
+      rawScreenParam === 'fpv_table' ||
+      rawScreenParam === 'proposals_radar' ||
+      rawScreenParam === 'sales_funnel' ||
+      rawScreenParam === 'annual_pipeline'
+    ) {
+      screenVariant = rawScreenParam;
+    } else if (/funil|prospec|visita|lead|convers/i.test(textKey)) {
       screenVariant = 'sales_funnel';
     } else if (/revis|rev-01|controle de proposta|rastre|abertura|vendedor/i.test(textKey)) {
       screenVariant = 'proposals_radar';
-    } else if (/anual|repactua|reajuste|diss[ií]dio|reforma|ibs|cbs|contrato/i.test(textKey)) {
+    } else if (/anual|repactua|reajuste|diss[ií]dio|reforma|ibs|cbs/i.test(textKey)) {
       screenVariant = 'annual_pipeline';
-    } else if (/proposta comercial/i.test(textKey) && !/planilha|custo|insalub|encargo/i.test(textKey)) {
-      screenVariant = 'proposals_radar';
-    } else {
-      screenVariant = 'fpv_table';
     }
 
     const subtitleByVariant: Record<typeof screenVariant, string> = {
@@ -497,21 +536,21 @@ export async function GET(request: Request) {
     };
 
     const pillsByVariant: Record<typeof screenVariant, [string, string, string]> = {
-      fpv_table: ['✓ Protege seu Excel interno', '✓ Padrão Compras B2B & Editais', '⚡ Gerado em 1 clique na FPV'],
-      proposals_radar: ['✓ Histórico REV-01 e REV-02', '✓ Rastreio de Leitura ao Vivo', '⚡ Radar de Metas & Conversão'],
-      sales_funnel: ['✓ 5 Etapas do Funil B2B', '✓ Gestão de Visitas & ATAs', '⚡ Taxa de Fechamento ao Vivo'],
-      annual_pipeline: ['✓ Alerta Automático de CCT', '✓ Simulador IBS + CBS 2027', '⚡ Memória de Repactuação'],
+      fpv_table: ['Protege seu Excel interno', 'Padrão Compras B2B & Editais', '⚡ Gerado em 1 clique na FPV'],
+      proposals_radar: ['Histórico REV-01 e REV-02', 'Rastreio de Leitura ao Vivo', '⚡ Radar de Metas & Conversão'],
+      sales_funnel: ['5 Etapas do Funil B2B', 'Gestão de Visitas & ATAs', '⚡ Taxa de Fechamento ao Vivo'],
+      annual_pipeline: ['Alerta Automático de CCT', 'Simulador IBS + CBS 2027', '⚡ Memória de Repactuação'],
     };
 
     const windowBarByVariant: Record<typeof screenVariant, { url: string; badge1: string; badge2: string }> = {
       fpv_table: {
         url: 'app.smartbidhub.com.br • Extrato da Proposta #FPV-2027',
-        badge1: '✓ Memória Auditada por CCT',
+        badge1: 'Memória Auditada por CCT',
         badge2: 'Fórmulas Internas Protegidas',
       },
       proposals_radar: {
         url: 'app.smartbidhub.com.br • Central de Propostas & Radar Comercial',
-        badge1: '✓ Assinatura Digital Ativa',
+        badge1: 'Assinatura Digital Ativa',
         badge2: 'Telemetria em Tempo Real',
       },
       sales_funnel: {
@@ -521,7 +560,7 @@ export async function GET(request: Request) {
       },
       annual_pipeline: {
         url: 'app.smartbidhub.com.br • Pipeline de Orçamentos Anuais & Repactuação',
-        badge1: '✓ Motor Tributário 2027 Ativo',
+        badge1: 'Motor Tributário 2027 Ativo',
         badge2: '3 CCTs com Data-Base no Mês',
       },
     };
@@ -677,34 +716,28 @@ export async function GET(request: Request) {
 
               {/* 3 Pílulas de Benefício */}
               <div style={{ display: 'flex', gap: '14px', width: '916px' }}>
-                <div
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: '14px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    color: '#FFFFFF',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    display: 'flex',
-                  }}
-                >
-                  {pillsByVariant[screenVariant][0]}
-                </div>
-                <div
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: '14px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    color: '#FFFFFF',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    display: 'flex',
-                  }}
-                >
-                  {pillsByVariant[screenVariant][1]}
-                </div>
+                {[0, 1].map((pillIdx) => (
+                  <div
+                    key={pillIdx}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      color: '#FFFFFF',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13L9 17L19 7" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>{pillsByVariant[screenVariant][pillIdx]}</span>
+                  </div>
+                ))}
                 <div
                   style={{
                     padding: '10px 18px',
@@ -1180,9 +1213,9 @@ export async function GET(request: Request) {
                       }}
                     >
                       <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
-                        ✓ Memória de Repactuação: Quadro Comparativo Antes vs. Depois (Montante A por CCT + Montante B por IPCA + Gross-up 2027)
+                        • Memória de Repactuação: Quadro Comparativo Antes vs. Depois (Montante A por CCT + Montante B por IPCA + Gross-up 2027)
                       </span>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669' }}>Margem Blindada ✓</span>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669' }}>Margem Blindada • Ativo</span>
                     </div>
                   </div>
                 ) : (

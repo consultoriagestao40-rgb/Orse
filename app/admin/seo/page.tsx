@@ -102,8 +102,10 @@ export default function AdminSeoPage() {
     }
   };
 
-  const getAutoStyleForIndex = (_idx: number): 'cascade' | 'light' | 'lphero' => {
-    return 'lphero';
+  const getAutoStyleForIndex = (idx: number): 'cascade' | 'light' | 'lphero' => {
+    const rotation = ['cascade', 'light', 'lphero'] as const;
+    const chronoIdx = Math.max(0, articles.length - 1 - idx);
+    return rotation[chronoIdx % rotation.length];
   };
 
   const openLinkedInReviewModal = (art: any, idx = 0) => {
