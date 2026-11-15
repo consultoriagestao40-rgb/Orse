@@ -40,6 +40,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/.well-known/') ||
     pathname === '/google7ebbc4c4a41aadfa.html' ||
     (pathname.startsWith('/google') && pathname.endsWith('.html')) ||
+    pathname === '/tiktokD72W0QOmJbc0dPL8xZdVSFH0roS8Inlr.txt' ||
+    (pathname.startsWith('/tiktok') && pathname.endsWith('.txt')) ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next') ||
     pathname.includes('favicon')
@@ -52,5 +54,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|\\.well-known|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg|og-image.jpg|sitemap.xml|robots.txt|llms.txt|ai-catalog.json|ard.json|google7ebbc4c4a41aadfa.html).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|\\.well-known|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg|og-image.jpg|sitemap.xml|robots.txt|llms.txt|ai-catalog.json|ard.json|google7ebbc4c4a41aadfa.html|tiktokD72W0QOmJbc0dPL8xZdVSFH0roS8Inlr.txt).*)'],
 }
