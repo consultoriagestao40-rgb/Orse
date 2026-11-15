@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { sendOfficialWhatsAppNotification, normalizeBrazilPhone } from '@/lib/whatsapp-official';
+import { summarizeAttribution, type MarketingAttribution } from '@/lib/marketing-attribution';
 
 const SUPER_ADMIN_EMAIL = 'cristiano@grupojvsserv.com.br';
 const FOUNDER_WHATSAPP = '5541992823967';
@@ -12,6 +13,7 @@ export interface SaasLeadOnboardingParams {
   planoInteresse?: string | null;
   origem?: 'CADASTRO_TRIAL_30D' | 'LP_DEMONSTRACAO' | 'GOOGLE_AUTH';
   postos?: string | null;
+  attribution?: MarketingAttribution | null;
 }
 
 /**
@@ -28,7 +30,10 @@ export async function processSaasTrialOnboarding(params: SaasLeadOnboardingParam
     planoInteresse,
     origem = 'CADASTRO_TRIAL_30D',
     postos,
+    attribution,
   } = params;
+
+  const attrSummary = summarizeAttribution(attribution);
 
   const primeiroNome = (nome || '').trim().split(' ')[0] || 'Gestor';
   const empresaNome = (empresa || '').trim() || 'Sua Empresa';
@@ -84,8 +89,15 @@ export async function processSaasTrialOnboarding(params: SaasLeadOnboardingParam
             ? 299
             : 149;
 
-        const tagLabel =
+        const baseTag =
           origem === 'LP_DEMONSTRACAO' ? 'LP_DEMO_SMARTBID' : 'TRIAL_30_DIAS_SMARTBID';
+        const tagLabel = [
+          baseTag,
+          attrSummary.channel !== 'ORGANICO' ? attrSummary.channel : null,
+          attribution?.utmCampaign ? attribution.utmCampaign.slice(0, 40) : null,
+        ]
+          .filter(Boolean)
+          .join(', ');
 
         // Verifica se já existe um Lead com este e-mail ou telefone no CRM do Super Admin
         const phoneSuffix = cleanPhone.slice(-8);
@@ -135,9 +147,10 @@ export async function processSaasTrialOnboarding(params: SaasLeadOnboardingParam
             leadId: existingLead.id,
             tipo: 'PROSPECCAO',
             descricao:
-              origem === 'LP_DEMONSTRACAO'
-                ? `Solicitou demonstração na Landing Page (${planoInteresse || 'Geral'}${postos ? ` • Porte: ${postos}` : ''}). Mensagem automática de boas-vindas ${whatsResult.success ? 'enviada no WhatsApp' : 'registrada'}.`
-                : `Cadastrou conta no Teste Grátis de 30 Dias do SmartBid${planoInteresse ? ` (Plano de interesse: ${planoInteresse})` : ''}. Mensagem automática de boas-vindas ${whatsResult.success ? 'enviada no WhatsApp' : 'registrada'}.`,
+              (origem === 'LP_DEMONSTRACAO'
+                ? `Solicitou demonstração na Landing Page (${planoInteresse || 'Geral'}${postos ? ` • Porte: ${postos}` : ''}).`
+                : `Cadastrou conta no Teste Grátis de 30 Dias do SmartBid${planoInteresse ? ` (Plano de interesse: ${planoInteresse})` : ''}.`) +
+              ` Origem: ${attrSummary.fullSummary}. Mensagem automática de boas-vindas ${whatsResult.success ? 'enviada no WhatsApp' : 'registrada'}.`,
           },
         });
 
@@ -167,6 +180,67 @@ export async function processSaasTrialOnboarding(params: SaasLeadOnboardingParam
     console.error('Erro ao registrar novo Trial no CRM do Super Admin:', crmErr);
   }
 
+  // 3.5 Registra também no Kanban oficial de Tráfego & SaaS (/admin/saas-crm) com atribuição UTM exata
+  try {
+    const firstSaasStage = await prisma.saasStage.findFirst({ orderBy: { ordem: 'asc' } });
+    const valorMensalEst =
+      planoInteresse?.toUpperCase().includes('ENTERPRISE')
+        ? 599
+        : planoInteresse?.toUpperCase().includes('PRO')
+        ? 299
+        : 149;
+
+    const emailClean = (email || '').toLowerCase().trim();
+    const phoneTail = cleanPhone.slice(-8);
+    const existingSaasLead = await prisma.saasLead.findFirst({
+      where: {
+        OR: [
+          ...(emailClean ? [{ email: emailClean }] : []),
+          ...(phoneTail.length === 8 ? [{ telefone: { contains: phoneTail } }] : []),
+        ],
+      },
+    });
+
+    const saasTags = [
+      origem === 'LP_DEMONSTRACAO' ? 'LP_DEMO' : 'TRIAL_30D',
+      attrSummary.channel,
+      attribution?.utmCampaign || null,
+      attribution?.utmContent || null,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    if (!existingSaasLead) {
+      const createdSaasLead = await prisma.saasLead.create({
+        data: {
+          nome: nome.trim(),
+          empresa: empresaNome,
+          email: emailClean || 'nao-informado@smartbidhub.com.br',
+          telefone: cleanPhone || celular,
+          cargo: origem === 'LP_DEMONSTRACAO' ? 'Interessado LP' : 'Admin Trial 30d',
+          tamanhoEmpresa: postos || null,
+          origem: attrSummary.saasOrigem,
+          status: 'NOVO',
+          stageId: firstSaasStage?.id || null,
+          valorMensal: valorMensalEst,
+          notas: `Origem rastreada: ${attrSummary.fullSummary}`,
+          tags: saasTags,
+        },
+      });
+
+      await prisma.saasLeadHistory.create({
+        data: {
+          leadId: createdSaasLead.id,
+          tipo: 'NOTE',
+          autor: 'Rastreamento Automático',
+          descricao: `${origem === 'LP_DEMONSTRACAO' ? 'Pedido de Demonstração na LP' : 'Cadastro no Teste Grátis 30 Dias'} • ${attrSummary.fullSummary}`,
+        },
+      });
+    }
+  } catch (saasCrmErr) {
+    console.error('Aviso ao registrar lead em SaasLead (/admin/saas-crm):', saasCrmErr);
+  }
+
   // 4. Notifica também o WhatsApp pessoal/oficial do Cristiano com o resumo do novo Lead
   try {
     const adminAlertMsg =
@@ -177,6 +251,7 @@ export async function processSaasTrialOnboarding(params: SaasLeadOnboardingParam
       `✉️ *E-mail:* ${email || 'Não informado'}\n` +
       (planoInteresse ? `📦 *Plano:* ${planoInteresse}\n` : '') +
       (postos ? `📊 *Porte:* ${postos}\n` : '') +
+      `📣 *Origem:* ${attrSummary.fullSummary}\n` +
       `\n✅ *Já cadastrado automaticamente no seu CRM de Leads e mensagem de boas-vindas enviada ao cliente!*`;
 
     await sendOfficialWhatsAppNotification({

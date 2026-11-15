@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { extractAttributionFromRequest, sendMetaCapiEvent } from '@/lib/marketing-attribution'
 
 export async function GET(request: Request) {
   try {
@@ -54,6 +55,8 @@ export async function GET(request: Request) {
       where: { email: googleUser.email }
     })
 
+    const attribution = extractAttributionFromRequest(request)
+
     // Novos usuários (ou usuários sem empresa) recebem SEMPRE uma empresa isolada em teste de 7 dias.
     // Nunca vincular a um tenant existente: isso exporia dados de outra empresa.
     const createTrialTenant = () => {
@@ -69,6 +72,12 @@ export async function GET(request: Request) {
           plano: 'TESTE',
           trialStartedAt: new Date(),
           limiteUsuarios: 3,
+          features: {
+            entregas: false,
+            ativos: false,
+            erpflex: false,
+            ...(attribution ? { attribution } : {}),
+          } as any,
         }
       })
     }
@@ -84,6 +93,45 @@ export async function GET(request: Request) {
           tenantId: tenant.id
         }
       })
+      try {
+        const { processSaasTrialOnboarding } = await import('@/lib/saas-onboarding')
+        await processSaasTrialOnboarding({
+          nome: user.nome,
+          empresa: tenant.nomeFantasia,
+          email: user.email,
+          celular: '',
+          planoInteresse: 'Teste Grátis 30 Dias (Google)',
+          origem: 'GOOGLE_AUTH',
+          attribution,
+        })
+      } catch (e) {
+        console.warn('Aviso onboarding Google Auth:', e)
+      }
+      try {
+        const googleEvtId = `google_trial_${tenant.id}`
+        await Promise.all([
+          sendMetaCapiEvent({
+            eventName: 'CompleteRegistration',
+            eventId: `${googleEvtId}_reg`,
+            request,
+            email: user.email,
+            fullName: user.nome,
+            attribution,
+            customData: { content_name: 'Google OAuth Trial 30d', status: 'registered' },
+          }),
+          sendMetaCapiEvent({
+            eventName: 'StartTrial',
+            eventId: googleEvtId,
+            request,
+            email: user.email,
+            fullName: user.nome,
+            attribution,
+            customData: { content_name: 'Google OAuth Trial 30d', value: 149, currency: 'BRL' },
+          }),
+        ])
+      } catch (e) {
+        console.warn('Aviso Meta CAPI Google Auth:', e)
+      }
     } else if (!user.tenantId) {
       const tenant = await createTrialTenant()
       user = await prisma.user.update({

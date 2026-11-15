@@ -569,6 +569,14 @@ function TenantManagerDashboardContent() {
                                   {(t as any).responsavelEmail && <span className="text-slate-400">✉️ {(t as any).responsavelEmail}</span>}
                                 </p>
                               )}
+                              {(t as any).attributionBadge && (
+                                <p
+                                  title={(t as any).attributionFull || ''}
+                                  className="text-[10px] font-bold mt-1 inline-flex items-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                >
+                                  {(t as any).attributionBadge}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </td>

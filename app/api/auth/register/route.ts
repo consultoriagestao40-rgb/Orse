@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { extractAttributionFromRequest, sendMetaCapiEvent } from '@/lib/marketing-attribution'
 
 export async function POST(request: Request) {
   try {
-    const { nome, email, password, empresa, celular, plano } = await request.json()
+    const { nome, email, password, empresa, celular, plano, attribution: rawAttribution, eventId } = await request.json()
+    const attribution = extractAttributionFromRequest(request, rawAttribution)
 
     if (!nome || !email || !password || !empresa?.trim()) {
       return NextResponse.json({ error: 'Nome, empresa, e-mail e senha são obrigatórios.' }, { status: 400 })
@@ -41,6 +43,12 @@ export async function POST(request: Request) {
         trialStartedAt: new Date(),
         limiteUsuarios: 3,
         whatsappPhone: celularDigits,
+        features: {
+          entregas: false,
+          ativos: false,
+          erpflex: false,
+          ...(attribution ? { attribution } : {}),
+        } as any,
       }
     })
     const tenantId = tenant.id
@@ -87,9 +95,39 @@ export async function POST(request: Request) {
         celular: celularDigits,
         planoInteresse: plano || 'Teste Grátis 30 Dias',
         origem: 'CADASTRO_TRIAL_30D',
+        attribution,
       })
     } catch (onbErr) {
       console.error('Falha ao processar onboarding SaaS no registro:', onbErr)
+    }
+
+    // Dispara eventos server-side na Meta Conversions API (CAPI) com desduplicação via eventId
+    try {
+      const baseEventId = typeof eventId === 'string' && eventId ? eventId : `srv_trial_${tenant.id}`
+      await Promise.all([
+        sendMetaCapiEvent({
+          eventName: 'CompleteRegistration',
+          eventId: `${baseEventId}_reg`,
+          request,
+          email: user.email,
+          phone: celularDigits,
+          fullName: user.nome,
+          attribution,
+          customData: { content_name: plano || 'Trial 30 Dias', status: 'registered' },
+        }),
+        sendMetaCapiEvent({
+          eventName: 'StartTrial',
+          eventId: baseEventId,
+          request,
+          email: user.email,
+          phone: celularDigits,
+          fullName: user.nome,
+          attribution,
+          customData: { content_name: plano || 'Trial 30 Dias', value: 149, currency: 'BRL' },
+        }),
+      ])
+    } catch (capiErr) {
+      console.warn('Aviso Meta CAPI no registro:', capiErr)
     }
 
     return NextResponse.json({

@@ -10,7 +10,7 @@ import {
 import { getPlanConfigs } from '@/app/admin/empresas/actions';
 import { displayFont, textFont } from '@/components/lp/fonts';
 import '@/components/lp/lp.css';
-import { trackEvent } from '@/components/TrackingScripts';
+import { trackEvent, getClientAttribution, generateEventId } from '@/components/TrackingScripts';
 
 const ProposalJourney = dynamic(() => import('@/components/lp/ProposalJourney'));
 const ModulesSection = dynamic(() => import('@/components/lp/ModulesSection'));
@@ -229,11 +229,20 @@ export default function LandingPage() {
   const handleDemoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setDemoSuccess(true);
-    trackEvent('Lead', {
-      content_name: demoPlanName,
-      company: demoForm.empresa,
-      size: demoForm.postos,
-    });
+    const eventId = generateEventId('lead');
+    const attribution = getClientAttribution();
+    trackEvent(
+      'Lead',
+      {
+        content_name: demoPlanName,
+        company: demoForm.empresa,
+        size: demoForm.postos,
+      },
+      {
+        eventId,
+        userData: { email: demoForm.email, phone: demoForm.whatsapp },
+      }
+    );
     fetch('/api/public/trial-lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -244,6 +253,8 @@ export default function LandingPage() {
         whatsapp: demoForm.whatsapp,
         plano: demoPlanName,
         postos: demoForm.postos,
+        attribution,
+        eventId,
       }),
     }).catch(() => {});
     const msg = encodeURIComponent(

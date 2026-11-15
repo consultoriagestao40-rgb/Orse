@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import PasswordInputWithRequirements from '@/components/PasswordInputWithRequirements';
 import { textFont } from '@/components/lp/fonts';
-import { trackEvent } from '@/components/TrackingScripts';
+import { trackEvent, getClientAttribution, generateEventId } from '@/components/TrackingScripts';
 
 const C = {
   paper: '#FBFAF7',
@@ -108,20 +108,33 @@ function CadastroForm() {
 
     setLoading(true);
     try {
+      const eventId = generateEventId('trial');
+      const attribution = getClientAttribution();
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, plano }),
+        body: JSON.stringify({ ...form, plano, attribution, eventId }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        trackEvent('CompleteRegistration', {
-          content_name: plano || 'Trial 30 Dias',
-          status: 'registered',
-        });
-        trackEvent('StartTrial', {
-          content_name: plano || 'Trial 30 Dias',
-        });
+        const userData = { email: form.email, phone: form.celular };
+        trackEvent(
+          'CompleteRegistration',
+          {
+            content_name: plano || 'Trial 30 Dias',
+            status: 'registered',
+          },
+          { eventId: `${eventId}_reg`, userData }
+        );
+        trackEvent(
+          'StartTrial',
+          {
+            content_name: plano || 'Trial 30 Dias',
+            value: 149,
+            currency: 'BRL',
+          },
+          { eventId, userData }
+        );
         setRegisteredEmail(data.email || form.email);
         setStep('VERIFICATION_INSTRUCTIONS');
       } else {

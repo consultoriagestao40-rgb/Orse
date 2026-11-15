@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { getOrCreateAsaasCustomer, createAsaasPixCharge, createAsaasCardPayment } from './asaas';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { revalidatePath } from 'next/cache';
+import { summarizeAttribution, type MarketingAttribution } from '@/lib/marketing-attribution';
 
 /**
  * Auxiliar de Segurança:
@@ -96,26 +97,34 @@ export async function getTenantsWithStats() {
       }
     });
 
-    return tenants.map(t => ({
-      id: t.id,
-      nomeFantasia: t.nomeFantasia,
-      cnpj: t.cnpj,
-      ativo: t.ativo,
-      createdAt: t.createdAt.toISOString(),
-      plano: t.plano,
-      limiteUsuarios: t.limiteUsuarios,
-      trialStartedAt: t.trialStartedAt ? t.trialStartedAt.toISOString() : null,
-      taxaWhatsapp: t.taxaWhatsapp,
-      whatsappPhone: t.whatsappPhone || t.users?.[0]?.celular || null,
-      responsavelNome: t.users?.[0]?.nome || null,
-      responsavelEmail: t.users?.[0]?.email || null,
-      stats: {
-        users: t._count.users,
-        propostas: t._count.propostas,
-        leads: t._count.leads,
-        contratos: t._count.contratos
-      }
-    }));
+    return tenants.map(t => {
+      const feat = (t.features && typeof t.features === 'object' ? (t.features as Record<string, any>) : {}) || {};
+      const rawAttr = (feat.attribution as MarketingAttribution | undefined) || null;
+      const attrInfo = rawAttr ? summarizeAttribution(rawAttr) : null;
+      return {
+        id: t.id,
+        nomeFantasia: t.nomeFantasia,
+        cnpj: t.cnpj,
+        ativo: t.ativo,
+        createdAt: t.createdAt.toISOString(),
+        plano: t.plano,
+        limiteUsuarios: t.limiteUsuarios,
+        trialStartedAt: t.trialStartedAt ? t.trialStartedAt.toISOString() : null,
+        taxaWhatsapp: t.taxaWhatsapp,
+        whatsappPhone: t.whatsappPhone || t.users?.[0]?.celular || null,
+        responsavelNome: t.users?.[0]?.nome || null,
+        responsavelEmail: t.users?.[0]?.email || null,
+        attributionBadge: attrInfo?.shortBadge || null,
+        attributionFull: attrInfo?.fullSummary || null,
+        attributionChannel: attrInfo?.channel || null,
+        stats: {
+          users: t._count.users,
+          propostas: t._count.propostas,
+          leads: t._count.leads,
+          contratos: t._count.contratos
+        }
+      };
+    });
   } catch (error: any) {
     console.error('Erro ao listar empresas:', error);
     throw new Error('Falha ao obter lista de empresas: ' + error.message);
