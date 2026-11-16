@@ -25,6 +25,8 @@ export function middleware(request: NextRequest) {
     pathname === '/icon-192.png' ||
     pathname === '/icon-512.png' ||
     pathname.startsWith('/proposta/') ||
+    pathname.startsWith('/p/') ||
+    pathname.startsWith('/og/') ||
     pathname === '/conteudos' ||
     pathname.startsWith('/conteudos/') ||
     pathname.startsWith('/slides/') ||
@@ -54,5 +56,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|\\.well-known|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg|og-image.jpg|sitemap.xml|robots.txt|llms.txt|ai-catalog.json|ard.json|google7ebbc4c4a41aadfa.html|tiktokD72W0QOmJbc0dPL8xZdVSFH0roS8Inlr.txt).*)'],
+  matcher: ['/((?!api|og|_next/static|_next/image|\\.well-known|slides|uploads|favicon.ico|manifest.json|sw.js|icon-192.png|icon-512.png|icon.svg|og-image.jpg|sitemap.xml|robots.txt|llms.txt|ai-catalog.json|ard.json|google7ebbc4c4a41aadfa.html|tiktokD72W0QOmJbc0dPL8xZdVSFH0roS8Inlr.txt).*)'],
 }

@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2, TrendingUp
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2, TrendingUp, MessageCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { transferirProposta, updateDocumentoStatusParam, createDocumentoStatus } from '@/app/propostas/actions';
@@ -21,8 +21,13 @@ import {
   deleteDocumentoProposta,
   getPropostasComerciaisPageData,
   getCreateProposalModalData,
-  getDocumentosProposta
+  getDocumentosProposta,
+  updateConfigApresentacao
 } from './actions';
+import {
+  buildExecutiveWhatsAppMessage,
+  buildWhatsAppWebUrl,
+} from '@/lib/proposal-share';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
 
@@ -545,6 +550,55 @@ export default function PropostasComerciaisDashboard() {
     return cols;
   }, [filteredDocs, segmentos]);
 
+  const handleQuickWhatsAppShare = async (e: React.MouseEvent, doc: any) => {
+    e.stopPropagation();
+    const rawPhone = String(doc.contatoWhatsApp || doc.configApresentacao?.contatoWhatsApp || '').replace(/\D/g, '');
+    if (rawPhone.length < 10) {
+      // Sem WhatsApp cadastrado na FPV ainda: abre o modal já no card de envio
+      setActiveShareDoc(doc);
+      return;
+    }
+
+    const message = buildExecutiveWhatsAppMessage({
+      docId: doc.id,
+      numeroFPV: doc.numeroFPV,
+      versaoFPV: doc.versaoFPV || 1,
+      clienteNome: doc.cliente,
+      contatoNome: doc.contatoNome || doc.configApresentacao?.contatoNome || '',
+      empresaEmissora: doc.empresa || 'SmartBid Hub',
+      codigoAcessoCustom: doc.configApresentacao?.regrasAcesso?.codigoAcessoCustom || '',
+    });
+
+    const waUrl = buildWhatsAppWebUrl(rawPhone, message);
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+    // Se o link ainda não tinha validade ativa, garante 10 dias automaticamente em background
+    const cfg = doc.configApresentacao || {};
+    const isExpiredOrMissing = !cfg.linkExpiresAt || new Date() > new Date(cfg.linkExpiresAt);
+    if (isExpiredOrMissing) {
+      const days = Number(cfg.validadeDays) > 0 ? Number(cfg.validadeDays) : 10;
+      const updatedCfg = {
+        ...cfg,
+        validadeDays: days,
+        linkCreatedAt: new Date().toISOString(),
+        linkExpiresAt: new Date(Date.now() + days * 86400000).toISOString(),
+      };
+      updateConfigApresentacao(doc.id, updatedCfg)
+        .then(() => {
+          setDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, configApresentacao: updatedCfg } : d)));
+        })
+        .catch(() => {});
+    }
+
+    if ((doc.status || '').toLowerCase() === 'rascunho') {
+      updateDocumentoStatus(doc.id, 'Enviada')
+        .then(() => {
+          setDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'Enviada' } : d)));
+        })
+        .catch(() => {});
+    }
+  };
+
   const renderProposalCard = (doc: any) => (
     <div
       draggable
@@ -591,7 +645,7 @@ export default function PropostasComerciaisDashboard() {
           <span className="text-xs font-black text-[#1B4D3E]">{fmt(doc.valor)}</span>
         </div>
 
-        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between shrink-0">
+        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1 shrink-0">
           <div className="flex items-center gap-1 min-w-0">
             {doc.avatarUrl ? (
               <img 
@@ -604,7 +658,34 @@ export default function PropostasComerciaisDashboard() {
                 {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
               </div>
             )}
-            <span className="text-[9px] text-slate-500 font-bold truncate max-w-[120px]">{doc.usuario || 'Sistema'}</span>
+            <span className="text-[9px] text-slate-500 font-bold truncate max-w-[105px]">{doc.usuario || 'Sistema'}</span>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveShareDoc(doc);
+              }}
+              title="Configurar Link Interativo"
+              className="p-1 rounded-md text-slate-400 hover:text-[#1B4D3E] hover:bg-emerald-50 transition-colors cursor-pointer"
+            >
+              <Share2 size={12} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleQuickWhatsAppShare(e, doc)}
+              title={
+                doc.contatoWhatsApp
+                  ? `Enviar com 1 clique para ${doc.contatoNome || 'Contato'} (${doc.contatoWhatsApp})`
+                  : 'Enviar Link Executivo no WhatsApp'
+              }
+              className="px-1.5 py-0.5 rounded-md bg-[#25D366]/12 hover:bg-[#25D366] text-[#15803D] hover:text-white border border-[#25D366]/30 transition-all flex items-center gap-1 text-[8.5px] font-black uppercase tracking-wide cursor-pointer"
+            >
+              <MessageCircle size={11} />
+              <span>Whats</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1328,9 +1409,20 @@ export default function PropostasComerciaisDashboard() {
                              )}
                            </button>
                            <button
+                             onClick={(e) => handleQuickWhatsAppShare(e, doc)}
+                             title={
+                               doc.contatoWhatsApp
+                                 ? `Enviar no WhatsApp de ${doc.contatoNome || 'Contato'}: ${doc.contatoWhatsApp}`
+                                 : 'Enviar Proposta por WhatsApp'
+                             }
+                             className="text-[#16A34A] hover:text-white hover:bg-[#25D366] p-1 rounded-md transition-colors cursor-pointer"
+                           >
+                             <MessageCircle size={16} />
+                           </button>
+                           <button
                              onClick={() => setActiveShareDoc(doc)}
                              title="Configurar e Copiar Link"
-                             className="text-green-500 hover:text-green-700 p-1 transition-colors cursor-pointer"
+                             className="text-emerald-700 hover:text-[#1B4D3E] p-1 transition-colors cursor-pointer"
                            >
                              <Share2 size={16} />
                            </button>

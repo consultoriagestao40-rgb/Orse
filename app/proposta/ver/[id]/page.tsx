@@ -1,37 +1,86 @@
 import React from 'react';
-import { getDocumentoPropostaById } from './queries';
+import { getDocumentoPropostaById, resolveDocumentoPropostaBySlugOrId } from './queries';
 import { getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import ViewClient from './ViewClient';
 import { Metadata } from 'next';
+import { buildExecutiveProposalUrl } from '@/lib/proposal-share';
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const params = await props.params;
-  const res: any = await getDocumentoPropostaById(params.id);
-  
-  if (!res) return { title: 'Proposta Comercial' };
+export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Metadata> {
+  const res: any = await resolveDocumentoPropostaBySlugOrId(slugOrId);
 
-  // Verifica se o link já expirou
+  if (!res) {
+    return {
+      title: 'Proposta Comercial • SmartBid Hub',
+      description: 'Portal seguro de visualização e aceite digital de propostas comerciais.',
+    };
+  }
+
   const config = res.configApresentacao as any;
   if (config && config.linkExpiresAt) {
     const expiresAt = new Date(config.linkExpiresAt);
     if (new Date() > expiresAt) {
-      return { title: 'ACESSO EXPIRADO - PROPOSTA COMERCIAL' };
+      return { title: 'Acesso Expirado • Proposta Comercial | SmartBid Hub' };
     }
   }
-  
-  const cliente = res.client?.nomeFantasia || res.client?.razaoSocial || '';
-  const numeroPadded = String(res.proposta?.numero || '').padStart(3, '0');
+
+  const cliente = res.client?.nomeFantasia || res.client?.razaoSocial || 'Cliente';
+  const emissora = res.empresaEmissora?.nomeFantasia || res.empresaEmissora?.razaoSocial || 'SmartBid Hub';
+  const numeroPadded = String(res.proposta?.numero || 1).padStart(3, '0');
   const versaoNum = res.versaoFPV || res.proposta?.versoes?.[0]?.versao || 1;
   const revisaoPart = `R${String(versaoNum).padStart(2, '0')}`;
-  
+
+  const matchedVer = res.proposta?.versoes?.[0];
+  const meta = (matchedVer?.metadados as Record<string, any>) || {};
+  const objeto =
+    (typeof meta.objetoProposta === 'string' && meta.objetoProposta.trim()) ||
+    'Apresentação institucional, detalhamento comercial e aceite digital seguro.';
+
+  const prettyTitle = `📄 Proposta FPV-${numeroPadded}-${revisaoPart} • ${cliente}`;
+  const description = `Emitida por ${emissora} • ${objeto}`;
+  const canonicalUrl = buildExecutiveProposalUrl({
+    docId: res.id,
+    numeroFPV: res.proposta?.numero,
+    versaoFPV: versaoNum,
+    clienteNome: cliente,
+  });
+  const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${res.id}.png?v=${versaoNum}`;
+
   return {
-    title: `PROPOSTA COMERCIAL - FPV-${numeroPadded}-${revisaoPart} - ${cliente}`.toUpperCase()
+    title: `${prettyTitle} | SmartBid Hub`,
+    description,
+    openGraph: {
+      title: prettyTitle,
+      description,
+      url: canonicalUrl,
+      siteName: 'SmartBid Hub • Portal de Propostas & Aceite Digital',
+      locale: 'pt_BR',
+      type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          type: 'image/png',
+          alt: prettyTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: prettyTitle,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 
-export default async function PublicPropostaView(props: { params: Promise<{ id: string }> }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const params = await props.params;
-  const res: any = await getDocumentoPropostaById(params.id);
+  return buildPublicPropostaMetadata(params.id);
+}
+
+export async function renderPublicPropostaBySlugOrId(slugOrId: string) {
+  const res: any = await resolveDocumentoPropostaBySlugOrId(slugOrId);
 
   if (!res) {
     return (
@@ -258,4 +307,9 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
       />
     </>
   );
+}
+
+export default async function PublicPropostaView(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  return renderPublicPropostaBySlugOrId(params.id);
 }

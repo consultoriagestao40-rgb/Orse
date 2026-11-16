@@ -8,7 +8,7 @@ import {
   ChevronUp, ChevronDown, Plus, X, Undo, Redo, Copy, Paintbrush, 
   Lock, Unlock, Eye, EyeOff, Smile, Phone, Mail, Award, Users, DollarSign, 
   Star, Briefcase, HelpCircle, Edit2, Play, Search, Image as ImageIcon, Sparkles,
-  Layout, Share2
+  Layout, Share2, MessageCircle
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
@@ -23,6 +23,10 @@ import {
   updateConfigApresentacao,
   uploadSlideImageAction
 } from '../actions';
+import {
+  buildExecutiveWhatsAppMessage,
+  buildWhatsAppWebUrl,
+} from '@/lib/proposal-share';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -1125,6 +1129,66 @@ export default function DocumentoPropostaDetail() {
                   className="bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
                 >
                   <Share2 size={16} /> Link do Cliente
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const matchedVer = doc?.proposta?.versoes?.[0];
+                    const meta = (matchedVer?.metadados as Record<string, any>) || {};
+                    const rawPhone = String(
+                      configApresentacao?.contatoWhatsApp ||
+                        meta.celular ||
+                        meta.whatsapp ||
+                        doc?.client?.whatsapp ||
+                        ''
+                    ).replace(/\D/g, '');
+
+                    if (rawPhone.length < 10) {
+                      setShowShareModal(true);
+                      return;
+                    }
+
+                    const contatoNome =
+                      configApresentacao?.contatoNome || meta.contato || doc?.client?.contato || '';
+                    const clienteNome =
+                      doc?.client?.nomeFantasia || doc?.client?.razaoSocial || meta.clienteNome || 'Cliente';
+                    const rev = doc?.versaoFPV || matchedVer?.versao || 1;
+
+                    const msg = buildExecutiveWhatsAppMessage({
+                      docId: id,
+                      numeroFPV: doc?.proposta?.numero,
+                      versaoFPV: rev,
+                      clienteNome,
+                      contatoNome,
+                      empresaEmissora: doc?.empresaEmissora?.nomeFantasia || 'SmartBid Hub',
+                      codigoAcessoCustom: configApresentacao?.regrasAcesso?.codigoAcessoCustom || '',
+                    });
+
+                    window.open(buildWhatsAppWebUrl(rawPhone, msg), '_blank', 'noopener,noreferrer');
+
+                    const isExpiredOrMissing =
+                      !configApresentacao?.linkExpiresAt ||
+                      new Date() > new Date(configApresentacao.linkExpiresAt);
+                    if (isExpiredOrMissing) {
+                      const days = Number(configApresentacao?.validadeDays) > 0 ? Number(configApresentacao.validadeDays) : 10;
+                      const nextCfg = {
+                        ...(configApresentacao || {}),
+                        validadeDays: days,
+                        linkCreatedAt: new Date().toISOString(),
+                        linkExpiresAt: new Date(Date.now() + days * 86400000).toISOString(),
+                      };
+                      setConfigApresentacao(nextCfg);
+                      updateConfigApresentacao(id, nextCfg).catch(() => {});
+                    }
+                    if ((status || '').toLowerCase() === 'rascunho') {
+                      setStatus('Enviada');
+                      updateDocumentoStatus(id, 'Enviada').catch(() => {});
+                    }
+                  }}
+                  title="Enviar Link Executivo no WhatsApp do Contato da FPV"
+                  className="bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle size={16} /> Enviar WhatsApp
                 </button>
                 <button
                   onClick={handleSave}

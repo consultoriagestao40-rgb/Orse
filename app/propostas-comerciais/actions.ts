@@ -13,6 +13,12 @@ import {
 } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import { formatServerDateTime } from '@/lib/timezone';
+import {
+  buildExecutiveProposalUrl,
+  buildExecutiveWhatsAppMessage,
+  formatProposalCode,
+  normalizeWhatsAppDigits,
+} from '@/lib/proposal-share';
 
 export async function getDocumentosProposta(preFetchedUser?: any) {
   const user = preFetchedUser || await getLoggedUser();
@@ -64,7 +70,9 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         client: {
           select: {
             nomeFantasia: true,
-            segmento: true
+            segmento: true,
+            whatsapp: true,
+            contato: true
           }
         },
         empresaEmissora: {
@@ -75,6 +83,12 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         proposta: {
           select: {
             numero: true,
+            lead: {
+              select: {
+                telefone: true,
+                contatoNome: true
+              }
+            },
             user: {
               select: {
                 nome: true,
@@ -93,11 +107,51 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
       orderBy: [{ createdAt: 'desc' }, { versaoFPV: 'desc' }]
     });
 
+    // Busca super-leve apenas de contato e celular salvos em metadados da FPV (sem carregar JSON pesado de insumos)
+    const propostaIds = Array.from(new Set(docs.map((d: any) => d.propostaId).filter(Boolean)));
+    const fpvContactMap = new Map<string, { contato?: string | null; celular?: string | null }>();
+    if (propostaIds.length > 0) {
+      try {
+        const metaRows = await prisma.$queryRawUnsafe<
+          Array<{ propostaId: string; versao: number; contato: string | null; celular: string | null }>
+        >(
+          `SELECT "propostaId", "versao",
+                  "metadados"->>'contato' AS contato,
+                  COALESCE("metadados"->>'celular', "metadados"->>'whatsapp', "metadados"->>'telefone') AS celular
+             FROM "PropostaVersao"
+            WHERE "propostaId" = ANY($1::text[])`,
+          propostaIds
+        );
+        for (const row of metaRows) {
+          fpvContactMap.set(`${row.propostaId}:${row.versao}`, {
+            contato: row.contato,
+            celular: row.celular,
+          });
+        }
+      } catch {}
+    }
+
     return docs.map((d: any) => {
       const sortedVersoes = [...(d.proposta?.versoes || [])].sort((a: any, b: any) => b.versao - a.versao);
       const lastVersao = sortedVersoes[0];
       const effectiveVersao = d.versaoFPV || lastVersao?.versao || 1;
       const matchedVersaoObj = sortedVersoes.find((v: any) => v.versao === effectiveVersao);
+      const fpvContact =
+        fpvContactMap.get(`${d.propostaId}:${effectiveVersao}`) ||
+        (lastVersao ? fpvContactMap.get(`${d.propostaId}:${lastVersao.versao}`) : undefined);
+      const cfg = configMap.get(d.id) || null;
+      const contatoWhatsApp =
+        cfg?.contatoWhatsApp ||
+        fpvContact?.celular ||
+        d.client?.whatsapp ||
+        d.proposta?.lead?.telefone ||
+        '';
+      const contatoNome =
+        cfg?.contatoNome ||
+        fpvContact?.contato ||
+        d.client?.contato ||
+        d.proposta?.lead?.contatoNome ||
+        '';
       return {
         id: d.id,
         propostaId: d.propostaId,
@@ -112,7 +166,9 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         versaoFPV: effectiveVersao,
         usuario: d.proposta?.user?.nome || 'Sistema',
         avatarUrl: d.proposta?.user?.avatarUrl || null,
-        configApresentacao: configMap.get(d.id) || null,
+        configApresentacao: cfg,
+        contatoNome,
+        contatoWhatsApp,
         statusAssinatura: d.statusAssinatura,
         nomeAssinante: d.nomeAssinante,
         dataAssinatura: d.dataAssinatura,
@@ -998,12 +1054,248 @@ export async function getDocumentoConfigApresentacao(id: string) {
   try {
     const doc = await prisma.documentoProposta.findUnique({
       where: { id },
-      select: { configApresentacao: true }
+      select: {
+        id: true,
+        versaoFPV: true,
+        configApresentacao: true,
+        client: {
+          select: {
+            nomeFantasia: true,
+            razaoSocial: true,
+            whatsapp: true,
+            contato: true,
+          },
+        },
+        empresaEmissora: {
+          select: {
+            nomeFantasia: true,
+            razaoSocial: true,
+          },
+        },
+        proposta: {
+          select: {
+            numero: true,
+            lead: {
+              select: {
+                telefone: true,
+                contatoNome: true,
+                contacts: {
+                  take: 1,
+                  select: { nome: true, telefone: true },
+                },
+              },
+            },
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 5,
+              select: { versao: true, metadados: true },
+            },
+          },
+        },
+      },
     });
-    return { success: true, configApresentacao: doc?.configApresentacao || null };
+
+    if (!doc) {
+      return { success: false, error: 'Documento não encontrado.' };
+    }
+
+    const cfg = (doc.configApresentacao as Record<string, any>) || null;
+    const rev = doc.versaoFPV || doc.proposta?.versoes?.[0]?.versao || 1;
+    const matchedVer =
+      doc.proposta?.versoes?.find((v) => v.versao === rev) || doc.proposta?.versoes?.[0];
+    const meta = (matchedVer?.metadados as Record<string, any>) || {};
+
+    const contatoWhatsApp =
+      cfg?.contatoWhatsApp ||
+      meta.celular ||
+      meta.whatsapp ||
+      meta.telefone ||
+      doc.client?.whatsapp ||
+      doc.proposta?.lead?.telefone ||
+      doc.proposta?.lead?.contacts?.[0]?.telefone ||
+      '';
+
+    const contatoNome =
+      cfg?.contatoNome ||
+      meta.contato ||
+      doc.client?.contato ||
+      doc.proposta?.lead?.contatoNome ||
+      doc.proposta?.lead?.contacts?.[0]?.nome ||
+      '';
+
+    const clienteNome =
+      doc.client?.nomeFantasia || doc.client?.razaoSocial || meta.clienteNome || 'Cliente';
+    const empresaEmissora =
+      doc.empresaEmissora?.nomeFantasia || doc.empresaEmissora?.razaoSocial || 'SmartBid Hub';
+
+    return {
+      success: true,
+      configApresentacao: cfg,
+      shareContext: {
+        docId: doc.id,
+        numeroFPV: doc.proposta?.numero || 1,
+        versaoFPV: rev,
+        clienteNome,
+        contatoNome,
+        contatoWhatsApp,
+        empresaEmissora,
+      },
+    };
   } catch (error: any) {
     console.error('Error fetching configApresentacao:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Envia o link executivo da proposta direto no WhatsApp do cliente com Card Rico estilo Autentique (via Z-API /send-link)
+ */
+export async function sendProposalLinkViaZApiAction(params: {
+  documentoId: string;
+  phone: string;
+  contatoNome?: string;
+  customMessage?: string;
+}) {
+  try {
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Sessão expirada.' };
+
+    const cleanPhone = normalizeWhatsAppDigits(params.phone);
+    if (cleanPhone.length < 12) {
+      return { success: false, error: 'Informe um número de WhatsApp válido com DDD.' };
+    }
+
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: params.documentoId },
+      include: {
+        client: true,
+        empresaEmissora: true,
+        tenant: true,
+        proposta: {
+          include: {
+            versoes: { orderBy: { versao: 'desc' }, take: 3 },
+          },
+        },
+      },
+    });
+
+    if (!doc) return { success: false, error: 'Proposta comercial não encontrada.' };
+
+    const rev = doc.versaoFPV || doc.proposta?.versoes?.[0]?.versao || 1;
+    const matchedVer =
+      doc.proposta?.versoes?.find((v) => v.versao === rev) || doc.proposta?.versoes?.[0];
+    const meta = (matchedVer?.metadados as Record<string, any>) || {};
+    const cfg = (doc.configApresentacao as Record<string, any>) || {};
+
+    const clienteNome =
+      doc.client?.nomeFantasia || doc.client?.razaoSocial || meta.clienteNome || 'Cliente';
+    const emissoraNome =
+      doc.empresaEmissora?.nomeFantasia || doc.empresaEmissora?.razaoSocial || 'SmartBid Hub';
+    const code = formatProposalCode(doc.proposta?.numero, rev);
+    const shareUrl = buildExecutiveProposalUrl({
+      docId: doc.id,
+      numeroFPV: doc.proposta?.numero,
+      versaoFPV: rev,
+      clienteNome,
+    });
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}`;
+    const cardTitle = `📄 Proposta ${code} • ${clienteNome}`;
+    const cardDescription = `Emitida por ${emissoraNome} • Clique para visualizar e realizar o aceite digital no SmartBid Hub.`;
+
+    const messageText =
+      (params.customMessage || '').trim() ||
+      buildExecutiveWhatsAppMessage({
+        docId: doc.id,
+        numeroFPV: doc.proposta?.numero,
+        versaoFPV: rev,
+        clienteNome,
+        contatoNome: params.contatoNome || meta.contato || doc.client?.contato,
+        empresaEmissora: emissoraNome,
+        codigoAcessoCustom: cfg?.regrasAcesso?.codigoAcessoCustom,
+      });
+
+    // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback para a oficial
+    let instanceId = '';
+    let token = '';
+    let clientToken = '';
+
+    if (
+      doc.tenant?.whatsappConnected &&
+      doc.tenant.whatsappInstanceId &&
+      doc.tenant.whatsappToken &&
+      doc.tenant.whatsappClientToken
+    ) {
+      instanceId = doc.tenant.whatsappInstanceId.trim();
+      token = doc.tenant.whatsappToken.trim();
+      clientToken = doc.tenant.whatsappClientToken.trim();
+    } else {
+      const { resolveOfficialZApiCredentials } = await import('@/lib/whatsapp-official');
+      const official = await resolveOfficialZApiCredentials(doc.tenantId);
+      instanceId = official.instanceId || '';
+      token = official.token || '';
+      clientToken = official.clientToken || '';
+    }
+
+    if (!instanceId || !token || !clientToken) {
+      return {
+        success: false,
+        error: 'Instância de WhatsApp API não conectada. Use o botão "Abrir no WhatsApp" para enviar direto pelo seu aplicativo.',
+      };
+    }
+
+    const zRes = await fetch(
+      `https://api.z-api.io/instances/${instanceId}/token/${token}/send-link`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Client-Token': clientToken,
+        },
+        body: JSON.stringify({
+          phone: cleanPhone,
+          message: messageText,
+          image: ogImageUrl,
+          linkUrl: shareUrl,
+          title: cardTitle,
+          linkDescription: cardDescription,
+        }),
+      }
+    );
+
+    const zData = await zRes.json().catch(() => ({}));
+    if (!zRes.ok) {
+      return {
+        success: false,
+        error: zData?.error || zData?.message || `Falha HTTP ${zRes.status} ao enviar link na Z-API.`,
+      };
+    }
+
+    // Garante validade mínima de 10 dias caso a proposta estivesse sem validade configurada e marca como Enviada se Rascunho
+    const nextCfg: Record<string, any> = {
+      ...cfg,
+      contatoWhatsApp: params.phone,
+      ...(params.contatoNome ? { contatoNome: params.contatoNome } : {}),
+    };
+    if (!nextCfg.linkExpiresAt) {
+      const days = Number(nextCfg.validadeDays) > 0 ? Number(nextCfg.validadeDays) : 10;
+      nextCfg.validadeDays = days;
+      nextCfg.linkCreatedAt = new Date().toISOString();
+      nextCfg.linkExpiresAt = new Date(Date.now() + days * 86400000).toISOString();
+    }
+
+    await prisma.documentoProposta.update({
+      where: { id: doc.id },
+      data: {
+        ...(doc.status?.toLowerCase() === 'rascunho' ? { status: 'Enviada' } : {}),
+        configApresentacao: nextCfg as any,
+      },
+    });
+
+    revalidatePath('/propostas-comerciais');
+    return { success: true, shareUrl };
+  } catch (err: any) {
+    console.error('Erro em sendProposalLinkViaZApiAction:', err);
+    return { success: false, error: err?.message || 'Erro ao disparar link no WhatsApp.' };
   }
 }
 

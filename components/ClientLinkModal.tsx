@@ -1,10 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle, Lock, ShieldCheck, Upload } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle, Lock, ShieldCheck, Upload, MessageCircle, Send, Sparkles } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
-import { updateConfigApresentacao, uploadClientFileAction, getDocumentoConfigApresentacao } from '@/app/propostas-comerciais/actions';
+import {
+  updateConfigApresentacao,
+  uploadClientFileAction,
+  getDocumentoConfigApresentacao,
+  sendProposalLinkViaZApiAction,
+  updateDocumentoStatus,
+} from '@/app/propostas-comerciais/actions';
 import { getFaqsPadrao } from '@/app/admin/settings/actions';
+import {
+  buildExecutiveProposalUrl,
+  buildExecutiveWhatsAppMessage,
+  buildWhatsAppWebUrl,
+  formatProposalCode,
+  maskBrazilPhone,
+} from '@/lib/proposal-share';
 
 interface ClientLinkModalProps {
   documentoId: string;
@@ -89,8 +102,28 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const [validadeDays, setValidadeDays] = useState<number | ''>(
-    configApresentacao?.validadeDays || ''
+    configApresentacao?.validadeDays || 10
   );
+
+  // Dados do Contato da FPV + Contexto de Compartilhamento no WhatsApp
+  const [shareMeta, setShareMeta] = useState<{
+    numeroFPV: number | string;
+    versaoFPV: number | string;
+    clienteNome: string;
+    empresaEmissora: string;
+  }>({
+    numeroFPV: 1,
+    versaoFPV: 1,
+    clienteNome: '',
+    empresaEmissora: 'SmartBid Hub',
+  });
+  const [contatoNome, setContatoNome] = useState<string>(configApresentacao?.contatoNome || '');
+  const [contatoWhatsApp, setContatoWhatsApp] = useState<string>(
+    maskBrazilPhone(configApresentacao?.contatoWhatsApp || '')
+  );
+  const [pulledFromFpv, setPulledFromFpv] = useState<boolean>(false);
+  const [sendingZApi, setSendingZApi] = useState<boolean>(false);
+  const [zApiFeedback, setZApiFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Regras de Acesso e Bloqueio Condicional
   const [exigirIdentificacao, setExigirIdentificacao] = useState(
@@ -138,7 +171,22 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   useEffect(() => {
     async function loadFullConfig() {
       try {
-        const res = await getDocumentoConfigApresentacao(documentoId);
+        const res: any = await getDocumentoConfigApresentacao(documentoId);
+        if (res.success && res.shareContext) {
+          setShareMeta({
+            numeroFPV: res.shareContext.numeroFPV || 1,
+            versaoFPV: res.shareContext.versaoFPV || 1,
+            clienteNome: res.shareContext.clienteNome || '',
+            empresaEmissora: res.shareContext.empresaEmissora || 'SmartBid Hub',
+          });
+          if (res.shareContext.contatoNome) {
+            setContatoNome(res.shareContext.contatoNome);
+          }
+          if (res.shareContext.contatoWhatsApp) {
+            setContatoWhatsApp(maskBrazilPhone(res.shareContext.contatoWhatsApp));
+            setPulledFromFpv(true);
+          }
+        }
         if (res.success && res.configApresentacao) {
           const config = res.configApresentacao;
           setFotosList(config.fotosList || []);
@@ -311,6 +359,55 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     }
   };
 
+  const shareUrl = buildExecutiveProposalUrl({
+    docId: documentoId,
+    numeroFPV: shareMeta.numeroFPV,
+    versaoFPV: shareMeta.versaoFPV,
+    clienteNome: shareMeta.clienteNome,
+  });
+
+  const proposalCode = formatProposalCode(shareMeta.numeroFPV, shareMeta.versaoFPV);
+  const ogPreviewUrl = `/og/proposta/${documentoId}.png?v=${shareMeta.versaoFPV}`;
+
+  const buildNewConfigPayload = (days: number) => {
+    const finalCanvaUrl = (canvaEmbedUrl || '').trim() || DEFAULT_CANVA_URL;
+    return {
+      ...(configApresentacao || {}),
+      useCanva: apresentacao,
+      canvaEmbedUrl: finalCanvaUrl,
+      totalSlides: Number(totalSlides) > 0 ? Number(totalSlides) : 10,
+      clientTabs: {
+        apresentacao,
+        proposta,
+        fpv,
+        fpvTabs,
+        minuta,
+        minutaTemplateId,
+        video,
+        fotos,
+        documentos,
+        faq,
+      },
+      regrasAcesso: {
+        exigirIdentificacao,
+        codigoAcessoCustom: codigoAcessoCustom.trim(),
+        obrigarApresentacao: apresentacao && obrigarApresentacao,
+        tempoMinimoApresentacaoSegundos: Number(tempoMinimoApresentacaoSegundos) || 30,
+        obrigarVideo: video && obrigarVideo,
+      },
+      videoUrl: videoUrl.trim(),
+      slidesList,
+      fotosList,
+      documentosList,
+      faqList,
+      validadeDays: days,
+      contatoNome: contatoNome.trim(),
+      contatoWhatsApp: contatoWhatsApp.trim(),
+      linkCreatedAt: new Date().toISOString(),
+      linkExpiresAt: new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000).toISOString(),
+    };
+  };
+
   const handleSaveAndCopy = async () => {
     const days = Number(validadeDays);
     if (!validadeDays || isNaN(days) || days <= 0) {
@@ -320,47 +417,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
     setLoading(true);
     try {
-      const finalCanvaUrl = (canvaEmbedUrl || '').trim() || DEFAULT_CANVA_URL;
-      const newConfig = {
-        ...(configApresentacao || {}),
-        useCanva: apresentacao,
-        canvaEmbedUrl: finalCanvaUrl,
-        totalSlides: Number(totalSlides) > 0 ? Number(totalSlides) : 10,
-        clientTabs: {
-          apresentacao,
-          proposta,
-          fpv,
-          fpvTabs,
-          minuta,
-          minutaTemplateId,
-          video,
-          fotos,
-          documentos,
-          faq
-        },
-        regrasAcesso: {
-          exigirIdentificacao,
-          codigoAcessoCustom: codigoAcessoCustom.trim(),
-          obrigarApresentacao: apresentacao && obrigarApresentacao,
-          tempoMinimoApresentacaoSegundos: Number(tempoMinimoApresentacaoSegundos) || 30,
-          obrigarVideo: video && obrigarVideo
-        },
-        videoUrl: videoUrl.trim(),
-        slidesList,
-        fotosList,
-        documentosList,
-        faqList,
-        validadeDays: days,
-        linkCreatedAt: new Date().toISOString(),
-        linkExpiresAt: new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000).toISOString()
-      };
-
+      const newConfig = buildNewConfigPayload(days);
       const res = await updateConfigApresentacao(documentoId, newConfig);
       if (res.success) {
-        // Copiar o link do cliente para a área de transferência
-        const shareUrl = `https://smartbidhub.com.br/proposta/ver/${documentoId}`;
         await navigator.clipboard.writeText(shareUrl);
-        
         setCopied(true);
         if (onSaveSuccess) {
           onSaveSuccess(newConfig);
@@ -379,7 +439,70 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     }
   };
 
-  const shareUrl = `https://smartbidhub.com.br/proposta/ver/${documentoId}`;
+  const handleSaveAndOpenWhatsApp = async () => {
+    const days = Number(validadeDays) > 0 ? Number(validadeDays) : 10;
+    const message = buildExecutiveWhatsAppMessage({
+      docId: documentoId,
+      numeroFPV: shareMeta.numeroFPV,
+      versaoFPV: shareMeta.versaoFPV,
+      clienteNome: shareMeta.clienteNome,
+      contatoNome: contatoNome.trim(),
+      empresaEmissora: shareMeta.empresaEmissora,
+      codigoAcessoCustom: codigoAcessoCustom.trim(),
+    });
+    const waUrl = buildWhatsAppWebUrl(contatoWhatsApp, message);
+
+    // Abre o WhatsApp sincronamente no clique para não sofrer bloqueio de popup do navegador
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+    setLoading(true);
+    try {
+      const newConfig = buildNewConfigPayload(days);
+      const res = await updateConfigApresentacao(documentoId, newConfig);
+      if (res.success) {
+        updateDocumentoStatus(documentoId, 'Enviada').catch(() => {});
+        if (onSaveSuccess) onSaveSuccess(newConfig);
+        onClose();
+      }
+    } catch (err) {
+      console.error('Erro ao salvar config após abrir WhatsApp:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendDirectViaZApi = async () => {
+    if (contatoWhatsApp.replace(/\D/g, '').length < 10) {
+      setZApiFeedback({ ok: false, msg: 'Informe um WhatsApp com DDD para disparo direto pela API.' });
+      return;
+    }
+    const days = Number(validadeDays) > 0 ? Number(validadeDays) : 10;
+    setSendingZApi(true);
+    setZApiFeedback(null);
+    try {
+      const newConfig = buildNewConfigPayload(days);
+      await updateConfigApresentacao(documentoId, newConfig);
+      if (onSaveSuccess) onSaveSuccess(newConfig);
+
+      const res = await sendProposalLinkViaZApiAction({
+        documentoId,
+        phone: contatoWhatsApp,
+        contatoNome: contatoNome.trim(),
+      });
+      if (res.success) {
+        setZApiFeedback({
+          ok: true,
+          msg: `Card executivo enviado com sucesso para ${contatoNome || contatoWhatsApp}!`,
+        });
+      } else {
+        setZApiFeedback({ ok: false, msg: res.error || 'Não foi possível disparar via API.' });
+      }
+    } catch (err: any) {
+      setZApiFeedback({ ok: false, msg: err?.message || 'Erro de conexão.' });
+    } finally {
+      setSendingZApi(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -1097,27 +1220,125 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             </div>
           </div>
 
-          {/* VISUALIZADOR DE LINK */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 space-y-1.5">
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">
-              Endereço do Link Interativo do Cliente
-            </span>
-            <div className="flex gap-2 items-center bg-white border border-slate-250 p-1.5 pl-3 rounded-xl">
-              <span className="text-[10px] text-slate-500 font-bold truncate flex-1 font-mono select-all">
-                {shareUrl}
+          {/* ENVIO EXECUTIVO POR WHATSAPP (ESTILO AUTENTIQUE) + VISUALIZADOR DE LINK */}
+          <div className="bg-gradient-to-br from-emerald-50/80 via-white to-slate-50 p-4 rounded-2xl border border-emerald-200/80 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-[#1B4D3E]">
+                <MessageCircle size={15} className="text-emerald-600" />
+                Envio por WhatsApp • Card Executivo SmartBid
+              </div>
+              {pulledFromFpv && contatoWhatsApp ? (
+                <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  ✓ WhatsApp puxado da FPV
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
+                  Preview Rico Ativo
+                </span>
+              )}
+            </div>
+
+            {/* Campos do Contato da FPV (editáveis na hora) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+                  Nome do Contato (FPV)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: João Silva"
+                  value={contatoNome}
+                  onChange={(e) => setContatoNome(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+                  WhatsApp do Contato (FPV)
+                </label>
+                <input
+                  type="tel"
+                  placeholder="(41) 99999-9999"
+                  value={contatoWhatsApp}
+                  onChange={(e) => setContatoWhatsApp(maskBrazilPhone(e.target.value))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Prévia Visual do Cartão que chega no WhatsApp do Cliente */}
+            <div className="rounded-2xl overflow-hidden border border-slate-200 bg-[#ECE5DD] p-2.5">
+              <span className="text-[8.5px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 px-1">
+                Prévia de como chega no WhatsApp do cliente:
               </span>
-              <button 
+              <div className="bg-[#DCF8C6] rounded-xl p-2 shadow-xs border border-emerald-200/70 space-y-1.5">
+                <div className="rounded-lg overflow-hidden border border-black/10 bg-white">
+                  <img
+                    src={ogPreviewUrl}
+                    alt={`Card ${proposalCode}`}
+                    className="w-full h-auto block object-cover aspect-[1200/630]"
+                  />
+                  <div className="px-2.5 py-2 bg-[#F7F9FA] border-t border-slate-100">
+                    <p className="text-[11px] font-black text-slate-800 truncate">
+                      📄 Proposta {proposalCode} • {shareMeta.clienteNome || 'Cliente'}
+                    </p>
+                    <p className="text-[9.5px] text-slate-500 truncate">
+                      Emitida por {shareMeta.empresaEmissora} • Visualização e Aceite Digital
+                    </p>
+                    <p className="text-[8.5px] text-emerald-700 font-mono mt-0.5">smartbidhub.com.br</p>
+                  </div>
+                </div>
+                <p className="text-[10.5px] text-slate-800 px-1 leading-snug">
+                  Olá{contatoNome ? `, *${contatoNome.split(' ')[0]}*` : ''}! Encaminho o acesso digital à nossa *Proposta Comercial ({proposalCode})*…
+                </p>
+              </div>
+            </div>
+
+            {/* Disparo direto pela Z-API (1 clique sem nem sair da tela) */}
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
+              <button
                 type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(shareUrl);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className="p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-lg transition-all"
-                title="Copiar Link"
+                onClick={handleSendDirectViaZApi}
+                disabled={sendingZApi}
+                className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl bg-white hover:bg-emerald-50 text-[#1B4D3E] border border-emerald-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
+                title="Envia o card rico automaticamente pela instância de WhatsApp API conectada"
               >
-                {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                {sendingZApi ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                {sendingZApi ? 'Enviando Card...' : 'Disparo Instantâneo via API'}
               </button>
+              {zApiFeedback && (
+                <span
+                  className={`text-[10px] font-bold ${
+                    zApiFeedback.ok ? 'text-emerald-700' : 'text-red-600'
+                  }`}
+                >
+                  {zApiFeedback.msg}
+                </span>
+              )}
+            </div>
+
+            {/* Endereço limpo do Link Executivo */}
+            <div className="pt-1 border-t border-emerald-100 space-y-1">
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">
+                Link Curto Executivo (Amigável)
+              </span>
+              <div className="flex gap-2 items-center bg-white border border-slate-200 p-1.5 pl-3 rounded-xl">
+                <span className="text-[10px] text-slate-600 font-bold truncate flex-1 font-mono select-all">
+                  {shareUrl}
+                </span>
+                <button 
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="p-2 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-lg transition-all cursor-pointer"
+                  title="Copiar Link Executivo"
+                >
+                  {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                </button>
+              </div>
             </div>
           </div>
             </>
@@ -1125,31 +1346,43 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap justify-end gap-2.5 shrink-0">
           <button 
             onClick={onClose}
-            className="px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-slate-500 bg-white border border-slate-350 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider text-slate-500 bg-white border border-slate-300 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
           >
-            Cancelar
+            Fechar
           </button>
           <button 
             onClick={handleSaveAndCopy}
             disabled={loading || !validadeDays || Number(validadeDays) <= 0}
-            className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               loading || !validadeDays || Number(validadeDays) <= 0
-                ? 'bg-slate-150 text-slate-400 border border-slate-250 cursor-not-allowed shadow-none opacity-60'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10 active:scale-[0.98]'
+                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                : 'bg-white hover:bg-slate-100 text-[#1B4D3E] border border-emerald-300 shadow-xs active:scale-[0.98]'
             }`}
           >
             {copied ? (
               <>
-                <Check size={14} /> Link Copiado!
+                <Check size={14} className="text-emerald-600" /> Link Copiado!
               </>
             ) : (
               <>
-                🔗 Salvar e Copiar Link
+                <Copy size={14} /> Salvar e Copiar
               </>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAndOpenWhatsApp}
+            disabled={loading || !validadeDays || Number(validadeDays) <= 0}
+            className={`px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              loading || !validadeDays || Number(validadeDays) <= 0
+                ? 'bg-slate-150 text-slate-400 border border-slate-250 cursor-not-allowed shadow-none opacity-60'
+                : 'bg-[#25D366] hover:bg-[#1EBE5D] text-white shadow-emerald-500/20 active:scale-[0.98]'
+            }`}
+          >
+            <MessageCircle size={15} /> Enviar no WhatsApp
           </button>
         </div>
       </div>
