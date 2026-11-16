@@ -137,6 +137,8 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [pulledFromFpv, setPulledFromFpv] = useState<boolean>(false);
   const [sendingZApi, setSendingZApi] = useState<boolean>(false);
   const [zApiFeedback, setZApiFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+  const whatsappSectionRef = React.useRef<HTMLDivElement>(null);
+  const whatsappPhoneInputRef = React.useRef<HTMLInputElement>(null);
 
   // Regras de Acesso e Bloqueio Condicional
   const [exigirIdentificacao, setExigirIdentificacao] = useState(
@@ -504,7 +506,12 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
   const handleSendDirectViaZApi = async () => {
     if (contatoWhatsApp.replace(/\D/g, '').length < 10) {
-      setZApiFeedback({ ok: false, msg: 'Informe o WhatsApp do contato com DDD para enviar o Card Executivo.' });
+      setZApiFeedback({
+        ok: false,
+        msg: 'Informe o WhatsApp do contato com DDD para disparar o Card Executivo.',
+      });
+      whatsappSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => whatsappPhoneInputRef.current?.focus(), 350);
       return;
     }
     const days = Number(validadeDays) > 0 ? Number(validadeDays) : 10;
@@ -1264,13 +1271,16 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           </div>
 
           {/* ENVIO EXECUTIVO POR WHATSAPP (ESTILO AUTENTIQUE) + VISUALIZADOR DE LINK */}
-          <div className="bg-gradient-to-br from-emerald-50/80 via-white to-slate-50 p-4 rounded-2xl border border-emerald-200/80 space-y-3.5 shadow-xs">
+          <div
+            ref={whatsappSectionRef}
+            className="bg-gradient-to-br from-emerald-50/80 via-white to-slate-50 p-4 rounded-2xl border border-emerald-200/80 space-y-3.5 shadow-xs"
+          >
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-[#1B4D3E]">
                 <span className="w-5 h-5 rounded-full bg-[#25D366] text-white inline-flex items-center justify-center shadow-2xs">
                   <WhatsAppIcon size={12} />
                 </span>
-                Envio por WhatsApp • Card Executivo SmartBid
+                Envio por WhatsApp • Card Compacto SmartBid
               </div>
               {pulledFromFpv && contatoWhatsApp ? (
                 <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -1278,7 +1288,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                 </span>
               ) : (
                 <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
-                  Preview Rico Ativo
+                  Card Compacto Ativo
                 </span>
               )}
             </div>
@@ -1302,52 +1312,65 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                   WhatsApp do Contato (FPV)
                 </label>
                 <input
+                  ref={whatsappPhoneInputRef}
                   type="tel"
                   placeholder="(41) 99999-9999"
                   value={contatoWhatsApp}
-                  onChange={(e) => setContatoWhatsApp(maskBrazilPhone(e.target.value))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                  onChange={(e) => {
+                    setContatoWhatsApp(maskBrazilPhone(e.target.value));
+                    if (zApiFeedback && !zApiFeedback.ok) setZApiFeedback(null);
+                  }}
+                  className={`w-full px-3 py-2 bg-white border rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 font-mono ${
+                    zApiFeedback && !zApiFeedback.ok
+                      ? 'border-amber-400 ring-2 ring-amber-200'
+                      : 'border-slate-200 focus:ring-emerald-500'
+                  }`}
                 />
               </div>
             </div>
 
-            {/* Prévia Visual do Cartão que chega no WhatsApp do Cliente */}
+            {/* Prévia Visual do Cartão Compacto que chega no WhatsApp do Cliente */}
             <div className="rounded-2xl overflow-hidden border border-slate-200 bg-[#EFEAE2] p-3">
               <span className="text-[8.5px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">
-                Prévia de como chega no WhatsApp do cliente ({proposalCode}):
+                Prévia compacta de como chega no WhatsApp ({proposalCode}):
               </span>
-              <div className="bg-[#D9FDD3] rounded-2xl p-2.5 shadow-sm border border-emerald-200/80 space-y-1.5 max-w-md ml-auto">
-                <div className="rounded-xl bg-[#0F3B2E] px-4 py-3.5 flex items-center gap-3 shadow-xs">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#6EE7B7"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 17 L9 11 L13 15 L21 7" />
-                      <path d="M15 7 H21 V13" />
-                    </svg>
+              <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-1.5 max-w-sm ml-auto">
+                <div className="rounded-xl bg-black/[0.04] border border-black/[0.06] p-2 flex items-center gap-2.5">
+                  <div className="w-14 h-14 rounded-lg bg-[#0F3B2E] flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                    <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center mb-0.5">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#6EE7B7"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 17 L9 11 L13 15 L21 7" />
+                        <path d="M15 7 H21 V13" />
+                      </svg>
+                    </div>
+                    <span className="text-[8px] font-black text-white tracking-tight leading-none">
+                      SmartBid
+                    </span>
                   </div>
-                  <span className="text-white font-black text-sm tracking-tight">
-                    SmartBid <span className="text-emerald-300 font-bold">·</span> Proposta
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11.5px] font-black text-slate-900 leading-tight truncate">
+                      {cardHeadline}
+                    </p>
+                    <p className="text-[10.5px] font-semibold text-slate-600 leading-tight truncate mt-0.5">
+                      {cardSubtitle}
+                    </p>
+                    <p className="text-[9.5px] text-slate-400 font-medium truncate mt-0.5">
+                      smartbidhub.com.br
+                    </p>
+                  </div>
                 </div>
-                <div className="px-1 pt-0.5 space-y-0.5">
-                  <p className="text-[12.5px] font-black text-slate-900 leading-snug truncate">
-                    {cardHeadline}
-                  </p>
-                  <p className="text-[11.5px] font-bold text-[#14532D] leading-snug truncate">
-                    {cardSubtitle}
-                  </p>
-                  <p className="text-[10.5px] text-slate-500 font-medium truncate pt-0.5">
-                    {shortDomainDisplay}
-                  </p>
-                </div>
+                <p className="text-[10.5px] text-[#027EB5] underline px-1 truncate">
+                  {shortDomainDisplay}
+                </p>
               </div>
             </div>
 
@@ -1403,6 +1426,26 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             </>
           )}
         </div>
+
+        {/* BANNER FIXO DE FEEDBACK ACIMA DO RODAPÉ (VISÍVEL EM QUALQUER POSIÇÃO DE SCROLL) */}
+        {zApiFeedback && (
+          <div
+            className={`px-6 py-2.5 border-t text-xs font-bold flex items-center justify-between gap-2 shrink-0 ${
+              zApiFeedback.ok
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-amber-50 border-amber-200 text-amber-800'
+            }`}
+          >
+            <span>{zApiFeedback.msg}</span>
+            <button
+              type="button"
+              onClick={handleSaveAndOpenWhatsApp}
+              className="text-[10px] font-black uppercase tracking-wider underline shrink-0 cursor-pointer"
+            >
+              Abrir WhatsApp Web ↗
+            </button>
+          </div>
+        )}
 
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap justify-end gap-2.5 shrink-0">

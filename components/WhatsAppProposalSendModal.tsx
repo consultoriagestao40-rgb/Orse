@@ -196,38 +196,43 @@ export default function WhatsAppProposalSendModal({
               {loadingMeta && <Loader2 size={11} className="animate-spin text-slate-400" />}
             </div>
 
-            <div className="bg-[#D9FDD3] rounded-2xl p-2.5 shadow-sm border border-emerald-200/80 space-y-1.5">
-              <div className="rounded-xl bg-[#0E3A2D] px-4 py-3.5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#A7F3D0"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 17 L9 11 L13 15 L21 7" />
-                    <path d="M15 7 H21 V13" />
-                  </svg>
+            <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-1.5">
+              <div className="rounded-xl bg-black/[0.04] border border-black/[0.06] p-2 flex items-center gap-2.5">
+                <div className="w-14 h-14 rounded-lg bg-[#0E3A2D] flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                  <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center mb-0.5">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#6EE7B7"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 17 L9 11 L13 15 L21 7" />
+                      <path d="M15 7 H21 V13" />
+                    </svg>
+                  </div>
+                  <span className="text-[8px] font-black text-white tracking-tight leading-none">
+                    SmartBid
+                  </span>
                 </div>
-                <span className="text-white font-black text-sm tracking-tight">
-                  SmartBid <span className="text-emerald-300 font-bold">·</span> Proposta
-                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-black text-slate-900 leading-tight truncate">
+                    {cardHeadline}
+                  </p>
+                  <p className="text-[11px] font-semibold text-slate-600 leading-tight truncate mt-0.5">
+                    {cardSubtitle}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                    smartbidhub.com.br
+                  </p>
+                </div>
               </div>
-              <div className="px-1 pt-0.5 space-y-0.5">
-                <p className="text-[13px] font-black text-slate-900 leading-snug truncate">
-                  {cardHeadline}
-                </p>
-                <p className="text-[12px] font-bold text-[#14532D] leading-snug truncate">
-                  {cardSubtitle}
-                </p>
-                <p className="text-[11px] text-slate-500 font-medium truncate pt-0.5">
-                  {shortDomainDisplay}
-                </p>
-              </div>
+              <p className="text-[11px] text-[#027EB5] underline px-1 truncate">
+                {shortDomainDisplay}
+              </p>
             </div>
           </div>
 
