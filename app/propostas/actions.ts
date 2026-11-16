@@ -877,7 +877,7 @@ export async function getPropostas(preFetchedUser?: any) {
         empresaEmissoraId: meta.empresaEmissoraId || meta.premissas?.empresaEmissoraId || '',
         regimeTributario: meta.regimeTributario || meta.premissas?.regimeTributario || 'LUCRO_REAL',
         segmento: p.client?.segmento || 'Sem Segmento',
-        data: p.createdAt.toLocaleDateString('pt-BR', { timeZone: user?.timezone || 'America/Sao_Paulo' }),
+        data: p.createdAt.toLocaleDateString('pt-BR', { timeZone: (loggedUser as any)?.timezone || 'America/Sao_Paulo' }),
         valor: meta.resultado?.faturamentoBruto || lastVersao?.precoVenda || 0,
         status: p.status,
         versao: lastVersao?.versao || 1,
