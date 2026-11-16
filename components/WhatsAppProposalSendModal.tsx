@@ -196,10 +196,11 @@ export default function WhatsAppProposalSendModal({
               {loadingMeta && <Loader2 size={11} className="animate-spin text-slate-400" />}
             </div>
 
-            <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-1.5">
-              <div className="rounded-xl bg-black/[0.04] border border-black/[0.06] p-2 flex items-center gap-2.5">
-                <div className="w-14 h-14 rounded-lg bg-[#0E3A2D] flex flex-col items-center justify-center shrink-0 shadow-2xs">
-                  <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center mb-0.5">
+            <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-2">
+              {/* Faixa verde superior: SmartBid · Proposta + Número da Proposta */}
+              <div className="rounded-xl bg-gradient-to-r from-[#092920] via-[#0E3A2D] to-[#144B3A] px-3 py-2.5 flex items-center justify-between gap-2 shadow-2xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0">
                     <svg
                       width="13"
                       height="13"
@@ -214,25 +215,29 @@ export default function WhatsAppProposalSendModal({
                       <path d="M15 7 H21 V13" />
                     </svg>
                   </div>
-                  <span className="text-[8px] font-black text-white tracking-tight leading-none">
-                    SmartBid
+                  <span className="text-[12px] font-extrabold text-white tracking-tight truncate">
+                    SmartBid <span className="text-emerald-300">·</span> Proposta
                   </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-black text-slate-900 leading-tight truncate">
-                    {cardHeadline}
-                  </p>
-                  <p className="text-[11px] font-semibold text-slate-600 leading-tight truncate mt-0.5">
-                    {cardSubtitle}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
-                    smartbidhub.com.br
-                  </p>
-                </div>
+                {code && code !== 'PROPOSTA' && (
+                  <span className="text-[9.5px] font-extrabold text-emerald-200 bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 rounded-full shrink-0">
+                    {code.replace(/-R/, ' · R')}
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] text-[#027EB5] underline px-1 truncate">
-                {shortDomainDisplay}
-              </p>
+
+              {/* Parte inferior: Dados reais da proposta + Link clicável */}
+              <div className="px-1 pb-0.5 space-y-0.5">
+                <p className="text-[12px] font-black text-slate-900 leading-snug truncate">
+                  {cardHeadline}
+                </p>
+                <p className="text-[11px] font-bold text-[#14532D] leading-snug truncate">
+                  {cardSubtitle}
+                </p>
+                <p className="text-[10.5px] text-[#027EB5] underline truncate pt-0.5">
+                  {shortDomainDisplay}
+                </p>
+              </div>
             </div>
           </div>
 

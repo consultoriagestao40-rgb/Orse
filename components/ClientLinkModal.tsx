@@ -1332,12 +1332,13 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             {/* Prévia Visual do Cartão Compacto que chega no WhatsApp do Cliente */}
             <div className="rounded-2xl overflow-hidden border border-slate-200 bg-[#EFEAE2] p-3">
               <span className="text-[8.5px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">
-                Prévia compacta de como chega no WhatsApp ({proposalCode}):
+                Prévia de como chega no WhatsApp (Celular e Computador):
               </span>
-              <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-1.5 max-w-sm ml-auto">
-                <div className="rounded-xl bg-black/[0.04] border border-black/[0.06] p-2 flex items-center gap-2.5">
-                  <div className="w-14 h-14 rounded-lg bg-[#0F3B2E] flex flex-col items-center justify-center shrink-0 shadow-2xs">
-                    <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center mb-0.5">
+              <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-2 max-w-sm ml-auto">
+                {/* Faixa verde superior: SmartBid · Proposta + Número da Proposta */}
+                <div className="rounded-xl bg-gradient-to-r from-[#092920] via-[#0E3A2D] to-[#144B3A] px-3 py-2.5 flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0">
                       <svg
                         width="13"
                         height="13"
@@ -1352,25 +1353,29 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                         <path d="M15 7 H21 V13" />
                       </svg>
                     </div>
-                    <span className="text-[8px] font-black text-white tracking-tight leading-none">
-                      SmartBid
+                    <span className="text-[11.5px] font-extrabold text-white tracking-tight truncate">
+                      SmartBid <span className="text-emerald-300">·</span> Proposta
                     </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11.5px] font-black text-slate-900 leading-tight truncate">
-                      {cardHeadline}
-                    </p>
-                    <p className="text-[10.5px] font-semibold text-slate-600 leading-tight truncate mt-0.5">
-                      {cardSubtitle}
-                    </p>
-                    <p className="text-[9.5px] text-slate-400 font-medium truncate mt-0.5">
-                      smartbidhub.com.br
-                    </p>
-                  </div>
+                  {proposalCode && proposalCode !== 'PROPOSTA' && (
+                    <span className="text-[9px] font-extrabold text-emerald-200 bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 rounded-full shrink-0">
+                      {proposalCode.replace(/-R/, ' · R')}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[10.5px] text-[#027EB5] underline px-1 truncate">
-                  {shortDomainDisplay}
-                </p>
+
+                {/* Parte inferior: Dados reais da proposta + Link clicável */}
+                <div className="px-1 pb-0.5 space-y-0.5">
+                  <p className="text-[11.5px] font-black text-slate-900 leading-snug truncate">
+                    {cardHeadline}
+                  </p>
+                  <p className="text-[10.5px] font-bold text-[#14532D] leading-snug truncate">
+                    {cardSubtitle}
+                  </p>
+                  <p className="text-[10px] text-[#027EB5] underline truncate pt-0.5">
+                    {shortDomainDisplay}
+                  </p>
+                </div>
               </div>
             </div>
 
