@@ -12,6 +12,7 @@ import { transferirProposta, updateDocumentoStatusParam, createDocumentoStatus }
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
 import WhatsAppIcon from '@/components/WhatsAppIcon';
+import WhatsAppProposalSendModal from '@/components/WhatsAppProposalSendModal';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 import { Building } from 'lucide-react';
@@ -157,6 +158,7 @@ export default function PropostasComerciaisDashboard() {
     localStorage.setItem('orse_proposta_view_mode', mode);
   };
   const [activeShareDoc, setActiveShareDoc] = useState<any | null>(null);
+  const [activeWhatsAppDoc, setActiveWhatsAppDoc] = useState<any | null>(null);
   const [activeTrackingDoc, setActiveTrackingDoc] = useState<any | null>(null);
 
   // Dados para modal de criação
@@ -551,53 +553,9 @@ export default function PropostasComerciaisDashboard() {
     return cols;
   }, [filteredDocs, segmentos]);
 
-  const handleQuickWhatsAppShare = async (e: React.MouseEvent, doc: any) => {
+  const handleQuickWhatsAppShare = (e: React.MouseEvent, doc: any) => {
     e.stopPropagation();
-    const rawPhone = String(doc.contatoWhatsApp || doc.configApresentacao?.contatoWhatsApp || '').replace(/\D/g, '');
-    if (rawPhone.length < 10) {
-      // Sem WhatsApp cadastrado na FPV ainda: abre o modal já no card de envio
-      setActiveShareDoc(doc);
-      return;
-    }
-
-    const message = buildExecutiveWhatsAppMessage({
-      docId: doc.id,
-      numeroFPV: doc.numeroFPV,
-      versaoFPV: doc.versaoFPV || 1,
-      clienteNome: doc.cliente,
-      contatoNome: doc.contatoNome || doc.configApresentacao?.contatoNome || '',
-      empresaEmissora: doc.empresa || 'SmartBid Hub',
-      codigoAcessoCustom: doc.configApresentacao?.regrasAcesso?.codigoAcessoCustom || '',
-    });
-
-    const waUrl = buildWhatsAppWebUrl(rawPhone, message);
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
-
-    // Se o link ainda não tinha validade ativa, garante 10 dias automaticamente em background
-    const cfg = doc.configApresentacao || {};
-    const isExpiredOrMissing = !cfg.linkExpiresAt || new Date() > new Date(cfg.linkExpiresAt);
-    if (isExpiredOrMissing) {
-      const days = Number(cfg.validadeDays) > 0 ? Number(cfg.validadeDays) : 10;
-      const updatedCfg = {
-        ...cfg,
-        validadeDays: days,
-        linkCreatedAt: new Date().toISOString(),
-        linkExpiresAt: new Date(Date.now() + days * 86400000).toISOString(),
-      };
-      updateConfigApresentacao(doc.id, updatedCfg)
-        .then(() => {
-          setDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, configApresentacao: updatedCfg } : d)));
-        })
-        .catch(() => {});
-    }
-
-    if ((doc.status || '').toLowerCase() === 'rascunho') {
-      updateDocumentoStatus(doc.id, 'Enviada')
-        .then(() => {
-          setDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'Enviada' } : d)));
-        })
-        .catch(() => {});
-    }
+    setActiveWhatsAppDoc(doc);
   };
 
   const renderProposalCard = (doc: any) => (
@@ -2079,6 +2037,27 @@ export default function PropostasComerciaisDashboard() {
             </div>
           </div>
         </div>
+      )}
+      {activeWhatsAppDoc && (
+        <WhatsAppProposalSendModal
+          documentoId={activeWhatsAppDoc.id}
+          initialDoc={activeWhatsAppDoc}
+          onClose={() => setActiveWhatsAppDoc(null)}
+          onSentSuccess={(phone, contatoNome) => {
+            setDocs((prev) =>
+              prev.map((d) =>
+                d.id === activeWhatsAppDoc.id
+                  ? {
+                      ...d,
+                      contatoWhatsApp: phone,
+                      contatoNome: contatoNome || d.contatoNome,
+                      status: (d.status || '').toLowerCase() === 'rascunho' ? 'Enviada' : d.status,
+                    }
+                  : d
+              )
+            );
+          }}
+        />
       )}
       {activeShareDoc && (
         <ClientLinkModal 

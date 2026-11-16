@@ -109,17 +109,37 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
       orderBy: [{ createdAt: 'desc' }, { versaoFPV: 'desc' }]
     });
 
-    // Busca super-leve apenas de contato e celular salvos em metadados da FPV (sem carregar JSON pesado de insumos)
+    // Busca super-leve apenas de contato e dados do card salvos em metadados da FPV (sem carregar JSON pesado de insumos)
     const propostaIds = Array.from(new Set(docs.map((d: any) => d.propostaId).filter(Boolean)));
-    const fpvContactMap = new Map<string, { contato?: string | null; celular?: string | null }>();
+    const fpvContactMap = new Map<
+      string,
+      {
+        contato?: string | null;
+        celular?: string | null;
+        tipoServicos?: string | null;
+        objetoProposta?: string | null;
+        tipoProposta?: string | null;
+      }
+    >();
     if (propostaIds.length > 0) {
       try {
         const metaRows = await prisma.$queryRawUnsafe<
-          Array<{ propostaId: string; versao: number; contato: string | null; celular: string | null }>
+          Array<{
+            propostaId: string;
+            versao: number;
+            contato: string | null;
+            celular: string | null;
+            tipoServicos: string | null;
+            objetoProposta: string | null;
+            tipoProposta: string | null;
+          }>
         >(
           `SELECT "propostaId", "versao",
                   "metadados"->>'contato' AS contato,
-                  COALESCE("metadados"->>'celular', "metadados"->>'whatsapp', "metadados"->>'telefone') AS celular
+                  COALESCE("metadados"->>'celular', "metadados"->>'whatsapp', "metadados"->>'telefone') AS celular,
+                  "metadados"->>'tipoServicos' AS "tipoServicos",
+                  LEFT("metadados"->>'objetoProposta', 180) AS "objetoProposta",
+                  "metadados"->>'tipoProposta' AS "tipoProposta"
              FROM "PropostaVersao"
             WHERE "propostaId" = ANY($1::text[])`,
           propostaIds
@@ -128,6 +148,9 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
           fpvContactMap.set(`${row.propostaId}:${row.versao}`, {
             contato: row.contato,
             celular: row.celular,
+            tipoServicos: row.tipoServicos,
+            objetoProposta: row.objetoProposta,
+            tipoProposta: row.tipoProposta,
           });
         }
       } catch {}
@@ -171,6 +194,9 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         configApresentacao: cfg,
         contatoNome,
         contatoWhatsApp,
+        tipoServicos: fpvContact?.tipoServicos || '',
+        objetoProposta: fpvContact?.objetoProposta || '',
+        tipoProposta: fpvContact?.tipoProposta || 'RECORRENTE',
         statusAssinatura: d.statusAssinatura,
         nomeAssinante: d.nomeAssinante,
         dataAssinatura: d.dataAssinatura,
@@ -1234,7 +1260,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-3`;
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-4`;
     const cardTitle = buildProposalCardHeadline({
       tipoServicos: meta.tipoServicos,
       objetoProposta: meta.objetoProposta,
@@ -1261,69 +1287,91 @@ export async function sendProposalLinkViaZApiAction(params: {
         codigoAcessoCustom: cfg?.regrasAcesso?.codigoAcessoCustom,
       });
 
-    // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback para a oficial
-    let instanceId = '';
-    let token = '';
-    let clientToken = '';
+    const linkPayload = JSON.stringify({
+      phone: cleanPhone,
+      message: messageText,
+      image: ogImageUrl,
+      linkUrl: shareUrl,
+      title: cardTitle,
+      linkDescription: cardDescription,
+      linkType: 'LARGE',
+    });
 
+    // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial
+    const candidates: Array<{ instanceId: string; token: string; clientToken: string }> = [];
     if (
       doc.tenant?.whatsappConnected &&
       doc.tenant.whatsappInstanceId &&
       doc.tenant.whatsappToken &&
       doc.tenant.whatsappClientToken
     ) {
-      instanceId = doc.tenant.whatsappInstanceId.trim();
-      token = doc.tenant.whatsappToken.trim();
-      clientToken = doc.tenant.whatsappClientToken.trim();
-    } else {
-      const { resolveOfficialZApiCredentials } = await import('@/lib/whatsapp-official');
-      const official = await resolveOfficialZApiCredentials(doc.tenantId);
-      instanceId = official.instanceId || '';
-      token = official.token || '';
-      clientToken = official.clientToken || '';
+      candidates.push({
+        instanceId: doc.tenant.whatsappInstanceId.trim(),
+        token: doc.tenant.whatsappToken.trim(),
+        clientToken: doc.tenant.whatsappClientToken.trim(),
+      });
     }
 
-    if (!instanceId || !token || !clientToken) {
+    const { resolveOfficialZApiCredentials } = await import('@/lib/whatsapp-official');
+    const official = await resolveOfficialZApiCredentials(doc.tenantId);
+    if (
+      official.instanceId &&
+      official.token &&
+      official.clientToken &&
+      !candidates.some((c) => c.instanceId === official.instanceId)
+    ) {
+      candidates.push({
+        instanceId: official.instanceId,
+        token: official.token,
+        clientToken: official.clientToken,
+      });
+    }
+
+    if (candidates.length === 0) {
       return {
         success: false,
-        error: 'Instância de WhatsApp API não conectada. Use o botão "Abrir no WhatsApp" para enviar direto pelo seu aplicativo.',
+        error: 'Instância de WhatsApp API não conectada.',
       };
     }
 
-    const zRes = await fetch(
-      `https://api.z-api.io/instances/${instanceId}/token/${token}/send-link`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Client-Token': clientToken,
-        },
-        body: JSON.stringify({
-          phone: cleanPhone,
-          message: messageText,
-          image: ogImageUrl,
-          linkUrl: shareUrl,
-          title: cardTitle,
-          linkDescription: cardDescription,
-        }),
+    let sentOk = false;
+    let lastErrorMsg = '';
+    for (const cred of candidates) {
+      const zRes = await fetch(
+        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-link`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Client-Token': cred.clientToken,
+          },
+          body: linkPayload,
+        }
+      );
+      const zData = await zRes.json().catch(() => ({}));
+      if (zRes.ok && !zData?.error) {
+        sentOk = true;
+        break;
       }
-    );
+      lastErrorMsg = zData?.error || zData?.message || `Falha HTTP ${zRes.status} na Z-API.`;
+    }
 
-    const zData = await zRes.json().catch(() => ({}));
-    if (!zRes.ok) {
+    if (!sentOk) {
       return {
         success: false,
-        error: zData?.error || zData?.message || `Falha HTTP ${zRes.status} ao enviar link na Z-API.`,
+        error: lastErrorMsg || 'Não foi possível disparar o card na Z-API.',
       };
     }
 
-    // Garante validade mínima de 10 dias caso a proposta estivesse sem validade configurada e marca como Enviada se Rascunho
+    // Garante validade mínima de 10 dias caso a proposta estivesse sem validade configurada ou expirada, e marca como Enviada se Rascunho
     const nextCfg: Record<string, any> = {
       ...cfg,
       contatoWhatsApp: params.phone,
       ...(params.contatoNome ? { contatoNome: params.contatoNome } : {}),
     };
-    if (!nextCfg.linkExpiresAt) {
+    const isExpiredOrMissing =
+      !nextCfg.linkExpiresAt || new Date() > new Date(nextCfg.linkExpiresAt);
+    if (isExpiredOrMissing) {
       const days = Number(nextCfg.validadeDays) > 0 ? Number(nextCfg.validadeDays) : 10;
       nextCfg.validadeDays = days;
       nextCfg.linkCreatedAt = new Date().toISOString();

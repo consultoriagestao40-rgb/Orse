@@ -16,6 +16,7 @@ import { getLoggedUser } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
 import WhatsAppIcon from '@/components/WhatsAppIcon';
+import WhatsAppProposalSendModal from '@/components/WhatsAppProposalSendModal';
 import { 
   getDocumentoPropostaById, 
   updateDocumentoStatus, 
@@ -290,6 +291,7 @@ export default function DocumentoPropostaDetail() {
   const [tempLayerName, setTempLayerName] = useState('');
   const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [customModal, setCustomModal] = useState<{
     isOpen: boolean;
@@ -1133,60 +1135,8 @@ export default function DocumentoPropostaDetail() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    const matchedVer = doc?.proposta?.versoes?.[0];
-                    const meta = (matchedVer?.metadados as Record<string, any>) || {};
-                    const rawPhone = String(
-                      configApresentacao?.contatoWhatsApp ||
-                        meta.celular ||
-                        meta.whatsapp ||
-                        doc?.client?.whatsapp ||
-                        ''
-                    ).replace(/\D/g, '');
-
-                    if (rawPhone.length < 10) {
-                      setShowShareModal(true);
-                      return;
-                    }
-
-                    const contatoNome =
-                      configApresentacao?.contatoNome || meta.contato || doc?.client?.contato || '';
-                    const clienteNome =
-                      doc?.client?.nomeFantasia || doc?.client?.razaoSocial || meta.clienteNome || 'Cliente';
-                    const rev = doc?.versaoFPV || matchedVer?.versao || 1;
-
-                    const msg = buildExecutiveWhatsAppMessage({
-                      docId: id,
-                      numeroFPV: doc?.proposta?.numero,
-                      versaoFPV: rev,
-                      clienteNome,
-                      contatoNome,
-                      empresaEmissora: doc?.empresaEmissora?.nomeFantasia || 'SmartBid Hub',
-                      codigoAcessoCustom: configApresentacao?.regrasAcesso?.codigoAcessoCustom || '',
-                    });
-
-                    window.open(buildWhatsAppWebUrl(rawPhone, msg), '_blank', 'noopener,noreferrer');
-
-                    const isExpiredOrMissing =
-                      !configApresentacao?.linkExpiresAt ||
-                      new Date() > new Date(configApresentacao.linkExpiresAt);
-                    if (isExpiredOrMissing) {
-                      const days = Number(configApresentacao?.validadeDays) > 0 ? Number(configApresentacao.validadeDays) : 10;
-                      const nextCfg = {
-                        ...(configApresentacao || {}),
-                        validadeDays: days,
-                        linkCreatedAt: new Date().toISOString(),
-                        linkExpiresAt: new Date(Date.now() + days * 86400000).toISOString(),
-                      };
-                      setConfigApresentacao(nextCfg);
-                      updateConfigApresentacao(id, nextCfg).catch(() => {});
-                    }
-                    if ((status || '').toLowerCase() === 'rascunho') {
-                      setStatus('Enviada');
-                      updateDocumentoStatus(id, 'Enviada').catch(() => {});
-                    }
-                  }}
-                  title="Enviar Link Executivo no WhatsApp do Contato da FPV"
+                  onClick={() => setShowWhatsAppModal(true)}
+                  title="Enviar Card Executivo no WhatsApp do Contato da FPV"
                   className="bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                 >
                   <WhatsAppIcon size={16} /> Enviar WhatsApp
@@ -3572,6 +3522,17 @@ export default function DocumentoPropostaDetail() {
           </div>
         </main>
       </div>
+      {showWhatsAppModal && (
+        <WhatsAppProposalSendModal
+          documentoId={id}
+          onClose={() => setShowWhatsAppModal(false)}
+          onSentSuccess={() => {
+            if ((status || '').toLowerCase() === 'rascunho') {
+              setStatus('Enviada');
+            }
+          }}
+        />
+      )}
       {showShareModal && (
         <ClientLinkModal 
           documentoId={id}

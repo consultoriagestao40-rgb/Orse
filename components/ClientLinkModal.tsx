@@ -504,7 +504,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
   const handleSendDirectViaZApi = async () => {
     if (contatoWhatsApp.replace(/\D/g, '').length < 10) {
-      setZApiFeedback({ ok: false, msg: 'Informe um WhatsApp com DDD para disparo direto pela API.' });
+      setZApiFeedback({ ok: false, msg: 'Informe o WhatsApp do contato com DDD para enviar o Card Executivo.' });
       return;
     }
     const days = Number(validadeDays) > 0 ? Number(validadeDays) : 10;
@@ -521,12 +521,24 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         contatoNome: contatoNome.trim(),
       });
       if (res.success) {
+        updateDocumentoStatus(documentoId, 'Enviada').catch(() => {});
         setZApiFeedback({
           ok: true,
-          msg: `Card executivo enviado com sucesso para ${contatoNome || contatoWhatsApp}!`,
+          msg: `✓ Card Executivo enviado direto no WhatsApp de ${contatoNome || contatoWhatsApp}!`,
         });
       } else {
-        setZApiFeedback({ ok: false, msg: res.error || 'Não foi possível disparar via API.' });
+        // Fallback para abertura do WhatsApp Web caso a instância não esteja disponível
+        const message = buildExecutiveWhatsAppMessage({
+          docId: documentoId,
+          numeroFPV: shareMeta.numeroFPV,
+          versaoFPV: shareMeta.versaoFPV,
+          clienteNome: shareMeta.clienteNome,
+          contatoNome: contatoNome.trim(),
+          empresaEmissora: shareMeta.empresaEmissora,
+          codigoAcessoCustom: codigoAcessoCustom.trim(),
+        });
+        window.open(buildWhatsAppWebUrl(contatoWhatsApp, message), '_blank', 'noopener,noreferrer');
+        setZApiFeedback({ ok: false, msg: res.error || 'Abrindo WhatsApp Web...' });
       }
     } catch (err: any) {
       setZApiFeedback({ ok: false, msg: err?.message || 'Erro de conexão.' });
@@ -1339,27 +1351,29 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
               </div>
             </div>
 
-            {/* Disparo direto pela Z-API (1 clique sem nem sair da tela) */}
+            {/* Feedback de Envio Direto + Opção secundária de abrir conversa */}
             <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
-              <button
-                type="button"
-                onClick={handleSendDirectViaZApi}
-                disabled={sendingZApi}
-                className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl bg-white hover:bg-emerald-50 text-[#1B4D3E] border border-emerald-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
-                title="Envia o card rico automaticamente pela instância de WhatsApp API conectada"
-              >
-                {sendingZApi ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                {sendingZApi ? 'Enviando Card...' : 'Disparo Instantâneo via API'}
-              </button>
-              {zApiFeedback && (
+              {zApiFeedback ? (
                 <span
-                  className={`text-[10px] font-bold ${
+                  className={`text-[10.5px] font-bold ${
                     zApiFeedback.ok ? 'text-emerald-700' : 'text-red-600'
                   }`}
                 >
                   {zApiFeedback.msg}
                 </span>
+              ) : (
+                <span className="text-[10px] font-semibold text-slate-500">
+                  O botão verde abaixo envia o Card Executivo pronto direto na conversa do cliente.
+                </span>
               )}
+              <button
+                type="button"
+                onClick={handleSaveAndOpenWhatsApp}
+                className="text-[10px] font-bold text-[#1B4D3E] hover:underline cursor-pointer"
+                title="Abrir conversa no aplicativo/WhatsApp Web"
+              >
+                Abrir WhatsApp Web ↗
+              </button>
             </div>
 
             {/* Endereço limpo do Link Executivo */}
@@ -1419,15 +1433,23 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           </button>
           <button
             type="button"
-            onClick={handleSaveAndOpenWhatsApp}
-            disabled={loading || !validadeDays || Number(validadeDays) <= 0}
+            onClick={handleSendDirectViaZApi}
+            disabled={loading || sendingZApi || !validadeDays || Number(validadeDays) <= 0}
             className={`px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              loading || !validadeDays || Number(validadeDays) <= 0
+              loading || sendingZApi || !validadeDays || Number(validadeDays) <= 0
                 ? 'bg-slate-150 text-slate-400 border border-slate-250 cursor-not-allowed shadow-none opacity-60'
                 : 'bg-[#25D366] hover:bg-[#1EBE5D] text-white shadow-emerald-500/20 active:scale-[0.98]'
             }`}
           >
-            <WhatsAppIcon size={15} /> Enviar no WhatsApp
+            {sendingZApi ? (
+              <>
+                <Loader2 size={15} className="animate-spin" /> Enviando Card...
+              </>
+            ) : (
+              <>
+                <WhatsAppIcon size={15} /> Enviar no WhatsApp
+              </>
+            )}
           </button>
         </div>
       </div>
