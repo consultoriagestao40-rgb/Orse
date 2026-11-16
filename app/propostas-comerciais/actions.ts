@@ -1276,61 +1276,17 @@ export async function sendProposalLinkViaZApiAction(params: {
     });
 
     const pin = (cfg?.regrasAcesso?.codigoAcessoCustom || '').trim();
-
-    // Limite nativo do rodapé (footer) interativo do WhatsApp é 60 caracteres, preservando sempre o valor intacto
-    let footerText = cardDescription;
-    if (footerText.length > 60) {
-      if (footerText.includes(' · R$')) {
-        const [clientPart, valueRest] = footerText.split(' · R$');
-        const suffix = ` · R$${valueRest}`;
-        const maxClient = Math.max(8, 59 - suffix.length);
-        footerText = `${clientPart.slice(0, maxClient).trimEnd()}…${suffix}`;
-      } else {
-        footerText = `${footerText.slice(0, 59).trimEnd()}…`;
-      }
-    }
-
-    const buttonBodyText =
-      (params.customMessage || '').trim() ||
-      [`*${cardTitle}*`, ...(pin ? [`🔑 Código de acesso: *${pin}*`] : [])].join('\n');
-
-    const buttonActionsPayload = JSON.stringify({
-      phone: cleanPhone,
-      image: ogImageUrl,
-      message: buttonBodyText,
-      footer: footerText,
-      buttonActions: [
-        {
-          id: '1',
-          type: 'URL',
-          url: shareUrl,
-          label: 'Abrir Proposta',
-        },
-        ...(pin
-          ? [
-              {
-                id: '2',
-                type: 'URL',
-                url: `https://www.whatsapp.com/otp/code/?otp_type=COPY_CODE&code=${encodeURIComponent(pin)}`,
-                label: 'Copiar Código',
-              },
-            ]
-          : []),
-      ],
-    });
-
-    // Fallback caso alguma instância não tenha aceitado o termo de botões na Z-API
     const shortDisplayLink = shareUrl.replace(/^https?:\/\/(www\.)?/, '');
-    const fallbackCaptionLines = [
+    const captionLines = [
       `*${cardTitle}*`,
       `> ${cardDescription}`,
       shortDisplayLink,
       ...(pin ? [`🔑 Código de acesso: ${pin}`] : []),
     ];
-    const imageFallbackPayload = JSON.stringify({
+    const imagePayload = JSON.stringify({
       phone: cleanPhone,
       image: ogImageUrl,
-      caption: (params.customMessage || '').trim() || fallbackCaptionLines.join('\n'),
+      caption: (params.customMessage || '').trim() || captionLines.join('\n'),
     });
 
     // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial
@@ -1372,18 +1328,16 @@ export async function sendProposalLinkViaZApiAction(params: {
 
     let sentOk = false;
     let lastErrorMsg = '';
-
-    // 1ª Tentativa: Card executivo com faixa verde no topo + rodapé cinza + botão charmoso "Abrir Proposta" (link 100% oculto)
     for (const cred of candidates) {
       const zRes = await fetch(
-        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-button-actions`,
+        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-image`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Client-Token': cred.clientToken,
           },
-          body: buttonActionsPayload,
+          body: imagePayload,
         }
       );
       const zData = await zRes.json().catch(() => ({}));
@@ -1392,29 +1346,6 @@ export async function sendProposalLinkViaZApiAction(params: {
         break;
       }
       lastErrorMsg = zData?.error || zData?.message || `Falha HTTP ${zRes.status} na Z-API.`;
-    }
-
-    // 2ª Tentativa (segurança): se botões não estiverem habilitados na instância, envia via /send-image
-    if (!sentOk) {
-      for (const cred of candidates) {
-        const zRes = await fetch(
-          `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-image`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Client-Token': cred.clientToken,
-            },
-            body: imageFallbackPayload,
-          }
-        );
-        const zData = await zRes.json().catch(() => ({}));
-        if (zRes.ok && !zData?.error) {
-          sentOk = true;
-          break;
-        }
-        lastErrorMsg = zData?.error || zData?.message || `Falha HTTP ${zRes.status} na Z-API.`;
-      }
     }
 
     if (!sentOk) {

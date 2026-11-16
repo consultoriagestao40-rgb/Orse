@@ -41,8 +41,7 @@ export function buildExecutiveProposalSlug(ctx: {
   versaoFPV?: number | string | null;
   clienteNome?: string | null;
 }): string {
-  const tail = ctx.docId.length > 8 ? ctx.docId.slice(-8) : ctx.docId;
-  return `proposta-${tail}`;
+  return ctx.docId.length > 8 ? ctx.docId.slice(-8) : ctx.docId;
 }
 
 export function buildExecutiveProposalUrl(ctx: {

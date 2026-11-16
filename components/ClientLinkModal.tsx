@@ -1364,18 +1364,20 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                   )}
                 </div>
 
-                {/* Parte inferior: Dados reais + texto secundário suave + Botão Abrir Proposta (link oculto) */}
-                <div className="px-1 pb-0.5 space-y-0.5">
+                {/* Parte inferior: Dados reais + texto secundário cinza suave + link curto */}
+                <div className="px-1 pb-0.5 space-y-1">
                   <p className="text-[11.5px] font-black text-slate-900 leading-snug truncate">
                     {cardHeadline}
                   </p>
-                  <p className="text-[10.5px] font-medium text-[#667781] leading-snug truncate">
-                    {cardSubtitle}
+                  <div className="flex items-center gap-1.5 pl-0.5">
+                    <span className="w-[2.5px] h-3.5 rounded-full bg-slate-400/70 shrink-0" />
+                    <p className="text-[10.5px] font-medium text-[#667781] leading-snug truncate">
+                      {cardSubtitle}
+                    </p>
+                  </div>
+                  <p className="text-[10px] text-[#027EB5] underline truncate">
+                    {shortDomainDisplay}
                   </p>
-                </div>
-                <div className="border-t border-emerald-700/15 pt-1.5 pb-0.5 flex items-center justify-center gap-1.5 text-[#00A884] font-bold text-[11.5px]">
-                  <ExternalLink size={12} className="shrink-0" />
-                  <span>Abrir Proposta</span>
                 </div>
               </div>
             </div>
