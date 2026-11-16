@@ -1364,19 +1364,16 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                   )}
                 </div>
 
-                {/* Parte inferior: Dados reais + texto secundário cinza suave + link curto */}
-                <div className="px-1 pb-0.5 space-y-1">
+                {/* Parte inferior do card clicável (link oculto, texto secundário em cinza suave) */}
+                <div className="px-1 pb-0.5 space-y-0.5">
                   <p className="text-[11.5px] font-black text-slate-900 leading-snug truncate">
                     {cardHeadline}
                   </p>
-                  <div className="flex items-center gap-1.5 pl-0.5">
-                    <span className="w-[2.5px] h-3.5 rounded-full bg-slate-400/70 shrink-0" />
-                    <p className="text-[10.5px] font-medium text-[#667781] leading-snug truncate">
-                      {cardSubtitle}
-                    </p>
-                  </div>
-                  <p className="text-[10px] text-[#027EB5] underline truncate">
-                    {shortDomainDisplay}
+                  <p className="text-[10.5px] font-medium text-[#667781] leading-snug truncate">
+                    {cardSubtitle}
+                  </p>
+                  <p className="text-[9.5px] text-slate-500 font-medium truncate pt-0.5">
+                    🔗 smartbidhub.com.br
                   </p>
                 </div>
               </div>

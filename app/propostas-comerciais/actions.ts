@@ -1260,7 +1260,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-6`;
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-7`;
     const cardTitle = buildProposalCardHeadline({
       tipoServicos: meta.tipoServicos,
       objetoProposta: meta.objetoProposta,
@@ -1276,17 +1276,22 @@ export async function sendProposalLinkViaZApiAction(params: {
     });
 
     const pin = (cfg?.regrasAcesso?.codigoAcessoCustom || '').trim();
-    const shortDisplayLink = shareUrl.replace(/^https?:\/\/(www\.)?/, '');
-    const captionLines = [
-      `*${cardTitle}*`,
-      `> ${cardDescription}`,
-      shortDisplayLink,
-      ...(pin ? [`🔑 Código de acesso: ${pin}`] : []),
-    ];
-    const imagePayload = JSON.stringify({
+    const messageBody =
+      (params.customMessage || '').trim() ||
+      (pin ? `🔑 Código de acesso: *${pin}*` : ' ');
+
+    // Card nativo clicável (/send-link LARGE com message=' '):
+    // 1. Oculta a URL crua embaixo (clicar no card inteiro abre a proposta direto)
+    // 2. Faixa verde horizontal compacta (900x250) no topo com SmartBid · Proposta + FPV-XXX · RXX
+    // 3. Título em negrito + Empresa/Valor em cinza suave visíveis TANTO no celular quanto no PC
+    const linkPayload = JSON.stringify({
       phone: cleanPhone,
+      message: messageBody,
       image: ogImageUrl,
-      caption: (params.customMessage || '').trim() || captionLines.join('\n'),
+      linkUrl: shareUrl,
+      title: cardTitle,
+      linkDescription: cardDescription,
+      linkType: 'LARGE',
     });
 
     // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial
@@ -1330,14 +1335,14 @@ export async function sendProposalLinkViaZApiAction(params: {
     let lastErrorMsg = '';
     for (const cred of candidates) {
       const zRes = await fetch(
-        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-image`,
+        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-link`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Client-Token': cred.clientToken,
           },
-          body: imagePayload,
+          body: linkPayload,
         }
       );
       const zData = await zRes.json().catch(() => ({}));

@@ -37,8 +37,7 @@ function getInterBoldFont(): Promise<ArrayBuffer | null> {
 }
 
 /**
- * Faixa horizontal compacta (1040x260) estilo "SmartBid · Proposta | FPV-XXX-RXX"
- * enviada no topo do balão do WhatsApp (idêntica no celular e no computador).
+ * Faixa horizontal compacta (900x250) para o topo do card nativo clicável do WhatsApp (/send-link LARGE com link oculto).
  */
 export async function GET(
   _req: Request,
@@ -78,8 +77,8 @@ export async function GET(
     (
       <div
         style={{
-          width: '1040px',
-          height: '260px',
+          width: '900px',
+          height: '250px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -98,21 +97,21 @@ export async function GET(
         >
           <div
             style={{
-              width: '104px',
-              height: '104px',
-              borderRadius: '26px',
+              width: '80px',
+              height: '80px',
+              borderRadius: '20px',
               background: 'rgba(16, 185, 129, 0.16)',
-              border: '3.5px solid rgba(110, 231, 183, 0.48)',
+              border: '3px solid rgba(110, 231, 183, 0.48)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: '32px',
+              marginRight: '26px',
               flexShrink: 0,
             }}
           >
             <svg
-              width="56"
-              height="56"
+              width="42"
+              height="42"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#6EE7B7"
@@ -129,9 +128,9 @@ export async function GET(
             style={{
               display: 'flex',
               alignItems: 'center',
-              fontSize: codeBadge ? '52px' : '60px',
+              fontSize: codeBadge ? '42px' : '48px',
               fontWeight: 800,
-              letterSpacing: '-1.2px',
+              letterSpacing: '-1px',
               color: '#FFFFFF',
               lineHeight: 1.1,
             }}
@@ -139,8 +138,8 @@ export async function GET(
             <span>SmartBid</span>
             <span
               style={{
-                marginLeft: '16px',
-                marginRight: '16px',
+                marginLeft: '14px',
+                marginRight: '14px',
                 color: '#6EE7B7',
                 fontWeight: 800,
               }}
@@ -157,14 +156,14 @@ export async function GET(
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '14px 26px',
+              padding: '11px 22px',
               borderRadius: '999px',
               background: 'rgba(16, 185, 129, 0.18)',
-              border: '2.5px solid rgba(110, 231, 183, 0.42)',
-              fontSize: '28px',
+              border: '2px solid rgba(110, 231, 183, 0.42)',
+              fontSize: '23px',
               fontWeight: 800,
               color: '#A7F3D0',
-              letterSpacing: '0.6px',
+              letterSpacing: '0.5px',
             }}
           >
             {codeBadge}
@@ -173,8 +172,8 @@ export async function GET(
       </div>
     ),
     {
-      width: 1040,
-      height: 260,
+      width: 900,
+      height: 250,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },

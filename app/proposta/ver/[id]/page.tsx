@@ -54,7 +54,7 @@ export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Met
     versaoFPV: versaoNum,
     clienteNome: cliente,
   });
-  const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${res.id}.png?v=${versaoNum}-6`;
+  const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${res.id}.png?v=${versaoNum}-7`;
 
   return {
     title: `${prettyTitle} | SmartBid`,
@@ -72,8 +72,8 @@ export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Met
       images: [
         {
           url: ogImageUrl,
-          width: 1040,
-          height: 260,
+          width: 900,
+          height: 250,
           type: 'image/png',
           alt: prettyTitle,
         },
