@@ -609,9 +609,11 @@ export async function saveProposta(data: any) {
 
     const itemsData = equipe.map((item: any) => {
       const itemRes = resultado?.items?.find((r: any) => r.id === item.id);
+      const parsedQtd = Number(item.quantidade);
+      const safeQuantidade = !isNaN(parsedQtd) && parsedQtd > 0 ? parsedQtd : 1;
       return {
         nomeCargo: item.nomeCargo,
-        quantidade: item.quantidade || 1,
+        quantidade: safeQuantidade,
         escala: item.escala || '5x2',
         entrada: item.parametrosPosto?.horarioInicio || '08:00',
         saida: item.parametrosPosto?.horarioFim || '17:00',
@@ -619,7 +621,8 @@ export async function saveProposta(data: any) {
         ativosConfig: {
           ...(item.ativosConfig || {}),
           parametrosPosto: item.parametrosPosto,
-          identificacao: item.identificacao || ''
+          identificacao: item.identificacao || '',
+          quantidadeReal: safeQuantidade,
         } as any,
         custoDireto: itemRes?.detalhes?.remuneracao || item.custoDireto || 0,
         custoTotalItem: itemRes?.custoTotal || item.custoTotalItem || 0,
@@ -1134,13 +1137,23 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         })(),
         meta: { sindicatoId: impostos?.sindicatoId || '' }
       },
-      equipe: v.items.map((i: any) => {
+      equipe: v.items.map((i: any, idx: number) => {
         const itemAtivosConfig = (i.ativosConfig as any) || {};
+        const savedResultItems = Array.isArray(meta.resultado?.items) ? meta.resultado.items : [];
+        const matchedResultItem =
+          savedResultItems[idx] ||
+          savedResultItems.find(
+            (r: any) => r?.cargo?.nome === i.nomeCargo && r?.escala === i.escala
+          );
+        const healedQuantidade =
+          Number(i.quantidade) > 0
+            ? Number(i.quantidade)
+            : Number(itemAtivosConfig.quantidadeReal ?? matchedResultItem?.quantidade ?? 1);
         return {
           id: i.id,
           nomeCargo: i.nomeCargo,
           identificacao: itemAtivosConfig.identificacao || '',
-          quantidade: i.quantidade,
+          quantidade: healedQuantidade,
           escala: i.escala,
           cargo: i.configFinanceira,
           ativosConfig: itemAtivosConfig,

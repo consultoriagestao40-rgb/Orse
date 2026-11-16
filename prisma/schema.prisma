@@ -288,7 +288,7 @@ model PropostaItem {
   id               String         @id @default(cuid())
   versaoId         String
   nomeCargo        String
-  quantidade       Int            @default(1)
+  quantidade       Float          @default(1)
   escala           String         @default("5x2")
   entrada          String?        @default("08:00")
   saida            String?        @default("17:00")

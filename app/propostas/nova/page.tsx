@@ -4282,7 +4282,7 @@ function PropostaEditor() {
                                  <React.Fragment key={p.id}>
                                     <tr className="border-b border-slate-200 hover:bg-slate-50">
                                        <td className="px-6 py-4">
-                                          <input type="number" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
+                                          <input type="number" step="any" min="0" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
                                        </td>
                                        <td className="px-6 py-4">
                                           {(() => {
