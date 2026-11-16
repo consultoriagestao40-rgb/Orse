@@ -450,7 +450,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       <td className="p-2 border-r border-b border-slate-200 font-bold text-slate-800">{item.nomeCargo}</td>
                       <td className="p-2 border-r border-b border-slate-200 text-center text-slate-600">{item.escala}</td>
                       <td className="p-2 border-r border-b border-slate-200 text-center text-slate-600">{qty}</td>
-                      {isSpot && <td className="p-2 border-r border-b border-slate-200 text-center uppercase font-bold text-slate-600">{item.unidadeMedida || 'DIA'}</td>}
+                      {isSpot && <td className="p-2 border-r border-b border-slate-200 text-center uppercase font-bold text-slate-600">{item.unidadeMedida === 'MES' ? 'MÊS' : (item.unidadeMedida || 'DIA')}</td>}
                       <td className="p-2 border-r border-b border-slate-200 text-right text-slate-600">{fmt(precoUnitario)}</td>
                       <td className="p-2 border-b border-slate-200 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
                     </tr>

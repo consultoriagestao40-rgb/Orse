@@ -53,6 +53,113 @@ const TABS = [
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
+function resolveSpotItemPricing(
+  item: any,
+  opts: {
+    ccts?: any[];
+    equipesTecnicas?: any[];
+    sindicatoId?: string;
+    encargos?: any;
+    reservaTecnicaPct?: number;
+    manutencaoPct?: number;
+    maquinas?: number;
+    totalEquipeQtd?: number;
+    forceRecalculateUnitPrice?: boolean;
+    targetUnit?: string;
+  }
+) {
+  const { ccts = [], equipesTecnicas = [], sindicatoId = '' } = opts;
+  const eqById = item.equipeTecnicaId
+    ? equipesTecnicas.find((x: any) => x.id === item.equipeTecnicaId)
+    : null;
+
+  const cctId = item.cargo?.cctId || item.configFinanceira?.cctId || sindicatoId;
+  const cctBase =
+    (item.cctBase && Object.keys(item.cctBase).length > 0 ? item.cctBase : null) ||
+    ccts.find((c: any) => c.id === cctId) ||
+    ccts.find((c: any) => c.id === sindicatoId) ||
+    {};
+
+  const cargoRef = item.cargo || item.configFinanceira || {};
+  let cltMonthlyCost = 0;
+  if (Number(cargoRef.pisoSalarial) > 0) {
+    const cltRes = calculateLaborCost(
+      {
+        ...item,
+        tipoItem: 'POSTO_FIXO',
+        quantidade: 1,
+        cargo: cargoRef,
+        cctBase,
+      },
+      {
+        reservaTecnicaPct: opts.reservaTecnicaPct || 0,
+        manutencaoPct: opts.manutencaoPct || 0,
+        encargos: opts.encargos,
+        cctGlobal: cctBase,
+        maquinas: Number(opts.maquinas) || 0,
+        totalEquipeQuantidade: opts.totalEquipeQtd || 1,
+        isSpot: false,
+      }
+    );
+    cltMonthlyCost = Number(cltRes?.custoTotal || 0);
+  }
+
+  const rawQty = Number(item.quantidadeDemanda ?? item.quantidade ?? 1);
+  const qty = !isNaN(rawQty) && rawQty > 0 ? rawQty : 1;
+
+  let unit = opts.targetUnit || item.unidadeMedida || '';
+  if (!unit) {
+    if (!eqById && cltMonthlyCost > 0 && Number(item.quantidade) > 0 && Number(item.quantidade) < 1) {
+      unit = 'MES';
+    } else {
+      unit = 'DIA';
+    }
+  }
+
+  let precoUnit = opts.forceRecalculateUnitPrice ? 0 : Number(item.precoUnitarioDemanda ?? 0);
+  if (precoUnit <= 0) {
+    if (eqById) {
+      precoUnit =
+        unit === 'HORA'
+          ? Number(eqById.valorHoraSugerido || 0)
+          : unit === 'MES'
+          ? Number(eqById.custoMensalTotal || eqById.custoMensalMaoObra || 0)
+          : Number(eqById.valorDiariaSugerido || 0);
+    } else if (cltMonthlyCost > 0) {
+      const divisor = unit === 'HORA' ? 176 : unit === 'MES' ? 1 : 22;
+      precoUnit = Number((cltMonthlyCost / divisor).toFixed(2));
+    } else if (opts.forceRecalculateUnitPrice && Number(item.precoUnitarioDemanda) > 0) {
+      const prevUnit = item.unidadeMedida || 'DIA';
+      const prevMult = prevUnit === 'HORA' ? 176 : prevUnit === 'MES' ? 1 : 22;
+      const baseMensal = Number(item.precoUnitarioDemanda) * prevMult;
+      const nextDiv = unit === 'HORA' ? 176 : unit === 'MES' ? 1 : 22;
+      precoUnit = Number((baseMensal / nextDiv).toFixed(2));
+    }
+  }
+
+  const healedAtivosConfig = {
+    ...(item.ativosConfig || {}),
+    custoMensalMaoObra:
+      eqById?.custoMensalMaoObra ||
+      item.ativosConfig?.custoMensalMaoObra ||
+      (cltMonthlyCost > 0 ? cltMonthlyCost : 0),
+    custoMensalVeiculo: eqById?.custoMensalVeiculo || item.ativosConfig?.custoMensalVeiculo || 0,
+    custoMensalCombustivel: eqById?.custoMensalCombustivel || item.ativosConfig?.custoMensalCombustivel || 0,
+    custoMensalTotal:
+      eqById?.custoMensalTotal ||
+      item.ativosConfig?.custoMensalTotal ||
+      (cltMonthlyCost > 0 ? cltMonthlyCost : 0),
+  };
+
+  return {
+    unidadeMedida: unit,
+    quantidadeDemanda: qty,
+    precoUnitarioDemanda: precoUnit,
+    cctBase,
+    ativosConfig: healedAtivosConfig,
+  };
+}
+
 function PropostaEditor() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -168,11 +275,37 @@ function PropostaEditor() {
             outrosBeneficios: Array.isArray((fullData.premissas as any)?.outrosBeneficios) ? (fullData.premissas as any).outrosBeneficios : [],
             tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
           },
-          equipe: (fullData.equipe || []).map((e: any) => ({
-             ...e,
-             showConfig: false,
-             cctBase: (ccts || []).find((c: any) => c.id === savedSindicatoId) || {}
-          })),
+          equipe: (fullData.equipe || []).map((e: any) => {
+             const isProposalSpot = fullData.cliente?.tipoProposta === 'SPOT';
+             const isItemSpot = isProposalSpot || e.tipoItem === 'SPOT';
+             if (isItemSpot) {
+               const resolved = resolveSpotItemPricing(e, {
+                 ccts: ccts || [],
+                 equipesTecnicas: equipesTecnicasDb || [],
+                 sindicatoId: savedSindicatoId,
+                 encargos: fullData.encargos || proposta.encargos,
+                 reservaTecnicaPct: fullData.premissas?.reservaTecnicaPct || 0,
+                 manutencaoPct: fullData.premissas?.manutencaoPct || 0,
+                 maquinas: Number((fullData as any).insumos?.maquinas) || 0,
+                 totalEquipeQtd: (fullData.equipe || []).reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0) || 1
+               });
+               return {
+                 ...e,
+                 tipoItem: 'SPOT',
+                 unidadeMedida: resolved.unidadeMedida,
+                 quantidadeDemanda: resolved.quantidadeDemanda,
+                 precoUnitarioDemanda: resolved.precoUnitarioDemanda,
+                 showConfig: false,
+                 cctBase: resolved.cctBase,
+                 ativosConfig: resolved.ativosConfig
+               };
+             }
+             return {
+               ...e,
+               showConfig: false,
+               cctBase: (ccts || []).find((c: any) => c.id === (e.cargo?.cctId || savedSindicatoId)) || {}
+             };
+          }),
           versao: fullData.versao,
           insumos: (() => {
             const rawInsumos = (fullData as any).insumos || {};
@@ -662,28 +795,37 @@ function PropostaEditor() {
                 equipe: (fullData.equipe || []).map((e: any) => {
                     const isProposalSpot = (fullData.cliente?.tipoProposta === 'SPOT');
                     const isItemSpot = isProposalSpot || e.tipoItem === 'SPOT';
-                    let healedAtivosConfig = e.ativosConfig || {};
-                    if (isItemSpot && e.equipeTecnicaId) {
-                       const eq = (eqRes?.success ? eqRes.list : []).find((x: any) => x.id === e.equipeTecnicaId);
-                       if (eq) {
-                          healedAtivosConfig = {
-                             ...healedAtivosConfig,
-                             custoMensalMaoObra: eq.custoMensalMaoObra,
-                             custoMensalVeiculo: eq.custoMensalVeiculo,
-                             custoMensalCombustivel: eq.custoMensalCombustivel,
-                             custoMensalTotal: eq.custoMensalTotal
-                          };
-                       }
+                    if (isItemSpot) {
+                       const resolved = resolveSpotItemPricing(e, {
+                          ccts: dataCcts || [],
+                          equipesTecnicas: eqRes?.success ? eqRes.list : [],
+                          sindicatoId: savedSindicatoId,
+                          encargos: fullData.encargos || proposta.encargos,
+                          reservaTecnicaPct: fullData.premissas?.reservaTecnicaPct || 0,
+                          manutencaoPct: fullData.premissas?.manutencaoPct || 0,
+                          maquinas: Number(fullData.insumos?.maquinas) || 0,
+                          totalEquipeQtd: (fullData.equipe || []).reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0) || 1
+                       });
+                       return {
+                          ...e,
+                          tipoItem: 'SPOT',
+                          quantidadeDemanda: resolved.quantidadeDemanda,
+                          precoUnitarioDemanda: resolved.precoUnitarioDemanda,
+                          unidadeMedida: resolved.unidadeMedida,
+                          showConfig: false,
+                          cctBase: resolved.cctBase,
+                          ativosConfig: resolved.ativosConfig
+                       };
                     }
                     return {
                        ...e,
-                       tipoItem: isItemSpot ? 'SPOT' : (e.tipoItem || 'POSTO_FIXO'),
-                       quantidadeDemanda: isItemSpot ? Number(e.quantidadeDemanda ?? e.quantidade ?? 1) : e.quantidadeDemanda,
-                       precoUnitarioDemanda: isItemSpot ? Number(e.precoUnitarioDemanda ?? 0) : e.precoUnitarioDemanda,
-                       unidadeMedida: isItemSpot ? (e.unidadeMedida || 'DIA') : e.unidadeMedida,
+                       tipoItem: e.tipoItem || 'POSTO_FIXO',
+                       quantidadeDemanda: e.quantidadeDemanda,
+                       precoUnitarioDemanda: e.precoUnitarioDemanda,
+                       unidadeMedida: e.unidadeMedida,
                        showConfig: false,
                        cctBase: (dataCcts || []).find((c: any) => c.id === (e.cargo?.cctId || savedSindicatoId)) || {},
-                       ativosConfig: healedAtivosConfig
+                       ativosConfig: e.ativosConfig || {}
                     };
                  }),
                 versao: fullData.versao,
@@ -825,27 +967,28 @@ function PropostaEditor() {
       const isProposalSpot = proposta.cliente?.tipoProposta === 'SPOT';
 
       // Sanitize and heal ativosConfig for SPOT services dynamically on calculation
+      const totalEquipeQtd = proposta.equipe.reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0) || 1;
       const sanitizedItems = proposta.equipe.map((item: any) => {
         const isItemSpot = isProposalSpot || item.tipoItem === 'SPOT';
         if (isItemSpot) {
-          const eq = item.equipeTecnicaId ? equipesTecnicasDb.find(x => x.id === item.equipeTecnicaId) : null;
-          let precoUnit = Number(item.precoUnitarioDemanda ?? 0);
-          if (precoUnit <= 0 && eq) {
-            precoUnit = item.unidadeMedida === 'HORA' ? (Number(eq.valorHoraSugerido) || 0) : (Number(eq.valorDiariaSugerido) || 0);
-          }
+          const resolved = resolveSpotItemPricing(item, {
+            ccts,
+            equipesTecnicas: equipesTecnicasDb,
+            sindicatoId: proposta.cliente?.sindicatoId || '',
+            encargos: proposta.encargos,
+            reservaTecnicaPct: proposta.premissas?.reservaTecnicaPct || 0,
+            manutencaoPct: proposta.premissas?.manutencaoPct || 0,
+            maquinas: Number(proposta.insumos?.maquinas) || 0,
+            totalEquipeQtd
+          });
           return {
             ...item,
             tipoItem: 'SPOT',
-            precoUnitarioDemanda: precoUnit,
-            quantidadeDemanda: Number(item.quantidadeDemanda ?? item.quantidade ?? 1),
-            unidadeMedida: item.unidadeMedida || 'DIA',
-            ativosConfig: {
-              ...item.ativosConfig,
-              custoMensalMaoObra: eq?.custoMensalMaoObra || item.ativosConfig?.custoMensalMaoObra || 0,
-              custoMensalVeiculo: eq?.custoMensalVeiculo || item.ativosConfig?.custoMensalVeiculo || 0,
-              custoMensalCombustivel: eq?.custoMensalCombustivel || item.ativosConfig?.custoMensalCombustivel || 0,
-              custoMensalTotal: eq?.custoMensalTotal || item.ativosConfig?.custoMensalTotal || 0
-            }
+            precoUnitarioDemanda: resolved.precoUnitarioDemanda,
+            quantidadeDemanda: resolved.quantidadeDemanda,
+            unidadeMedida: resolved.unidadeMedida,
+            cctBase: resolved.cctBase,
+            ativosConfig: resolved.ativosConfig
           };
         }
         return item;
@@ -3529,12 +3672,28 @@ function PropostaEditor() {
                            <button
                               type="button"
                               onClick={() => {
-                                 const updatedEquipe = proposta.equipe.map((p: any) => ({
-                                    ...p,
-                                    tipoItem: 'SPOT',
-                                    quantidadeDemanda: p.quantidadeDemanda ?? p.quantidade ?? 1,
-                                    unidadeMedida: p.unidadeMedida || 'DIA'
-                                 }));
+                                 const totalEqQtd = proposta.equipe.reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0) || 1;
+                                 const updatedEquipe = proposta.equipe.map((p: any) => {
+                                    const resolved = resolveSpotItemPricing(p, {
+                                       ccts,
+                                       equipesTecnicas: equipesTecnicasDb,
+                                       sindicatoId: proposta.cliente?.sindicatoId || '',
+                                       encargos: proposta.encargos,
+                                       reservaTecnicaPct: proposta.premissas?.reservaTecnicaPct || 0,
+                                       manutencaoPct: proposta.premissas?.manutencaoPct || 0,
+                                       maquinas: Number(proposta.insumos?.maquinas) || 0,
+                                       totalEquipeQtd: totalEqQtd
+                                    });
+                                    return {
+                                       ...p,
+                                       tipoItem: 'SPOT',
+                                       quantidadeDemanda: resolved.quantidadeDemanda,
+                                       unidadeMedida: resolved.unidadeMedida,
+                                       precoUnitarioDemanda: resolved.precoUnitarioDemanda,
+                                       cctBase: resolved.cctBase,
+                                       ativosConfig: resolved.ativosConfig
+                                    };
+                                 });
                                  setProposta({
                                     ...proposta,
                                     cliente: { ...proposta.cliente, tipoProposta: 'SPOT' },
@@ -4086,6 +4245,8 @@ function PropostaEditor() {
                                     <td className="px-6 py-4">
                                        <input 
                                           type="number" 
+                                          step="any"
+                                          min="0"
                                           className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-blue-500" 
                                           value={p.quantidadeDemanda ?? 1} 
                                           onChange={(e) => {
@@ -4165,19 +4326,31 @@ function PropostaEditor() {
                                           value={p.unidadeMedida || 'DIA'} 
                                           onChange={(e) => {
                                              const unit = e.target.value;
-                                             const eq = equipesTecnicasDb.find(x => x.id === p.equipeTecnicaId);
-                                             const preco = eq ? (unit === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido) : 0;
+                                             const totalEqQtd = proposta.equipe.reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0) || 1;
+                                             const resolved = resolveSpotItemPricing(p, {
+                                                ccts,
+                                                equipesTecnicas: equipesTecnicasDb,
+                                                sindicatoId: proposta.cliente?.sindicatoId || '',
+                                                encargos: proposta.encargos,
+                                                reservaTecnicaPct: proposta.premissas?.reservaTecnicaPct || 0,
+                                                manutencaoPct: proposta.premissas?.manutencaoPct || 0,
+                                                maquinas: Number(proposta.insumos?.maquinas) || 0,
+                                                totalEquipeQtd: totalEqQtd,
+                                                forceRecalculateUnitPrice: true,
+                                                targetUnit: unit
+                                             });
                                              const newE = proposta.equipe.map((x: any) => x.id === p.id ? {
                                                 ...x, 
                                                 tipoItem: 'SPOT',
                                                 unidadeMedida: unit, 
-                                                precoUnitarioDemanda: preco
+                                                precoUnitarioDemanda: resolved.precoUnitarioDemanda
                                              } : x);
                                              setProposta({...proposta, equipe: newE});
                                           }}
                                        >
                                           <option value="DIA" className="text-slate-800 bg-white">DIA (Diária)</option>
                                           <option value="HORA" className="text-slate-800 bg-white">HORA (Hora Técnica)</option>
+                                          <option value="MES" className="text-slate-800 bg-white">MÊS (Posto / Período)</option>
                                        </select>
                                     </td>
                                     <td className="px-6 py-4">
@@ -4187,7 +4360,7 @@ function PropostaEditor() {
                                              type="number" 
                                              step="0.01"
                                              className="w-32 bg-white border border-slate-300 rounded pl-7 pr-2 py-1 text-right font-bold text-slate-800 outline-none focus:border-blue-500" 
-                                             value={p.precoUnitarioDemanda ?? 0} 
+                                             value={p.precoUnitarioDemanda ?? (resultado?.items?.find((x: any) => x.id === p.id)?.detalhes?.custoUnitarioCalculado ? Number(resultado.items.find((x: any) => x.id === p.id).detalhes.custoUnitarioCalculado.toFixed(2)) : 0)} 
                                              onChange={(e) => {
                                                 const val = e.target.value === '' ? '' : Number(e.target.value);
                                                 const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, tipoItem: 'SPOT', precoUnitarioDemanda: val} : x);
@@ -4198,7 +4371,9 @@ function PropostaEditor() {
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-slate-900">
                                        {(() => {
-                                          const totalCusto = (p.quantidadeDemanda || 0) * (p.precoUnitarioDemanda || 0);
+                                          const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
+                                          const directCalc = Number(p.quantidadeDemanda || 0) * Number(p.precoUnitarioDemanda || 0);
+                                          const totalCusto = directCalc > 0 ? directCalc : Number(itemRes?.custoTotal || 0);
                                           return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCusto);
                                        })()}
                                     </td>
@@ -4484,7 +4659,9 @@ function PropostaEditor() {
                            const isSpotItem = isSpot || p.tipoItem === 'SPOT';
                            const qty = isSpotItem ? Number(p.quantidadeDemanda ?? p.quantidade ?? 1) : Number(p.quantidade || 1);
                            const custoTotal = itemRes?.detalhes?.remuneracao ?? itemRes?.custoTotal ?? (isSpotItem ? (qty * Number(p.precoUnitarioDemanda || 0)) : 0);
-                           const custoUnitario = isSpotItem ? (Number(p.precoUnitarioDemanda) || (qty > 0 ? custoTotal / qty : 0)) : custoTotal;
+                           const custoUnitario = isSpotItem
+                             ? (Number(p.precoUnitarioDemanda) || Number(itemRes?.detalhes?.custoUnitarioCalculado) || (qty > 0 ? custoTotal / qty : 0))
+                             : custoTotal;
                            const totalLinha = isSpotItem ? custoTotal : (custoTotal * qty);
                            return (
                               <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50">
@@ -4497,7 +4674,7 @@ function PropostaEditor() {
                                     )}
                                  </td>
                                  <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
-                                 {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
+                                 {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida === 'MES' ? 'MÊS' : (p.unidadeMedida || 'DIA')}</td>}
                                  <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
                                  <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalLinha)}</td>
                               </tr>
@@ -4631,17 +4808,15 @@ function PropostaEditor() {
                            <th colSpan={isSpot ? 5 : 4} className="py-2.5 px-6">
                               <div className="flex items-center justify-between">
                                  <span className="uppercase tracking-widest font-bold">Montante "B" - Insumos</span>
-                                 {!isSpot && (
-                                    <button
-                                       type="button"
-                                       onClick={handleAddOutroCusto}
-                                       className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded text-xs font-bold border border-white/40 transition-all cursor-pointer shadow-xs"
-                                       title="Adicionar nova linha de custo ou serviço"
-                                    >
-                                       <Plus className="w-3.5 h-3.5" />
-                                       <span>Adicionar Linha</span>
-                                    </button>
-                                 )}
+                                 <button
+                                    type="button"
+                                    onClick={handleAddOutroCusto}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded text-xs font-bold border border-white/40 transition-all cursor-pointer shadow-xs"
+                                    title="Adicionar nova linha de custo ou serviço"
+                                 >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Adicionar Linha</span>
+                                 </button>
                               </div>
                            </th>
                         </tr>
@@ -4668,7 +4843,7 @@ function PropostaEditor() {
                               ...(isSpot ? [{ label: 'Equipamentos Locados', val: totalMaquinasLocadas }] : []),
                            ];
 
-                           const outros = (!isSpot && Array.isArray(proposta.insumos?.outrosCustos)) ? proposta.insumos.outrosCustos : [];
+                           const outros = Array.isArray(proposta.insumos?.outrosCustos) ? proposta.insumos.outrosCustos : [];
 
                            return (
                               <>
@@ -4683,11 +4858,11 @@ function PropostaEditor() {
                                     </tr>
                                  ))}
 
-                                 {!isSpot && outros.map((item: any, idx: number) => {
+                                 {outros.map((item: any, idx: number) => {
                                     const rowNumber = baseRows.length + idx + 1;
                                     return (
                                        <tr key={item.id || idx} className="border-b border-slate-200 border-dotted hover:bg-emerald-50/30 transition-colors">
-                                          <td colSpan={3} className="py-1.5 px-6">
+                                          <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6">
                                              <div className="flex items-center gap-2">
                                                 <span className="text-slate-600 font-extrabold text-xs">{rowNumber})</span>
                                                 <input
@@ -4727,19 +4902,17 @@ function PropostaEditor() {
                                     );
                                  })}
 
-                                 {!isSpot && (
-                                    <tr className="border-b border-slate-200 bg-slate-50/60">
-                                       <td colSpan={4} className="py-2 px-6">
-                                          <button
-                                             type="button"
-                                             onClick={handleAddOutroCusto}
-                                             className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
-                                          >
-                                             + Adicionar nova Linha
-                                          </button>
-                                       </td>
-                                    </tr>
-                                 )}
+                                 <tr className="border-b border-slate-200 bg-slate-50/60">
+                                    <td colSpan={isSpot ? 5 : 4} className="py-2 px-6">
+                                       <button
+                                          type="button"
+                                          onClick={handleAddOutroCusto}
+                                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                                       >
+                                          + Adicionar nova Linha
+                                       </button>
+                                    </td>
+                                 </tr>
                               </>
                            );
                         })()}
@@ -4752,11 +4925,9 @@ function PropostaEditor() {
                                  (proposta.insumos.materiais || 0) + 
                                  (isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : (proposta.insumos.maquinas || 0)) + 
                                  (proposta.insumos.descartaveis || 0) + 
-                                 (isSpot ? 0 : (
-                                    Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
-                                       ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
-                                       : (proposta.insumos.servicos || 0)
-                                 ))
+                                 (Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
+                                    ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
+                                    : (proposta.insumos.servicos || 0))
                               )}
                            </td>
                         </tr>
@@ -5032,15 +5203,15 @@ function PropostaEditor() {
                             proposta.equipe.map((p: any, idx: number) => {
                               const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
                               const precoVendaItem = itemRes?.precoVenda || 0;
-                              const isSpotItem = p.tipoItem === 'SPOT';
-                              const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
-                              const precoUnitario = isSpotItem ? (precoVendaItem / qty) : (p.quantidade > 0 ? precoVendaItem / p.quantidade : 0);
+                              const isSpotItem = isSpot || p.tipoItem === 'SPOT';
+                              const qty = isSpotItem ? Number(p.quantidadeDemanda ?? p.quantidade ?? 1) : Number(p.quantidade || 1);
+                              const precoUnitario = qty > 0 ? (precoVendaItem / qty) : 0;
                               return (
                                 <tr key={p.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                   <td className="px-4 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
                                   <td className="px-4 py-2 font-semibold text-slate-800">{p.nomeCargo}</td>
                                   <td className="px-4 py-2 text-center font-bold text-slate-800">{qty}</td>
-                                  {isSpot && <td className="px-4 py-2 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
+                                  {isSpot && <td className="px-4 py-2 text-center uppercase font-bold text-slate-600">{p.unidadeMedida === 'MES' ? 'MÊS' : (p.unidadeMedida || 'DIA')}</td>}
                                   <td className="px-4 py-2 text-right text-slate-700">{fc(precoUnitario)}</td>
                                   <td className="px-4 py-2 text-right font-semibold bg-emerald-50 text-emerald-800">{fc(precoVendaItem)}</td>
                                 </tr>
@@ -5097,7 +5268,7 @@ function PropostaEditor() {
                               {fc(applyCascata(proposta.insumos.descartaveis))}
                             </td>
                           </tr>
-                          {isSpot ? (
+                          {isSpot && (
                             <tr className="border-b border-slate-200 hover:bg-slate-50">
                               <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
                               <td className="px-6 py-2.5 font-semibold text-slate-700">Equipamentos Locados</td>
@@ -5105,29 +5276,28 @@ function PropostaEditor() {
                                 {fc(applyCascata(totalMaquinasLocadas))}
                               </td>
                             </tr>
-                          ) : (
-                            (Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0) ? (
-                              proposta.insumos.outrosCustos.map((item: any, idx: number) => (
-                                <tr key={item.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
-                                  <td className="px-6 py-2.5 text-center font-bold text-slate-500">{5 + idx}</td>
-                                  <td className="px-6 py-2.5 font-semibold text-slate-700">{item.descricao || 'Custo / Serviço Adicional'}</td>
-                                  <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                                    {fc(applyCascata(Number(item.valor) || 0))}
-                                  </td>
-                                </tr>
-                              ))
-                            ) : ((proposta.insumos?.servicos || 0) > 0 ? (
-                              <tr className="border-b border-slate-200 hover:bg-slate-50">
-                                <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
-                                <td className="px-6 py-2.5 font-semibold text-slate-700">
-                                  {proposta.insumos?.servicosDescricao ? `Serviços (${proposta.insumos.servicosDescricao})` : 'Serviços'}
-                                </td>
+                          )}
+                          {(Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0) ? (
+                            proposta.insumos.outrosCustos.map((item: any, idx: number) => (
+                              <tr key={item.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
+                                <td className="px-6 py-2.5 text-center font-bold text-slate-500">{(isSpot ? 6 : 5) + idx}</td>
+                                <td className="px-6 py-2.5 font-semibold text-slate-700">{item.descricao || 'Custo / Serviço Adicional'}</td>
                                 <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                                  {fc(applyCascata(proposta.insumos.servicos))}
+                                  {fc(applyCascata(Number(item.valor) || 0))}
                                 </td>
                               </tr>
-                            ) : null)
-                          )}
+                            ))
+                          ) : ((proposta.insumos?.servicos || 0) > 0 ? (
+                            <tr className="border-b border-slate-200 hover:bg-slate-50">
+                              <td className="px-6 py-2.5 text-center font-bold text-slate-500">{isSpot ? 6 : 5}</td>
+                              <td className="px-6 py-2.5 font-semibold text-slate-700">
+                                {proposta.insumos?.servicosDescricao ? `Serviços (${proposta.insumos.servicosDescricao})` : 'Serviços'}
+                              </td>
+                              <td className="px-6 py-2.5 text-right font-bold text-slate-800">
+                                {fc(applyCascata(proposta.insumos.servicos))}
+                              </td>
+                            </tr>
+                          ) : null)}
                         </tbody>
                         <tfoot>
                           <tr className="bg-[#0B2E24] text-white font-black">
@@ -5137,11 +5307,11 @@ function PropostaEditor() {
                                 Number(proposta.insumos.materiais || 0) + 
                                 Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas || 0) + 
                                 Number(proposta.insumos.descartaveis || 0) + 
-                                Number(isSpot ? 0 : (
+                                Number(
                                   Array.isArray(proposta.insumos?.outrosCustos) && proposta.insumos.outrosCustos.length > 0
                                     ? proposta.insumos.outrosCustos.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0)
                                     : (proposta.insumos.servicos || 0)
-                                ))
+                                )
                               ))}
                             </td>
                           </tr>
@@ -9049,7 +9219,7 @@ function PropostaEditor() {
                                           const newE = proposta.equipe.map((x: any) => {
                                              if (x.id === cargoPickerModal.postoId) {
                                                 const unit = x.unidadeMedida || 'DIA';
-                                                const preco = unit === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido;
+                                                const preco = unit === 'HORA' ? eq.valorHoraSugerido : unit === 'MES' ? (eq.custoMensalTotal || eq.custoMensalMaoObra || 0) : eq.valorDiariaSugerido;
                                                 return {
                                                    ...x,
                                                    tipoItem: 'SPOT',

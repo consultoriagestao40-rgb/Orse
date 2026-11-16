@@ -2873,7 +2873,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                               <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50 bg-white">
                                 <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
                                 <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
-                                {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
+                                {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida === 'MES' ? 'MÊS' : (p.unidadeMedida || 'DIA')}</td>}
                                 <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
                                 <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(totalLinha)}</td>
                               </tr>
@@ -3211,7 +3211,7 @@ export default function ViewClient({ doc, fullProposta, isInternalUser = false }
                                       <td className="px-6 py-2 text-center font-bold text-slate-455">{idx + 1}</td>
                                       <td className="px-6 py-2 font-bold text-slate-700">{p.nomeCargo}</td>
                                       <td className="px-6 py-2 text-center font-black text-slate-800">{qty}</td>
-                                      {isSpot && <td className="px-6 py-2 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
+                                      {isSpot && <td className="px-6 py-2 text-center uppercase font-bold text-slate-600">{p.unidadeMedida === 'MES' ? 'MÊS' : (p.unidadeMedida || 'DIA')}</td>}
                                       <td className="px-6 py-2 text-right font-medium text-slate-600">{fc(precoUnitario)}</td>
                                       <td className="px-6 py-2 text-right font-black bg-emerald-50/30 text-[#1B4D3E] border-l border-slate-100">{fc(precoVendaItem)}</td>
                                     </tr>

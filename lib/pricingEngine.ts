@@ -7,21 +7,43 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     const unit = colab.unidadeMedida || 'DIA';
     const precoUnitDemanda = Number(colab.precoUnitarioDemanda ?? 0);
     const configAtivos = colab.ativosConfig || {};
-    
+
     const totalMensalMaoObra = Number(configAtivos.custoMensalMaoObra || 0);
     const totalMensalVeiculo = Number(configAtivos.custoMensalVeiculo || 0);
     const totalMensalCombustivel = Number(configAtivos.custoMensalCombustivel || 0);
-    
-    const divisor = unit === 'HORA' ? 176 : 22;
-    
+
+    const divisor = unit === 'HORA' ? 176 : unit === 'MES' ? 1 : 22;
+
     const custoMaoObra = (totalMensalMaoObra / divisor) * qtyDemanda;
     const custoVeiculo = (totalMensalVeiculo / divisor) * qtyDemanda;
     const custoCombustivel = (totalMensalCombustivel / divisor) * qtyDemanda;
-    
+
     const outrosCustos = custoCombustivel;
-    const fallbackCustoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
+    let fallbackCustoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
+    let custoUnitarioCalculado = precoUnitDemanda > 0
+      ? precoUnitDemanda
+      : (qtyDemanda > 0 ? fallbackCustoTotalDireto / qtyDemanda : 0);
+
+    // Fallback inteligente: se o item veio de um cargo CLT (ex: conversão Recorrente -> SPOT)
+    // e ainda não possui precoUnitarioDemanda nem custoMensalMaoObra na Equipe Técnica,
+    // calcula o custo mensal integral do cargo pela CCT para nunca zerar a mão de obra.
+    if (precoUnitDemanda <= 0 && fallbackCustoTotalDireto <= 0) {
+      const cargoRef = colab.cargo || colab.configFinanceira || {};
+      if (Number(cargoRef.pisoSalarial) > 0) {
+        const cltRes = computeCltLaborCost(
+          { ...colab, tipoItem: 'POSTO_FIXO', quantidade: 1 },
+          { ...premissas, isSpot: false, tipoProposta: 'RECORRENTE' }
+        );
+        const cltMensalUnit = Number(cltRes?.custoTotal || 0);
+        if (cltMensalUnit > 0) {
+          custoUnitarioCalculado = cltMensalUnit / divisor;
+          fallbackCustoTotalDireto = custoUnitarioCalculado * qtyDemanda;
+        }
+      }
+    }
+
     const custoTotalDireto = precoUnitDemanda > 0 ? (qtyDemanda * precoUnitDemanda) : fallbackCustoTotalDireto;
-    
+
     return {
       remuneracao: custoTotalDireto,
       encargos: 0,
@@ -29,6 +51,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       beneficios: 0,
       ativos: 0,
       custoTotal: custoTotalDireto,
+      custoUnitarioCalculado,
       detalheBlocoB: {
         uniformes: 0,
         epis: 0,
@@ -55,6 +78,11 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       custoTotalDireto: custoTotalDireto
     };
   }
+
+  return computeCltLaborCost(colab, premissas);
+}
+
+function computeCltLaborCost(colab: any, premissas: any): any {
 
   // Busca resiliente da CCT e do Cargo
   // Prioridade de CCT: 1. Do colaborador, 2. Global da proposta (selecionada na Aba 1), 3. Config Financeira (backup)
