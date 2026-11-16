@@ -659,7 +659,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                                      </div>
                                                                      <div className="space-y-0.5">
                                                                         <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Data / Hora do Aceite</div>
-                                                                        <div className="text-[0.9cqw] text-slate-800 leading-none">{proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR') : '-'}</div>
+                                                                        <div className="text-[0.9cqw] text-slate-800 leading-none">{proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '-'}</div>
                                                                      </div>
                                                                   </div>
 

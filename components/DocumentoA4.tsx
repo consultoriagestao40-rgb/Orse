@@ -734,7 +734,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   <div className="truncate"><strong>Assinante:</strong> {proposta.nomeAssinante}</div>
                   <div className="truncate"><strong>CPF/CNPJ:</strong> {proposta.cpfAssinante}</div>
                   {proposta.emailAssinante && <div className="truncate"><strong>E-mail:</strong> {proposta.emailAssinante}</div>}
-                  <div><strong>Data/Hora:</strong> {proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}</div>
+                  <div><strong>Data/Hora:</strong> {proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
                   <div className="truncate"><strong>IP de Registro:</strong> <span className="font-mono">{proposta.ipAssinante || '187.64.12.195'}</span></div>
                 </div>
               </div>

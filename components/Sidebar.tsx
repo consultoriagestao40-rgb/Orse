@@ -13,7 +13,7 @@ import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
 import { playWhatsAppChime } from '@/lib/sound';
 import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList, uploadChatFileAction, updateUserLastActive } from '@/app/leads/chat-actions';
-import { formatLastSeen } from '@/lib/timezone';
+import { formatLastSeen, formatDateTimeBrasilia } from '@/lib/timezone';
 import { WavAudioRecorder } from '@/lib/WavAudioRecorder';
 import { UserProfileModal } from './sidebar/UserProfileModal';
  
@@ -2198,11 +2198,30 @@ const Sidebar = () => {
                           filtered.map((n) => {
                             const getNotificationMeta = (text: string) => {
                               const lower = text.toLowerCase();
-                              if (lower.includes('visualizou') || lower.includes('visualizada')) {
+                              if (
+                                lower.includes('visualizou') ||
+                                lower.includes('visualizada') ||
+                                lower.includes('proposta aberta') ||
+                                lower.includes('primeiro acesso')
+                              ) {
                                   return {
                                     bg: 'bg-emerald-50 text-emerald-600 border-emerald-100',
                                     emoji: '👀',
-                                    title: 'Visualização de Proposta'
+                                    title: 'Cliente na Proposta'
+                                  };
+                              }
+                              if (lower.includes('proposta aprovada')) {
+                                  return {
+                                    bg: 'bg-green-50 text-green-700 border-green-200',
+                                    emoji: '🎉',
+                                    title: 'Proposta Aprovada!'
+                                  };
+                              }
+                              if (lower.includes('reajuste') || lower.includes('vencimento de contrato') || lower.includes('data-base')) {
+                                  return {
+                                    bg: 'bg-amber-50 text-amber-700 border-amber-200',
+                                    emoji: '📅',
+                                    title: 'Reajuste & Contratos'
                                   };
                               }
                               if (lower.includes('e-mail') || lower.includes('email')) {
@@ -2254,11 +2273,17 @@ const Sidebar = () => {
 
                                   <div className="pt-2 flex items-center justify-between border-t border-slate-100 flex-wrap gap-2">
                                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight flex items-center gap-1">
-                                      🕒 {new Date(n.createdAt).toLocaleDateString('pt-BR')} • {new Date(n.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                      🕒 {formatDateTimeBrasilia(n.createdAt)}
                                     </span>
                                     {n.link && (
                                       <span className="text-[9px] text-[#1B4D3E] hover:underline font-black uppercase tracking-wider flex items-center gap-0.5 transition-all group-hover:translate-x-0.5">
-                                        Acessar orçamento →
+                                        {n.link.startsWith('/contratos')
+                                          ? 'Abrir contrato →'
+                                          : n.link.startsWith('/ccts')
+                                          ? 'Ver convenção →'
+                                          : n.link.startsWith('/leads')
+                                          ? 'Abrir CRM →'
+                                          : 'Acessar proposta →'}
                                       </span>
                                     )}
                                   </div>

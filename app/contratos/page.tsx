@@ -737,6 +737,46 @@ export default function ContratosDashboard() {
   const valorMensalTotal = contratosValidosParaReceita.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
   const valorGlobalTotal = contratosValidosParaReceita.reduce((acc, c) => acc + (c.valorTotal || 0), 0);
 
+  const contratosAlerta45Dias = React.useMemo(() => {
+    const now = new Date();
+    const hojeUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    return contratos
+      .filter((c) => {
+        const st = (c.status || '').toLowerCase();
+        return !st.includes('encerrad') && !st.includes('cancelad') && !st.includes('rescind');
+      })
+      .map((c) => {
+        let target: Date | null = null;
+        let label = 'Reajuste';
+        if (c.dataReajuste) {
+          const r = new Date(c.dataReajuste);
+          target = new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth(), r.getUTCDate()));
+          label = `Reajuste (${c.indiceReajuste || 'IPCA'})`;
+        } else if (c.dataInicio) {
+          const d = new Date(c.dataInicio);
+          const months = Number(c.vigenciaMeses || 12);
+          target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + Math.min(12, months), d.getUTCDate()));
+          label = months <= 12 ? 'Vencimento / Reajuste' : 'Aniversário 12m (Reajuste)';
+        }
+        if (!target) return null;
+        const dias = Math.round((target.getTime() - hojeUTC.getTime()) / 86400000);
+        if (dias > 45 || dias < -30) return null;
+        return {
+          contrato: c,
+          dias,
+          label,
+          dataStr: target.toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+        };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => a.dias - b.dias) as Array<{
+      contrato: any;
+      dias: number;
+      label: string;
+      dataStr: string;
+    }>;
+  }, [contratos]);
+
   const statusList = statusesList;
 
   // ── Utilitários de cor ───────────────────────────────────────────────────────
@@ -995,6 +1035,42 @@ export default function ContratosDashboard() {
               ))}
             </div>
 
+            {/* RADAR AUTOMÁTICO DE REAJUSTES E VENCIMENTOS (<= 45 DIAS) */}
+            {contratosAlerta45Dias.length > 0 && (
+              <div className="px-8 py-2.5 bg-amber-50/90 border-b border-amber-200 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                  <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                  <span>
+                    Radar de Reajuste &amp; Renovação: <strong>{contratosAlerta45Dias.length}</strong>{' '}
+                    {contratosAlerta45Dias.length === 1 ? 'contrato exige' : 'contratos exigem'} atenção nos próximos 45 dias:
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {contratosAlerta45Dias.slice(0, 4).map((item) => (
+                    <button
+                      key={item.contrato.id}
+                      onClick={() => router.push(`/contratos/${item.contrato.id}`)}
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1.5 ${
+                        item.dias <= 7
+                          ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                          : 'bg-white text-amber-800 border-amber-300 hover:bg-amber-100'
+                      }`}
+                    >
+                      <span>{item.contrato.client?.nomeFantasia || item.contrato.client?.razaoSocial || 'Contrato'}</span>
+                      <span className="opacity-75">•</span>
+                      <span>
+                        {item.dias < 0
+                          ? `Vencido há ${Math.abs(item.dias)}d`
+                          : item.dias === 0
+                          ? 'Hoje!'
+                          : `em ${item.dias}d (${item.dataStr})`}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* BARRA DE BUSCA */}
             <div className="px-8 py-3 flex items-center gap-3 shrink-0 bg-white border-b border-slate-200">
               <div className="relative flex-1 max-w-sm">
@@ -1048,7 +1124,7 @@ export default function ContratosDashboard() {
                               <span className="text-slate-600 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-slate-500 font-mono text-xs">{new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                          <td className="px-6 py-3 text-slate-500 font-mono text-xs">{new Date(c.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                           <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
                           <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.vigenciaMeses}m</td>
                           <td className="px-6 py-3 text-center text-slate-600">{renderVencimento(c.dataInicio, c.vigenciaMeses)}</td>

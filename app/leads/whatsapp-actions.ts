@@ -586,7 +586,7 @@ export async function addLeadReminder(leadId: string, data: { titulo: string; ti
     await prisma.notification.create({
       data: {
         userId: user.id,
-        texto: `⏰ Lembrete agendado: ${data.titulo} para ${dInicio.toLocaleString('pt-BR')}`,
+        texto: `⏰ Lembrete agendado: ${data.titulo} para ${dInicio.toLocaleString('pt-BR', { timeZone: user?.timezone || 'America/Sao_Paulo' })}`,
         link: `/leads?id=${leadId}`
       }
     });

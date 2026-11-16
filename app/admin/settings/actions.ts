@@ -613,7 +613,7 @@ export async function testSystemSmtpConnection(targetEmail: string) {
             </p>
           </div>
           <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-            Enviado em: ${new Date().toLocaleString('pt-BR')}
+            Enviado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
           </p>
         </div>
       `,
@@ -875,11 +875,13 @@ export async function testSystemWhatsAppConnection(targetPhone: string) {
       `✅ *TESTE DE CONEXÃO — SMARTBIDHUB OFICIAL*\n\n` +
       `Esta é uma mensagem de teste disparada pelo número central oficial da *SmartBidHub*.\n\n` +
       `A partir de agora, todas as notificações automáticas de:\n` +
+      `• 👀 *Abertura de Propostas em Tempo Real*\n` +
       `• 🎉 *Propostas Aprovadas / Assinadas*\n` +
       `• ⚠️ *Propostas Recusadas / Pedidos de Ajuste*\n` +
+      `• 📅 *Vencimento e Reajuste de Contratos / CCTs*\n` +
       `• 📢 *Publicação de Atas de Reunião*\n\n` +
       `serão enviadas por este canal oficial para todas as empresas da plataforma.\n\n` +
-      `📅 _Enviado em: ${new Date().toLocaleString('pt-BR')}_`;
+      `📅 _Enviado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}_`;
 
     const res = await sendOfficialWhatsAppNotification({
       phone: targetPhone,

@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { triggerPicCreationForContract } from '@/app/pic/actions';
+import { formatServerDate } from '@/lib/timezone';
+import { runContractAndReajusteAlerts } from '@/lib/contract-alerts';
 
 export async function getEmpresasEmissoras() {
   const user = await getLoggedUser();
@@ -150,6 +152,8 @@ export async function getContratos() {
   if (!user || !user.tenantId) {
     return { success: true, data: [] };
   }
+  // Disparo assíncrono diário de verificação de vencimentos e reajustes do tenant
+  runContractAndReajusteAlerts({ tenantId: user.tenantId }).catch(() => {});
   try {
     const contratos = await prisma.contrato.findMany({
       where: { tenantId: user.tenantId },
@@ -246,7 +250,7 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
     const valorTotal = valorMensal * vigenciaMeses;
 
     const fmtMoeda = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-    const dateStr = new Date().toLocaleDateString('pt-BR');
+    const dateStr = formatServerDate(new Date(), user?.timezone || 'America/Sao_Paulo');
     
     let tableItens = '';
     if (proposta.versoes?.[0]?.items) {
@@ -348,10 +352,22 @@ export async function updateContratoDetails(id: string, data: any) {
       return { success: false, error: 'Contrato não encontrado no seu ambiente.' };
     }
 
+    const nextData = { ...data };
+    if (nextData.dataInicio && !nextData.dataReajuste && !existing.dataReajuste) {
+      const dIni = new Date(nextData.dataInicio);
+      if (!isNaN(dIni.getTime())) {
+        nextData.dataReajuste = new Date(
+          Date.UTC(dIni.getUTCFullYear() + 1, dIni.getUTCMonth(), dIni.getUTCDate())
+        );
+      }
+    }
+
     await prisma.contrato.update({
       where: { id },
-      data
+      data: nextData
     });
+
+    runContractAndReajusteAlerts({ tenantId: user.tenantId, forceCheck: true }).catch(() => {});
 
     if (data.status && (data.status.toUpperCase() === 'VIGENTE' || data.status.toUpperCase() === 'ATIVO')) {
       const picRes = await triggerPicCreationForContract(id);

@@ -2,6 +2,32 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { formatServerDateTime } from '@/lib/timezone';
+
+const TAB_LABELS: Record<string, string> = {
+  apresentacao: 'Apresentação Institucional',
+  proposta: 'Proposta Comercial',
+  fpv: 'Planilha de Custos (FPV)',
+  minuta: 'Minuta de Contrato',
+  faq: 'Perguntas Frequentes (FAQ)',
+};
+
+async function resolveTargetWhatsAppPhone(doc: any): Promise<string | null> {
+  if (doc?.proposta?.user?.celular) return doc.proposta.user.celular;
+  if (!doc?.tenantId) return null;
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: doc.tenantId },
+    select: {
+      whatsappPhone: true,
+      users: {
+        where: { role: 'ADMIN', celular: { not: null } },
+        take: 1,
+        select: { celular: true },
+      },
+    },
+  });
+  return tenant?.users?.[0]?.celular || tenant?.whatsappPhone || null;
+}
 
 /**
  * Server Action pública para buscar um template de minuta por ID
@@ -75,13 +101,26 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
       data: { status: 'Aprovada' }
     }).catch(err => console.error('Erro ao atualizar FPV associada:', err));
 
-    // 3. Disparar notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
+    // 3. Disparar Push + notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
     const vendedor = doc.proposta.user;
-    if (vendedor.celular) {
+    const numProposta = String(doc.proposta.numero).padStart(3, '0');
+    const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || 'Cliente';
+    const dataHoraBr = formatServerDateTime(new Date(), vendedor?.timezone || 'America/Sao_Paulo');
+
+    try {
+      const { sendWebPush } = await import('@/app/notifications/actions');
+      await sendWebPush(
+        doc.proposta.userId,
+        `🎉 Proposta FPV-${numProposta} Aprovada!`,
+        `${clienteNome} (${payload.nome}) assinou eletronicamente às ${dataHoraBr}.`,
+        `/propostas-comerciais/${doc.id}`
+      );
+    } catch {}
+
+    const targetPhone = await resolveTargetWhatsAppPhone(doc);
+    if (targetPhone) {
       try {
         const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
-        const numProposta = String(doc.proposta.numero).padStart(3, '0');
-        const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
 
         const text = `🎉 *PROPOSTA APROVADA!* 🎉\n\n` +
                      `Olá, *${vendedor.nome}*!\n\n` +
@@ -89,12 +128,12 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
                      `✍️ *Assinado por:* ${payload.nome}\n` +
                      `🆔 *CPF/CNPJ:* ${payload.cpf}\n` +
                      `🌐 *IP:* ${payload.ip}\n` +
-                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `📅 *Data/Hora:* ${dataHoraBr}\n\n` +
                      `Parabéns por mais este fechamento! 🚀💼\n` +
                      `_Notificação Oficial • SmartBidHub_`;
 
         await sendOfficialWhatsAppNotification({
-          phone: vendedor.celular,
+          phone: targetPhone,
           message: text,
           fallbackTenantId: doc.tenantId,
         });
@@ -179,24 +218,37 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       data: { status: 'Recusada' }
     }).catch(err => console.error('Erro ao atualizar FPV:', err));
 
-    // 3. Disparar notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
+    // 3. Disparar Push + notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
     const vendedor = doc.proposta.user;
-    if (vendedor.celular) {
+    const numProposta = String(doc.proposta.numero).padStart(3, '0');
+    const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || 'Cliente';
+    const dataHoraBr = formatServerDateTime(new Date(), vendedor?.timezone || 'America/Sao_Paulo');
+
+    try {
+      const { sendWebPush } = await import('@/app/notifications/actions');
+      await sendWebPush(
+        doc.proposta.userId,
+        `⚠️ Proposta FPV-${numProposta} Recusada`,
+        `${clienteNome} registrou recusa às ${dataHoraBr}.`,
+        `/propostas-comerciais/${doc.id}`
+      );
+    } catch {}
+
+    const targetPhone = await resolveTargetWhatsAppPhone(doc);
+    if (targetPhone) {
       try {
         const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
-        const numProposta = String(doc.proposta.numero).padStart(3, '0');
-        const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
 
         const text = `⚠️ *PROPOSTA RECUSADA* ⚠️\n\n` +
                      `Olá, *${vendedor.nome}*!\n\n` +
                      `O cliente *${clienteNome}* visualizou e *recusou* a proposta comercial *FPV-${numProposta}*.\n\n` +
                      `💬 *Justificativa informada:* ${motivo}\n` +
-                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `📅 *Data/Hora:* ${dataHoraBr}\n\n` +
                      `Acesse a plataforma para renegociar com o cliente. 📈💼\n` +
                      `_Notificação Oficial • SmartBidHub_`;
 
         await sendOfficialWhatsAppNotification({
-          phone: vendedor.celular,
+          phone: targetPhone,
           message: text,
           fallbackTenantId: doc.tenantId,
         });
@@ -298,22 +350,104 @@ export async function trackDocumentoView(
       }
       tracking.history.push(historyItem);
 
-      // Criar notificação para o vendedor dono da proposta
+      // Criar notificação para o vendedor dono da proposta + Push + WhatsApp Inteligente (sem spam de abas)
+      const vendedor = doc.proposta?.user;
       const numProposta = String(doc.proposta.numero).padStart(3, '0');
-      const clienteNome = identificacao?.nome 
-        ? `${identificacao.nome}${identificacao.cnpjOuEmail ? ` (${identificacao.cnpjOuEmail})` : ''}` 
-        : (doc.client.nomeFantasia || 'Cliente');
+      const empresaClienteNome = doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Cliente';
+      const visitanteLabel = identificacao?.nome
+        ? `${identificacao.nome}${identificacao.cnpjOuEmail ? ` (${identificacao.cnpjOuEmail})` : ''}`
+        : null;
+      const clienteDisplay = visitanteLabel ? `${empresaClienteNome} — ${visitanteLabel}` : empresaClienteNome;
+      const tabFriendly = TAB_LABELS[tabId] || tabId.toUpperCase();
       const isFirstAccess = tracking.history.length === 1;
+      const dataHoraBr = formatServerDateTime(now, vendedor?.timezone || 'America/Sao_Paulo');
+
+      const notifiedVisitors: string[] = Array.isArray(tracking.notifiedVisitors) ? tracking.notifiedVisitors : [];
+      const visitorKey = identificacao?.nome
+        ? `${identificacao.nome.trim().toLowerCase()}|${(identificacao.cnpjOuEmail || '').trim().toLowerCase()}`
+        : null;
+      const isNewNamedVisitor = Boolean(visitorKey && !notifiedVisitors.includes(visitorKey));
+      if (visitorKey && isNewNamedVisitor) {
+        notifiedVisitors.push(visitorKey);
+        tracking.notifiedVisitors = notifiedVisitors;
+      }
+
+      const lastWhatsMs = tracking.lastWhatsappViewAlertAt ? new Date(tracking.lastWhatsappViewAlertAt).getTime() : 0;
+      const minutesSinceLastWhats = lastWhatsMs ? (now.getTime() - lastWhatsMs) / 60000 : Infinity;
+      const shouldSendRealtimeAlert = isFirstAccess || isNewNamedVisitor || minutesSinceLastWhats >= 45;
+
+      if (shouldSendRealtimeAlert) {
+        tracking.lastWhatsappViewAlertAt = now.toISOString();
+      }
 
       await prisma.notification.create({
         data: {
           userId: doc.proposta.userId,
           texto: isFirstAccess
-            ? `👀 Primeiro Acesso: O cliente ${clienteNome} acessou a sua proposta FPV-${numProposta} pela primeira vez!`
-            : `👀 Proposta Visualizada: O cliente ${clienteNome} visualizou a aba "${tabId.toUpperCase()}" da proposta FPV-${numProposta}.`,
+            ? `👀 Proposta Aberta Agora: ${clienteDisplay} acabou de abrir sua proposta FPV-${numProposta} (${dataHoraBr})!`
+            : `👀 Proposta Visualizada: ${clienteDisplay} acessou "${tabFriendly}" da proposta FPV-${numProposta} (${dataHoraBr}).`,
           link: `/propostas-comerciais/${documentoId}`
         }
       });
+
+      // Persiste o rastreamento imediatamente antes dos envios externos (evita corrida entre abas)
+      await prisma.documentoProposta.update({
+        where: { id: documentoId },
+        data: {
+          configApresentacao: {
+            ...config,
+            viewTracking: tracking
+          }
+        }
+      });
+
+      if (shouldSendRealtimeAlert) {
+        try {
+          const { sendWebPush } = await import('@/app/notifications/actions');
+          await sendWebPush(
+            doc.proposta.userId,
+            isFirstAccess
+              ? `👀 Cliente abriu a Proposta FPV-${numProposta}!`
+              : `🔥 Cliente voltou na Proposta FPV-${numProposta}!`,
+            `${clienteDisplay} está visualizando "${tabFriendly}" agora (${dataHoraBr}).`,
+            `/propostas-comerciais/${documentoId}`
+          );
+        } catch {}
+
+        const targetPhone = await resolveTargetWhatsAppPhone(doc);
+        if (targetPhone) {
+          try {
+            const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
+            const headline = isFirstAccess
+              ? `👀 *CLIENTE ABRIU SUA PROPOSTA AGORA!* 👀`
+              : isNewNamedVisitor
+              ? `👀 *NOVO DECISOR ABRIU SUA PROPOSTA!* 👀`
+              : `🔥 *CLIENTE VOLTOU A LER SUA PROPOSTA!* 🔥`;
+
+            const text =
+              `${headline}\n\n` +
+              `Olá, *${vendedor?.nome || 'Consultor'}*!\n\n` +
+              (isFirstAccess
+                ? `O cliente *${empresaClienteNome}* acabou de abrir o link da sua proposta comercial *FPV-${numProposta}* pela primeira vez!\n\n`
+                : `O cliente *${empresaClienteNome}* está novamente com a sua proposta comercial *FPV-${numProposta}* aberta na tela!\n\n`) +
+              (visitanteLabel ? `👤 *Visitante identificado:* ${visitanteLabel}\n` : '') +
+              `📑 *Seção aberta:* ${tabFriendly}\n` +
+              `📅 *Data/Hora:* ${dataHoraBr}\n\n` +
+              `💡 _Excelente momento para acompanhar a negociação enquanto a proposta está aberta!_\n` +
+              `_Notificação Oficial • SmartBidHub_`;
+
+            await sendOfficialWhatsAppNotification({
+              phone: targetPhone,
+              message: text,
+              fallbackTenantId: doc.tenantId,
+            });
+          } catch (whatsErr) {
+            console.error('Erro ao disparar WhatsApp de abertura de proposta:', whatsErr);
+          }
+        }
+      }
+
+      return { success: true };
     }
 
     // Save back to db
@@ -393,24 +527,37 @@ export async function registrarAjusteAction(documentoId: string, mensagem: strin
       }
     });
 
-    // 2. Disparar notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
+    // 2. Disparar Push + notificação no WhatsApp do Vendedor via Instância Oficial Central SmartBid (Z-API)
     const vendedor = doc.proposta.user;
-    if (vendedor.celular) {
+    const numProposta = String(doc.proposta.numero).padStart(3, '0');
+    const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || 'Cliente';
+    const dataHoraBr = formatServerDateTime(new Date(), vendedor?.timezone || 'America/Sao_Paulo');
+
+    try {
+      const { sendWebPush } = await import('@/app/notifications/actions');
+      await sendWebPush(
+        doc.proposta.userId,
+        `💬 Ajuste Solicitado na FPV-${numProposta}`,
+        `${clienteNome} enviou uma solicitação de ajuste às ${dataHoraBr}.`,
+        `/propostas-comerciais/${doc.id}`
+      );
+    } catch {}
+
+    const targetPhone = await resolveTargetWhatsAppPhone(doc);
+    if (targetPhone) {
       try {
         const { sendOfficialWhatsAppNotification } = await import('@/lib/whatsapp-official');
-        const numProposta = String(doc.proposta.numero).padStart(3, '0');
-        const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
 
         const text = `💬 *SOLICITAÇÃO DE AJUSTES* 💬\n\n` +
                      `Olá, *${vendedor.nome}*!\n\n` +
                      `O cliente *${clienteNome}* visualizou a proposta comercial *FPV-${numProposta}* e solicitou ajustes/contraproposta.\n\n` +
                      `💬 *Mensagem do cliente:* ${mensagem}\n` +
-                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `📅 *Data/Hora:* ${dataHoraBr}\n\n` +
                      `Acesse a plataforma para responder ao cliente. 📈💼\n` +
                      `_Notificação Oficial • SmartBidHub_`;
 
         await sendOfficialWhatsAppNotification({
-          phone: vendedor.celular,
+          phone: targetPhone,
           message: text,
           fallbackTenantId: doc.tenantId,
         });

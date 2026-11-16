@@ -877,7 +877,7 @@ export async function getPropostas(preFetchedUser?: any) {
         empresaEmissoraId: meta.empresaEmissoraId || meta.premissas?.empresaEmissoraId || '',
         regimeTributario: meta.regimeTributario || meta.premissas?.regimeTributario || 'LUCRO_REAL',
         segmento: p.client?.segmento || 'Sem Segmento',
-        data: p.createdAt.toLocaleDateString('pt-BR'),
+        data: p.createdAt.toLocaleDateString('pt-BR', { timeZone: user?.timezone || 'America/Sao_Paulo' }),
         valor: meta.resultado?.faturamentoBruto || lastVersao?.precoVenda || 0,
         status: p.status,
         versao: lastVersao?.versao || 1,
@@ -1030,7 +1030,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       return {
         id: v.id,
         versao: v.versao,
-        data: v.dataCriacao.toLocaleDateString('pt-BR'),
+        data: v.dataCriacao.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
         valor: v.precoVenda,
         changelog: meta.changelog || 'Criação inicial da proposta'
       };

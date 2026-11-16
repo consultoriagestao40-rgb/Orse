@@ -594,7 +594,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                                      </div>
                                                                      <div className="space-y-0.5">
                                                                         <div className="text-[8px] text-slate-400 font-black uppercase tracking-widest leading-none">Data / Hora do Aceite</div>
-                                                                        <div className="text-[9px] text-slate-800 leading-none">{proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR') : '-'}</div>
+                                                                        <div className="text-[9px] text-slate-800 leading-none">{proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '-'}</div>
                                                                      </div>
                                                                   </div>
 

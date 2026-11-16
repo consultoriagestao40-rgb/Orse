@@ -97,6 +97,58 @@ export function formatDateTimeBrasilia(dateInput: any): string {
 }
 
 /**
+ * Formata data e hora de forma determinística (seguro em Server Actions / Vercel Serverless UTC e no Browser)
+ * Exemplo: "16/11/2026 às 08:05"
+ */
+export function formatServerDateTime(
+  dateInput: any = new Date(),
+  tz: string = 'America/Sao_Paulo',
+  withSeconds: boolean = false
+): string {
+  try {
+    const date = parseDateUTC(dateInput);
+    const safeTz = tz || 'America/Sao_Paulo';
+    const datePart = date.toLocaleDateString('pt-BR', {
+      timeZone: safeTz,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const timePart = date.toLocaleTimeString('pt-BR', {
+      timeZone: safeTz,
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(withSeconds ? { second: '2-digit' } : {}),
+    });
+    return `${datePart} às ${timePart}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Formata apenas a data de forma determinística no fuso horário de Brasília (ou fuso do usuário)
+ * Exemplo: "16/11/2026"
+ */
+export function formatServerDate(
+  dateInput: any = new Date(),
+  tz: string = 'America/Sao_Paulo'
+): string {
+  try {
+    const date = parseDateUTC(dateInput);
+    const safeTz = tz || 'America/Sao_Paulo';
+    return date.toLocaleDateString('pt-BR', {
+      timeZone: safeTz,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Formata o status de "Último Visto" do usuário no fuso horário do usuário
  */
 export function formatLastSeen(lastActiveInput: any): string {

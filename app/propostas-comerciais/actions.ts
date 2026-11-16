@@ -12,6 +12,7 @@ import {
   getDocumentoStatuses 
 } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
+import { formatServerDateTime } from '@/lib/timezone';
 
 export async function getDocumentosProposta(preFetchedUser?: any) {
   const user = preFetchedUser || await getLoggedUser();
@@ -107,7 +108,7 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         empresa: d.empresaEmissora?.nomeFantasia,
         valor: d.valorTotal || matchedVersaoObj?.precoVenda || 0,
         status: d.status,
-        data: d.createdAt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        data: d.createdAt.toLocaleString('pt-BR', { timeZone: user?.timezone || 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         versaoFPV: effectiveVersao,
         usuario: d.proposta?.user?.nome || 'Sistema',
         avatarUrl: d.proposta?.user?.avatarUrl || null,
@@ -443,7 +444,7 @@ export async function updateDocumentoStatus(id: string, status: string) {
           `🎉 *PROPOSTA APROVADA!* 🎉\n\n` +
           `Olá, *${vendedor.nome}*!\n\n` +
           `A proposta comercial *FPV-${numProposta}* do cliente *${clienteNome}* acaba de ser marcada como *Aprovada*!\n\n` +
-          `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+          `📅 *Data/Hora:* ${formatServerDateTime(new Date(), vendedor?.timezone || 'America/Sao_Paulo')}\n\n` +
           `Parabéns por mais este fechamento! 🚀💼\n` +
           `_Notificação Oficial • SmartBidHub_`;
 
@@ -677,7 +678,7 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
                      `✍️ *Assinado por:* ${payload.nome}\n` +
                      `🆔 *CPF/CNPJ:* ${payload.cpf}\n` +
                      `🌐 *IP:* ${payload.ip}\n` +
-                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `📅 *Data/Hora:* ${formatServerDateTime(new Date(), vendedor?.timezone || 'America/Sao_Paulo')}\n\n` +
                      `Parabéns por mais este fechamento! 🚀💼\n` +
                      `_Notificação Oficial • SmartBidHub_`;
 
@@ -806,7 +807,7 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
                      `Olá, *${vendedor.nome}*!\n\n` +
                      `O cliente *${clienteNome}* visualizou e *recusou* a proposta comercial *FPV-${numProposta}*.\n\n` +
                      `💬 *Justificativa informada:* ${motivo}\n` +
-                     `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                     `📅 *Data/Hora:* ${formatServerDateTime(new Date(), vendedor?.timezone || 'America/Sao_Paulo')}\n\n` +
                      `Acesse a plataforma para renegociar com o cliente. 📈💼\n` +
                      `_Notificação Oficial • SmartBidHub_`;
 
@@ -833,83 +834,8 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
  * Server Action para registrar a visualização de uma aba do cliente
  */
 export async function trackDocumentoView(documentoId: string, tabId: string) {
-  try {
-    const doc = await prisma.documentoProposta.findUnique({
-      where: { id: documentoId },
-      include: {
-        proposta: {
-          include: {
-            user: true
-          }
-        },
-        client: true
-      }
-    });
-
-    if (!doc) return { success: false, error: 'Documento não encontrado' };
-
-    const config = (doc.configApresentacao as any) || {};
-    const tracking = config.viewTracking || {
-      firstSentAt: new Date().toISOString(),
-      views: {
-        apresentacao: 0,
-        proposta: 0,
-        fpv: 0,
-        minuta: 0
-      },
-      history: []
-    };
-
-    // Increment view count for the specific tab
-    if (!tracking.views) tracking.views = {};
-    tracking.views[tabId] = (tracking.views[tabId] || 0) + 1;
-
-    // Add to history list
-    if (!tracking.history) tracking.history = [];
-    
-    // Prevent recording high frequency repeat clicks within 3 seconds for the same tab
-    const now = new Date();
-    const lastEvent = tracking.history.length > 0 ? tracking.history[tracking.history.length - 1] : null;
-    const isRepeatClick = lastEvent && lastEvent.tab === tabId && (now.getTime() - new Date(lastEvent.viewedAt).getTime() < 3000);
-
-    if (!isRepeatClick) {
-      tracking.history.push({
-        tab: tabId,
-        viewedAt: now.toISOString()
-      });
-
-      // Criar notificação para o vendedor dono da proposta
-      const numProposta = String(doc.proposta.numero).padStart(3, '0');
-      const clienteNome = doc.client.nomeFantasia || 'Cliente';
-      const isFirstAccess = tracking.history.length === 1;
-
-      await prisma.notification.create({
-        data: {
-          userId: doc.proposta.userId,
-          texto: isFirstAccess
-            ? `👀 Primeiro Acesso: O cliente ${clienteNome} acessou a sua proposta FPV-${numProposta} pela primeira vez!`
-            : `👀 Proposta Visualizada: O cliente ${clienteNome} visualizou a aba "${tabId.toUpperCase()}" da proposta FPV-${numProposta}.`,
-          link: `/propostas-comerciais/${documentoId}`
-        }
-      });
-    }
-
-    // Save back to db
-    await prisma.documentoProposta.update({
-      where: { id: documentoId },
-      data: {
-        configApresentacao: {
-          ...config,
-          viewTracking: tracking
-        }
-      }
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Erro ao registrar visualização:', error);
-    return { success: false, error: error.message };
-  }
+  const { trackDocumentoView: trackPublicView } = await import('@/app/proposta/ver/[id]/actions');
+  return trackPublicView(documentoId, tabId);
 }
 
 /**

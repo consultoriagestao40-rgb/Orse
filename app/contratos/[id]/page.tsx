@@ -179,7 +179,17 @@ export default function ContratoDetail() {
                     <input 
                       type="date"
                       value={dataInicio}
-                      onChange={e => setDataInicio(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setDataInicio(val);
+                        if (val && !dataReajuste) {
+                          const [y, m, d] = val.split('-').map(Number);
+                          if (y && m && d) {
+                            const reaj = new Date(Date.UTC(y + 1, m - 1, d));
+                            setDataReajuste(reaj.toISOString().split('T')[0]);
+                          }
+                        }
+                      }}
                       className="w-full border border-slate-300 rounded-lg p-2 text-sm font-bold text-slate-700 focus:ring-1 focus:ring-[#1B4D3E]"
                     />
                   </div>
