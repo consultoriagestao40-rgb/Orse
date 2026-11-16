@@ -16,6 +16,8 @@ import { formatServerDateTime } from '@/lib/timezone';
 import {
   buildExecutiveProposalUrl,
   buildExecutiveWhatsAppMessage,
+  buildProposalCardHeadline,
+  buildProposalCardSubtitle,
   formatProposalCode,
   normalizeWhatsAppDigits,
 } from '@/lib/proposal-share';
@@ -1057,6 +1059,7 @@ export async function getDocumentoConfigApresentacao(id: string) {
       select: {
         id: true,
         versaoFPV: true,
+        valorTotal: true,
         configApresentacao: true,
         client: {
           select: {
@@ -1088,7 +1091,15 @@ export async function getDocumentoConfigApresentacao(id: string) {
             versoes: {
               orderBy: { versao: 'desc' },
               take: 5,
-              select: { versao: true, metadados: true },
+              select: {
+                versao: true,
+                precoVenda: true,
+                metadados: true,
+                items: {
+                  take: 2,
+                  select: { nomeCargo: true, tipoItem: true },
+                },
+              },
             },
           },
         },
@@ -1127,6 +1138,14 @@ export async function getDocumentoConfigApresentacao(id: string) {
       doc.client?.nomeFantasia || doc.client?.razaoSocial || meta.clienteNome || 'Cliente';
     const empresaEmissora =
       doc.empresaEmissora?.nomeFantasia || doc.empresaEmissora?.razaoSocial || 'SmartBid Hub';
+    const valorTotal =
+      Number(doc.valorTotal || 0) ||
+      Number(matchedVer?.precoVenda || 0) ||
+      Number(meta?.resultado?.faturamentoBruto || 0);
+    const tipoProposta =
+      meta.tipoProposta ||
+      (matchedVer?.items?.some((i: any) => i.tipoItem === 'SPOT') ? 'SPOT' : 'RECORRENTE');
+    const cargoPrincipal = matchedVer?.items?.[0]?.nomeCargo || '';
 
     return {
       success: true,
@@ -1139,6 +1158,11 @@ export async function getDocumentoConfigApresentacao(id: string) {
         contatoNome,
         contatoWhatsApp,
         empresaEmissora,
+        valorTotal,
+        tipoServicos: meta.tipoServicos || '',
+        objetoProposta: meta.objetoProposta || '',
+        tipoProposta,
+        cargoPrincipal,
       },
     };
   } catch (error: any) {
@@ -1173,7 +1197,11 @@ export async function sendProposalLinkViaZApiAction(params: {
         tenant: true,
         proposta: {
           include: {
-            versoes: { orderBy: { versao: 'desc' }, take: 3 },
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 3,
+              include: { items: { take: 2 } },
+            },
           },
         },
       },
@@ -1191,16 +1219,35 @@ export async function sendProposalLinkViaZApiAction(params: {
       doc.client?.nomeFantasia || doc.client?.razaoSocial || meta.clienteNome || 'Cliente';
     const emissoraNome =
       doc.empresaEmissora?.nomeFantasia || doc.empresaEmissora?.razaoSocial || 'SmartBid Hub';
-    const code = formatProposalCode(doc.proposta?.numero, rev);
+    const valorProposta =
+      Number(doc.valorTotal || 0) ||
+      Number(matchedVer?.precoVenda || 0) ||
+      Number(meta?.resultado?.faturamentoBruto || 0);
+    const tipoProposta =
+      meta.tipoProposta ||
+      ((matchedVer as any)?.items?.some((i: any) => i.tipoItem === 'SPOT') ? 'SPOT' : 'RECORRENTE');
+    const cargoPrincipal = (matchedVer as any)?.items?.[0]?.nomeCargo || '';
+
     const shareUrl = buildExecutiveProposalUrl({
       docId: doc.id,
       numeroFPV: doc.proposta?.numero,
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}`;
-    const cardTitle = `📄 Proposta ${code} • ${clienteNome}`;
-    const cardDescription = `Emitida por ${emissoraNome} • Clique para visualizar e realizar o aceite digital no SmartBid Hub.`;
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-3`;
+    const cardTitle = buildProposalCardHeadline({
+      tipoServicos: meta.tipoServicos,
+      objetoProposta: meta.objetoProposta,
+      cargoPrincipal,
+      numeroFPV: doc.proposta?.numero,
+      versaoFPV: rev,
+    });
+    const cardDescription = buildProposalCardSubtitle({
+      clienteNome,
+      valorTotal: valorProposta,
+      tipoProposta,
+      empresaEmissora: emissoraNome,
+    });
 
     const messageText =
       (params.customMessage || '').trim() ||

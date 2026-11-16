@@ -3,56 +3,67 @@ import { getDocumentoPropostaById, resolveDocumentoPropostaBySlugOrId } from './
 import { getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import ViewClient from './ViewClient';
 import { Metadata } from 'next';
-import { buildExecutiveProposalUrl } from '@/lib/proposal-share';
+import {
+  buildExecutiveProposalUrl,
+  buildProposalCardHeadline,
+  buildProposalCardSubtitle,
+} from '@/lib/proposal-share';
 
 export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Metadata> {
   const res: any = await resolveDocumentoPropostaBySlugOrId(slugOrId);
 
   if (!res) {
     return {
-      title: 'Proposta Comercial • SmartBid Hub',
+      title: 'SmartBid · Proposta',
       description: 'Portal seguro de visualização e aceite digital de propostas comerciais.',
     };
   }
 
-  const config = res.configApresentacao as any;
-  if (config && config.linkExpiresAt) {
-    const expiresAt = new Date(config.linkExpiresAt);
-    if (new Date() > expiresAt) {
-      return { title: 'Acesso Expirado • Proposta Comercial | SmartBid Hub' };
-    }
-  }
-
   const cliente = res.client?.nomeFantasia || res.client?.razaoSocial || 'Cliente';
   const emissora = res.empresaEmissora?.nomeFantasia || res.empresaEmissora?.razaoSocial || 'SmartBid Hub';
-  const numeroPadded = String(res.proposta?.numero || 1).padStart(3, '0');
   const versaoNum = res.versaoFPV || res.proposta?.versoes?.[0]?.versao || 1;
-  const revisaoPart = `R${String(versaoNum).padStart(2, '0')}`;
 
-  const matchedVer = res.proposta?.versoes?.[0];
+  const matchedVer =
+    res.proposta?.versoes?.find((v: any) => v.versao === versaoNum) || res.proposta?.versoes?.[0];
   const meta = (matchedVer?.metadados as Record<string, any>) || {};
-  const objeto =
-    (typeof meta.objetoProposta === 'string' && meta.objetoProposta.trim()) ||
-    'Apresentação institucional, detalhamento comercial e aceite digital seguro.';
+  const valorProposta =
+    Number(res.valorTotal || 0) ||
+    Number(matchedVer?.precoVenda || 0) ||
+    Number(meta?.resultado?.faturamentoBruto || 0);
+  const tipoProposta =
+    meta.tipoProposta ||
+    (matchedVer?.items?.some((i: any) => i.tipoItem === 'SPOT') ? 'SPOT' : 'RECORRENTE');
+  const cargoPrincipal = matchedVer?.items?.[0]?.nomeCargo || '';
 
-  const prettyTitle = `📄 Proposta FPV-${numeroPadded}-${revisaoPart} • ${cliente}`;
-  const description = `Emitida por ${emissora} • ${objeto}`;
+  const prettyTitle = buildProposalCardHeadline({
+    tipoServicos: meta.tipoServicos,
+    objetoProposta: meta.objetoProposta,
+    cargoPrincipal,
+    numeroFPV: res.proposta?.numero,
+    versaoFPV: versaoNum,
+  });
+  const description = buildProposalCardSubtitle({
+    clienteNome: cliente,
+    valorTotal: valorProposta,
+    tipoProposta,
+    empresaEmissora: emissora,
+  });
   const canonicalUrl = buildExecutiveProposalUrl({
     docId: res.id,
     numeroFPV: res.proposta?.numero,
     versaoFPV: versaoNum,
     clienteNome: cliente,
   });
-  const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${res.id}.png?v=${versaoNum}`;
+  const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${res.id}.png?v=${versaoNum}-3`;
 
   return {
-    title: `${prettyTitle} | SmartBid Hub`,
+    title: `${prettyTitle} | SmartBid`,
     description,
     openGraph: {
       title: prettyTitle,
       description,
       url: canonicalUrl,
-      siteName: 'SmartBid Hub • Portal de Propostas & Aceite Digital',
+      siteName: 'SmartBid · Proposta',
       locale: 'pt_BR',
       type: 'website',
       images: [

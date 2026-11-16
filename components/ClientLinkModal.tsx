@@ -14,10 +14,13 @@ import { getFaqsPadrao } from '@/app/admin/settings/actions';
 import {
   buildExecutiveProposalUrl,
   buildExecutiveWhatsAppMessage,
+  buildProposalCardHeadline,
+  buildProposalCardSubtitle,
   buildWhatsAppWebUrl,
   formatProposalCode,
   maskBrazilPhone,
 } from '@/lib/proposal-share';
+import WhatsAppIcon from '@/components/WhatsAppIcon';
 
 interface ClientLinkModalProps {
   documentoId: string;
@@ -111,11 +114,21 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     versaoFPV: number | string;
     clienteNome: string;
     empresaEmissora: string;
+    valorTotal: number;
+    tipoServicos: string;
+    objetoProposta: string;
+    tipoProposta: string;
+    cargoPrincipal: string;
   }>({
     numeroFPV: 1,
     versaoFPV: 1,
     clienteNome: '',
     empresaEmissora: 'SmartBid Hub',
+    valorTotal: 0,
+    tipoServicos: '',
+    objetoProposta: '',
+    tipoProposta: 'RECORRENTE',
+    cargoPrincipal: '',
   });
   const [contatoNome, setContatoNome] = useState<string>(configApresentacao?.contatoNome || '');
   const [contatoWhatsApp, setContatoWhatsApp] = useState<string>(
@@ -178,6 +191,11 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             versaoFPV: res.shareContext.versaoFPV || 1,
             clienteNome: res.shareContext.clienteNome || '',
             empresaEmissora: res.shareContext.empresaEmissora || 'SmartBid Hub',
+            valorTotal: Number(res.shareContext.valorTotal || 0),
+            tipoServicos: res.shareContext.tipoServicos || '',
+            objetoProposta: res.shareContext.objetoProposta || '',
+            tipoProposta: res.shareContext.tipoProposta || 'RECORRENTE',
+            cargoPrincipal: res.shareContext.cargoPrincipal || '',
           });
           if (res.shareContext.contatoNome) {
             setContatoNome(res.shareContext.contatoNome);
@@ -367,7 +385,20 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   });
 
   const proposalCode = formatProposalCode(shareMeta.numeroFPV, shareMeta.versaoFPV);
-  const ogPreviewUrl = `/og/proposta/${documentoId}.png?v=${shareMeta.versaoFPV}`;
+  const cardHeadline = buildProposalCardHeadline({
+    tipoServicos: shareMeta.tipoServicos,
+    objetoProposta: shareMeta.objetoProposta,
+    cargoPrincipal: shareMeta.cargoPrincipal,
+    numeroFPV: shareMeta.numeroFPV,
+    versaoFPV: shareMeta.versaoFPV,
+  });
+  const cardSubtitle = buildProposalCardSubtitle({
+    clienteNome: shareMeta.clienteNome,
+    valorTotal: shareMeta.valorTotal,
+    tipoProposta: shareMeta.tipoProposta,
+    empresaEmissora: shareMeta.empresaEmissora,
+  });
+  const shortDomainDisplay = shareUrl.replace(/^https?:\/\/(www\.)?/, '');
 
   const buildNewConfigPayload = (days: number) => {
     const finalCanvaUrl = (canvaEmbedUrl || '').trim() || DEFAULT_CANVA_URL;
@@ -1223,8 +1254,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           {/* ENVIO EXECUTIVO POR WHATSAPP (ESTILO AUTENTIQUE) + VISUALIZADOR DE LINK */}
           <div className="bg-gradient-to-br from-emerald-50/80 via-white to-slate-50 p-4 rounded-2xl border border-emerald-200/80 space-y-3.5 shadow-xs">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-[#1B4D3E]">
-                <MessageCircle size={15} className="text-emerald-600" />
+              <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-[#1B4D3E]">
+                <span className="w-5 h-5 rounded-full bg-[#25D366] text-white inline-flex items-center justify-center shadow-2xs">
+                  <WhatsAppIcon size={12} />
+                </span>
                 Envio por WhatsApp • Card Executivo SmartBid
               </div>
               {pulledFromFpv && contatoWhatsApp ? (
@@ -1267,30 +1300,42 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
             </div>
 
             {/* Prévia Visual do Cartão que chega no WhatsApp do Cliente */}
-            <div className="rounded-2xl overflow-hidden border border-slate-200 bg-[#ECE5DD] p-2.5">
-              <span className="text-[8.5px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 px-1">
-                Prévia de como chega no WhatsApp do cliente:
+            <div className="rounded-2xl overflow-hidden border border-slate-200 bg-[#EFEAE2] p-3">
+              <span className="text-[8.5px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">
+                Prévia de como chega no WhatsApp do cliente ({proposalCode}):
               </span>
-              <div className="bg-[#DCF8C6] rounded-xl p-2 shadow-xs border border-emerald-200/70 space-y-1.5">
-                <div className="rounded-lg overflow-hidden border border-black/10 bg-white">
-                  <img
-                    src={ogPreviewUrl}
-                    alt={`Card ${proposalCode}`}
-                    className="w-full h-auto block object-cover aspect-[1200/630]"
-                  />
-                  <div className="px-2.5 py-2 bg-[#F7F9FA] border-t border-slate-100">
-                    <p className="text-[11px] font-black text-slate-800 truncate">
-                      📄 Proposta {proposalCode} • {shareMeta.clienteNome || 'Cliente'}
-                    </p>
-                    <p className="text-[9.5px] text-slate-500 truncate">
-                      Emitida por {shareMeta.empresaEmissora} • Visualização e Aceite Digital
-                    </p>
-                    <p className="text-[8.5px] text-emerald-700 font-mono mt-0.5">smartbidhub.com.br</p>
+              <div className="bg-[#D9FDD3] rounded-2xl p-2.5 shadow-sm border border-emerald-200/80 space-y-1.5 max-w-md ml-auto">
+                <div className="rounded-xl bg-[#0F3B2E] px-4 py-3.5 flex items-center gap-3 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#6EE7B7"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 17 L9 11 L13 15 L21 7" />
+                      <path d="M15 7 H21 V13" />
+                    </svg>
                   </div>
+                  <span className="text-white font-black text-sm tracking-tight">
+                    SmartBid <span className="text-emerald-300 font-bold">·</span> Proposta
+                  </span>
                 </div>
-                <p className="text-[10.5px] text-slate-800 px-1 leading-snug">
-                  Olá{contatoNome ? `, *${contatoNome.split(' ')[0]}*` : ''}! Encaminho o acesso digital à nossa *Proposta Comercial ({proposalCode})*…
-                </p>
+                <div className="px-1 pt-0.5 space-y-0.5">
+                  <p className="text-[12.5px] font-black text-slate-900 leading-snug truncate">
+                    {cardHeadline}
+                  </p>
+                  <p className="text-[11.5px] font-bold text-[#14532D] leading-snug truncate">
+                    {cardSubtitle}
+                  </p>
+                  <p className="text-[10.5px] text-slate-500 font-medium truncate pt-0.5">
+                    {shortDomainDisplay}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -1382,7 +1427,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                 : 'bg-[#25D366] hover:bg-[#1EBE5D] text-white shadow-emerald-500/20 active:scale-[0.98]'
             }`}
           >
-            <MessageCircle size={15} /> Enviar no WhatsApp
+            <WhatsAppIcon size={15} /> Enviar no WhatsApp
           </button>
         </div>
       </div>

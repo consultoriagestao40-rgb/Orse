@@ -15,6 +15,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { getLoggedUser } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
+import WhatsAppIcon from '@/components/WhatsAppIcon';
 import { 
   getDocumentoPropostaById, 
   updateDocumentoStatus, 
@@ -1188,7 +1189,7 @@ export default function DocumentoPropostaDetail() {
                   title="Enviar Link Executivo no WhatsApp do Contato da FPV"
                   className="bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                 >
-                  <MessageCircle size={16} /> Enviar WhatsApp
+                  <WhatsAppIcon size={16} /> Enviar WhatsApp
                 </button>
                 <button
                   onClick={handleSave}

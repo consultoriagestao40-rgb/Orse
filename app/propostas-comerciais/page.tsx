@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { transferirProposta, updateDocumentoStatusParam, createDocumentoStatus } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
+import WhatsAppIcon from '@/components/WhatsAppIcon';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 import { Building } from 'lucide-react';
@@ -681,9 +682,9 @@ export default function PropostasComerciaisDashboard() {
                   ? `Enviar com 1 clique para ${doc.contatoNome || 'Contato'} (${doc.contatoWhatsApp})`
                   : 'Enviar Link Executivo no WhatsApp'
               }
-              className="px-1.5 py-0.5 rounded-md bg-[#25D366]/12 hover:bg-[#25D366] text-[#15803D] hover:text-white border border-[#25D366]/30 transition-all flex items-center gap-1 text-[8.5px] font-black uppercase tracking-wide cursor-pointer"
+              className="px-2 py-0.5 rounded-full bg-[#25D366] hover:bg-[#1ebe5b] text-white shadow-2xs transition-all flex items-center gap-1 text-[8.5px] font-black uppercase tracking-wide cursor-pointer"
             >
-              <MessageCircle size={11} />
+              <WhatsAppIcon size={11} />
               <span>Whats</span>
             </button>
           </div>
@@ -1415,9 +1416,9 @@ export default function PropostasComerciaisDashboard() {
                                  ? `Enviar no WhatsApp de ${doc.contatoNome || 'Contato'}: ${doc.contatoWhatsApp}`
                                  : 'Enviar Proposta por WhatsApp'
                              }
-                             className="text-[#16A34A] hover:text-white hover:bg-[#25D366] p-1 rounded-md transition-colors cursor-pointer"
+                             className="w-6 h-6 rounded-full bg-[#25D366] hover:bg-[#1ebe5b] text-white inline-flex items-center justify-center shadow-xs hover:scale-110 transition-all cursor-pointer"
                            >
-                             <MessageCircle size={16} />
+                             <WhatsAppIcon size={13} />
                            </button>
                            <button
                              onClick={() => setActiveShareDoc(doc)}

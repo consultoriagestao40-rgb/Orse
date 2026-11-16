@@ -566,7 +566,10 @@ export async function saveProposta(data: any) {
       numeroProposta: numeroProposta,
       revisao: 'R' + String(nextVersion).padStart(2, '0'),
       tipoServicos: cliente.tipoServicos,
-      tipoProposta: cliente.tipoProposta || 'RECORRENTE',
+      tipoProposta:
+        cliente.tipoProposta === 'SPOT' || equipe.some((i: any) => i.tipoItem === 'SPOT')
+          ? 'SPOT'
+          : (cliente.tipoProposta || 'RECORRENTE'),
       empresaEmissoraId: cliente.empresaEmissoraId || premissas?.empresaEmissoraId || '',
       regimeTributario: premissas?.regimeTributario || cliente.regimeTributario || 'LUCRO_REAL',
       modoTributario: premissas?.modoTributario || cliente.modoTributario || 'ATUAL',
@@ -1069,7 +1072,9 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         numeroProposta: meta.numeroProposta || '',
         revisao: meta.revisao || '',
         tipoServicos: meta.tipoServicos || '',
-        tipoProposta: meta.tipoProposta || 'RECORRENTE',
+        tipoProposta:
+          meta.tipoProposta ||
+          (v.items.some((i: any) => i.tipoItem === 'SPOT') ? 'SPOT' : 'RECORRENTE'),
         empresaEmissoraId: meta.empresaEmissoraId || meta.premissas?.empresaEmissoraId || '',
         regimeTributario: meta.regimeTributario || meta.premissas?.regimeTributario || 'LUCRO_REAL',
         modoTributario: meta.modoTributario || meta.premissas?.modoTributario || 'ATUAL',

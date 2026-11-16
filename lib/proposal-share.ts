@@ -7,6 +7,11 @@ export interface ProposalShareContext {
   contatoWhatsApp?: string | null;
   empresaEmissora?: string | null;
   codigoAcessoCustom?: string | null;
+  valorTotal?: number | null;
+  tipoServicos?: string | null;
+  objetoProposta?: string | null;
+  tipoProposta?: string | null;
+  cargoPrincipal?: string | null;
 }
 
 export function slugifyAscii(input?: string | null, maxLen = 28): string {
@@ -36,11 +41,8 @@ export function buildExecutiveProposalSlug(ctx: {
   versaoFPV?: number | string | null;
   clienteNome?: string | null;
 }): string {
-  const num = String(ctx.numeroFPV || 1).padStart(3, '0');
-  const rev = String(ctx.versaoFPV || 1).padStart(2, '0');
-  const clientPart = slugifyAscii(ctx.clienteNome, 26);
-  const tail = ctx.docId.length > 10 ? ctx.docId.slice(-10) : ctx.docId;
-  return ['fpv', num, `r${rev}`, clientPart || null, tail].filter(Boolean).join('-');
+  const tail = ctx.docId.length > 8 ? ctx.docId.slice(-8) : ctx.docId;
+  return `proposta-${tail}`;
 }
 
 export function buildExecutiveProposalUrl(ctx: {
@@ -51,6 +53,102 @@ export function buildExecutiveProposalUrl(ctx: {
 }): string {
   const slug = buildExecutiveProposalSlug(ctx);
   return `https://www.smartbidhub.com.br/p/${slug}`;
+}
+
+const LOWERCASE_WORDS = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'para', 'com', 'por', 'a', 'o', 'as', 'os']);
+
+function smartTitleCase(raw: string): string {
+  return raw
+    .trim()
+    .split(/\s+/)
+    .map((word, idx) => {
+      const lower = word.toLowerCase();
+      if (idx > 0 && LOWERCASE_WORDS.has(lower)) return lower;
+      if (word.length <= 3 && word === word.toUpperCase() && /[A-Z]/.test(word)) return word;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ');
+}
+
+function stripHtmlPlain(raw?: string | null): string {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Monta o título principal do card no WhatsApp com dados reais da proposta
+ * Ex.: "Proposta de Limpeza e Portaria" | "Proposta de Limpeza Manual e Mecanizada"
+ */
+export function buildProposalCardHeadline(params: {
+  tipoServicos?: string | null;
+  objetoProposta?: string | null;
+  cargoPrincipal?: string | null;
+  numeroFPV?: number | string | null;
+  versaoFPV?: number | string | null;
+}): string {
+  const tipo = stripHtmlPlain(params.tipoServicos);
+  if (tipo) {
+    const cleanTipo = smartTitleCase(tipo);
+    return /^proposta\b/i.test(cleanTipo) ? cleanTipo : `Proposta de ${cleanTipo}`;
+  }
+
+  const objeto = stripHtmlPlain(params.objetoProposta);
+  if (objeto) {
+    const match = objeto.match(
+      /^(?:presta[çc][ãa]o|execu[çc][ãa]o|fornecimento|contrata[çc][ãa]o)\s+de\s+(?:servi[çc]os\s+(?:t[ée]cnicos\s+|especializados\s+)?de\s+|servi[çc]os\s+de\s+|m[ãa]o\s+de\s+obra\s+para\s+)?([^,.;:\n(]+)/i
+    );
+    if (match && match[1]) {
+      const phrase = match[1].trim().slice(0, 48).trim();
+      if (phrase.length >= 3) {
+        return `Proposta de ${smartTitleCase(phrase)}`;
+      }
+    }
+    const firstClause = objeto.split(/[,.;:\n]/)[0]?.trim() || '';
+    if (firstClause.length >= 4 && firstClause.length <= 52) {
+      const cleanClause = smartTitleCase(firstClause);
+      return /^proposta\b/i.test(cleanClause) ? cleanClause : `Proposta · ${cleanClause}`;
+    }
+  }
+
+  const cargo = stripHtmlPlain(params.cargoPrincipal)
+    .replace(/\b\d+\s*horas?\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (cargo) {
+    return `Proposta · ${smartTitleCase(cargo)}`;
+  }
+
+  return `Proposta Comercial · ${formatProposalCode(params.numeroFPV, params.versaoFPV)}`;
+}
+
+/**
+ * Monta o subtítulo do card no WhatsApp com cliente real e valor real da proposta
+ * Ex.: "Hospital Santa Helena · R$ 66.172,70/mês" (Recorrente) ou "ZOBER SP 02 · R$ 36.572,18" (SPOT)
+ */
+export function buildProposalCardSubtitle(params: {
+  clienteNome?: string | null;
+  valorTotal?: number | null;
+  tipoProposta?: string | null;
+  empresaEmissora?: string | null;
+}): string {
+  const cliente = (params.clienteNome || 'Cliente').trim();
+  const val = Number(params.valorTotal || 0);
+  if (val > 0) {
+    const formatted = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(val);
+    const isSpot = String(params.tipoProposta || '').toUpperCase() === 'SPOT';
+    return isSpot ? `${cliente} · ${formatted}` : `${cliente} · ${formatted}/mês`;
+  }
+  return `${cliente} · ${params.empresaEmissora || 'SmartBid Hub'}`;
 }
 
 export function normalizeWhatsAppDigits(raw?: string | null): string {
@@ -75,32 +173,17 @@ export function maskBrazilPhone(raw?: string | null): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
+/**
+ * Envia o link limpo para que o WhatsApp renderize exclusivamente o Card Executivo SmartBid
+ * (adicionando o PIN apenas caso a proposta possua senha personalizada configurada)
+ */
 export function buildExecutiveWhatsAppMessage(ctx: ProposalShareContext): string {
   const shareUrl = buildExecutiveProposalUrl(ctx);
-  const code = formatProposalCode(ctx.numeroFPV, ctx.versaoFPV);
-  const firstContactName = (ctx.contatoNome || '').trim().split(/\s+/)[0] || '';
-  const greeting = firstContactName ? `Olá, *${firstContactName}*! Tudo bem?` : `Olá! Tudo bem?`;
-  const cliente = (ctx.clienteNome || '').trim();
   const pin = (ctx.codigoAcessoCustom || '').trim();
-
-  const lines: string[] = [
-    greeting,
-    '',
-    cliente
-      ? `Encaminho o acesso digital à nossa *Proposta Comercial (${code})* elaborada para *${cliente}*:`
-      : `Encaminho o acesso digital à nossa *Proposta Comercial (${code})*:`,
-    '',
-    shareUrl,
-    '',
-    `Pelo link seguro você visualiza a apresentação, o detalhamento da proposta e realiza o aceite eletrônico.`,
-  ];
-
   if (pin) {
-    lines.push(`🔑 *Código de acesso:* ${pin}`);
+    return `${shareUrl}\n🔑 Código de acesso: ${pin}`;
   }
-
-  lines.push(`Qualquer dúvida, fico à disposição!`);
-  return lines.join('\n');
+  return shareUrl;
 }
 
 export function buildWhatsAppWebUrl(rawPhone: string | null | undefined, message: string): string {
