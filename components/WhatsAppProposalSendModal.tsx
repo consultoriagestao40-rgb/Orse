@@ -226,17 +226,18 @@ export default function WhatsAppProposalSendModal({
                 )}
               </div>
 
-              {/* Parte inferior: Dados reais da proposta + Link clicável */}
+              {/* Parte inferior: Dados reais + texto secundário suave + Botão Abrir Proposta (link oculto) */}
               <div className="px-1 pb-0.5 space-y-0.5">
                 <p className="text-[12px] font-black text-slate-900 leading-snug truncate">
                   {cardHeadline}
                 </p>
-                <p className="text-[11px] font-bold text-[#14532D] leading-snug truncate">
+                <p className="text-[11px] font-medium text-[#667781] leading-snug truncate">
                   {cardSubtitle}
                 </p>
-                <p className="text-[10.5px] text-[#027EB5] underline truncate pt-0.5">
-                  {shortDomainDisplay}
-                </p>
+              </div>
+              <div className="border-t border-emerald-700/15 pt-1.5 pb-0.5 flex items-center justify-center gap-1.5 text-[#00A884] font-bold text-[12px]">
+                <ExternalLink size={13} className="shrink-0" />
+                <span>Abrir Proposta</span>
               </div>
             </div>
           </div>
