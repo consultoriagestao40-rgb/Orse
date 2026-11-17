@@ -67,6 +67,8 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         status: true,
         statusAssinatura: true,
         nomeAssinante: true,
+        cpfAssinante: true,
+        ipAssinante: true,
         dataAssinatura: true,
         createdAt: true,
         client: {

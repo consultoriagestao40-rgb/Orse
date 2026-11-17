@@ -6,10 +6,14 @@ import { formatServerDateTime } from '@/lib/timezone';
 
 const TAB_LABELS: Record<string, string> = {
   apresentacao: 'Apresentação Institucional',
-  proposta: 'Proposta Comercial',
+  proposta: 'Proposta Comercial (A4)',
   fpv: 'Planilha de Custos (FPV)',
   minuta: 'Minuta de Contrato',
+  video: 'Vídeo de Apresentação',
+  fotos: 'Galeria de Fotos',
+  documentos: 'Documentos e Certidões',
   faq: 'Perguntas Frequentes (FAQ)',
+  historico: 'Ajustes e Negociação',
 };
 
 async function resolveTargetWhatsAppPhone(doc: any): Promise<string | null> {

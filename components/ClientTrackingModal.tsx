@@ -1,211 +1,300 @@
 'use client';
 
-import React from 'react';
-import { X, Check, Eye, Calendar, Clock, BarChart3, Activity, ShieldCheck, ShieldAlert } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  ExternalLink,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  HelpCircle,
+  Image as ImageIcon,
+  Lock,
+  MessageSquare,
+  Paperclip,
+  Presentation,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  TrendingUp,
+  UserCheck,
+  Video,
+  X,
+} from 'lucide-react';
+import { buildExecutiveProposalUrl } from '@/lib/proposal-share';
 
 interface ClientTrackingModalProps {
   doc: any;
   onClose: () => void;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
 }
 
-function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefresh?: () => void }) {
-  const [replyText, setReplyText] = React.useState('');
-  const [submittingReply, setSubmittingReply] = React.useState(false);
-  const [alertState, setAlertState] = React.useState<{
-    type: 'success' | 'error' | 'warning';
-    title: string;
-    message: string;
-    onConfirm?: () => void;
-  } | null>(null);
+const C = {
+  paper: '#FBFAF7',
+  ink: '#111418',
+  muted: '#47505B',
+  line: '#E6E2DA',
+  green: '#1B4D3E',
+  greenSoft: '#EAF1ED',
+  amberSoft: '#FBF6EA',
+  amberInk: '#6B4E12',
+};
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' = 'success', onConfirm?: () => void) => {
-    setAlertState({ type, title, message, onConfirm });
-  };
+const MENU_DEFINITIONS: Array<{
+  id: string;
+  label: string;
+  description: string;
+  core?: boolean;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
+}> = [
+  {
+    id: 'apresentacao',
+    label: 'Apresentação institucional',
+    description: 'Slides executivos e credenciais da empresa',
+    core: true,
+    icon: Presentation,
+  },
+  {
+    id: 'proposta',
+    label: 'Proposta comercial (A4)',
+    description: 'Carta comercial, escopo de serviços e condições',
+    core: true,
+    icon: FileText,
+  },
+  {
+    id: 'fpv',
+    label: 'Planilha de custos (FPV)',
+    description: 'Salários, encargos da CCT, benefícios e insumos',
+    core: true,
+    icon: FileSpreadsheet,
+  },
+  {
+    id: 'minuta',
+    label: 'Minuta de contrato',
+    description: 'Cláusulas jurídicas, vigência e reajuste anual',
+    core: true,
+    icon: Lock,
+  },
+  {
+    id: 'video',
+    label: 'Vídeo de apresentação',
+    description: 'Explicação gravada pelo consultor comercial',
+    icon: Video,
+  },
+  {
+    id: 'fotos',
+    label: 'Galeria operacional',
+    description: 'Fotos de equipes, uniformes e equipamentos',
+    icon: ImageIcon,
+  },
+  {
+    id: 'documentos',
+    label: 'Documentos e certidões',
+    description: 'Anexos técnicos, licenças e regularidade fiscal',
+    icon: Paperclip,
+  },
+  {
+    id: 'faq',
+    label: 'Dúvidas frequentes (FAQ)',
+    description: 'Perguntas e respostas sobre implantação e operação',
+    icon: HelpCircle,
+  },
+  {
+    id: 'historico',
+    label: 'Ajustes e negociação',
+    description: ' Histórico de contrapropostas e respostas',
+    icon: MessageSquare,
+  },
+];
+
+function formatEditorialName(raw?: string | null): string {
+  const str = (raw || '').trim();
+  if (!str) return '';
+  if (str !== str.toUpperCase()) return str;
+  const lowerWords = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'para', 'com', 'por']);
+  const keepUpper = new Set([
+    'JVS', 'SP', 'PR', 'RJ', 'MG', 'SC', 'RS', 'BA', 'GO', 'DF', 'ES', 'PE', 'CE',
+    'S/A', 'SA', 'ME', 'EPP', 'FPV', 'RH', 'TI',
+  ]);
+  return str
+    .split(/\s+/)
+    .map((w, idx) => {
+      const clean = w.replace(/[^A-Za-zÀ-ÿ0-9/]/g, '');
+      if (keepUpper.has(clean.toUpperCase())) return w.toUpperCase();
+      const lw = w.toLowerCase();
+      if (lw === 'ltda' || lw === 'ltda.') return 'Ltda';
+      if (idx > 0 && lowerWords.has(lw)) return lw;
+      return lw.charAt(0).toUpperCase() + lw.slice(1);
+    })
+    .join(' ');
+}
+
+function fmtDateTime(d: any): string {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return '—';
+  return dt.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function fmtShortDate(d: any): string {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return '—';
+  return dt.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function fmtRelativeTime(d: any): { text: string; isRecent: boolean } {
+  if (!d) return { text: 'Sem abertura ainda', isRecent: false };
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return { text: 'Sem abertura ainda', isRecent: false };
+  const diffMs = Date.now() - dt.getTime();
+  const mins = Math.max(0, Math.floor(diffMs / 60000));
+  if (mins < 1) return { text: 'Agora mesmo', isRecent: true };
+  if (mins < 60) return { text: `Há ${mins} min`, isRecent: true };
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return { text: `Há ${hours}h`, isRecent: hours <= 3 };
+  const days = Math.floor(hours / 24);
+  if (days === 1) return { text: 'Ontem', isRecent: false };
+  if (days < 30) return { text: `Há ${days} dias`, isRecent: false };
+  return { text: fmtShortDate(dt), isRecent: false };
+}
+
+function NegotiationItem({
+  item,
+  doc,
+  onRefresh,
+}: {
+  item: any;
+  doc: any;
+  onRefresh?: () => void | Promise<void>;
+}) {
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+  const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
 
   const handleSendReply = async () => {
     if (!replyText.trim()) return;
     setSubmittingReply(true);
+    setFeedback(null);
     try {
       const { responderAjusteAction } = await import('@/app/propostas-comerciais/actions');
       const res = await responderAjusteAction(doc.id, item.id, replyText);
       if (res.success) {
-        showAlert('Sucesso', 'Resposta registrada com sucesso!', 'success', () => {
-          setReplyText('');
-          if (onRefresh) onRefresh();
-        });
+        setReplyText('');
+        setFeedback({ ok: true, text: 'Resposta enviada e publicada na proposta do cliente.' });
+        if (onRefresh) await onRefresh();
       } else {
-        showAlert('Erro ao responder', res.error, 'error');
+        setFeedback({ ok: false, text: res.error || 'Não foi possível registrar a resposta.' });
       }
     } catch (err: any) {
-      showAlert('Erro Inesperado', err.message, 'error');
+      setFeedback({ ok: false, text: err?.message || 'Erro inesperado ao responder.' });
     } finally {
       setSubmittingReply(false);
     }
   };
 
-  const clientInitials = (item.nomeCliente || 'Cliente')
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
-
-  const sellerAvatar = doc.proposta?.user?.avatarUrl || doc.avatarUrl;
-  const sellerName = item.nomeVendedor || doc.proposta?.user?.nome || doc.usuario || 'Consultor';
-  const sellerInitials = sellerName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
+  const clientName = formatEditorialName(item.nomeCliente || 'Cliente');
+  const sellerName = formatEditorialName(
+    item.nomeVendedor || doc.proposta?.user?.nome || doc.usuario || 'Consultor'
+  );
+  const isDecline = item.tipo === 'recusa';
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-sm text-left relative">
-      
-      {/* CLIENT REQUEST HEADER WITH AVATAR */}
-      <div className="flex justify-between items-start gap-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm uppercase border border-blue-200 shadow-sm shrink-0">
-            {clientInitials}
-          </div>
-          <div>
-            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded leading-none ${
-              item.tipo === 'recusa' ? 'bg-red-50 text-red-700 font-bold border border-red-200' : 'bg-blue-50 text-blue-700 font-bold border border-blue-200'
-            }`}>
-              {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
-            </span>
-            <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{item.nomeCliente || 'Cliente'}</span>
-          </div>
+    <div
+      className="rounded-2xl border bg-white p-5 space-y-4"
+      style={{ borderColor: C.line }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <span
+            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11.5px] font-semibold"
+            style={
+              isDecline
+                ? { backgroundColor: '#FEF2F2', color: '#B91C1C' }
+                : { backgroundColor: C.amberSoft, color: C.amberInk }
+            }
+          >
+            {isDecline ? 'Declínio registrado' : 'Solicitação de ajuste'}
+          </span>
+          <p className="text-[14px] font-semibold" style={{ color: C.ink }}>
+            {clientName}
+          </p>
         </div>
-        <span className="text-[9px] font-bold text-slate-400 font-mono tracking-wider shrink-0">
-          {new Date(item.data).toLocaleString('pt-BR')}
+        <span className="text-[12px] tabular-nums shrink-0" style={{ color: C.muted }}>
+          {fmtDateTime(item.data)}
         </span>
       </div>
 
-      <div className="pl-13">
-        <div className="text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-150 p-4 rounded-2xl rounded-tl-none shadow-inner">
-          {item.mensagem}
-        </div>
+      <div
+        className="rounded-xl p-3.5 text-[13.5px] leading-relaxed whitespace-pre-line border"
+        style={{ backgroundColor: C.paper, borderColor: C.line, color: C.ink }}
+      >
+        {item.mensagem}
       </div>
 
-      {/* SELLER RESPONSE SECTION */}
       {item.respondida ? (
-        <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
-          <div className="flex justify-between items-start gap-2">
-            <div className="flex items-center gap-3">
-              {sellerAvatar ? (
-                <img 
-                  src={sellerAvatar} 
-                  alt={sellerName} 
-                  className="w-10 h-10 rounded-full object-cover border border-emerald-200 shadow-sm shrink-0 animate-fadeIn"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-sm uppercase border border-emerald-200 shadow-sm shrink-0">
-                  {sellerInitials}
-                </div>
-              )}
-              <div>
-                <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider leading-none font-bold border border-emerald-200">
-                  ✓ Resposta do Consultor
-                </span>
-                <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{sellerName}</span>
-              </div>
-            </div>
-            <span className="text-[9px] font-bold text-slate-455 font-mono tracking-wider shrink-0">
-              {new Date(item.dataResposta).toLocaleString('pt-BR')}
+        <div className="pt-3 border-t space-y-2" style={{ borderColor: C.line }}>
+          <div className="flex items-center justify-between gap-2 text-[12px]">
+            <span className="font-semibold" style={{ color: C.green }}>
+              ✓ Respondido por {sellerName}
+            </span>
+            <span className="tabular-nums" style={{ color: C.muted }}>
+              {fmtDateTime(item.dataResposta)}
             </span>
           </div>
-
-          <div className="pl-13">
-            <div className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 p-4 rounded-2xl rounded-tl-none shadow-sm border border-emerald-100">
-              {item.resposta}
-            </div>
+          <div
+            className="rounded-xl p-3.5 text-[13px] leading-relaxed whitespace-pre-line"
+            style={{ backgroundColor: C.greenSoft, color: C.ink }}
+          >
+            {item.resposta}
           </div>
         </div>
       ) : (
-        <div className="space-y-3 border-t border-slate-100 pt-4 mt-4">
-          
-          {/* Form Header with Seller avatar to show who is replying */}
-          <div className="flex items-center gap-3 mb-2">
-            {sellerAvatar ? (
-              <img 
-                src={sellerAvatar} 
-                alt={sellerName} 
-                className="w-8 h-8 rounded-full object-cover border border-emerald-105 shrink-0 shadow-sm"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-650 flex items-center justify-center font-black text-xs uppercase border border-slate-200 shrink-0">
-                {sellerInitials}
-              </div>
-            )}
-            <div>
-              <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">RESPONDER COMO:</span>
-              <span className="text-[11px] font-bold text-slate-700 block leading-tight">{sellerName}</span>
-            </div>
-          </div>
-
+        <div className="pt-3 border-t space-y-3" style={{ borderColor: C.line }}>
+          <label className="block text-[12.5px] font-medium" style={{ color: C.muted }}>
+            Responder como <strong style={{ color: C.ink }}>{sellerName}</strong>
+          </label>
           <textarea
             rows={3}
-            placeholder="Digite a resposta ou contraproposta que ficará disponível na área do cliente..."
+            placeholder="Escreva o retorno ou condição comercial revisada para o cliente..."
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
-            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-semibold text-slate-850 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] shadow-inner resize-none transition-all placeholder:text-slate-400"
+            className="w-full px-3.5 py-2.5 rounded-xl border text-[13.5px] outline-none resize-none transition-colors focus:bg-white"
+            style={{ backgroundColor: C.paper, borderColor: C.line, color: C.ink }}
           />
+          {feedback && (
+            <p
+              className="text-[12.5px] font-medium"
+              style={{ color: feedback.ok ? C.green : '#B91C1C' }}
+            >
+              {feedback.text}
+            </p>
+          )}
           <div className="flex justify-end">
             <button
+              type="button"
               disabled={!replyText.trim() || submittingReply}
               onClick={handleSendReply}
-              className="px-5 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer transform hover:-translate-y-[1px] active:translate-y-0"
+              className="px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-opacity hover:opacity-95 disabled:opacity-50 cursor-pointer"
+              style={{ backgroundColor: C.green }}
             >
-              {submittingReply ? 'Enviando...' : 'Enviar Resposta'}
+              {submittingReply ? 'Enviando...' : 'Enviar resposta ao cliente'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* PREMIUM CUSTOM ALERT DIALOG */}
-      {alertState && (
-        <div className="fixed inset-0 bg-black/60 z-[1000000] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-150 p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-            
-            {alertState.type === 'success' && (
-              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-100 shadow-sm shrink-0 animate-bounce">
-                <Check size={32} className="stroke-[3]" />
-              </div>
-            )}
-
-            {alertState.type === 'error' && (
-              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 border border-red-100 shadow-sm shrink-0 animate-bounce">
-                <X size={32} className="stroke-[3]" />
-              </div>
-            )}
-
-            {alertState.type === 'warning' && (
-              <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-4 border border-amber-100 shadow-sm shrink-0">
-                <ShieldAlert size={32} className="stroke-[3]" />
-              </div>
-            )}
-
-            <h3 className="text-sm font-black text-slate-800 mb-2 uppercase tracking-wider">
-              {alertState.title}
-            </h3>
-            
-            <p className="text-xs font-bold text-slate-500 leading-relaxed max-w-[280px]">
-              {alertState.message}
-            </p>
-
-            <button
-              onClick={() => {
-                const onConfirm = alertState.onConfirm;
-                setAlertState(null);
-                if (onConfirm) onConfirm();
-              }}
-              className="w-full mt-6 py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-md hover:shadow-lg transition-all active:translate-y-0.5 transform cursor-pointer text-center"
-            >
-              Entendi
-            </button>
-
           </div>
         </div>
       )}
@@ -213,340 +302,1108 @@ function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefr
   );
 }
 
-export default function ClientTrackingModal({ doc, onClose, onRefresh }: ClientTrackingModalProps) {
-  // Configuração e tracking
-  const config = doc.configApresentacao || {};
+export default function ClientTrackingModal({
+  doc,
+  onClose,
+  onRefresh,
+}: ClientTrackingModalProps) {
+  const config = doc?.configApresentacao || {};
   const tracking = config.viewTracking || {
-    firstSentAt: doc.createdAt,
-    views: {
-      apresentacao: 0,
-      proposta: 0,
-      fpv: 0,
-      minuta: 0
-    },
-    history: []
+    firstSentAt: doc?.createdAt,
+    views: {},
+    history: [],
   };
 
-  const [activeTab, setActiveTab] = React.useState<'visitas' | 'negociacoes'>('visitas');
+  const views: Record<string, number> = tracking.views || {};
+  const history: Array<{
+    tab: string;
+    viewedAt: string;
+    nome?: string;
+    cnpjOuEmail?: string;
+  }> = Array.isArray(tracking.history) ? tracking.history : [];
 
-  const firstSentDate = tracking.firstSentAt ? new Date(tracking.firstSentAt) : new Date(doc.createdAt);
-  const views = tracking.views || { apresentacao: 0, proposta: 0, fpv: 0, minuta: 0 };
-  const history = tracking.history || [];
+  const negotiations: any[] = Array.isArray(config.negotiations) ? config.negotiations : [];
+  const pendingNegotiationsCount = negotiations.filter((n) => !n.respondida).length;
 
-  const negotiations = config.negotiations || [];
-  const pendingNegotiationsCount = negotiations.filter((n: any) => !n.respondida).length;
+  const [rightPanelTab, setRightPanelTab] = useState<'feed' | 'negociacoes'>(
+    pendingNegotiationsCount > 0 ? 'negociacoes' : 'feed'
+  );
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshRef = useRef(onRefresh);
+  refreshRef.current = onRefresh;
 
-  const fmtDate = (d: any) => {
-    if (!d) return '-';
-    return new Date(d).toLocaleString('pt-BR', {
-      timeZone: 'America/Sao_Paulo',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Suporte à tecla ESC, trava de scroll do body e atualização silenciosa ao vivo a cada 20s
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-  // Encontra a data da primeira visualização de uma aba no histórico
-  const getFirstViewedDate = (tabId: string) => {
-    const found = history.find((h: any) => h.tab === tabId);
-    return found ? fmtDate(found.viewedAt) : null;
-  };
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible' && refreshRef.current) {
+        Promise.resolve(refreshRef.current()).catch(() => {});
+      }
+    }, 20000);
 
-  // Status flags (making it case-insensitive and supporting both DocumentoProposta and Proposta statuses)
-  const isApproved = doc.statusAssinatura === 'ASSINADO' || 
-    doc.status?.toLowerCase() === 'aprovada' || 
-    doc.status?.toLowerCase() === 'aprovado' || 
-    doc.proposta?.status?.toLowerCase() === 'aprovada' || 
-    doc.proposta?.status?.toLowerCase() === 'aprovado';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+      clearInterval(timer);
+    };
+  }, [onClose]);
 
-  const isRejected = doc.statusAssinatura === 'RECUSADO' || 
-    doc.status?.toLowerCase() === 'recusada' || 
-    doc.status?.toLowerCase() === 'recusado' || 
-    doc.proposta?.status?.toLowerCase() === 'recusada' || 
-    doc.proposta?.status?.toLowerCase() === 'recusado';
-
-  const timelineItems = [
-    {
-      id: 'sent',
-      title: '1. Proposta Criada e Link Gerado',
-      subtitle: 'O link de acesso público do cliente foi gerado e enviado pela primeira vez.',
-      checked: !!tracking.firstSentAt || !!doc.createdAt,
-      dateText: fmtDate(firstSentDate),
-      color: 'border-emerald-500 bg-emerald-500 text-white'
-    },
-    {
-      id: 'apresentacao',
-      title: '2. Apresentação (Slides) Visualizada',
-      subtitle: 'O cliente visualizou as lâminas de apresentação e slides do Canva.',
-      checked: (views.apresentacao || 0) > 0,
-      dateText: getFirstViewedDate('apresentacao') ? `Primeiro acesso: ${getFirstViewedDate('apresentacao')}` : null,
-      subText: (views.apresentacao || 0) > 1 ? `Visualizado de novo ${views.apresentacao - 1}x (Total: ${views.apresentacao} acessos)` : null,
-      color: (views.apresentacao || 0) > 0 ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-200 bg-white text-slate-300'
-    },
-    {
-      id: 'proposta',
-      title: '3. Proposta Comercial (A4) Visualizada',
-      subtitle: 'O cliente visualizou o termo comercial A4 e a carta de apresentação.',
-      checked: (views.proposta || 0) > 0,
-      dateText: getFirstViewedDate('proposta') ? `Primeiro acesso: ${getFirstViewedDate('proposta')}` : null,
-      subText: (views.proposta || 0) > 1 ? `Visualizado de novo ${views.proposta - 1}x (Total: ${views.proposta} acessos)` : null,
-      color: (views.proposta || 0) > 0 ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-200 bg-white text-slate-300'
-    },
-    {
-      id: 'fpv',
-      title: '4. Planilha FPV Detalhada Visualizada',
-      subtitle: 'O cliente navegou pelas planilhas de custos (Premissas, Insumos, Quadro).',
-      checked: (views.fpv || 0) > 0,
-      dateText: getFirstViewedDate('fpv') ? `Primeiro acesso: ${getFirstViewedDate('fpv')}` : null,
-      subText: (views.fpv || 0) > 1 ? `Visualizado de novo ${views.fpv - 1}x (Total: ${views.fpv} acessos)` : null,
-      color: (views.fpv || 0) > 0 ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-200 bg-white text-slate-300'
-    },
-    {
-      id: 'minuta',
-      title: '5. Minuta de Contrato Visualizada',
-      subtitle: 'O cliente abriu e leu a minuta do contrato padrão anexada.',
-      checked: (views.minuta || 0) > 0,
-      dateText: getFirstViewedDate('minuta') ? `Primeiro acesso: ${getFirstViewedDate('minuta')}` : null,
-      subText: (views.minuta || 0) > 1 ? `Visualizado de novo ${views.minuta - 1}x (Total: ${views.minuta} acessos)` : null,
-      color: (views.minuta || 0) > 0 ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-200 bg-white text-slate-300'
-    },
-    {
-      id: 'status',
-      title: '6. Resposta Final do Cliente',
-      subtitle: isApproved 
-        ? `Aprovada e assinada eletronicamente por ${doc.nomeAssinante || 'Cliente'}.` 
-        : isRejected 
-        ? 'A proposta foi recusada/declinada pelo cliente final.' 
-        : 'Aguardando decisão de aceite ou recusa pelo cliente.',
-      checked: isApproved || isRejected,
-      dateText: doc.dataAssinatura ? fmtDate(doc.dataAssinatura) : isRejected ? 'Status: Recusada' : null,
-      isStatusStep: true,
-      color: isApproved
-        ? 'border-emerald-500 bg-emerald-500 text-white'
-        : isRejected
-        ? 'border-red-500 bg-red-500 text-white'
-        : 'border-slate-200 bg-white text-slate-300'
+  const handleManualRefresh = async () => {
+    if (!onRefresh || refreshing) return;
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setRefreshing(false);
     }
+  };
+
+  const isApproved =
+    doc?.statusAssinatura === 'ASSINADO' ||
+    doc?.status?.toLowerCase() === 'aprovada' ||
+    doc?.status?.toLowerCase() === 'aprovado' ||
+    doc?.proposta?.status?.toLowerCase() === 'aprovada' ||
+    doc?.proposta?.status?.toLowerCase() === 'aprovado';
+
+  const isRejected =
+    doc?.statusAssinatura === 'RECUSADO' ||
+    doc?.status?.toLowerCase() === 'recusada' ||
+    doc?.status?.toLowerCase() === 'recusado' ||
+    doc?.proposta?.status?.toLowerCase() === 'recusada' ||
+    doc?.proposta?.status?.toLowerCase() === 'recusado';
+
+  const numeroFpv = doc?.proposta?.numero || 1;
+  const versaoFpv = doc?.versaoFPV || doc?.proposta?.versoes?.[0]?.versao || 1;
+  const codigoFpv = `FPV-${String(numeroFpv).padStart(3, '0')} · R${String(versaoFpv).padStart(2, '0')}`;
+  const clienteNome = formatEditorialName(
+    doc?.client?.nomeFantasia || doc?.client?.razaoSocial || 'Cliente'
+  );
+  const valorProposta =
+    Number(doc?.valorTotal || 0) ||
+    Number(doc?.proposta?.versoes?.find((v: any) => v.versao === versaoFpv)?.precoVenda || 0) ||
+    Number(doc?.proposta?.versoes?.[0]?.precoVenda || 0);
+
+  const valorFormatado =
+    valorProposta > 0
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorProposta)
+      : null;
+
+  const publicUrl = buildExecutiveProposalUrl({
+    docId: doc?.id || '',
+    numeroFPV: numeroFpv,
+    versaoFPV: versaoFpv,
+    clienteNome,
+  });
+
+  // Menus habilitados na proposta + qualquer menu que já teve cliques registrados
+  const clientTabsCfg = config.clientTabs || {};
+  const menuStats = useMemo(() => {
+    const getLastViewForTab = (tabId: string) => {
+      for (let i = history.length - 1; i >= 0; i--) {
+        if (history[i]?.tab === tabId) return history[i].viewedAt;
+      }
+      return null;
+    };
+    const getFirstViewForTab = (tabId: string) => {
+      const found = history.find((h) => h?.tab === tabId);
+      return found ? found.viewedAt : null;
+    };
+
+    const items = MENU_DEFINITIONS.map((m) => {
+      const countFromViews = Number(views[m.id] || 0);
+      const countFromHistory = history.filter((h) => h?.tab === m.id).length;
+      const count = Math.max(countFromViews, countFromHistory);
+
+      const isEnabledInConfig =
+        m.id === 'proposta'
+          ? clientTabsCfg.proposta !== false
+          : m.id === 'apresentacao'
+          ? Boolean(clientTabsCfg.apresentacao)
+          : m.id === 'fpv'
+          ? Boolean(clientTabsCfg.fpv)
+          : m.id === 'minuta'
+          ? Boolean(clientTabsCfg.minuta)
+          : m.id === 'video'
+          ? Boolean(clientTabsCfg.video && config.videoUrl)
+          : m.id === 'fotos'
+          ? Boolean(clientTabsCfg.fotos)
+          : m.id === 'documentos'
+          ? Boolean(clientTabsCfg.documentos)
+          : m.id === 'faq'
+          ? Boolean(clientTabsCfg.faq)
+          : negotiations.length > 0;
+
+      return {
+        ...m,
+        count,
+        isEnabled: isEnabledInConfig,
+        firstViewedAt: getFirstViewForTab(m.id),
+        lastViewedAt: getLastViewForTab(m.id),
+      };
+    }).filter((m) => m.core || m.isEnabled || m.count > 0);
+
+    // Ordena mantendo os que têm mais acessos em evidência quando já houve leitura, ou ordem natural quando zerado
+    const hasAnyAccess = items.some((i) => i.count > 0);
+    if (hasAnyAccess) {
+      return [...items].sort((a, b) => b.count - a.count);
+    }
+    return items;
+  }, [views, history, clientTabsCfg, config.videoUrl, negotiations.length]);
+
+  const totalMenuViews = useMemo(() => {
+    const sumViews = menuStats.reduce((acc, m) => acc + m.count, 0);
+    return Math.max(sumViews, history.length);
+  }, [menuStats, history.length]);
+
+  const maxMenuCount = useMemo(
+    () => Math.max(1, ...menuStats.map((m) => m.count)),
+    [menuStats]
+  );
+
+  // Agrupamento nominal de decisores identificados
+  const visitors = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        key: string;
+        nome: string;
+        identificador: string;
+        clicks: number;
+        firstAt: string;
+        lastAt: string;
+        tabs: Set<string>;
+      }
+    >();
+
+    for (const h of history) {
+      const rawNome = (h.nome || '').trim();
+      const rawId = (h.cnpjOuEmail || '').trim();
+      const key = rawNome
+        ? `${rawNome.toLowerCase()}|${rawId.toLowerCase()}`
+        : '__visitante_direto__';
+      const labelNome = rawNome ? formatEditorialName(rawNome) : 'Visitante com link direto';
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, {
+          key,
+          nome: labelNome,
+          identificador: rawId,
+          clicks: 1,
+          firstAt: h.viewedAt,
+          lastAt: h.viewedAt,
+          tabs: new Set([h.tab]),
+        });
+      } else {
+        existing.clicks += 1;
+        existing.lastAt = h.viewedAt;
+        if (h.tab) existing.tabs.add(h.tab);
+      }
+    }
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime()
+    );
+  }, [history]);
+
+  const firstEvent = history[0] || null;
+  const lastEvent = history.length > 0 ? history[history.length - 1] : null;
+  const lastActivity = fmtRelativeTime(lastEvent?.viewedAt || doc?.dataAssinatura);
+  const firstSentAt = config.linkCreatedAt || tracking.firstSentAt || doc?.createdAt;
+
+  // Cálculo das 5 Fases da Jornada do Cliente (avança passo a passo)
+  const scopeReads =
+    (views.proposta || 0) + (views.apresentacao || 0) + (views.video || 0) + (views.fotos || 0);
+  const deepReads =
+    (views.fpv || 0) +
+    (views.minuta || 0) +
+    (views.documentos || 0) +
+    (views.faq || 0) +
+    negotiations.length;
+
+  const step1Done = Boolean(firstSentAt);
+  const step2Done = totalMenuViews > 0 || isApproved || isRejected;
+  const step3Done = scopeReads > 0 || deepReads > 0 || isApproved || isRejected;
+  const step4Done = deepReads > 0 || isApproved || isRejected;
+  const step5Done = isApproved || isRejected;
+
+  const journeySteps = [
+    {
+      num: 1,
+      title: 'Proposta enviada',
+      detail: firstSentAt ? `Gerada em ${fmtShortDate(firstSentAt)}` : 'Link criado',
+      done: step1Done,
+    },
+    {
+      num: 2,
+      title: 'Acesso identificado',
+      detail: step2Done
+        ? visitors[0]
+          ? `${visitors[0].nome} · ${fmtShortDate(firstEvent?.viewedAt || doc?.dataAssinatura)}`
+          : `1º acesso em ${fmtShortDate(firstEvent?.viewedAt)}`
+        : 'Aguardando 1ª abertura',
+      done: step2Done,
+    },
+    {
+      num: 3,
+      title: 'Escopo e proposta',
+      detail: step3Done
+        ? `${Math.max(1, scopeReads)} ${scopeReads === 1 ? 'leitura' : 'leituras'} no escopo`
+        : 'Ainda não visualizado',
+      done: step3Done,
+    },
+    {
+      num: 4,
+      title: 'Custos e minuta',
+      detail:
+        deepReads > 0
+          ? `${deepReads} ${deepReads === 1 ? 'análise técnica' : 'análises técnicas'}`
+          : step5Done
+          ? 'Validado no fechamento'
+          : 'Aguardando análise de FPV/minuta',
+      done: step4Done,
+    },
+    {
+      num: 5,
+      title: isRejected ? 'Proposta declinada' : isApproved ? 'Proposta aprovada' : 'Aceite digital',
+      detail: isApproved
+        ? `Assinada em ${fmtShortDate(doc?.dataAssinatura)}`
+        : isRejected
+        ? 'Encerrada sem aceite'
+        : negotiations.length > 0
+        ? `${negotiations.length} ${negotiations.length === 1 ? 'interação' : 'interações'} em negociação`
+        : 'Aguardando decisão final',
+      done: step5Done,
+      rejected: isRejected,
+    },
   ];
 
+  const completedCount = journeySteps.filter((s) => s.done).length;
+  // Índice da próxima fase ativa (para destacar com anel pulsante)
+  const activeStageIndex = journeySteps.findIndex((s) => !s.done);
+  const progressPercent = Math.round(((completedCount - 1) / (journeySteps.length - 1)) * 100);
+
+  // Temperatura Comercial e Insight Automático (estilo LP)
+  const radarSignal = useMemo(() => {
+    if (isApproved) {
+      return {
+        badge: 'Fechada · Aprovada',
+        badgeStyle: { backgroundColor: C.greenSoft, color: C.green },
+        insight: `Proposta aprovada eletronicamente${
+          doc?.nomeAssinante ? ` por ${formatEditorialName(doc.nomeAssinante)}` : ''
+        }${doc?.ipAssinante ? ` (IP ${doc.ipAssinante})` : ''}. Pronta para implantação.`,
+      };
+    }
+    if (isRejected) {
+      return {
+        badge: 'Declinada',
+        badgeStyle: { backgroundColor: '#FEF2F2', color: '#B91C1C' },
+        insight:
+          'O cliente registrou declínio nesta versão. Consulte a aba de negociações para avaliar uma revisão comercial.',
+      };
+    }
+    if (pendingNegotiationsCount > 0) {
+      return {
+        badge: 'Atenção · Pedido de ajuste',
+        badgeStyle: { backgroundColor: '#FFF7ED', color: '#C2410C' },
+        insight: `O cliente enviou ${pendingNegotiationsCount} ${
+          pendingNegotiationsCount === 1 ? 'solicitação de ajuste' : 'solicitações de ajuste'
+        } aguardando sua resposta.`,
+      };
+    }
+    if (totalMenuViews === 0) {
+      return {
+        badge: 'Aguardando abertura',
+        badgeStyle: { backgroundColor: '#F3F1EB', color: C.muted },
+        insight:
+          'O cliente ainda não abriu o link da proposta. Vale confirmar o recebimento no WhatsApp do decisor.',
+      };
+    }
+    const fpvReads = views.fpv || 0;
+    const minutaReads = views.minuta || 0;
+    if (fpvReads >= 2 || minutaReads >= 2 || totalMenuViews >= 5) {
+      const hotMenu =
+        fpvReads >= minutaReads ? 'a planilha de custos (FPV)' : 'a minuta contratual';
+      return {
+        badge: 'Quente · Alta intenção',
+        badgeStyle: { backgroundColor: '#FFF7ED', color: '#C2410C' },
+        insight: `O cliente já acumulou ${totalMenuViews} acessos e revisitou ${hotMenu}. Excelente momento para ligar e apoiar o fechamento.`,
+      };
+    }
+    const topMenu = menuStats[0];
+    return {
+      badge: 'Em leitura ativa',
+      badgeStyle: { backgroundColor: C.greenSoft, color: C.green },
+      insight: `O cliente iniciou a análise pela seção "${
+        topMenu?.label || 'Proposta comercial'
+      }". Acompanhe o avanço para abordar no momento ideal.`,
+    };
+  }, [
+    isApproved,
+    isRejected,
+    pendingNegotiationsCount,
+    totalMenuViews,
+    views.fpv,
+    views.minuta,
+    menuStats,
+    doc?.nomeAssinante,
+    doc?.ipAssinante,
+  ]);
+
+  // Validade restante do link
+  const validityLabel = useMemo(() => {
+    if (!config.linkExpiresAt) return null;
+    const exp = new Date(config.linkExpiresAt);
+    if (Number.isNaN(exp.getTime())) return null;
+    const diffDays = Math.ceil((exp.getTime() - Date.now()) / 86400000);
+    if (diffDays < 0) return 'Link expirado';
+    if (diffDays === 0) return 'Expira hoje';
+    if (diffDays === 1) return 'Válido por 1 dia';
+    return `Válido por ${diffDays} dias`;
+  }, [config.linkExpiresAt]);
+
+  // Feed cronológico unificado (do mais recente para o mais antigo)
+  const chronologicalFeed = useMemo(() => {
+    const events: Array<{
+      id: string;
+      time: string;
+      title: string;
+      subtitle?: string;
+      tone: 'green' | 'amber' | 'red' | 'neutral';
+    }> = [];
+
+    if (firstSentAt) {
+      events.push({
+        id: 'created',
+        time: firstSentAt,
+        title: 'Proposta gerada e link liberado',
+        subtitle: codigoFpv,
+        tone: 'neutral',
+      });
+    }
+
+    history.forEach((h, idx) => {
+      const menuDef = MENU_DEFINITIONS.find((m) => m.id === h.tab);
+      const menuName = menuDef ? menuDef.label : h.tab;
+      const person = h.nome ? formatEditorialName(h.nome) : 'Visitante do cliente';
+      events.push({
+        id: `h-${idx}-${h.viewedAt}`,
+        time: h.viewedAt,
+        title: `${person} acessou ${menuName}`,
+        subtitle: h.cnpjOuEmail ? `Identificação: ${h.cnpjOuEmail}` : undefined,
+        tone: 'green',
+      });
+    });
+
+    negotiations.forEach((n, idx) => {
+      const person = formatEditorialName(n.nomeCliente || 'Cliente');
+      events.push({
+        id: `neg-${n.id || idx}`,
+        time: n.data,
+        title:
+          n.tipo === 'recusa'
+            ? `${person} registrou declínio da proposta`
+            : `${person} solicitou ajuste na proposta`,
+        subtitle: n.mensagem,
+        tone: n.tipo === 'recusa' ? 'red' : 'amber',
+      });
+      if (n.respondida && n.dataResposta) {
+        events.push({
+          id: `neg-reply-${n.id || idx}`,
+          time: n.dataResposta,
+          title: `Consultor respondeu à solicitação`,
+          subtitle: n.resposta,
+          tone: 'green',
+        });
+      }
+    });
+
+    if (isApproved && doc?.dataAssinatura) {
+      events.push({
+        id: 'approved',
+        time: doc.dataAssinatura,
+        title: `Proposta aprovada eletronicamente`,
+        subtitle: [
+          doc.nomeAssinante ? `Assinado por ${formatEditorialName(doc.nomeAssinante)}` : null,
+          doc.cpfAssinante ? `Doc: ${doc.cpfAssinante}` : null,
+          doc.ipAssinante ? `IP: ${doc.ipAssinante}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        tone: 'green',
+      });
+    }
+
+    return events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  }, [
+    firstSentAt,
+    codigoFpv,
+    history,
+    negotiations,
+    isApproved,
+    doc?.dataAssinatura,
+    doc?.nomeAssinante,
+    doc?.cpfAssinante,
+    doc?.ipAssinante,
+  ]);
+
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 font-sans text-slate-800 animate-in zoom-in-95 duration-200">
-        
-        {/* HEADER */}
-        <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center text-white shrink-0">
-          <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-            <Activity size={16} className="text-emerald-400" /> Linha do Tempo e Acessos do Cliente
-          </h2>
-          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors cursor-pointer">
-            <X size={18} />
-          </button>
-        </div>
+    <div
+      className="fixed inset-0 z-[99999] overflow-y-auto overscroll-contain antialiased selection:bg-[#1B4D3E] selection:text-white animate-in fade-in duration-200"
+      style={{ backgroundColor: C.paper, color: C.ink }}
+    >
+      {/* ================================================================== */}
+      {/* BARRA SUPERIOR FIXA (TELA CHEIA)                                   */}
+      {/* ================================================================== */}
+      <header
+        className="sticky top-0 z-30 border-b backdrop-blur-md"
+        style={{
+          backgroundColor: 'rgba(251, 250, 247, 0.92)',
+          borderColor: C.line,
+        }}
+      >
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-8 h-[64px] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[13px] font-medium transition-colors hover:bg-black/[0.03] cursor-pointer shrink-0"
+              style={{ borderColor: C.line, backgroundColor: '#FFFFFF', color: C.ink }}
+            >
+              <ArrowLeft size={15} />
+              <span>Voltar</span>
+            </button>
 
-        {/* TAB SELECTOR */}
-        <div className="flex border-b border-slate-200 px-6 sm:px-8 shrink-0 bg-slate-50">
-          <button
-            onClick={() => setActiveTab('visitas')}
-            className={`flex items-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-              activeTab === 'visitas'
-                ? 'border-[#1B4D3E] text-[#1B4D3E]'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <Eye size={14} /> Acessos e Visitas
-          </button>
-          <button
-            onClick={() => setActiveTab('negociacoes')}
-            className={`flex items-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-wider border-b-2 transition-all relative cursor-pointer ${
-              activeTab === 'negociacoes'
-                ? 'border-[#1B4D3E] text-[#1B4D3E]'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <Activity size={14} /> Ajustes e Negociações
-            {pendingNegotiationsCount > 0 && (
-              <span className="w-2 h-2 bg-red-500 rounded-full absolute top-2 right-2 animate-pulse" />
-            )}
-          </button>
-        </div>
-
-        {/* BODY */}
-        <div className="p-6 md:p-8 space-y-8 overflow-y-auto flex-1 scrollbar-thin">
-          
-          {/* RESUMO CARD */}
-          <div className="bg-slate-50 border border-slate-150 p-5 rounded-2xl flex flex-col sm:flex-row items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#1B4D3E]/10 rounded-2xl flex items-center justify-center shrink-0">
-                <BarChart3 size={22} className="text-[#1B4D3E]" />
-              </div>
-              <div className="text-center sm:text-left">
-                <h4 className="text-xs font-black uppercase text-slate-800">Visualizações da Proposta</h4>
-                <p className="text-[10.5px] text-slate-450 font-bold uppercase tracking-wider mt-0.5">
-                  Monitoramento em tempo real das interações do cliente
+            <div className="min-w-0 flex items-center gap-2.5">
+              <span
+                className="hidden sm:inline-flex w-7 h-7 rounded-md items-center justify-center shrink-0"
+                style={{ backgroundColor: C.green }}
+              >
+                <TrendingUp size={15} className="text-white" strokeWidth={2.5} />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1
+                    className="text-[15px] sm:text-[17px] font-bold truncate"
+                    style={{ letterSpacing: '-0.02em', color: C.ink }}
+                  >
+                    Radar da proposta · {clienteNome}
+                  </h1>
+                </div>
+                <p className="text-[12px] truncate" style={{ color: C.muted }}>
+                  {codigoFpv}
+                  {valorFormatado ? ` · ${valorFormatado}` : ''}
+                  {validityLabel ? ` · ${validityLabel}` : ''}
                 </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-4 shrink-0">
-              <div className="text-center">
-                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">TOTAL ACESSOS</span>
-                <span className="text-xl font-black text-slate-800 mt-0.5 block leading-none">
-                  {history.length}
-                </span>
-              </div>
-              <div className="border-l border-slate-200" />
-              <div className="text-center">
-                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">STATUS ATUAL</span>
-                <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded mt-0.5 block ${
-                  doc.status === 'Aprovada'
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : doc.status === 'Recusada'
-                    ? 'bg-red-50 text-red-700'
-                    : 'bg-blue-50 text-blue-700'
-                }`}>
-                  {doc.status}
-                </span>
               </div>
             </div>
           </div>
 
-          {/* ── CONTEÚDO DA ABA DE VISITAS ───────────────────────────────────── */}
-          {activeTab === 'visitas' && (
-            <>
-              {/* TAB VISUALIZATIONS GRID */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 text-left">
-                  <Eye size={13} /> Visualizações por Aba do Sistema
-                </h3>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { label: '1. Slides / Apresentação', val: views.apresentacao || 0, bg: 'bg-indigo-50/40 border-indigo-100 text-indigo-750' },
-                    { label: '2. Proposta A4', val: views.proposta || 0, bg: 'bg-emerald-50/40 border-emerald-100 text-emerald-750' },
-                    { label: '3. FPV Detalhada', val: views.fpv || 0, bg: 'bg-amber-50/40 border-amber-100 text-amber-750' },
-                    { label: '4. Minuta de Contrato', val: views.minuta || 0, bg: 'bg-sky-50/40 border-sky-100 text-sky-750' },
-                  ].map((t, i) => (
-                    <div key={i} className={`p-4 border rounded-2xl flex flex-col justify-between gap-3 text-left ${t.bg}`}>
-                      <span className="text-[9.5px] font-black uppercase tracking-wider leading-tight">{t.label}</span>
-                      <div className="flex items-baseline gap-1 mt-auto">
-                        <span className="text-2xl font-black">{t.val}</span>
-                        <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400">{t.val === 1 ? 'visita' : 'visitas'}</span>
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <span
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-semibold"
+              style={radarSignal.badgeStyle}
+            >
+              {lastActivity.isRecent && !isApproved && !isRejected && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ backgroundColor: 'currentColor' }}
+                />
+              )}
+              {radarSignal.badge}
+            </span>
+
+            {onRefresh && (
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={refreshing}
+                title="Atualizar dados agora"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[13px] font-medium transition-colors hover:bg-black/[0.03] cursor-pointer disabled:opacity-50"
+                style={{ borderColor: C.line, backgroundColor: '#FFFFFF', color: C.ink }}
+              >
+                <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+                <span className="hidden sm:inline">Atualizar</span>
+              </button>
+            )}
+
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-white transition-opacity hover:opacity-95"
+              style={{ backgroundColor: C.green }}
+            >
+              <span className="hidden sm:inline">Ver proposta</span>
+              <span className="sm:hidden">Abrir</span>
+              <ExternalLink size={13} />
+            </a>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar radar"
+              className="p-1.5 rounded-full hover:bg-black/[0.05] transition-colors cursor-pointer"
+              style={{ color: C.muted }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ================================================================== */}
+      {/* CONTEÚDO PRINCIPAL DO RADAR                                        */}
+      {/* ================================================================== */}
+      <main className="max-w-[1280px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+        {/* ---------------------------------------------------------------- */}
+        {/* 1. ESTEIRA HORIZONTAL DA JORNADA DO CLIENTE (PASSO A PASSO)      */}
+        {/* ---------------------------------------------------------------- */}
+        <section
+          className="bg-white rounded-[22px] border p-5 sm:p-7"
+          style={{ borderColor: C.line }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+              <p className="text-[12px] font-medium" style={{ color: C.muted }}>
+                Jornada de decisão do cliente
+              </p>
+              <h2
+                className="text-[18px] sm:text-[20px] font-bold mt-0.5"
+                style={{ letterSpacing: '-0.025em', color: C.ink }}
+              >
+                Fase {completedCount} de {journeySteps.length} concluída
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[12.5px] tabular-nums font-medium" style={{ color: C.muted }}>
+                Avanço da jornada:
+              </span>
+              <span
+                className="px-2.5 py-0.5 rounded-full text-[12.5px] font-bold tabular-nums"
+                style={{ backgroundColor: C.greenSoft, color: C.green }}
+              >
+                {Math.max(10, progressPercent)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Trilha Horizontal Desktop + Vertical Compacta Mobile */}
+          <div className="relative">
+            {/* Linha contínua de fundo (Desktop) */}
+            <div
+              className="hidden lg:block absolute top-[17px] left-[8%] right-[8%] h-[2px] rounded-full"
+              style={{ backgroundColor: '#ECE9E1' }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${Math.min(100, Math.max(0, progressPercent))}%`,
+                  backgroundColor: isRejected ? '#DC2626' : C.green,
+                }}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-3 relative z-10">
+              {journeySteps.map((step, idx) => {
+                const isNextActive = idx === activeStageIndex;
+                return (
+                  <div
+                    key={step.num}
+                    className="flex lg:flex-col items-start lg:items-center lg:text-center gap-3 lg:gap-2.5"
+                  >
+                    <div className="relative flex items-center justify-center shrink-0">
+                      {isNextActive && (
+                        <span
+                          className="absolute inset-0 rounded-full animate-ping opacity-25"
+                          style={{ backgroundColor: C.green }}
+                        />
+                      )}
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold border-2 transition-all"
+                        style={
+                          step.done
+                            ? step.rejected
+                              ? {
+                                  backgroundColor: '#DC2626',
+                                  borderColor: '#DC2626',
+                                  color: '#FFFFFF',
+                                }
+                              : {
+                                  backgroundColor: C.green,
+                                  borderColor: C.green,
+                                  color: '#FFFFFF',
+                                }
+                            : isNextActive
+                            ? {
+                                backgroundColor: '#FFFFFF',
+                                borderColor: C.green,
+                                color: C.green,
+                              }
+                            : {
+                                backgroundColor: '#FFFFFF',
+                                borderColor: C.line,
+                                color: '#9CA3AF',
+                              }
+                        }
+                      >
+                        {step.done ? (
+                          step.rejected ? (
+                            <X size={16} strokeWidth={2.8} />
+                          ) : (
+                            <Check size={16} strokeWidth={2.8} />
+                          )
+                        ) : (
+                          step.num
+                        )}
                       </div>
                     </div>
-                  ))}
+
+                    <div className="min-w-0">
+                      <p
+                        className="text-[13.5px] font-semibold leading-snug"
+                        style={{ color: step.done || isNextActive ? C.ink : '#8B939E' }}
+                      >
+                        {step.title}
+                      </p>
+                      <p
+                        className="text-[12px] leading-snug mt-0.5"
+                        style={{ color: step.done ? C.muted : '#9CA3AF' }}
+                      >
+                        {step.detail}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* 2. MÉTRICAS-CHAVE DO RADAR (ESTILO LP)                           */}
+        {/* ---------------------------------------------------------------- */}
+        <section
+          className="grid grid-cols-2 lg:grid-cols-4 gap-px rounded-[20px] overflow-hidden border"
+          style={{ backgroundColor: C.line, borderColor: C.line }}
+        >
+          <div className="bg-white p-5">
+            <p className="text-[12px]" style={{ color: C.muted }}>
+              Total de acessos em menus
+            </p>
+            <p
+              className="text-[34px] sm:text-[38px] leading-none font-bold mt-2 tabular-nums"
+              style={{ letterSpacing: '-0.035em', color: C.ink }}
+            >
+              {totalMenuViews}
+            </p>
+            <p className="text-[12px] mt-2" style={{ color: C.muted }}>
+              {totalMenuViews === 0
+                ? 'Nenhuma visita do cliente ainda'
+                : `${menuStats.filter((m) => m.count > 0).length} de ${menuStats.length} menus visitados`}
+            </p>
+          </div>
+
+          <div className="bg-white p-5">
+            <p className="text-[12px]" style={{ color: C.muted }}>
+              Última interação do cliente
+            </p>
+            <p
+              className="text-[24px] sm:text-[28px] leading-tight font-bold mt-2 flex items-center gap-2"
+              style={{ letterSpacing: '-0.03em', color: C.ink }}
+            >
+              {lastActivity.isRecent && (
+                <span
+                  className="w-2.5 h-2.5 rounded-full animate-pulse shrink-0"
+                  style={{ backgroundColor: C.green }}
+                />
+              )}
+              <span className="truncate">{lastActivity.text}</span>
+            </p>
+            <p className="text-[12px] mt-2 truncate" style={{ color: C.muted }}>
+              {lastEvent
+                ? `Em ${fmtDateTime(lastEvent.viewedAt)}`
+                : doc?.dataAssinatura
+                ? `Em ${fmtDateTime(doc.dataAssinatura)}`
+                : 'Aguardando 1º clique'}
+            </p>
+          </div>
+
+          <div className="bg-white p-5">
+            <p className="text-[12px]" style={{ color: C.muted }}>
+              Decisores identificados
+            </p>
+            <p
+              className="text-[34px] sm:text-[38px] leading-none font-bold mt-2 tabular-nums"
+              style={{ letterSpacing: '-0.035em', color: C.ink }}
+            >
+              {visitors.length}
+            </p>
+            <p className="text-[12px] mt-2 truncate" style={{ color: C.muted }}>
+              {visitors.length > 0
+                ? visitors.map((v) => v.nome).join(', ')
+                : 'Identificação na entrada do link'}
+            </p>
+          </div>
+
+          <div className="bg-white p-5">
+            <p className="text-[12px]" style={{ color: C.muted }}>
+              Menu mais consultado
+            </p>
+            <p
+              className="text-[18px] sm:text-[20px] leading-snug font-bold mt-2 line-clamp-2"
+              style={{ letterSpacing: '-0.025em', color: C.ink }}
+            >
+              {totalMenuViews > 0 && menuStats[0]?.count > 0
+                ? menuStats[0].label
+                : 'Sem leituras ainda'}
+            </p>
+            <p className="text-[12px] mt-1.5" style={{ color: C.muted }}>
+              {totalMenuViews > 0 && menuStats[0]?.count > 0
+                ? `${menuStats[0].count} ${menuStats[0].count === 1 ? 'acesso' : 'acessos'} nesta seção`
+                : 'Os cliques aparecem aqui em tempo real'}
+            </p>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* 3. PAINEL DUPLO: ACESSOS POR MENU + LINHA DO TEMPO / NEGOCIAÇÃO  */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* COLUNA ESQUERDA (7 col): Acessos em cada menu + Quem acessou */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Card: Número de acessos em cada menu */}
+            <section
+              className="bg-white rounded-[22px] border p-5 sm:p-7"
+              style={{ borderColor: C.line }}
+            >
+              <div className="flex items-center justify-between gap-2 mb-5">
+                <div>
+                  <p className="text-[12px] font-medium" style={{ color: C.muted }}>
+                    Rastreio de leitura por seção
+                  </p>
+                  <h3
+                    className="text-[18px] font-bold mt-0.5"
+                    style={{ letterSpacing: '-0.025em', color: C.ink }}
+                  >
+                    Acessos em cada menu da proposta
+                  </h3>
                 </div>
+                <span className="text-[12px]" style={{ color: C.muted }}>
+                  Acessos do consultor são ignorados
+                </span>
               </div>
 
-              {/* LINE TIME VERTICAL */}
-              <div className="space-y-4 pt-2">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 text-left">
-                  <Clock size={13} /> Histórico Chronológico de Aceite (Linha do Tempo)
-                </h3>
-                
-                <div className="relative pl-6 border-l-2 border-slate-100 space-y-6 ml-3 text-left">
-                  {timelineItems.map((item, idx) => {
-                    const isApprovedState = isApproved;
-                    const isRejectedState = isRejected;
+              <div className="space-y-5">
+                {menuStats.map((menu) => {
+                  const IconComp = menu.icon;
+                  const pctBar =
+                    menu.count > 0 ? Math.max(8, Math.round((menu.count / maxMenuCount) * 100)) : 0;
+                  const sharePct =
+                    totalMenuViews > 0 ? Math.round((menu.count / totalMenuViews) * 100) : 0;
 
-                    return (
-                      <div key={item.id} className="relative">
-                        
-                        {/* Circle Node Icon */}
-                        <div className={`absolute -left-[35px] top-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${item.color}`}>
-                          {item.isStatusStep ? (
-                            isApprovedState ? (
-                              <ShieldCheck size={12} className="stroke-[3]" />
-                            ) : isRejectedState ? (
-                              <ShieldAlert size={12} className="stroke-[3]" />
-                            ) : (
-                              <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
-                            )
-                          ) : item.checked ? (
-                            <Check size={12} className="stroke-[3]" />
-                          ) : (
-                            <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
-                          )}
-                        </div>
-
-                        {/* Content Container */}
-                        <div className="space-y-1.5 pl-2">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                            <h4 className={`text-xs font-black uppercase tracking-wide ${
-                              item.checked 
-                                ? item.isStatusStep && isRejectedState 
-                                  ? 'text-red-700' 
-                                  : 'text-slate-800' 
-                                : 'text-slate-400'
-                            }`}>
-                              {item.title}
-                            </h4>
-                            
-                            {item.dateText && (
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center gap-1">
-                                <Calendar size={10} /> {item.dateText}
+                  return (
+                    <div key={menu.id} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{
+                              backgroundColor: menu.count > 0 ? C.greenSoft : '#F3F1EB',
+                              color: menu.count > 0 ? C.green : '#7A838E',
+                            }}
+                          >
+                            <IconComp size={16} />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-[14px] font-semibold truncate"
+                                style={{ color: C.ink }}
+                              >
+                                {menu.label}
                               </span>
-                            )}
-                          </div>
-
-                          <p className={`text-[10px] leading-relaxed font-medium ${item.checked ? 'text-slate-500' : 'text-slate-350 italic'}`}>
-                            {item.subtitle}
-                          </p>
-
-                          {item.subText && (
-                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 border border-emerald-100 rounded-md text-[9px] font-black text-emerald-700 uppercase tracking-wider mt-1">
-                              🔔 {item.subText}
+                              {!menu.isEnabled && menu.count === 0 && (
+                                <span
+                                  className="text-[10.5px] px-2 py-0.5 rounded-full"
+                                  style={{ backgroundColor: '#F3F1EB', color: C.muted }}
+                                >
+                                  Oculto no link
+                                </span>
+                              )}
                             </div>
-                          )}
+                            <p className="text-[12px] truncate" style={{ color: C.muted }}>
+                              {menu.lastViewedAt
+                                ? `Último acesso em ${fmtShortDate(menu.lastViewedAt)}`
+                                : menu.description}
+                            </p>
+                          </div>
                         </div>
 
+                        <div className="text-right shrink-0">
+                          <span
+                            className="text-[16px] font-bold tabular-nums"
+                            style={{ color: menu.count > 0 ? C.ink : '#9CA3AF' }}
+                          >
+                            {menu.count}x
+                          </span>
+                          <span
+                            className="block text-[11.5px] tabular-nums"
+                            style={{ color: C.muted }}
+                          >
+                            {menu.count === 1 ? '1 acesso' : `${menu.count} acessos`}
+                            {sharePct > 0 ? ` · ${sharePct}%` : ''}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="h-2 rounded-full overflow-hidden"
+                        style={{ backgroundColor: '#EFEDE8' }}
+                      >
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${pctBar}%`,
+                            backgroundColor: C.green,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Insight Comercial Automático (mesmo estilo da LP) */}
+              <div
+                className="mt-6 rounded-xl px-4 py-3.5 text-[13px] leading-relaxed flex items-start gap-2.5"
+                style={{ backgroundColor: C.amberSoft, color: C.amberInk }}
+              >
+                <Eye size={16} className="mt-0.5 shrink-0" />
+                <span>{radarSignal.insight}</span>
+              </div>
+            </section>
+
+            {/* Card: Pessoas / Decisores que abriram a proposta */}
+            <section
+              className="bg-white rounded-[22px] border p-5 sm:p-7"
+              style={{ borderColor: C.line }}
+            >
+              <div className="mb-4">
+                <p className="text-[12px] font-medium" style={{ color: C.muted }}>
+                  Mapeamento do comitê comprador
+                </p>
+                <h3
+                  className="text-[18px] font-bold mt-0.5"
+                  style={{ letterSpacing: '-0.025em', color: C.ink }}
+                >
+                  Quem acessou esta proposta
+                </h3>
+              </div>
+
+              {visitors.length === 0 ? (
+                <div
+                  className="rounded-xl border border-dashed py-8 px-4 text-center text-[13px]"
+                  style={{ borderColor: C.line, color: C.muted }}
+                >
+                  Assim que o cliente confirmar o acesso na entrada da proposta, o nome, CNPJ/e-mail e menus visitados por cada pessoa aparecerão aqui.
+                </div>
+              ) : (
+                <div className="divide-y" style={{ borderColor: C.line }}>
+                  {visitors.map((v) => {
+                    const initials = v.nome
+                      .split(/\s+/)
+                      .map((p) => p[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
+                    return (
+                      <div
+                        key={v.key}
+                        className="py-3.5 first:pt-1 last:pb-1 flex items-start justify-between gap-4"
+                        style={{ borderColor: C.line }}
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <span
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-[12.5px] font-bold shrink-0 mt-0.5"
+                            style={{ backgroundColor: C.greenSoft, color: C.green }}
+                          >
+                            {initials || <UserCheck size={15} />}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[14px] font-semibold truncate" style={{ color: C.ink }}>
+                              {v.nome}
+                            </p>
+                            {v.identificador && (
+                              <p className="text-[12.5px] truncate" style={{ color: C.muted }}>
+                                {v.identificador}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {Array.from(v.tabs).map((tId) => {
+                                const m = MENU_DEFINITIONS.find((x) => x.id === tId);
+                                return (
+                                  <span
+                                    key={tId}
+                                    className="text-[11px] px-2 py-0.5 rounded-md font-medium"
+                                    style={{ backgroundColor: '#F3F1EB', color: C.ink }}
+                                  >
+                                    {m ? m.label : tId}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span
+                            className="text-[13.5px] font-bold tabular-nums block"
+                            style={{ color: C.ink }}
+                          >
+                            {v.clicks} {v.clicks === 1 ? 'clique' : 'cliques'}
+                          </span>
+                          <span className="text-[11.5px] block mt-0.5" style={{ color: C.muted }}>
+                            Último: {fmtShortDate(v.lastAt)}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
+              )}
+            </section>
+          </div>
+
+          {/* COLUNA DIREITA (5 col): Linha do tempo ao vivo + Negociações */}
+          <div className="lg:col-span-5">
+            <section
+              className="bg-white rounded-[22px] border p-5 sm:p-7"
+              style={{ borderColor: C.line }}
+            >
+              {/* Seletor entre Linha do Tempo e Negociações */}
+              <div
+                className="grid grid-cols-2 p-1 rounded-xl mb-5"
+                style={{ backgroundColor: '#F3F1EB' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setRightPanelTab('feed')}
+                  className={`py-2 px-3 rounded-lg text-[13px] font-semibold transition-all cursor-pointer ${
+                    rightPanelTab === 'feed' ? 'bg-white shadow-2xs' : 'hover:opacity-80'
+                  }`}
+                  style={{ color: rightPanelTab === 'feed' ? C.ink : C.muted }}
+                >
+                  Linha do tempo ({chronologicalFeed.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelTab('negociacoes')}
+                  className={`py-2 px-3 rounded-lg text-[13px] font-semibold transition-all cursor-pointer relative ${
+                    rightPanelTab === 'negociacoes' ? 'bg-white shadow-2xs' : 'hover:opacity-80'
+                  }`}
+                  style={{ color: rightPanelTab === 'negociacoes' ? C.ink : C.muted }}
+                >
+                  <span>Ajustes ({negotiations.length})</span>
+                  {pendingNegotiationsCount > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10.5px] bg-orange-600 text-white">
+                      {pendingNegotiationsCount}
+                    </span>
+                  )}
+                </button>
               </div>
-            </>
-          )}
 
-          {/* ── CONTEÚDO DA ABA DE NEGOCIAÇÕES ───────────────────────────────── */}
-          {activeTab === 'negociacoes' && (
-            <div className="space-y-6">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 text-left">
-                <Activity size={13} /> Histórico de Ajustes e Contrapropostas do Cliente
-              </h3>
+              {rightPanelTab === 'feed' ? (
+                <div className="space-y-4 max-h-[620px] overflow-y-auto pr-1">
+                  {chronologicalFeed.length === 0 ? (
+                    <p className="text-[13px] py-8 text-center" style={{ color: C.muted }}>
+                      Nenhum evento registrado ainda.
+                    </p>
+                  ) : (
+                    <div className="relative pl-6 space-y-5 before:content-[''] before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[1.5px] before:bg-[#E6E2DA]">
+                      {chronologicalFeed.map((ev) => {
+                        const dotStyle =
+                          ev.tone === 'green'
+                            ? { backgroundColor: C.green, borderColor: C.green }
+                            : ev.tone === 'amber'
+                            ? { backgroundColor: '#EA580C', borderColor: '#EA580C' }
+                            : ev.tone === 'red'
+                            ? { backgroundColor: '#DC2626', borderColor: '#DC2626' }
+                            : { backgroundColor: '#FFFFFF', borderColor: '#9CA3AF' };
 
-              {negotiations.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 italic text-xs font-medium border-2 border-dashed border-slate-100 rounded-2xl">
-                  Nenhuma solicitação de ajuste ou contraproposta enviada pelo cliente ainda.
+                        return (
+                          <div key={ev.id} className="relative">
+                            <span
+                              className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full border-2"
+                              style={dotStyle}
+                            />
+                            <div className="space-y-0.5">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <p
+                                  className="text-[13.5px] font-semibold leading-snug"
+                                  style={{ color: C.ink }}
+                                >
+                                  {ev.title}
+                                </p>
+                                <span
+                                  className="text-[11.5px] tabular-nums shrink-0 inline-flex items-center gap-1"
+                                  style={{ color: C.muted }}
+                                >
+                                  <Clock size={11} />
+                                  {fmtShortDate(ev.time)}
+                                </span>
+                              </div>
+                              {ev.subtitle && (
+                                <p
+                                  className="text-[12.5px] leading-relaxed line-clamp-3"
+                                  style={{ color: C.muted }}
+                                >
+                                  {ev.subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
-                  {negotiations.map((item: any) => (
-                    <NegotiationItem 
-                      key={item.id} 
-                      item={item} 
-                      doc={doc} 
-                      onRefresh={onRefresh} 
-                    />
-                  ))}
+                <div className="space-y-4 max-h-[620px] overflow-y-auto pr-1">
+                  {negotiations.length === 0 ? (
+                    <div
+                      className="rounded-xl border border-dashed py-10 px-4 text-center space-y-1"
+                      style={{ borderColor: C.line }}
+                    >
+                      <ShieldCheck size={22} className="mx-auto mb-1" style={{ color: C.green }} />
+                      <p className="text-[13.5px] font-semibold" style={{ color: C.ink }}>
+                        Nenhum pedido de ajuste até o momento
+                      </p>
+                      <p className="text-[12.5px]" style={{ color: C.muted }}>
+                        Quando o cliente enviar dúvidas ou contrapropostas pela proposta, você poderá responder por aqui.
+                      </p>
+                    </div>
+                  ) : (
+                    negotiations.map((item: any) => (
+                      <NegotiationItem
+                        key={item.id}
+                        item={item}
+                        doc={doc}
+                        onRefresh={onRefresh}
+                      />
+                    ))
+                  )}
                 </div>
               )}
-            </div>
-          )}
-
+            </section>
+          </div>
         </div>
-
-        {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end shrink-0">
-          <button 
-            onClick={onClose}
-            className="px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white bg-[#1B4D3E] hover:bg-[#13382D] transition-colors shadow-md shadow-emerald-950/10 cursor-pointer"
-          >
-            Fechar Relatório
-          </button>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
