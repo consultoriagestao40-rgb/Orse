@@ -859,9 +859,23 @@ export async function getPropostas(preFetchedUser?: any) {
           select: {
             versao: true,
             precoVenda: true,
-            metadados: true
+            metadados: true,
+            items: {
+              select: {
+                tipoItem: true
+              }
+            }
           },
           orderBy: { versao: 'desc' },
+          take: 1
+        },
+        documentosComerciais: {
+          select: {
+            status: true,
+            statusAssinatura: true,
+            versaoFPV: true
+          },
+          orderBy: [{ versaoFPV: 'desc' }, { createdAt: 'desc' }],
           take: 1
         }
       },
@@ -872,6 +886,10 @@ export async function getPropostas(preFetchedUser?: any) {
       const sortedVersoes = [...p.versoes].sort((a, b) => b.versao - a.versao);
       const lastVersao = sortedVersoes[0];
       const meta = (lastVersao?.metadados as any) || {};
+      const latestDoc = p.documentosComerciais?.[0] || null;
+      const isSpot =
+        String(meta.tipoProposta || '').toUpperCase() === 'SPOT' ||
+        (lastVersao?.items || []).some((it: any) => it.tipoItem === 'SPOT');
       // Prioriza nome fantasia do cadastro, depois metadados salvos
       const clienteNome = p.client?.nomeFantasia || meta.clienteNome || 'Cliente não identificado';
 
@@ -882,6 +900,9 @@ export async function getPropostas(preFetchedUser?: any) {
         clientId: p.clientId,
         empresaEmissoraId: meta.empresaEmissoraId || meta.premissas?.empresaEmissoraId || '',
         regimeTributario: meta.regimeTributario || meta.premissas?.regimeTributario || 'LUCRO_REAL',
+        tipoProposta: isSpot ? 'SPOT' : 'RECORRENTE',
+        docComercialStatus: latestDoc?.status || null,
+        docAssinaturaStatus: latestDoc?.statusAssinatura || null,
         segmento: p.client?.segmento || 'Sem Segmento',
         data: p.createdAt.toLocaleDateString('pt-BR', { timeZone: (loggedUser as any)?.timezone || 'America/Sao_Paulo' }),
         valor: meta.resultado?.faturamentoBruto || lastVersao?.precoVenda || 0,

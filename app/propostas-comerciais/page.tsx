@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
-  FileText, Plus, Search, 
+  FileText, Plus, Search, Filter,
   LayoutList, LayoutGrid, UserSquare2,
   Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2, TrendingUp, MessageCircle
 } from 'lucide-react';
@@ -144,6 +144,8 @@ export default function PropostasComerciaisDashboard() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [docs, setDocs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [modalidadeFilter, setModalidadeFilter] = useState<'ALL' | 'RECORRENTE' | 'SPOT'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
   const [viewModeMounted, setViewModeMounted] = useState(false);
 
@@ -502,10 +504,74 @@ export default function PropostasComerciaisDashboard() {
     return 'bg-slate-100 text-slate-600';
   };
 
-  const filteredDocs = docs.filter(d =>
-    String(d.numeroFPV || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (d.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (d.usuario || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const matchesDocSearch = (d: any) => {
+    if (!searchTerm) return true;
+    const q = searchTerm.toLowerCase();
+    const refStr = fmtRef(d.numeroFPV || 0, d.versaoFPV || 1).toLowerCase();
+    return (
+      String(d.numeroFPV || '').toLowerCase().includes(q) ||
+      refStr.includes(q) ||
+      (d.cliente || '').toLowerCase().includes(q) ||
+      (d.usuario || '').toLowerCase().includes(q)
+    );
+  };
+
+  const matchesDocModalidade = (d: any, mod: 'ALL' | 'RECORRENTE' | 'SPOT') => {
+    if (mod === 'ALL') return true;
+    const tipo = String(d.tipoProposta || '').toUpperCase() === 'SPOT' ? 'SPOT' : 'RECORRENTE';
+    return tipo === mod;
+  };
+
+  const matchesDocStatus = (d: any, stFilter: string) => {
+    if (stFilter === 'ALL') return true;
+    const stUpper = String(d.status || '').trim().toUpperCase();
+    const isAprovada = stUpper.startsWith('APROVAD') || d.statusAssinatura === 'ASSINADO';
+    const isEnviada = !isAprovada && stUpper.startsWith('ENVIAD');
+    const isRascunho = !isAprovada && !isEnviada && (stUpper === 'RASCUNHO' || stUpper === '');
+
+    if (stFilter === 'RASCUNHO') return isRascunho;
+    if (stFilter === 'ENVIADA') return isEnviada;
+    if (stFilter === 'APROVADA') return isAprovada;
+    return stUpper === stFilter.toUpperCase();
+  };
+
+  const baseForModalidadeCounts = docs.filter(
+    d => matchesDocSearch(d) && matchesDocStatus(d, statusFilter)
+  );
+  const modalidadeCounts = {
+    ALL: baseForModalidadeCounts.length,
+    RECORRENTE: baseForModalidadeCounts.filter(d => matchesDocModalidade(d, 'RECORRENTE')).length,
+    SPOT: baseForModalidadeCounts.filter(d => matchesDocModalidade(d, 'SPOT')).length,
+  };
+
+  const baseForStatusCounts = docs.filter(
+    d => matchesDocSearch(d) && matchesDocModalidade(d, modalidadeFilter)
+  );
+  const statusCounts = {
+    ALL: baseForStatusCounts.length,
+    RASCUNHO: baseForStatusCounts.filter(d => matchesDocStatus(d, 'RASCUNHO')).length,
+    ENVIADA: baseForStatusCounts.filter(d => matchesDocStatus(d, 'ENVIADA')).length,
+    APROVADA: baseForStatusCounts.filter(d => matchesDocStatus(d, 'APROVADA')).length,
+  };
+
+  const extraStatuses = statuses.filter(s => {
+    const u = String(s.nome || '').trim().toUpperCase();
+    return (
+      u &&
+      u !== 'RASCUNHO' &&
+      !u.startsWith('ENVIAD') &&
+      !u.startsWith('APROVAD')
+    );
+  });
+
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) || modalidadeFilter !== 'ALL' || statusFilter !== 'ALL';
+
+  const filteredDocs = docs.filter(
+    d =>
+      matchesDocSearch(d) &&
+      matchesDocModalidade(d, modalidadeFilter) &&
+      matchesDocStatus(d, statusFilter)
   );
 
   // ── Dados para Kanban por Status ────────────────────────────────────────────
@@ -572,12 +638,21 @@ export default function PropostasComerciaisDashboard() {
     >
       <div>
         <div className="flex items-start justify-between gap-2 mb-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
               <FileText size={12} className="text-[#1B4D3E]" />
             </div>
-            <span className="text-xs font-black text-slate-700 tracking-wide">
+            <span className="text-xs font-black text-slate-700 tracking-wide truncate">
               {fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}
+            </span>
+            <span
+              className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 border ${
+                String(doc.tipoProposta || '').toUpperCase() === 'SPOT'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-[#1B4D3E]/8 text-[#1B4D3E] border-[#1B4D3E]/20'
+              }`}
+            >
+              {String(doc.tipoProposta || '').toUpperCase() === 'SPOT' ? 'Spot' : 'Recorrente'}
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-slate-400">
@@ -1134,9 +1209,11 @@ export default function PropostasComerciaisDashboard() {
     );
   };
 
-  const activeCount = docs.length;
-  const approvedCount = docs.filter(d => d.status === 'Aprovada').length;
-  const totalValue = docs.reduce((acc, d) => acc + (d.valor || 0), 0);
+  const activeCount = filteredDocs.length;
+  const approvedCount = filteredDocs.filter(
+    d => String(d.status || '').trim().toUpperCase().startsWith('APROVAD') || d.statusAssinatura === 'ASSINADO'
+  ).length;
+  const totalValue = filteredDocs.reduce((acc, d) => acc + (d.valor || 0), 0);
 
   const handleCreate = async () => {
     if (!createModal.fpvId || !createModal.templateId || !createModal.empresaId) {
@@ -1256,17 +1333,142 @@ export default function PropostasComerciaisDashboard() {
             ))}
           </div>
 
-          {/* BARRA DE BUSCA */}
-          <div className="px-8 py-3 flex items-center gap-3 shrink-0 bg-white border-b border-slate-200">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          {/* BARRA DE BUSCA E FILTROS */}
+          <div className="px-8 py-3 flex flex-wrap items-center gap-3 shrink-0 bg-white border-b border-slate-200">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
               <input
                 type="text"
-                placeholder="Buscar por cliente ou ID FPV..."
-                className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
+                placeholder="Buscar por cliente, vendedor ou FPV..."
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-[#1B4D3E] focus:outline-none transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+
+            {/* Filtro de Modalidade: Todas | Recorrente | Spot */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hidden xl:inline">
+                Modalidade:
+              </span>
+              <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5">
+                {([
+                  { id: 'ALL', label: 'Todas', count: modalidadeCounts.ALL },
+                  { id: 'RECORRENTE', label: 'Recorrente', count: modalidadeCounts.RECORRENTE },
+                  { id: 'SPOT', label: 'Spot', count: modalidadeCounts.SPOT },
+                ] as const).map((opt) => {
+                  const active = modalidadeFilter === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setModalidadeFilter(opt.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        active
+                          ? 'bg-[#1B4D3E] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          active ? 'bg-white/20 text-white' : 'bg-white text-slate-500 border border-slate-200/80'
+                        }`}
+                      >
+                        {opt.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Filtro de Status: Todos | Rascunho | Enviada | Aprovada (+ Outros) */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hidden xl:inline">
+                Status:
+              </span>
+              <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5 flex-wrap">
+                {([
+                  { id: 'ALL', label: 'Todos', count: statusCounts.ALL },
+                  { id: 'RASCUNHO', label: 'Rascunho', count: statusCounts.RASCUNHO },
+                  { id: 'ENVIADA', label: 'Enviada', count: statusCounts.ENVIADA },
+                  { id: 'APROVADA', label: 'Aprovada', count: statusCounts.APROVADA },
+                ] as const).map((opt) => {
+                  const active = statusFilter === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setStatusFilter(opt.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        active
+                          ? 'bg-[#1B4D3E] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          active ? 'bg-white/20 text-white' : 'bg-white text-slate-500 border border-slate-200/80'
+                        }`}
+                      >
+                        {opt.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {extraStatuses.length > 0 && (
+                <select
+                  value={
+                    ['ALL', 'RASCUNHO', 'ENVIADA', 'APROVADA'].includes(statusFilter)
+                      ? ''
+                      : statusFilter
+                  }
+                  onChange={(e) => setStatusFilter(e.target.value || 'ALL')}
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold border outline-none transition-all cursor-pointer ${
+                    !['ALL', 'RASCUNHO', 'ENVIADA', 'APROVADA'].includes(statusFilter)
+                      ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <option value="" className="bg-white text-slate-700">
+                    Mais etapas...
+                  </option>
+                  {extraStatuses.map((s) => (
+                    <option key={s.nome} value={s.nome} className="bg-white text-slate-700">
+                      {s.nome}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="ml-auto flex items-center gap-3">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setModalidadeFilter('ALL');
+                    setStatusFilter('ALL');
+                  }}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X size={13} />
+                  Limpar
+                </button>
+              )}
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <Filter size={13} className="text-slate-400" />
+                <span>
+                  {filteredDocs.length === docs.length
+                    ? `${filteredDocs.length} proposta${filteredDocs.length !== 1 ? 's' : ''}`
+                    : `${filteredDocs.length} de ${docs.length} propostas`}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1303,9 +1505,18 @@ export default function PropostasComerciaisDashboard() {
                   ) : filteredDocs.map((doc) => (
                     <tr key={doc.id} className="border-b border-slate-200 hover:bg-slate-50">
                       <td className="px-2.5 py-3 lg:px-4">
-                        <div className="flex items-center gap-2">
-                          <Tag size={14} className="text-slate-400" />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Tag size={14} className="text-slate-400 shrink-0" />
                           <span className="font-mono font-bold text-slate-800 text-xs">{fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}</span>
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${
+                              String(doc.tipoProposta || '').toUpperCase() === 'SPOT'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : 'bg-[#1B4D3E]/8 text-[#1B4D3E] border-[#1B4D3E]/20'
+                            }`}
+                          >
+                            {String(doc.tipoProposta || '').toUpperCase() === 'SPOT' ? 'Spot' : 'Recorrente'}
+                          </span>
                         </div>
                       </td>
                       <td className="px-2.5 py-3 lg:px-4 font-semibold text-slate-700 max-w-[140px] truncate" title={doc.cliente}>{doc.cliente}</td>
@@ -1339,6 +1550,9 @@ export default function PropostasComerciaisDashboard() {
                           className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border outline-none cursor-pointer ${getStatusStyle(doc.status)}`}
                         >
                           {statuses.map(s => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
+                          {doc.status && !statuses.some(s => s.nome === doc.status) && (
+                            <option value={doc.status}>{doc.status}</option>
+                          )}
                         </select>
                       </td>
                       <td className="px-2.5 py-3 lg:px-4 text-center w-[170px] min-w-[170px]">

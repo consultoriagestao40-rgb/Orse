@@ -136,14 +136,22 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
             tipoProposta: string | null;
           }>
         >(
-          `SELECT "propostaId", "versao",
-                  "metadados"->>'contato' AS contato,
-                  COALESCE("metadados"->>'celular', "metadados"->>'whatsapp', "metadados"->>'telefone') AS celular,
-                  "metadados"->>'tipoServicos' AS "tipoServicos",
-                  LEFT("metadados"->>'objetoProposta', 180) AS "objetoProposta",
-                  "metadados"->>'tipoProposta' AS "tipoProposta"
-             FROM "PropostaVersao"
-            WHERE "propostaId" = ANY($1::text[])`,
+          `SELECT pv."propostaId", pv."versao",
+                  pv."metadados"->>'contato' AS contato,
+                  COALESCE(pv."metadados"->>'celular', pv."metadados"->>'whatsapp', pv."metadados"->>'telefone') AS celular,
+                  pv."metadados"->>'tipoServicos' AS "tipoServicos",
+                  LEFT(pv."metadados"->>'objetoProposta', 180) AS "objetoProposta",
+                  CASE
+                    WHEN UPPER(COALESCE(pv."metadados"->>'tipoProposta', '')) = 'SPOT'
+                      OR EXISTS (
+                        SELECT 1 FROM "PropostaItem" pi
+                         WHERE pi."versaoId" = pv.id AND pi."tipoItem" = 'SPOT'
+                      )
+                    THEN 'SPOT'
+                    ELSE 'RECORRENTE'
+                  END AS "tipoProposta"
+             FROM "PropostaVersao" pv
+            WHERE pv."propostaId" = ANY($1::text[])`,
           propostaIds
         );
         for (const row of metaRows) {

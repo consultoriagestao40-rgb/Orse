@@ -36,6 +36,8 @@ function ProposalsDashboard() {
   const [proposals, setProposals] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [modalidadeFilter, setModalidadeFilter] = useState<'ALL' | 'RECORRENTE' | 'SPOT'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [userRole, setUserRole] = useState<string>('USER');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
   const [viewModeMounted, setViewModeMounted] = useState(false);
@@ -494,16 +496,87 @@ function ProposalsDashboard() {
     return found?.color || 'bg-slate-100 text-slate-600 border border-slate-200';
   };
 
-  const filteredProposals = proposals.filter(p =>
+  const matchesFpvSearch = (p: any) =>
+    !searchTerm ||
     (p.numero || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.usuario || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (p.usuario || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+  const matchesFpvModalidade = (p: any, mod: 'ALL' | 'RECORRENTE' | 'SPOT') => {
+    if (mod === 'ALL') return true;
+    const tipo = p.tipoProposta === 'SPOT' ? 'SPOT' : 'RECORRENTE';
+    return tipo === mod;
+  };
+
+  const matchesFpvStatus = (p: any, stFilter: string) => {
+    if (stFilter === 'ALL') return true;
+    const stUpper = String(p.status || '').trim().toUpperCase();
+    const docStUpper = String(p.docComercialStatus || '').trim().toUpperCase();
+    const isAprovada = stUpper.startsWith('APROVAD') || p.docAssinaturaStatus === 'ASSINADO';
+    const isRecusada = stUpper.includes('DECLIN') || stUpper.startsWith('RECUS') || stUpper.startsWith('REJEIT');
+    const isEnviada =
+      !isAprovada &&
+      !isRecusada &&
+      (stUpper.startsWith('ENVIAD') ||
+        stUpper === 'AGUARDANDO CLIENTE' ||
+        docStUpper.startsWith('ENVIAD') ||
+        docStUpper === 'FOLLOW-UP');
+    const isRascunho =
+      !isAprovada &&
+      !isRecusada &&
+      !isEnviada &&
+      (stUpper === 'RASCUNHO' || stUpper === 'ATIVO' || stUpper === '');
+
+    if (stFilter === 'RASCUNHO') return isRascunho;
+    if (stFilter === 'ENVIADA') return isEnviada;
+    if (stFilter === 'APROVADA') return isAprovada;
+    return stUpper === stFilter.toUpperCase();
+  };
+
+  const baseForModalidadeCounts = proposals.filter(
+    p => matchesFpvSearch(p) && matchesFpvStatus(p, statusFilter)
+  );
+  const modalidadeCounts = {
+    ALL: baseForModalidadeCounts.length,
+    RECORRENTE: baseForModalidadeCounts.filter(p => matchesFpvModalidade(p, 'RECORRENTE')).length,
+    SPOT: baseForModalidadeCounts.filter(p => matchesFpvModalidade(p, 'SPOT')).length,
+  };
+
+  const baseForStatusCounts = proposals.filter(
+    p => matchesFpvSearch(p) && matchesFpvModalidade(p, modalidadeFilter)
+  );
+  const statusCounts = {
+    ALL: baseForStatusCounts.length,
+    RASCUNHO: baseForStatusCounts.filter(p => matchesFpvStatus(p, 'RASCUNHO')).length,
+    ENVIADA: baseForStatusCounts.filter(p => matchesFpvStatus(p, 'ENVIADA')).length,
+    APROVADA: baseForStatusCounts.filter(p => matchesFpvStatus(p, 'APROVADA')).length,
+  };
+
+  const extraStatuses = statuses.filter(s => {
+    const u = String(s.nome || '').trim().toUpperCase();
+    return (
+      u &&
+      u !== 'RASCUNHO' &&
+      u !== 'ATIVO' &&
+      !u.startsWith('ENVIAD') &&
+      !u.startsWith('APROVAD')
+    );
+  });
+
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) || modalidadeFilter !== 'ALL' || statusFilter !== 'ALL';
+
+  const filteredProposals = proposals.filter(
+    p =>
+      matchesFpvSearch(p) &&
+      matchesFpvModalidade(p, modalidadeFilter) &&
+      matchesFpvStatus(p, statusFilter)
   );
 
-  const activeCount = proposals.length;
-  const monthlyVolume = proposals.reduce((acc, p) => acc + p.valor, 0);
-  const clientsCount = new Set(proposals.map(p => p.cliente)).size;
-  const revisionCount = proposals.filter(p => (p.status || '').toUpperCase().includes('REVIS')).length;
+  const activeCount = filteredProposals.length;
+  const monthlyVolume = filteredProposals.reduce((acc, p) => acc + p.valor, 0);
+  const clientsCount = new Set(filteredProposals.map(p => p.cliente)).size;
+  const revisionCount = filteredProposals.filter(p => (p.status || '').toUpperCase().includes('REVIS')).length;
 
   // ── Dados para Kanban por Status ────────────────────────────────────────────
   const kanbanStatusCols = statuses.map(s => {
@@ -609,6 +682,15 @@ function ProposalsDashboard() {
               <FileText size={12} className="text-[#1B4D3E]" />
             </div>
             <span className="text-xs font-black text-slate-700 tracking-wide">{prop.numero}</span>
+            <span
+              className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 border ${
+                prop.tipoProposta === 'SPOT'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-[#1B4D3E]/8 text-[#1B4D3E] border-[#1B4D3E]/20'
+              }`}
+            >
+              {prop.tipoProposta === 'SPOT' ? 'Spot' : 'Recorrente'}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-slate-400">
             {viewMode !== 'kanban-status' && (
@@ -1348,21 +1430,142 @@ function ProposalsDashboard() {
             ))}
           </div>
 
-          {/* BARRA DE BUSCA (sempre visível) */}
-          <div className="px-8 py-3 flex items-center gap-3 shrink-0 bg-white border-b border-slate-200">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          {/* BARRA DE BUSCA E FILTROS (sempre visível) */}
+          <div className="px-8 py-3 flex flex-wrap items-center gap-3 shrink-0 bg-white border-b border-slate-200">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
               <input
                 type="text"
-                placeholder="Buscar proposta, cliente ou vendedor..."
-                className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
+                placeholder="Buscar FPV, cliente ou vendedor..."
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:border-[#1B4D3E] focus:outline-none transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-              <Filter size={13} />
-              <span>{filteredProposals.length} proposta{filteredProposals.length !== 1 ? 's' : ''}</span>
+
+            {/* Filtro de Modalidade: Todas | Recorrente | Spot */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hidden xl:inline">
+                Modalidade:
+              </span>
+              <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5">
+                {([
+                  { id: 'ALL', label: 'Todas', count: modalidadeCounts.ALL },
+                  { id: 'RECORRENTE', label: 'Recorrente', count: modalidadeCounts.RECORRENTE },
+                  { id: 'SPOT', label: 'Spot', count: modalidadeCounts.SPOT },
+                ] as const).map((opt) => {
+                  const active = modalidadeFilter === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setModalidadeFilter(opt.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        active
+                          ? 'bg-[#1B4D3E] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          active ? 'bg-white/20 text-white' : 'bg-white text-slate-500 border border-slate-200/80'
+                        }`}
+                      >
+                        {opt.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Filtro de Status: Todos | Rascunho | Enviada | Aprovada (+ Outros) */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hidden xl:inline">
+                Status:
+              </span>
+              <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5 flex-wrap">
+                {([
+                  { id: 'ALL', label: 'Todos', count: statusCounts.ALL },
+                  { id: 'RASCUNHO', label: 'Rascunho', count: statusCounts.RASCUNHO },
+                  { id: 'ENVIADA', label: 'Enviada', count: statusCounts.ENVIADA },
+                  { id: 'APROVADA', label: 'Aprovada', count: statusCounts.APROVADA },
+                ] as const).map((opt) => {
+                  const active = statusFilter === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setStatusFilter(opt.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        active
+                          ? 'bg-[#1B4D3E] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          active ? 'bg-white/20 text-white' : 'bg-white text-slate-500 border border-slate-200/80'
+                        }`}
+                      >
+                        {opt.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {extraStatuses.length > 0 && (
+                <select
+                  value={
+                    ['ALL', 'RASCUNHO', 'ENVIADA', 'APROVADA'].includes(statusFilter)
+                      ? ''
+                      : statusFilter
+                  }
+                  onChange={(e) => setStatusFilter(e.target.value || 'ALL')}
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold border outline-none transition-all cursor-pointer ${
+                    !['ALL', 'RASCUNHO', 'ENVIADA', 'APROVADA'].includes(statusFilter)
+                      ? 'bg-[#1B4D3E] text-white border-[#1B4D3E]'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <option value="" className="bg-white text-slate-700">
+                    Mais etapas...
+                  </option>
+                  {extraStatuses.map((s) => (
+                    <option key={s.id} value={s.nome} className="bg-white text-slate-700">
+                      {s.nome}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="ml-auto flex items-center gap-3">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setModalidadeFilter('ALL');
+                    setStatusFilter('ALL');
+                  }}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X size={13} />
+                  Limpar
+                </button>
+              )}
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <Filter size={13} className="text-slate-400" />
+                <span>
+                  {filteredProposals.length === proposals.length
+                    ? `${filteredProposals.length} FPV${filteredProposals.length !== 1 ? 's' : ''}`
+                    : `${filteredProposals.length} de ${proposals.length} FPVs`}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1408,9 +1611,20 @@ function ProposalsDashboard() {
                       <tr key={prop.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-3">
                           <div className="flex items-center gap-3">
-                            <FileText size={16} className="text-slate-400" />
+                            <FileText size={16} className="text-slate-400 shrink-0" />
                             <div>
-                              <p className="font-bold text-slate-800">{prop.numero}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-slate-800">{prop.numero}</p>
+                                <span
+                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${
+                                    prop.tipoProposta === 'SPOT'
+                                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                      : 'bg-[#1B4D3E]/8 text-[#1B4D3E] border-[#1B4D3E]/20'
+                                  }`}
+                                >
+                                  {prop.tipoProposta === 'SPOT' ? 'Spot' : 'Recorrente'}
+                                </span>
+                              </div>
                               <p className="text-[10px] text-slate-500 uppercase font-medium">{prop.data}</p>
                             </div>
                           </div>
@@ -1438,22 +1652,32 @@ function ProposalsDashboard() {
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.valor)}
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <select
-                            value={prop.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-                              setProposals(proposals.map(p => p.id === prop.id ? { ...p, status: newStatus } : p));
-                              await updatePropostaStatus(prop.id, newStatus);
-                            }}
-                            className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border outline-none cursor-pointer ${getStatusStyle(prop.status)}`}
-                          >
-                            {statuses.map(s => (
-                              <option key={s.id} value={s.nome}>{s.nome}</option>
-                            ))}
-                            {!statuses.find(s => s.nome === prop.status) && (
-                              <option value={prop.status}>{prop.status}</option>
-                            )}
-                          </select>
+                          <div className="inline-flex flex-col items-center gap-1">
+                            <select
+                              value={prop.status}
+                              onChange={async (e) => {
+                                const newStatus = e.target.value;
+                                setProposals(proposals.map(p => p.id === prop.id ? { ...p, status: newStatus } : p));
+                                await updatePropostaStatus(prop.id, newStatus);
+                              }}
+                              className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border outline-none cursor-pointer ${getStatusStyle(prop.status)}`}
+                            >
+                              {statuses.map(s => (
+                                <option key={s.id} value={s.nome}>{s.nome}</option>
+                              ))}
+                              {!statuses.find(s => s.nome === prop.status) && (
+                                <option value={prop.status}>{prop.status}</option>
+                              )}
+                            </select>
+                            {prop.docComercialStatus &&
+                              String(prop.docComercialStatus).toUpperCase().startsWith('ENVIAD') &&
+                              !String(prop.status || '').toUpperCase().startsWith('APROVAD') &&
+                              !String(prop.status || '').toUpperCase().startsWith('ENVIAD') && (
+                                <span className="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                  Enviada ao cliente
+                                </span>
+                              )}
+                          </div>
                         </td>
                         <td className="px-6 py-3 text-center">
                           <div className="flex items-center justify-center gap-1 text-slate-500">
