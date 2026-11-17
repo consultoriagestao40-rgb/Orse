@@ -49,8 +49,8 @@ function getInterBoldFont(): Promise<ArrayBuffer | null> {
 }
 
 /**
- * Header oficial SmartBidHub (600x340, fundo #07271C idêntico ao logo oficial 3D)
- * com lockup centralizado na zona segura (330px) para nunca cortar em 1:1, 4:3 ou 1.91:1 no celular ou PC.
+ * Header oficial SmartBidHub na proporção nativa exata do WhatsApp/OpenGraph (1200x630 — 1.91:1),
+ * com logo 3D oficial + número da proposta centralizados na área segura (zero cortes no celular e no PC).
  */
 export async function GET(
   _req: Request,
@@ -93,8 +93,8 @@ export async function GET(
     (
       <div
         style={{
-          width: '600px',
-          height: '340px',
+          width: '1200px',
+          height: '630px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -102,7 +102,7 @@ export async function GET(
           backgroundColor: '#07271C',
           fontFamily: interBold ? 'Inter' : 'sans-serif',
           color: '#FFFFFF',
-          padding: '24px',
+          padding: '48px',
         }}
       >
         {/* Logo Oficial 3D S + SmartBidHub */}
@@ -115,13 +115,13 @@ export async function GET(
         >
           <img
             src={symbolUri}
-            width={76}
-            height={76}
+            width={136}
+            height={136}
             style={{
-              width: '76px',
-              height: '76px',
-              marginRight: '14px',
-              borderRadius: '16px',
+              width: '136px',
+              height: '136px',
+              marginRight: '26px',
+              borderRadius: '28px',
             }}
           />
           <div
@@ -133,9 +133,9 @@ export async function GET(
           >
             <span
               style={{
-                fontSize: '34px',
+                fontSize: '64px',
                 fontWeight: 800,
-                letterSpacing: '-0.9px',
+                letterSpacing: '-1.6px',
                 color: '#FFFFFF',
                 lineHeight: 1.05,
               }}
@@ -144,11 +144,11 @@ export async function GET(
             </span>
             <span
               style={{
-                fontSize: '15px',
+                fontSize: '27px',
                 fontWeight: 700,
-                letterSpacing: '1.6px',
+                letterSpacing: '3.2px',
                 color: '#6EE7B7',
-                marginTop: '4px',
+                marginTop: '8px',
                 textTransform: 'uppercase',
               }}
             >
@@ -157,22 +157,22 @@ export async function GET(
           </div>
         </div>
 
-        {/* Pílula centralizada com o número real da proposta (sem nunca cortar nas bordas) */}
+        {/* Pílula centralizada com o número real da proposta */}
         {codeBadge ? (
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginTop: '22px',
-              padding: '8px 22px',
+              marginTop: '40px',
+              padding: '14px 38px',
               borderRadius: '999px',
               background: 'rgba(16, 185, 129, 0.16)',
-              border: '1.5px solid rgba(110, 231, 183, 0.42)',
-              fontSize: '20px',
+              border: '2.5px solid rgba(110, 231, 183, 0.44)',
+              fontSize: '36px',
               fontWeight: 800,
               color: '#A7F3D0',
-              letterSpacing: '0.8px',
+              letterSpacing: '1.2px',
             }}
           >
             {codeBadge}
@@ -181,8 +181,8 @@ export async function GET(
       </div>
     ),
     {
-      width: 600,
-      height: 340,
+      width: 1200,
+      height: 630,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },

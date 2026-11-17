@@ -197,46 +197,50 @@ export default function WhatsAppProposalSendModal({
               {loadingMeta && <Loader2 size={11} className="animate-spin text-slate-400" />}
             </div>
 
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200/80 max-w-[290px] mx-auto">
-              {/* Topo: Logo Oficial SmartBidHub + Número da Proposta centralizados */}
-              <div className="bg-[#07271C] px-4 py-4 flex flex-col items-center justify-center text-center">
-                <div className="flex items-center gap-2">
-                  <img
-                    src="/smartbid-symbol.png"
-                    alt="SmartBidHub Oficial"
-                    className="w-8 h-8 rounded-lg object-contain shrink-0"
-                  />
-                  <div className="text-left">
-                    <p className="text-xs font-extrabold text-white leading-none tracking-tight">
-                      SmartBidHub
-                    </p>
-                    <p className="text-[8px] font-bold text-emerald-300 uppercase tracking-widest mt-0.5">
-                      Proposta Comercial
-                    </p>
+            <div className="bg-[#D9FDD3] rounded-2xl p-1.5 shadow-sm border border-emerald-200/80 max-w-[310px] mx-auto space-y-1">
+              <div className="rounded-xl overflow-hidden bg-[#F7F8FA] border border-black/[0.06]">
+                {/* Topo 1.91:1: Logo Oficial SmartBidHub + Número da Proposta centralizados */}
+                <div className="bg-[#07271C] px-4 py-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src="/smartbid-symbol.png"
+                      alt="SmartBidHub Oficial"
+                      className="w-8 h-8 rounded-lg object-contain shrink-0"
+                    />
+                    <div className="text-left">
+                      <p className="text-xs font-extrabold text-white leading-none tracking-tight">
+                        SmartBidHub
+                      </p>
+                      <p className="text-[8px] font-bold text-emerald-300 uppercase tracking-widest mt-0.5">
+                        Proposta Comercial
+                      </p>
+                    </div>
                   </div>
+                  {code && code !== 'PROPOSTA' && (
+                    <span className="mt-2.5 text-[9.5px] font-extrabold text-emerald-200 bg-emerald-500/15 border border-emerald-400/40 px-2.5 py-0.5 rounded-full">
+                      {code.replace(/-R/, ' · R')}
+                    </span>
+                  )}
                 </div>
-                {code && code !== 'PROPOSTA' && (
-                  <span className="mt-2.5 text-[9.5px] font-extrabold text-emerald-200 bg-emerald-500/15 border border-emerald-400/40 px-2.5 py-0.5 rounded-full">
-                    {code.replace(/-R/, ' · R')}
-                  </span>
-                )}
+
+                {/* Bloco cinza claro nativo com dados completos no Celular e no PC */}
+                <div className="px-3 py-2 space-y-0.5 bg-[#F7F8FA]">
+                  <p className="text-[12px] font-bold text-[#111B21] leading-snug">
+                    {cardHeadline}
+                  </p>
+                  <p className="text-[11px] font-normal text-[#667781] leading-snug">
+                    {cardSubtitle}
+                  </p>
+                  <p className="text-[10px] text-[#667781] font-normal pt-0.5">
+                    🔗 smartbidhub.com.br
+                  </p>
+                </div>
               </div>
 
-              {/* Corpo completo (não corta no celular nem no PC) */}
-              <div className="px-3.5 py-2.5 space-y-0.5 bg-white">
-                <p className="text-[12px] font-bold text-[#111B21] leading-snug">
-                  {cardHeadline}
-                </p>
-                <p className="text-[11px] font-normal text-[#667781] leading-snug">
-                  {cardSubtitle}
-                </p>
-              </div>
-
-              {/* Botão clicável Abrir Proposta (link 100% oculto) */}
-              <div className="border-t border-slate-200/90 py-2.5 px-3 flex items-center justify-center gap-1.5 text-[#00A884] font-bold text-[12px] bg-white">
-                <ExternalLink size={13} className="shrink-0" />
-                <span>Abrir Proposta</span>
-              </div>
+              {/* Linha do link clicável nativo */}
+              <p className="text-[11px] text-[#027EB5] underline px-1.5 pb-0.5 truncate">
+                {shareUrl}
+              </p>
             </div>
           </div>
 
