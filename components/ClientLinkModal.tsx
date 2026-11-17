@@ -1337,20 +1337,25 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
               </span>
               <div className="bg-[#D9FDD3] rounded-2xl p-1.5 shadow-sm border border-emerald-200/80 max-w-[300px] ml-auto space-y-1">
                 <div className="rounded-xl overflow-hidden bg-[#F7F8FA] border border-black/[0.06]">
-                  {/* Faixa baixa horizontal: Logo Oficial SmartBidHub + Número da Proposta centralizados */}
-                  <div className="bg-[#07271C] px-3.5 py-2.5 flex items-center justify-center gap-2.5">
-                    <div className="flex items-center gap-1.5">
+                  {/* Faixa baixa horizontal bem distribuída: Logo Oficial à esquerda + Número à direita */}
+                  <div className="bg-[#07271C] px-3.5 py-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <img
                         src="/smartbid-symbol.png"
                         alt="SmartBidHub Oficial"
-                        className="w-6 h-6 rounded-md object-contain shrink-0"
+                        className="w-8 h-8 rounded-lg object-contain shrink-0"
                       />
-                      <p className="text-xs font-extrabold text-white leading-none tracking-tight">
-                        SmartBidHub
-                      </p>
+                      <div className="text-left min-w-0">
+                        <p className="text-xs font-extrabold text-white leading-none tracking-tight truncate">
+                          SmartBidHub
+                        </p>
+                        <p className="text-[7.5px] font-bold text-emerald-300 uppercase tracking-widest mt-0.5 truncate">
+                          Proposta Comercial
+                        </p>
+                      </div>
                     </div>
                     {proposalCode && proposalCode !== 'PROPOSTA' && (
-                      <span className="text-[9px] font-extrabold text-emerald-200 bg-emerald-500/15 border border-emerald-400/40 px-2 py-0.5 rounded-full shrink-0">
+                      <span className="text-[9.5px] font-extrabold text-emerald-200 bg-emerald-500/20 border border-emerald-400/45 px-2.5 py-1 rounded-full shrink-0">
                         {proposalCode.replace(/-R/, ' · R')}
                       </span>
                     )}

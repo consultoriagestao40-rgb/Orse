@@ -49,8 +49,8 @@ function getInterBoldFont(): Promise<ArrayBuffer | null> {
 }
 
 /**
- * Faixa baixa horizontal (1100x240) com conteúdo agrupado no centro (~480px de largura útil),
- * reduzindo em mais de 55% a altura do topo no WhatsApp sem nunca cortar as laterais no celular ou PC.
+ * Faixa baixa horizontal (860x250 — 3.44:1, dentro do limite 3.6:1 sem cortes do WhatsApp)
+ * com Logo Oficial 3D à esquerda e Número da Proposta à direita preenchendo bem o espaço.
  */
 export async function GET(
   _req: Request,
@@ -93,73 +93,93 @@ export async function GET(
     (
       <div
         style={{
-          width: '1100px',
-          height: '240px',
+          width: '860px',
+          height: '250px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: codeBadge ? 'space-between' : 'center',
+          padding: '0 64px',
           backgroundColor: '#07271C',
           fontFamily: interBold ? 'Inter' : 'sans-serif',
           color: '#FFFFFF',
         }}
       >
-        {/* Linha única compacta centralizada (~480px total) para nunca cortar nas bordas */}
+        {/* Esquerda: Logo Oficial 3D S + SmartBidHub / Proposta Comercial */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
           }}
         >
           <img
             src={symbolUri}
-            width={72}
-            height={72}
+            width={118}
+            height={118}
             style={{
-              width: '72px',
-              height: '72px',
-              marginRight: '14px',
-              borderRadius: '16px',
+              width: '118px',
+              height: '118px',
+              marginRight: '20px',
+              borderRadius: '24px',
             }}
           />
-          <span
+          <div
             style={{
-              fontSize: '36px',
-              fontWeight: 800,
-              letterSpacing: '-0.9px',
-              color: '#FFFFFF',
-              lineHeight: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
             }}
           >
-            SmartBidHub
-          </span>
-
-          {codeBadge ? (
-            <div
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginLeft: '20px',
-                padding: '9px 20px',
-                borderRadius: '999px',
-                background: 'rgba(16, 185, 129, 0.18)',
-                border: '1.8px solid rgba(110, 231, 183, 0.45)',
-                fontSize: '21px',
+                fontSize: '46px',
                 fontWeight: 800,
-                color: '#A7F3D0',
-                letterSpacing: '0.6px',
+                letterSpacing: '-1.2px',
+                color: '#FFFFFF',
+                lineHeight: 1.05,
               }}
             >
-              {codeBadge}
-            </div>
-          ) : null}
+              SmartBidHub
+            </span>
+            <span
+              style={{
+                fontSize: '18px',
+                fontWeight: 700,
+                letterSpacing: '2.4px',
+                color: '#6EE7B7',
+                marginTop: '6px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Proposta Comercial
+            </span>
+          </div>
         </div>
+
+        {/* Direita: Pílula destacada com o número real da proposta */}
+        {codeBadge ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '14px 28px',
+              borderRadius: '999px',
+              background: 'rgba(16, 185, 129, 0.18)',
+              border: '2px solid rgba(110, 231, 183, 0.48)',
+              fontSize: '26px',
+              fontWeight: 800,
+              color: '#A7F3D0',
+              letterSpacing: '0.8px',
+            }}
+          >
+            {codeBadge}
+          </div>
+        ) : null}
       </div>
     ),
     {
-      width: 1100,
-      height: 240,
+      width: 860,
+      height: 250,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },

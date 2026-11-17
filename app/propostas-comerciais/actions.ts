@@ -1260,7 +1260,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-13`;
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-14`;
     const cardTitle = buildProposalCardHeadline({
       tipoServicos: meta.tipoServicos,
       objetoProposta: meta.objetoProposta,
