@@ -201,6 +201,8 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         tipoProposta: fpvContact?.tipoProposta || 'RECORRENTE',
         statusAssinatura: d.statusAssinatura,
         nomeAssinante: d.nomeAssinante,
+        cpfAssinante: d.cpfAssinante,
+        ipAssinante: d.ipAssinante,
         dataAssinatura: d.dataAssinatura,
         createdAt: d.createdAt
       };
