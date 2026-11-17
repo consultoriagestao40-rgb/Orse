@@ -197,24 +197,45 @@ export default function WhatsAppProposalSendModal({
               {loadingMeta && <Loader2 size={11} className="animate-spin text-slate-400" />}
             </div>
 
-            <div className="bg-white rounded-2xl p-2 shadow-sm border border-slate-200/80">
-              <div className="rounded-xl bg-[#F7F8FA] border border-black/[0.05] overflow-hidden flex items-stretch">
-                <img
-                  src="/whatsapp-card-logo.png"
-                  alt="SmartBidHub Oficial"
-                  className="w-[78px] h-[78px] object-cover shrink-0"
-                />
-                <div className="min-w-0 flex-1 px-3 py-2 flex flex-col justify-center">
-                  <p className="text-[12px] font-bold text-[#111B21] leading-snug truncate">
-                    {cardHeadline}
-                  </p>
-                  <p className="text-[11px] font-normal text-[#667781] leading-snug truncate mt-0.5">
-                    {cardSubtitle}
-                  </p>
-                  <p className="text-[10px] text-[#667781] font-normal truncate mt-1">
-                    🔗 smartbidhub.com.br
-                  </p>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200/80 max-w-[290px] mx-auto">
+              {/* Topo: Logo Oficial SmartBidHub + Número da Proposta centralizados */}
+              <div className="bg-[#07271C] px-4 py-4 flex flex-col items-center justify-center text-center">
+                <div className="flex items-center gap-2">
+                  <img
+                    src="/smartbid-symbol.png"
+                    alt="SmartBidHub Oficial"
+                    className="w-8 h-8 rounded-lg object-contain shrink-0"
+                  />
+                  <div className="text-left">
+                    <p className="text-xs font-extrabold text-white leading-none tracking-tight">
+                      SmartBidHub
+                    </p>
+                    <p className="text-[8px] font-bold text-emerald-300 uppercase tracking-widest mt-0.5">
+                      Proposta Comercial
+                    </p>
+                  </div>
                 </div>
+                {code && code !== 'PROPOSTA' && (
+                  <span className="mt-2.5 text-[9.5px] font-extrabold text-emerald-200 bg-emerald-500/15 border border-emerald-400/40 px-2.5 py-0.5 rounded-full">
+                    {code.replace(/-R/, ' · R')}
+                  </span>
+                )}
+              </div>
+
+              {/* Corpo completo (não corta no celular nem no PC) */}
+              <div className="px-3.5 py-2.5 space-y-0.5 bg-white">
+                <p className="text-[12px] font-bold text-[#111B21] leading-snug">
+                  {cardHeadline}
+                </p>
+                <p className="text-[11px] font-normal text-[#667781] leading-snug">
+                  {cardSubtitle}
+                </p>
+              </div>
+
+              {/* Botão clicável Abrir Proposta (link 100% oculto) */}
+              <div className="border-t border-slate-200/90 py-2.5 px-3 flex items-center justify-center gap-1.5 text-[#00A884] font-bold text-[12px] bg-white">
+                <ExternalLink size={13} className="shrink-0" />
+                <span>Abrir Proposta</span>
               </div>
             </div>
           </div>

@@ -1260,7 +1260,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = 'https://www.smartbidhub.com.br/whatsapp-card-logo.png?v=10';
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-11`;
     const cardTitle = buildProposalCardHeadline({
       tipoServicos: meta.tipoServicos,
       objetoProposta: meta.objetoProposta,
@@ -1276,30 +1276,53 @@ export async function sendProposalLinkViaZApiAction(params: {
       empresaEmissora: emissoraNome,
     });
 
-    const messageBody =
+    const pin = (cfg?.regrasAcesso?.codigoAcessoCustom || '').trim();
+    const firstContact = (params.contatoNome || meta.contato || doc.client?.contato || '')
+      .trim()
+      .split(/\s+/)[0];
+    const introMessage =
       (params.customMessage || '').trim() ||
-      buildExecutiveWhatsAppMessage({
-        docId: doc.id,
-        numeroFPV: doc.proposta?.numero,
-        versaoFPV: rev,
-        clienteNome,
-        contatoNome: params.contatoNome || meta.contato || doc.client?.contato,
-        empresaEmissora: emissoraNome,
-        codigoAcessoCustom: cfg?.regrasAcesso?.codigoAcessoCustom,
-      });
+      (firstContact
+        ? `Olá, *${firstContact}*! Segue nossa proposta comercial:`
+        : `Segue nossa proposta comercial para análise:`);
 
-    // Modelo das 19:50 (linkType: 'SMALL' + message === shareUrl + logo oficial 256x256):
-    // 1. O WhatsApp OCULTA 100% o link verde embaixo
-    // 2. Clicar em QUALQUER parte do card abre direto a proposta (nunca abre foto)
-    // 3. Logo oficial SmartBidHub + textos curtos e harmônicos sem cortes e sem repetir cliente
-    const linkPayload = JSON.stringify({
+    const cardBodyLines = [
+      `*${cardTitle}*`,
+      cardDescription,
+      ...(pin ? [`🔑 Código de acesso: *${pin}*`] : []),
+    ];
+
+    // Endpoint moderno /send-carousel (1 cartão vertical):
+    // 1. Imagem oficial SmartBidHub + número da proposta NO TOPO (zona segura central, sem cortes)
+    // 2. Dados completos da proposta embaixo SEM CORTAR nem no celular nem no PC
+    // 3. Botão clicável [ ↗ Abrir Proposta ] no rodapé com LINK 100% OCULTO (sem URL verde exposta)
+    const carouselPayload = JSON.stringify({
       phone: cleanPhone,
-      message: messageBody,
-      image: ogImageUrl,
-      linkUrl: shareUrl,
-      title: cardTitle,
-      linkDescription: cardDescription,
-      linkType: 'SMALL',
+      message: introMessage,
+      carousel: [
+        {
+          text: cardBodyLines.join('\n'),
+          image: ogImageUrl,
+          buttons: [
+            {
+              id: '1',
+              label: 'Abrir Proposta',
+              url: shareUrl,
+              type: 'URL',
+            },
+            ...(pin
+              ? [
+                  {
+                    id: '2',
+                    label: 'Copiar Código',
+                    url: `https://www.whatsapp.com/otp/code/?otp_type=COPY_CODE&code=${encodeURIComponent(pin)}`,
+                    type: 'URL',
+                  },
+                ]
+              : []),
+          ],
+        },
+      ],
     });
 
     // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial
@@ -1343,14 +1366,14 @@ export async function sendProposalLinkViaZApiAction(params: {
     let lastErrorMsg = '';
     for (const cred of candidates) {
       const zRes = await fetch(
-        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-link`,
+        `https://api.z-api.io/instances/${cred.instanceId}/token/${cred.token}/send-carousel`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Client-Token': cred.clientToken,
           },
-          body: linkPayload,
+          body: carouselPayload,
         }
       );
       const zData = await zRes.json().catch(() => ({}));
