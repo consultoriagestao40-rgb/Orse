@@ -226,8 +226,8 @@ export default function WhatsAppProposalSendModal({
                 )}
               </div>
 
-              {/* Parte inferior do card clicável (link oculto, texto secundário em cinza suave) */}
-              <div className="px-1 pb-0.5 space-y-0.5">
+              {/* Bloco cinza claro nativo de informações abaixo da faixa verde (clique em qualquer parte abre o link) */}
+              <div className="rounded-b-xl bg-white/90 px-2.5 py-2 space-y-0.5 border border-black/[0.05]">
                 <p className="text-[12px] font-black text-slate-900 leading-snug truncate">
                   {cardHeadline}
                 </p>

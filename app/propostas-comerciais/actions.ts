@@ -1275,15 +1275,22 @@ export async function sendProposalLinkViaZApiAction(params: {
       empresaEmissora: emissoraNome,
     });
 
-    const pin = (cfg?.regrasAcesso?.codigoAcessoCustom || '').trim();
     const messageBody =
       (params.customMessage || '').trim() ||
-      (pin ? `🔑 Código de acesso: *${pin}*` : ' ');
+      buildExecutiveWhatsAppMessage({
+        docId: doc.id,
+        numeroFPV: doc.proposta?.numero,
+        versaoFPV: rev,
+        clienteNome,
+        contatoNome: params.contatoNome || meta.contato || doc.client?.contato,
+        empresaEmissora: emissoraNome,
+        codigoAcessoCustom: cfg?.regrasAcesso?.codigoAcessoCustom,
+      });
 
-    // Card nativo clicável (/send-link LARGE com message=' '):
-    // 1. Oculta a URL crua embaixo (clicar no card inteiro abre a proposta direto)
-    // 2. Faixa verde horizontal compacta (900x250) no topo com SmartBid · Proposta + FPV-XXX · RXX
-    // 3. Título em negrito + Empresa/Valor em cinza suave visíveis TANTO no celular quanto no PC
+    // linkType: 'MEDIUM' usa ExtendedTextMessage nativo de topo no WhatsApp (diferente do LARGE que envia ImageMessage):
+    // 1. Clicar em QUALQUER parte do card (inclusive na faixa verde) abre o link da proposta (nunca abre foto)
+    // 2. Exibe a faixa verde no topo + bloco cinza claro embaixo com Título e Empresa/Valor em cinza suave
+    // 3. Quando message === linkUrl, o WhatsApp oculta a URL crua automaticamente
     const linkPayload = JSON.stringify({
       phone: cleanPhone,
       message: messageBody,
@@ -1291,7 +1298,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       linkUrl: shareUrl,
       title: cardTitle,
       linkDescription: cardDescription,
-      linkType: 'LARGE',
+      linkType: 'MEDIUM',
     });
 
     // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial
