@@ -49,8 +49,8 @@ function getInterBoldFont(): Promise<ArrayBuffer | null> {
 }
 
 /**
- * Header oficial SmartBidHub na proporção nativa exata do WhatsApp/OpenGraph (1200x630 — 1.91:1),
- * com logo 3D oficial + número da proposta centralizados na área segura (zero cortes no celular e no PC).
+ * Faixa baixa horizontal (1100x240) com conteúdo agrupado no centro (~480px de largura útil),
+ * reduzindo em mais de 55% a altura do topo no WhatsApp sem nunca cortar as laterais no celular ou PC.
  */
 export async function GET(
   _req: Request,
@@ -93,19 +93,17 @@ export async function GET(
     (
       <div
         style={{
-          width: '1200px',
-          height: '630px',
+          width: '1100px',
+          height: '240px',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: '#07271C',
           fontFamily: interBold ? 'Inter' : 'sans-serif',
           color: '#FFFFFF',
-          padding: '48px',
         }}
       >
-        {/* Logo Oficial 3D S + SmartBidHub */}
+        {/* Linha única compacta centralizada (~480px total) para nunca cortar nas bordas */}
         <div
           style={{
             display: 'flex',
@@ -115,74 +113,53 @@ export async function GET(
         >
           <img
             src={symbolUri}
-            width={136}
-            height={136}
+            width={72}
+            height={72}
             style={{
-              width: '136px',
-              height: '136px',
-              marginRight: '26px',
-              borderRadius: '28px',
+              width: '72px',
+              height: '72px',
+              marginRight: '14px',
+              borderRadius: '16px',
             }}
           />
-          <div
+          <span
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '64px',
-                fontWeight: 800,
-                letterSpacing: '-1.6px',
-                color: '#FFFFFF',
-                lineHeight: 1.05,
-              }}
-            >
-              SmartBidHub
-            </span>
-            <span
-              style={{
-                fontSize: '27px',
-                fontWeight: 700,
-                letterSpacing: '3.2px',
-                color: '#6EE7B7',
-                marginTop: '8px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Proposta Comercial
-            </span>
-          </div>
-        </div>
-
-        {/* Pílula centralizada com o número real da proposta */}
-        {codeBadge ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: '40px',
-              padding: '14px 38px',
-              borderRadius: '999px',
-              background: 'rgba(16, 185, 129, 0.16)',
-              border: '2.5px solid rgba(110, 231, 183, 0.44)',
               fontSize: '36px',
               fontWeight: 800,
-              color: '#A7F3D0',
-              letterSpacing: '1.2px',
+              letterSpacing: '-0.9px',
+              color: '#FFFFFF',
+              lineHeight: 1,
             }}
           >
-            {codeBadge}
-          </div>
-        ) : null}
+            SmartBidHub
+          </span>
+
+          {codeBadge ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: '20px',
+                padding: '9px 20px',
+                borderRadius: '999px',
+                background: 'rgba(16, 185, 129, 0.18)',
+                border: '1.8px solid rgba(110, 231, 183, 0.45)',
+                fontSize: '21px',
+                fontWeight: 800,
+                color: '#A7F3D0',
+                letterSpacing: '0.6px',
+              }}
+            >
+              {codeBadge}
+            </div>
+          ) : null}
+        </div>
       </div>
     ),
     {
-      width: 1200,
-      height: 630,
+      width: 1100,
+      height: 240,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },

@@ -51,7 +51,7 @@ export function buildExecutiveProposalUrl(ctx: {
   clienteNome?: string | null;
 }): string {
   const slug = buildExecutiveProposalSlug(ctx);
-  return `https://www.smartbidhub.com.br/p/${slug}`;
+  return `https://smartbidhub.com.br/p/${slug}`;
 }
 
 const LOWERCASE_WORDS = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'para', 'com', 'por', 'a', 'o', 'as', 'os']);
