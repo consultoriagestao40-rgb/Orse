@@ -1260,7 +1260,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-7`;
+    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-8`;
     const cardTitle = buildProposalCardHeadline({
       tipoServicos: meta.tipoServicos,
       objetoProposta: meta.objetoProposta,
@@ -1287,10 +1287,8 @@ export async function sendProposalLinkViaZApiAction(params: {
         codigoAcessoCustom: cfg?.regrasAcesso?.codigoAcessoCustom,
       });
 
-    // linkType: 'MEDIUM' usa ExtendedTextMessage nativo de topo no WhatsApp (diferente do LARGE que envia ImageMessage):
-    // 1. Clicar em QUALQUER parte do card (inclusive na faixa verde) abre o link da proposta (nunca abre foto)
-    // 2. Exibe a faixa verde no topo + bloco cinza claro embaixo com Título e Empresa/Valor em cinza suave
-    // 3. Quando message === linkUrl, o WhatsApp oculta a URL crua automaticamente
+    // linkType 'LARGE' + message = shareUrl: mesmo formato que renderizou corretamente às 19:37
+    // (imagem no topo + bloco cinza com título e cliente/valor), agora com a faixa fina 900x250.
     const linkPayload = JSON.stringify({
       phone: cleanPhone,
       message: messageBody,
@@ -1298,7 +1296,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       linkUrl: shareUrl,
       title: cardTitle,
       linkDescription: cardDescription,
-      linkType: 'MEDIUM',
+      linkType: 'LARGE',
     });
 
     // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial
