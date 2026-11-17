@@ -153,9 +153,10 @@ export function buildProposalCardSubtitle(params: {
       maximumFractionDigits: 2,
     }).format(val);
     const isSpot = String(params.tipoProposta || '').toUpperCase() === 'SPOT';
-    return isSpot ? `${cliente} · ${formatted}` : `${cliente} · ${formatted}/mês`;
+    // O cliente já aparece no título (nome do PDF), então aqui vai só o valor
+    return isSpot ? `Valor total: ${formatted}` : `Valor mensal: ${formatted}`;
   }
-  return `${cliente} · ${params.empresaEmissora || 'SmartBid Hub'}`;
+  return params.empresaEmissora || 'SmartBid Hub';
 }
 
 export function normalizeWhatsAppDigits(raw?: string | null): string {
