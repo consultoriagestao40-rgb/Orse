@@ -1267,6 +1267,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       cargoPrincipal,
       numeroFPV: doc.proposta?.numero,
       versaoFPV: rev,
+      clienteNome,
     });
     const cardDescription = buildProposalCardSubtitle({
       clienteNome,

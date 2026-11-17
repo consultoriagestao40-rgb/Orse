@@ -103,6 +103,7 @@ export default function WhatsAppProposalSendModal({
     cargoPrincipal: meta.cargoPrincipal,
     numeroFPV: meta.numeroFPV,
     versaoFPV: meta.versaoFPV,
+    clienteNome: meta.clienteNome,
   });
 
   const cardSubtitle = buildProposalCardSubtitle({

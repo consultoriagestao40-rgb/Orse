@@ -393,6 +393,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     cargoPrincipal: shareMeta.cargoPrincipal,
     numeroFPV: shareMeta.numeroFPV,
     versaoFPV: shareMeta.versaoFPV,
+    clienteNome: shareMeta.clienteNome,
   });
   const cardSubtitle = buildProposalCardSubtitle({
     clienteNome: shareMeta.clienteNome,

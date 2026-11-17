@@ -89,7 +89,15 @@ export function buildProposalCardHeadline(params: {
   cargoPrincipal?: string | null;
   numeroFPV?: number | string | null;
   versaoFPV?: number | string | null;
+  clienteNome?: string | null;
 }): string {
+  // Mesmo nome do arquivo gerado na exportação do PDF:
+  // "PROPOSTA COMERCIAL - FPV-063-R01 - TRANSPORTADORA TABORDA"
+  const clientePdf = (params.clienteNome || '').trim();
+  if (clientePdf) {
+    return `PROPOSTA COMERCIAL - ${formatProposalCode(params.numeroFPV, params.versaoFPV)} - ${clientePdf}`.toUpperCase();
+  }
+
   const tipo = stripHtmlPlain(params.tipoServicos);
   if (tipo) {
     const cleanTipo = smartTitleCase(tipo);

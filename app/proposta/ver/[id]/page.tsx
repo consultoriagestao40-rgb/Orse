@@ -41,6 +41,7 @@ export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Met
     cargoPrincipal,
     numeroFPV: res.proposta?.numero,
     versaoFPV: versaoNum,
+    clienteNome: cliente,
   });
   const description = buildProposalCardSubtitle({
     clienteNome: cliente,
