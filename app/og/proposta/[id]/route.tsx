@@ -37,7 +37,7 @@ function getInterBoldFont(): Promise<ArrayBuffer | null> {
 }
 
 /**
- * Faixa horizontal compacta (900x250) para o topo do card nativo clicável do WhatsApp (/send-link LARGE com link oculto).
+ * Faixa horizontal compacta (1100x220) para o topo do card nativo clicável do WhatsApp (/send-link LARGE com link oculto).
  */
 export async function GET(
   _req: Request,
@@ -77,12 +77,12 @@ export async function GET(
     (
       <div
         style={{
-          width: '900px',
-          height: '250px',
+          width: '1100px',
+          height: '220px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 64px',
+          padding: '0 56px',
           background: 'linear-gradient(135deg, #092920 0%, #0E3A2D 55%, #144B3A 100%)',
           fontFamily: interBold ? 'Inter' : 'sans-serif',
           color: '#FFFFFF',
@@ -97,8 +97,8 @@ export async function GET(
         >
           <div
             style={{
-              width: '80px',
-              height: '80px',
+              width: '76px',
+              height: '76px',
               borderRadius: '20px',
               background: 'rgba(16, 185, 129, 0.16)',
               border: '3px solid rgba(110, 231, 183, 0.48)',
@@ -128,7 +128,7 @@ export async function GET(
             style={{
               display: 'flex',
               alignItems: 'center',
-              fontSize: codeBadge ? '42px' : '48px',
+              fontSize: codeBadge ? '40px' : '46px',
               fontWeight: 800,
               letterSpacing: '-1px',
               color: '#FFFFFF',
@@ -172,8 +172,8 @@ export async function GET(
       </div>
     ),
     {
-      width: 900,
-      height: 250,
+      width: 1100,
+      height: 220,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },
