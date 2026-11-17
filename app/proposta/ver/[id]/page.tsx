@@ -55,7 +55,7 @@ export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Met
     versaoFPV: versaoNum,
     clienteNome: cliente,
   });
-  const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${res.id}.png?v=${versaoNum}-9`;
+  const ogImageUrl = 'https://www.smartbidhub.com.br/whatsapp-card-logo.png?v=10';
 
   return {
     title: `${prettyTitle} | SmartBid`,
@@ -67,14 +67,14 @@ export async function buildPublicPropostaMetadata(slugOrId: string): Promise<Met
       title: prettyTitle,
       description,
       url: canonicalUrl,
-      siteName: 'SmartBid · Proposta',
+      siteName: 'SmartBidHub',
       locale: 'pt_BR',
       type: 'website',
       images: [
         {
           url: ogImageUrl,
-          width: 1100,
-          height: 220,
+          width: 256,
+          height: 256,
           type: 'image/png',
           alt: prettyTitle,
         },

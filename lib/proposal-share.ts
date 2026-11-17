@@ -79,9 +79,23 @@ function stripHtmlPlain(raw?: string | null): string {
     .trim();
 }
 
+function cleanCompactClientName(raw?: string | null): string {
+  const base = (raw || 'Cliente')
+    .replace(/\b(LTDA\.?|S\/A|S\.A\.|EIRELI|MEI|ME|EPP|SS)\b/gi, '')
+    .replace(/\s*-\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!base) return 'Cliente';
+  // Se estiver todo em CAIXA ALTA (e tiver mais de 4 letras), converte para Title Case harmônico
+  if (base.length > 4 && base === base.toUpperCase()) {
+    return smartTitleCase(base);
+  }
+  return base;
+}
+
 /**
- * Monta o título principal do card no WhatsApp com dados reais da proposta
- * Ex.: "Proposta de Limpeza e Portaria" | "Proposta de Limpeza Manual e Mecanizada"
+ * Título conciso e relativo à proposta, sem repetir o cliente e sem estourar/cortar no celular:
+ * Ex.: "Proposta FPV-063 · R01"
  */
 export function buildProposalCardHeadline(params: {
   tipoServicos?: string | null;
@@ -91,51 +105,13 @@ export function buildProposalCardHeadline(params: {
   versaoFPV?: number | string | null;
   clienteNome?: string | null;
 }): string {
-  // Mesmo nome do arquivo gerado na exportação do PDF:
-  // "PROPOSTA COMERCIAL - FPV-063-R01 - TRANSPORTADORA TABORDA"
-  const clientePdf = (params.clienteNome || '').trim();
-  if (clientePdf) {
-    return `PROPOSTA COMERCIAL - ${formatProposalCode(params.numeroFPV, params.versaoFPV)} - ${clientePdf}`.toUpperCase();
-  }
-
-  const tipo = stripHtmlPlain(params.tipoServicos);
-  if (tipo) {
-    const cleanTipo = smartTitleCase(tipo);
-    return /^proposta\b/i.test(cleanTipo) ? cleanTipo : `Proposta de ${cleanTipo}`;
-  }
-
-  const objeto = stripHtmlPlain(params.objetoProposta);
-  if (objeto) {
-    const match = objeto.match(
-      /^(?:presta[çc][ãa]o|execu[çc][ãa]o|fornecimento|contrata[çc][ãa]o)\s+de\s+(?:servi[çc]os\s+(?:t[ée]cnicos\s+|especializados\s+)?de\s+|servi[çc]os\s+de\s+|m[ãa]o\s+de\s+obra\s+para\s+)?([^,.;:\n(]+)/i
-    );
-    if (match && match[1]) {
-      const phrase = match[1].trim().slice(0, 48).trim();
-      if (phrase.length >= 3) {
-        return `Proposta de ${smartTitleCase(phrase)}`;
-      }
-    }
-    const firstClause = objeto.split(/[,.;:\n]/)[0]?.trim() || '';
-    if (firstClause.length >= 4 && firstClause.length <= 52) {
-      const cleanClause = smartTitleCase(firstClause);
-      return /^proposta\b/i.test(cleanClause) ? cleanClause : `Proposta · ${cleanClause}`;
-    }
-  }
-
-  const cargo = stripHtmlPlain(params.cargoPrincipal)
-    .replace(/\b\d+\s*horas?\b/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (cargo) {
-    return `Proposta · ${smartTitleCase(cargo)}`;
-  }
-
-  return `Proposta Comercial · ${formatProposalCode(params.numeroFPV, params.versaoFPV)}`;
+  const code = formatProposalCode(params.numeroFPV, params.versaoFPV).replace(/-R/, ' · R');
+  return `Proposta ${code}`;
 }
 
 /**
- * Monta o subtítulo do card no WhatsApp com cliente real e valor real da proposta
- * Ex.: "Hospital Santa Helena · R$ 66.172,70/mês" (Recorrente) ou "ZOBER SP 02 · R$ 36.572,18" (SPOT)
+ * Subtítulo harmônico em cinza suave com cliente (sem repetição) + valor da proposta:
+ * Ex.: "Transportadora Taborda · R$ 29.867,89/mês" (Recorrente) ou "Zober SP 02 · R$ 36.572,18" (SPOT)
  */
 export function buildProposalCardSubtitle(params: {
   clienteNome?: string | null;
@@ -143,7 +119,7 @@ export function buildProposalCardSubtitle(params: {
   tipoProposta?: string | null;
   empresaEmissora?: string | null;
 }): string {
-  const cliente = (params.clienteNome || 'Cliente').trim();
+  const cliente = cleanCompactClientName(params.clienteNome);
   const val = Number(params.valorTotal || 0);
   if (val > 0) {
     const formatted = new Intl.NumberFormat('pt-BR', {
@@ -153,10 +129,9 @@ export function buildProposalCardSubtitle(params: {
       maximumFractionDigits: 2,
     }).format(val);
     const isSpot = String(params.tipoProposta || '').toUpperCase() === 'SPOT';
-    // O cliente já aparece no título (nome do PDF), então aqui vai só o valor
-    return isSpot ? `Valor total: ${formatted}` : `Valor mensal: ${formatted}`;
+    return isSpot ? `${cliente} · ${formatted}` : `${cliente} · ${formatted}/mês`;
   }
-  return params.empresaEmissora || 'SmartBid Hub';
+  return `${cliente} · ${params.empresaEmissora || 'SmartBid Hub'}`;
 }
 
 export function normalizeWhatsAppDigits(raw?: string | null): string {

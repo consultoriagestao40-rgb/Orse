@@ -1260,7 +1260,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       versaoFPV: rev,
       clienteNome,
     });
-    const ogImageUrl = `https://www.smartbidhub.com.br/og/proposta/${doc.id}.png?v=${rev}-9`;
+    const ogImageUrl = 'https://www.smartbidhub.com.br/whatsapp-card-logo.png?v=10';
     const cardTitle = buildProposalCardHeadline({
       tipoServicos: meta.tipoServicos,
       objetoProposta: meta.objetoProposta,
@@ -1288,8 +1288,10 @@ export async function sendProposalLinkViaZApiAction(params: {
         codigoAcessoCustom: cfg?.regrasAcesso?.codigoAcessoCustom,
       });
 
-    // linkType 'LARGE' + message = shareUrl: mesmo formato que renderizou corretamente às 19:37
-    // (imagem no topo + bloco cinza com título e cliente/valor), agora com a faixa fina 900x250.
+    // Modelo das 19:50 (linkType: 'SMALL' + message === shareUrl + logo oficial 256x256):
+    // 1. O WhatsApp OCULTA 100% o link verde embaixo
+    // 2. Clicar em QUALQUER parte do card abre direto a proposta (nunca abre foto)
+    // 3. Logo oficial SmartBidHub + textos curtos e harmônicos sem cortes e sem repetir cliente
     const linkPayload = JSON.stringify({
       phone: cleanPhone,
       message: messageBody,
@@ -1297,7 +1299,7 @@ export async function sendProposalLinkViaZApiAction(params: {
       linkUrl: shareUrl,
       title: cardTitle,
       linkDescription: cardDescription,
-      linkType: 'LARGE',
+      linkType: 'SMALL',
     });
 
     // Prioriza a instância Z-API da própria empresa (para sair do WhatsApp comercial do tenant), com fallback automático para a oficial

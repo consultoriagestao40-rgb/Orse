@@ -197,47 +197,24 @@ export default function WhatsAppProposalSendModal({
               {loadingMeta && <Loader2 size={11} className="animate-spin text-slate-400" />}
             </div>
 
-            <div className="bg-[#D9FDD3] rounded-2xl p-2 shadow-sm border border-emerald-200/80 space-y-2">
-              {/* Faixa verde superior: SmartBid · Proposta + Número da Proposta */}
-              <div className="rounded-xl bg-gradient-to-r from-[#092920] via-[#0E3A2D] to-[#144B3A] px-3 py-2.5 flex items-center justify-between gap-2 shadow-2xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center shrink-0">
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#6EE7B7"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 17 L9 11 L13 15 L21 7" />
-                      <path d="M15 7 H21 V13" />
-                    </svg>
-                  </div>
-                  <span className="text-[12px] font-extrabold text-white tracking-tight truncate">
-                    SmartBid <span className="text-emerald-300">·</span> Proposta
-                  </span>
+            <div className="bg-white rounded-2xl p-2 shadow-sm border border-slate-200/80">
+              <div className="rounded-xl bg-[#F7F8FA] border border-black/[0.05] overflow-hidden flex items-stretch">
+                <img
+                  src="/whatsapp-card-logo.png"
+                  alt="SmartBidHub Oficial"
+                  className="w-[78px] h-[78px] object-cover shrink-0"
+                />
+                <div className="min-w-0 flex-1 px-3 py-2 flex flex-col justify-center">
+                  <p className="text-[12px] font-bold text-[#111B21] leading-snug truncate">
+                    {cardHeadline}
+                  </p>
+                  <p className="text-[11px] font-normal text-[#667781] leading-snug truncate mt-0.5">
+                    {cardSubtitle}
+                  </p>
+                  <p className="text-[10px] text-[#667781] font-normal truncate mt-1">
+                    🔗 smartbidhub.com.br
+                  </p>
                 </div>
-                {code && code !== 'PROPOSTA' && (
-                  <span className="text-[9.5px] font-extrabold text-emerald-200 bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 rounded-full shrink-0">
-                    {code.replace(/-R/, ' · R')}
-                  </span>
-                )}
-              </div>
-
-              {/* Bloco cinza claro nativo de informações abaixo da faixa verde (clique em qualquer parte abre o link) */}
-              <div className="rounded-b-xl bg-white/90 px-2.5 py-2 space-y-0.5 border border-black/[0.05]">
-                <p className="text-[12px] font-black text-slate-900 leading-snug truncate">
-                  {cardHeadline}
-                </p>
-                <p className="text-[11px] font-medium text-[#667781] leading-snug truncate">
-                  {cardSubtitle}
-                </p>
-                <p className="text-[10px] text-slate-500 font-medium truncate pt-0.5">
-                  🔗 smartbidhub.com.br
-                </p>
               </div>
             </div>
           </div>
