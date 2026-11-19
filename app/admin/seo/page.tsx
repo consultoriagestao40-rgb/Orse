@@ -651,37 +651,71 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post
                   </div>
                 </div>
 
-                {gscData.topQueries && gscData.topQueries.length > 0 && (
-                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-600">
-                      Palavras-Chave que Mais Trouxeram Impressões e Cliques no Google
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-bold">
-                            <th className="px-4 py-2.5">Termo Pesquisado no Google</th>
-                            <th className="px-4 py-2.5 text-right">Cliques</th>
-                            <th className="px-4 py-2.5 text-right">Impressões</th>
-                            <th className="px-4 py-2.5 text-right">CTR</th>
-                            <th className="px-4 py-2.5 text-right">Posição</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {gscData.topQueries.map((q: any) => (
-                            <tr key={q.query} className="hover:bg-slate-50">
-                              <td className="px-4 py-2 font-semibold text-slate-800">{q.query}</td>
-                              <td className="px-4 py-2 text-right font-black text-[#1B4D3E] tabular-nums">{q.clicks}</td>
-                              <td className="px-4 py-2 text-right text-slate-600 tabular-nums">{q.impressions}</td>
-                              <td className="px-4 py-2 text-right text-slate-500 tabular-nums">{q.ctrPct}%</td>
-                              <td className="px-4 py-2 text-right font-bold text-slate-700 tabular-nums">{q.position}ª</td>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {gscData.topQueries && gscData.topQueries.length > 0 && (
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-600">
+                        Palavras-Chave Pesquisadas no Google
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-bold">
+                              <th className="px-4 py-2.5">Termo</th>
+                              <th className="px-3 py-2.5 text-right">Cliques</th>
+                              <th className="px-3 py-2.5 text-right">Impr.</th>
+                              <th className="px-4 py-2.5 text-right">Posição</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {gscData.topQueries.map((q: any) => (
+                              <tr key={q.query} className="hover:bg-slate-50">
+                                <td className="px-4 py-2 font-semibold text-slate-800">{q.query}</td>
+                                <td className="px-3 py-2 text-right font-black text-[#1B4D3E] tabular-nums">{q.clicks}</td>
+                                <td className="px-3 py-2 text-right text-slate-600 tabular-nums">{q.impressions}</td>
+                                <td className="px-4 py-2 text-right font-bold text-slate-700 tabular-nums">{q.position}ª</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {gscData.topPages && gscData.topPages.length > 0 && (
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-600">
+                        Páginas & Artigos Ranqueando no Google
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-bold">
+                              <th className="px-4 py-2.5">Página / Artigo</th>
+                              <th className="px-3 py-2.5 text-right">Cliques</th>
+                              <th className="px-3 py-2.5 text-right">Impr.</th>
+                              <th className="px-4 py-2.5 text-right">Posição</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {gscData.topPages.map((pg: any) => (
+                              <tr key={pg.page} className="hover:bg-slate-50">
+                                <td className="px-4 py-2 font-semibold text-slate-800 max-w-[260px] truncate" title={pg.page}>
+                                  <a href={pg.page} target="_blank" rel="noopener noreferrer" className="hover:text-[#1B4D3E]">
+                                    {pg.page}
+                                  </a>
+                                </td>
+                                <td className="px-3 py-2 text-right font-black text-[#1B4D3E] tabular-nums">{pg.clicks}</td>
+                                <td className="px-3 py-2 text-right text-slate-600 tabular-nums">{pg.impressions}</td>
+                                <td className="px-4 py-2 text-right font-bold text-slate-700 tabular-nums">{pg.position}ª</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -1476,3 +1476,23 @@ model TrafficCompetitor {
   updatedAt       DateTime @updatedAt
 }
 
+model PublicPageEvent {
+  id          String   @id @default(cuid())
+  eventType   String
+  path        String
+  visitorHash String
+  source      String
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  device      String   @default("Desktop")
+  isBot       Boolean  @default(false)
+  botName     String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([createdAt])
+  @@index([path])
+}
+
+

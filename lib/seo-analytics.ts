@@ -468,6 +468,7 @@ export async function fetchGoogleSearchConsoleData(days = 28) {
     }
 
     const entries: Array<{ siteUrl: string; permissionLevel: string }> = sitesJson?.siteEntry || [];
+    const verifiedEntries = entries.filter((e) => e.permissionLevel !== 'siteUnverifiedUser');
 
     const preferred = [
       'https://www.smartbidhub.com.br/',
@@ -475,15 +476,17 @@ export async function fetchGoogleSearchConsoleData(days = 28) {
       'https://smartbidhub.com.br/',
     ];
     const matched =
-      entries.find((e) => preferred.includes(e.siteUrl)) ||
-      entries.find((e) => e.siteUrl.includes('smartbidhub.com.br')) ||
-      entries[0];
+      verifiedEntries.find((e) => preferred.includes(e.siteUrl)) ||
+      verifiedEntries.find((e) => e.siteUrl.includes('smartbidhub.com.br')) ||
+      verifiedEntries[0];
 
     if (matched?.siteUrl) {
       siteUrl = matched.siteUrl;
       if (siteUrl !== cfg.siteUrl) {
         await saveGscConfig({ siteUrl });
       }
+    } else if (cfg.siteUrl && !verifiedEntries.some((e) => e.siteUrl === cfg.siteUrl)) {
+      siteUrl = '';
     }
 
     if (!siteUrl) {
