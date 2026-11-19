@@ -13,6 +13,12 @@ import {
   ArrowLeft,
   RefreshCw,
   Globe,
+  BarChart3,
+  Eye,
+  Users,
+  MousePointerClick,
+  Bot,
+  Search,
 } from 'lucide-react';
 
 export default function AdminSeoPage() {
@@ -38,6 +44,26 @@ export default function AdminSeoPage() {
   const [previewStyle, setPreviewStyle] = useState<'cascade' | 'light' | 'lphero'>('cascade');
   const [previewPhoto, setPreviewPhoto] = useState<number | null>(null);
   const [publishingLi, setPublishingLi] = useState(false);
+  const [analyticsDays, setAnalyticsDays] = useState<number>(30);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [gscData, setGscData] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState<boolean>(true);
+
+  const loadAnalytics = async (days = analyticsDays) => {
+    setLoadingAnalytics(true);
+    try {
+      const res = await fetch(`/api/seo/analytics?days=${days}`);
+      const data = await res.json();
+      if (data.success) {
+        setAnalyticsData(data.analytics || null);
+        setGscData(data.gsc || null);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar analytics:', err);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
 
   const loadLinkedInStatus = async () => {
     try {
@@ -76,6 +102,10 @@ export default function AdminSeoPage() {
   useEffect(() => {
     loadSeoData();
     loadLinkedInStatus();
+    loadAnalytics(30);
+    if (typeof window !== 'undefined' && window.location.search.includes('gsc=connected')) {
+      setFeedback('✅ Google Search Console conectado com sucesso! Carregando impressões, cliques e posições do Google...');
+    }
   }, []);
 
   const handleConnectLinkedInOAuth = async () => {
@@ -285,6 +315,375 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post
             >
               <ExternalLink size={15} className="text-[#1B4D3E]" /> Ver sitemap.xml
             </a>
+          </div>
+        </div>
+
+        {/* PAINEL AO VIVO: VISITAS NA LP & RESULTADO DO SEO */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <BarChart3 size={17} className="text-[#1B4D3E]" /> Visitas na LP & Performance de SEO
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Monitoramento próprio em tempo real da Landing Page (<code className="bg-slate-100 px-1 rounded">/lp</code>), central de artigos (<code className="bg-slate-100 px-1 rounded">/conteudos</code>), origens de tráfego e rastreio do Googlebot.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-xl p-0.5">
+                {[
+                  { d: 1, label: 'Hoje' },
+                  { d: 7, label: '7 dias' },
+                  { d: 30, label: '30 dias' },
+                  { d: 90, label: '90 dias' },
+                ].map((opt) => {
+                  const active = analyticsDays === opt.d;
+                  return (
+                    <button
+                      key={opt.d}
+                      type="button"
+                      onClick={() => {
+                        setAnalyticsDays(opt.d);
+                        loadAnalytics(opt.d);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        active ? 'bg-[#1B4D3E] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => loadAnalytics(analyticsDays)}
+                className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-[#1B4D3E] cursor-pointer"
+                title="Atualizar métricas agora"
+              >
+                <RefreshCw size={15} className={loadingAnalytics ? 'animate-spin text-[#1B4D3E]' : ''} />
+              </button>
+            </div>
+          </div>
+
+          {/* 4 KPIs Principais */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Visitas na LP</span>
+                <Eye size={15} className="text-[#1B4D3E]" />
+              </div>
+              <p className="text-2xl font-black text-slate-900 tabular-nums">
+                {analyticsData?.totals?.lpViews ?? 0}
+              </p>
+              <p className="text-[11px] text-slate-500 font-medium mt-1">
+                {analyticsData?.totals?.lpUniqueVisitors ?? 0} visitantes únicos · {analyticsData?.totals?.mobileSharePct ?? 0}% mobile
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Leituras de SEO</span>
+                <BookOpen size={15} className="text-[#EA580C]" />
+              </div>
+              <p className="text-2xl font-black text-slate-900 tabular-nums">
+                {analyticsData?.totals?.seoViews ?? 0}
+              </p>
+              <p className="text-[11px] text-slate-500 font-medium mt-1">
+                {analyticsData?.totals?.seoUniqueVisitors ?? 0} leitores em /conteudos ({articles.length} artigos ativos)
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Cliques em Cadastro</span>
+                <MousePointerClick size={15} className="text-blue-600" />
+              </div>
+              <p className="text-2xl font-black text-slate-900 tabular-nums">
+                {(analyticsData?.totals?.cadastroViews ?? 0) + (analyticsData?.totals?.ctaClicks ?? 0)}
+              </p>
+              <p className="text-[11px] text-slate-500 font-medium mt-1">
+                {analyticsData?.totals?.newTenantsCount ?? 0} contas criadas · {analyticsData?.totals?.newLeadsCount ?? 0} leads no período
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Googlebot & IAs</span>
+                <Bot size={15} className="text-emerald-700" />
+              </div>
+              <p className="text-2xl font-black text-slate-900 tabular-nums">
+                {analyticsData?.totals?.botCrawlsTotal ?? 0}
+              </p>
+              <p className="text-[11px] text-slate-500 font-medium mt-1">
+                Rastreios de indexação (Google, ChatGPT, Perplexity)
+              </p>
+            </div>
+          </div>
+
+          {/* Gráfico 14 dias + Origens de Tráfego */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div className="lg:col-span-7 rounded-2xl border border-slate-200 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700">
+                  Evolução Diária de Acessos (Últimos 14 dias)
+                </h3>
+                <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-[#1B4D3E]" /> LP
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-[#EA580C]" /> Artigos SEO
+                  </span>
+                </div>
+              </div>
+
+              {(() => {
+                const series: Array<{ date: string; label: string; lpViews: number; seoViews: number }> =
+                  analyticsData?.dailySeries || [];
+                const maxVal = Math.max(1, ...series.map((s) => s.lpViews + s.seoViews));
+                return (
+                  <div className="h-36 flex items-end gap-1.5 pt-4 border-b border-slate-100 pb-2">
+                    {series.map((d) => {
+                      const total = d.lpViews + d.seoViews;
+                      const lpH = Math.round((d.lpViews / maxVal) * 100);
+                      const seoH = Math.round((d.seoViews / maxVal) * 100);
+                      return (
+                        <div
+                          key={d.date}
+                          className="flex-1 flex flex-col items-center justify-end h-full group"
+                          title={`${d.label}: ${d.lpViews} visitas LP · ${d.seoViews} leituras SEO`}
+                        >
+                          {total > 0 && (
+                            <span className="text-[9px] font-bold text-slate-500 mb-1 tabular-nums">
+                              {total}
+                            </span>
+                          )}
+                          <div className="w-full max-w-[26px] flex flex-col justify-end rounded-t overflow-hidden bg-slate-100/80 min-h-[4px]" style={{ height: `${Math.max(4, lpH + seoH)}%` }}>
+                            {d.seoViews > 0 && (
+                              <div
+                                className="w-full bg-[#EA580C]"
+                                style={{ height: `${Math.round((d.seoViews / Math.max(1, total)) * 100)}%` }}
+                              />
+                            )}
+                            {d.lpViews > 0 && (
+                              <div
+                                className="w-full bg-[#1B4D3E]"
+                                style={{ height: `${Math.round((d.lpViews / Math.max(1, total)) * 100)}%` }}
+                              />
+                            )}
+                          </div>
+                          <span className="text-[9px] text-slate-400 font-semibold mt-1.5">{d.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {/* Top Páginas Visitadas */}
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2">
+                  Páginas Públicas Mais Acessadas
+                </p>
+                {!analyticsData?.topPages || analyticsData.topPages.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-3">
+                    As novas visitas na <code className="bg-slate-100 px-1 rounded">/lp</code> e em <code className="bg-slate-100 px-1 rounded">/conteudos</code> aparecerão aqui automaticamente a partir de agora.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {analyticsData.topPages.slice(0, 6).map((pg: any) => (
+                      <div key={pg.path} className="py-2 flex items-center justify-between gap-3">
+                        <a
+                          href={pg.path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-slate-700 hover:text-[#1B4D3E] truncate"
+                        >
+                          {pg.path}
+                        </a>
+                        <div className="flex items-center gap-3 shrink-0 tabular-nums">
+                          <span className="text-slate-500">{pg.uniqueVisitors} únicos</span>
+                          <span className="font-black text-[#1B4D3E] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                            {pg.views} visitas
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Coluna Direita: Origem das Visitas & Robôs */}
+            <div className="lg:col-span-5 rounded-2xl border border-slate-200 p-4 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Users size={14} className="text-[#1B4D3E]" /> Origem das Visitas
+                  </h3>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Canal de Entrada</span>
+                </div>
+
+                {!analyticsData?.sources || analyticsData.sources.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-4">
+                    Assim que visitantes entrarem pelo Google, Instagram, YouTube, TikTok, LinkedIn ou WhatsApp, a participação de cada canal aparece aqui.
+                  </p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(() => {
+                      const maxSrc = Math.max(1, ...analyticsData.sources.map((s: any) => s.views));
+                      return analyticsData.sources.map((s: any) => (
+                        <div key={s.source} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700">{s.source}</span>
+                            <span className="text-slate-500 font-semibold tabular-nums">
+                              {s.views} ({s.uniqueVisitors} únicos)
+                            </span>
+                          </div>
+                          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#1B4D3E] rounded-full"
+                              style={{ width: `${Math.max(6, Math.round((s.views / maxSrc) * 100))}%` }}
+                            />
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2">
+                  Robôs de Busca & IA Detectados
+                </p>
+                {!analyticsData?.botBreakdown || analyticsData.botBreakdown.length === 0 ? (
+                  <p className="text-[11px] text-slate-400">
+                    Aguardando próximas passagens do Googlebot, Bingbot e motores de IA nas páginas públicas.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {analyticsData.botBreakdown.map((b: any) => (
+                      <span
+                        key={b.bot}
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200"
+                      >
+                        {b.bot}: {b.hits}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Integração Oficial Google Search Console (Impressões, Cliques e Posição no Google) */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <Search size={15} className="text-[#1B4D3E]" /> Google Search Console Oficial (Impressões, Cliques & Posição no Google)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {gscData?.connected
+                    ? `Conectado (${gscData.connectedEmail || 'Google'}) · Propriedade: ${gscData.siteUrl || 'smartbidhub.com.br'}`
+                    : 'Conecte sua conta do Google Search Console em 1 clique para ver impressões, cliques orgânicos e em qual posição cada palavra-chave está ranqueando no Google.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {gscData?.connected ? (
+                  <>
+                    <a
+                      href="/api/seo/gsc"
+                      className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700"
+                    >
+                      Reconectar Conta
+                    </a>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await fetch('/api/seo/gsc', { method: 'DELETE' });
+                        loadAnalytics(analyticsDays);
+                      }}
+                      className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                    >
+                      Desconectar
+                    </button>
+                  </>
+                ) : (
+                  <a
+                    href="/api/seo/gsc"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-xs"
+                  >
+                    <Globe size={14} /> Conectar Google Search Console
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {gscData?.error && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                ⚠️ {gscData.error}
+              </div>
+            )}
+
+            {gscData?.connected && gscData?.totals && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-white rounded-xl border border-slate-200 p-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cliques no Google</p>
+                    <p className="text-xl font-black text-[#1B4D3E] mt-1 tabular-nums">{gscData.totals.clicks}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-200 p-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Impressões na Busca</p>
+                    <p className="text-xl font-black text-slate-800 mt-1 tabular-nums">{gscData.totals.impressions}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-200 p-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CTR Médio</p>
+                    <p className="text-xl font-black text-slate-800 mt-1 tabular-nums">{gscData.totals.ctrPct}%</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-200 p-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Posição Média</p>
+                    <p className="text-xl font-black text-[#EA580C] mt-1 tabular-nums">
+                      {gscData.totals.avgPosition > 0 ? `${gscData.totals.avgPosition}ª` : '—'}
+                    </p>
+                  </div>
+                </div>
+
+                {gscData.topQueries && gscData.topQueries.length > 0 && (
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-600">
+                      Palavras-Chave que Mais Trouxeram Impressões e Cliques no Google
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-bold">
+                            <th className="px-4 py-2.5">Termo Pesquisado no Google</th>
+                            <th className="px-4 py-2.5 text-right">Cliques</th>
+                            <th className="px-4 py-2.5 text-right">Impressões</th>
+                            <th className="px-4 py-2.5 text-right">CTR</th>
+                            <th className="px-4 py-2.5 text-right">Posição</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {gscData.topQueries.map((q: any) => (
+                            <tr key={q.query} className="hover:bg-slate-50">
+                              <td className="px-4 py-2 font-semibold text-slate-800">{q.query}</td>
+                              <td className="px-4 py-2 text-right font-black text-[#1B4D3E] tabular-nums">{q.clicks}</td>
+                              <td className="px-4 py-2 text-right text-slate-600 tabular-nums">{q.impressions}</td>
+                              <td className="px-4 py-2 text-right text-slate-500 tabular-nums">{q.ctrPct}%</td>
+                              <td className="px-4 py-2 text-right font-bold text-slate-700 tabular-nums">{q.position}ª</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -549,6 +948,16 @@ Acesse e libere 30 dias de teste grátis: https://www.smartbidhub.com.br/lp?post
                       <span className="text-[11px] text-slate-400 font-medium">
                         /conteudos/{art.slug}
                       </span>
+                      {analyticsData?.articleStats?.[art.slug]?.views > 0 && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                          👁️ {analyticsData.articleStats[art.slug].views} leitura{analyticsData.articleStats[art.slug].views !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {analyticsData?.articleStats?.[art.slug]?.botCrawls > 0 && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          🤖 {analyticsData.articleStats[art.slug].botCrawls} crawl{analyticsData.articleStats[art.slug].botCrawls !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-sm font-extrabold text-slate-800">{art.title}</h3>
                     <p className="text-xs text-slate-500 line-clamp-2">{art.metaDescription}</p>

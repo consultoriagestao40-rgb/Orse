@@ -142,6 +142,67 @@ export function getClientAttribution(): ClientAttribution {
   };
 }
 
+const VISITOR_STORAGE_KEY = 'sb_visitor_id_v1';
+
+function getOrCreateVisitorId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    let vid = window.localStorage.getItem(VISITOR_STORAGE_KEY);
+    if (!vid) {
+      vid = `v_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+      window.localStorage.setItem(VISITOR_STORAGE_KEY, vid);
+    }
+    return vid;
+  } catch {
+    return '';
+  }
+}
+
+export function sendFirstPartyAnalytics(eventType: 'PAGE_VIEW' | 'CTA_CLICK', customPath?: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const pathname = customPath || window.location.pathname || '/';
+    // Se o usuário já está logado no sistema e abriu '/', ele vê o Dashboard interno e não a LP
+    if (pathname === '/' && getBrowserCookie('sb_user')) return;
+    if (
+      pathname !== '/' &&
+      pathname !== '/lp' &&
+      !pathname.startsWith('/cadastro') &&
+      !pathname.startsWith('/conteudos')
+    ) {
+      return;
+    }
+
+    const sp = new URLSearchParams(window.location.search || '');
+    const attr = getClientAttribution();
+    const payload = JSON.stringify({
+      eventType,
+      path: pathname,
+      visitorId: getOrCreateVisitorId(),
+      referrer: document.referrer || attr.referrer || null,
+      utmSource: sp.get('utm_source') || attr.utmSource || null,
+      utmMedium: sp.get('utm_medium') || attr.utmMedium || null,
+      utmCampaign: sp.get('utm_campaign') || attr.utmCampaign || null,
+      fbclid: sp.get('fbclid') || attr.fbclid || null,
+      gclid: sp.get('gclid') || attr.gclid || null,
+      ttclid: sp.get('ttclid') || attr.ttclid || null,
+      postParam: sp.get('post') || null,
+    });
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: 'application/json' });
+      navigator.sendBeacon('/api/public/analytics', blob);
+    } else {
+      fetch('/api/public/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch {}
+}
+
 export const trackEvent = (
   eventName: string,
   params?: Record<string, any>,
@@ -151,6 +212,10 @@ export const trackEvent = (
     try {
       const eventId = options?.eventId;
       const attr = getClientAttribution();
+
+      if (['InitiateCheckout', 'Lead', 'CompleteRegistration', 'StartTrial'].includes(eventName)) {
+        sendFirstPartyAnalytics('CTA_CLICK');
+      }
 
       // 1. Meta Pixel (com eventID para desduplicar 100% com a Meta Conversions API do servidor)
       if ((window as any).fbq) {
@@ -231,6 +296,7 @@ export default function TrackingScripts() {
   // Captura UTMs, fbclid, gclid, ttclid e referrer assim que o visitante aterrissa em qualquer página pública
   useEffect(() => {
     captureAttributionFromUrl();
+    sendFirstPartyAnalytics('PAGE_VIEW', pathname || '/');
   }, [pathname]);
 
   // Não ativa scripts de marketing e tráfego pago em telas internas corporativas

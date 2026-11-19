@@ -1,8 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getSeoArticleBySlug, getAllSeoArticles, resolveAutoArtStyle } from '@/lib/seo-engine';
+import { buildVisitorHash, detectCrawlerBot, recordPublicPageEvent } from '@/lib/seo-analytics';
 import { ArrowLeft, ArrowRight, Clock, CheckCircle2, TrendingUp, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +72,24 @@ export default async function SeoArticlePage({
   if (!article) {
     notFound();
   }
+
+  // Registra rastreios server-side de robôs de indexação (Googlebot, ChatGPT, Perplexity, Bingbot) sem atrasar a resposta
+  try {
+    const hdrs = await headers();
+    const ua = hdrs.get('user-agent') || '';
+    const botName = detectCrawlerBot(ua);
+    if (botName) {
+      const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() || '0.0.0.0';
+      recordPublicPageEvent({
+        eventType: 'PAGE_VIEW',
+        path: `/conteudos/${article.slug}`,
+        visitorHash: buildVisitorHash(undefined, ip, ua),
+        source: botName,
+        userAgent: ua,
+        forceBotName: botName,
+      }).catch(() => {});
+    }
+  } catch {}
 
   const allArticles = await getAllSeoArticles();
   const related = allArticles.filter((a) => a.slug !== article.slug).slice(0, 3);

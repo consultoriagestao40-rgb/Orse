@@ -50,6 +50,22 @@ export async function GET(request: Request) {
       return new NextResponse('Erro: E-mail não fornecido pela conta Google.', { status: 400 })
     }
 
+    // Se veio do botão "Conectar Google Search Console" em /admin/seo, salva o refresh_token do Search Console sem mexer na sessão atual
+    if (searchParams.get('state') === 'gsc_connect') {
+      const { getLoggedUser } = await import('@/app/propostas/actions')
+      const currentAdmin = await getLoggedUser()
+      if (!currentAdmin || currentAdmin.role !== 'ADMIN') {
+        return new NextResponse('Acesso restrito ao administrador para vincular Search Console.', { status: 403 })
+      }
+      const { saveGscConfig } = await import('@/lib/seo-analytics')
+      await saveGscConfig({
+        ...(tokenData.refresh_token ? { refreshToken: tokenData.refresh_token } : {}),
+        accessToken: tokenData.access_token,
+        connectedEmail: googleUser.email,
+      })
+      return NextResponse.redirect(new URL('/admin/seo?gsc=connected', request.url))
+    }
+
     // 3. Buscar o usuário no banco de dados local pelo e-mail
     let user = await prisma.user.findUnique({
       where: { email: googleUser.email }

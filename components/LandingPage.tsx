@@ -1359,6 +1359,7 @@ export default function LandingPage() {
                 <div className="mt-8 pt-4">
                   <a
                     href={`/cadastro?plano=${encodeURIComponent(p.nome)}`}
+                    onClick={() => trackEvent('InitiateCheckout', { content_name: p.nome })}
                     className="w-full py-3 rounded-full text-[13px] font-bold text-center block transition-all hover:opacity-90 active:scale-[0.98]"
                     style={
                       p.destaque 

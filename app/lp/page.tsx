@@ -1,5 +1,7 @@
 import LandingPage from '@/components/LandingPage';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
+import { buildVisitorHash, detectCrawlerBot, recordPublicPageEvent } from '@/lib/seo-analytics';
 
 export async function generateMetadata({
   searchParams,
@@ -50,6 +52,22 @@ export async function generateMetadata({
   };
 }
 
-export default function LPPage() {
+export default async function LPPage() {
+  try {
+    const hdrs = await headers();
+    const ua = hdrs.get('user-agent') || '';
+    const botName = detectCrawlerBot(ua);
+    if (botName) {
+      const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() || '0.0.0.0';
+      recordPublicPageEvent({
+        eventType: 'PAGE_VIEW',
+        path: '/lp',
+        visitorHash: buildVisitorHash(undefined, ip, ua),
+        source: botName,
+        userAgent: ua,
+        forceBotName: botName,
+      }).catch(() => {});
+    }
+  } catch {}
   return <LandingPage />;
 }
