@@ -445,15 +445,33 @@ export async function fetchGoogleSearchConsoleData(days = 28) {
 
     // Descobre a propriedade verificada do smartbidhub.com.br na conta Google conectada
     let siteUrl = cfg.siteUrl || '';
-    const sitesRes = await fetch('https://www.googleapis.com/webmasters/v3/sites', {
+    const sitesRes = await fetch('https://searchconsole.googleapis.com/webmasters/v3/sites', {
       headers: authHeader,
     });
     const sitesJson = await sitesRes.json();
+    if (sitesJson?.error) {
+      const msg = String(sitesJson.error.message || '');
+      if (msg.includes('has not been used in project') || sitesJson.error.status === 'PERMISSION_DENIED') {
+        return {
+          connected: true as const,
+          connectedEmail: cfg.connectedEmail || null,
+          siteUrl: 'https://www.smartbidhub.com.br/',
+          error:
+            'Falta apenas ativar a "Google Search Console API" em 1 clique no seu Google Cloud: acesse console.developers.google.com/apis/api/searchconsole.googleapis.com/overview?project=10625014463 e clique em ATIVAR.',
+        };
+      }
+      return {
+        connected: true as const,
+        connectedEmail: cfg.connectedEmail || null,
+        error: msg || 'Erro retornado pela API do Google Search Console.',
+      };
+    }
+
     const entries: Array<{ siteUrl: string; permissionLevel: string }> = sitesJson?.siteEntry || [];
 
     const preferred = [
-      'sc-domain:smartbidhub.com.br',
       'https://www.smartbidhub.com.br/',
+      'sc-domain:smartbidhub.com.br',
       'https://smartbidhub.com.br/',
     ];
     const matched =
@@ -486,17 +504,17 @@ export async function fetchGoogleSearchConsoleData(days = 28) {
     const encodedSite = encodeURIComponent(siteUrl);
 
     const [totalsRes, queriesRes, pagesRes] = await Promise.all([
-      fetch(`https://www.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`, {
+      fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`, {
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify({ startDate, endDate }),
       }),
-      fetch(`https://www.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`, {
+      fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`, {
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify({ startDate, endDate, dimensions: ['query'], rowLimit: 15 }),
       }),
-      fetch(`https://www.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`, {
+      fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`, {
         method: 'POST',
         headers: authHeader,
         body: JSON.stringify({ startDate, endDate, dimensions: ['page'], rowLimit: 10 }),
